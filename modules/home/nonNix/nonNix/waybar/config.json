@@ -1,0 +1,24 @@
+{
+  "layer": "top",
+  "modules-left": ["sway/workspaces", "sway/mode"],
+  "modules-center": ["sway/window"],
+  "modules-right": ["battery", "clock"],
+  "sway/window": {
+    "max-length": 50
+  },
+  "battery": {
+    "format": "{capacity}% {icon}",
+    "format-icons": ["", "", "", "", ""]
+  },
+  "clock": {
+    "format-alt": "{:%a, %d. %b  %H:%M}"
+  },
+  "temperature": {
+    "thermal-zone": 2,
+    "hwmon-path": "/sys/devices/platform/coretemp.0/hwmon/hwmon1/temp1_input",
+    "critical-threshold": 70,
+    "format-critical": "{temperatureC}°C {icon}",
+    "format": "{temperatureC}°C {icon}",
+    "format-icons": ["", "", ""]
+  }
+}
