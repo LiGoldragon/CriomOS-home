@@ -1,5 +1,9 @@
 # Agent Bootstrap — CriomOS-home
 
+## First thing
+
+Run `bd list --status open` to see what's already on the table.
+
 Before making changes:
 
 1. Read `docs/ROADMAP.md`.
