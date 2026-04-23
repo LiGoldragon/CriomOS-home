@@ -4,11 +4,7 @@
 
 Run `bd list --status open` to see what's already on the table.
 
-Before making changes:
-
-1. Read `docs/ROADMAP.md`.
-2. Read the design essay at `../criomos-archive/proposals/CRIOMOS-NEXT.md`.
-3. Read `/home/li/.claude/projects/-home-li-git-CriomOS/memory/MEMORY.md`.
+Read `docs/ROADMAP.md`.
 
 ## Scope
 
