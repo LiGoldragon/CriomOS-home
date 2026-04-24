@@ -1,6 +1,5 @@
 {
   lib,
-  criomos-lib,
   pkgs,
   user,
   config,
@@ -12,13 +11,11 @@ let
     mkIf
     optionalString
     ;
-  inherit (criomos-lib) matchSize;
   inherit (user)
     size
     useColemak
     isMultimediaDev
     ;
-  inherit (user) size;
   inherit (pkgs) writeText;
   inherit (horizon.node.machine) model;
 
@@ -40,8 +37,9 @@ let
     waybarEksek = nixProfileExec "waybar";
     swaylockEksek = nixProfileExec "swaylock";
     browser =
-      matchSize size "" termBrowser "${nixProfileExec "qutebrowser"}"
-        "${nixProfileExec "qutebrowser"}";
+      if size.atLeastMed then "${nixProfileExec "qutebrowser"}"
+      else if size.atLeastMin then termBrowser
+      else "";
     launcher = "${nixProfileExec "wofi"} --show drun";
     shellTerm = shellLaunch "export SHELL=${zshEksek}; exec ${terminal} ${zshEksek}";
   };
