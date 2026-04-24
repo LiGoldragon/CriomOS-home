@@ -218,7 +218,6 @@ let
 
   AIPackages = [
     pkgs.gemini-cli
-    inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.claude-code
     codex
     pkgs.opencode
     pkgs.llama-cpp

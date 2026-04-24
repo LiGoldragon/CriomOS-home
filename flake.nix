@@ -20,12 +20,9 @@
     stylix.url = "github:danth/stylix";
     stylix.inputs.nixpkgs.follows = "nixpkgs";
 
-    # Editor — claude desktop, vscodium extensions.
+    # Editor — vscodium extensions.
     nix-vscode-extensions.url = "github:nix-community/nix-vscode-extensions";
     nix-vscode-extensions.inputs.nixpkgs.follows = "nixpkgs";
-    claude-for-linux.url = "github:LiGoldragon/claude-for-linux/update-v1.1.7714";
-    llm-agents.url = "github:numtide/llm-agents.nix";
-    llm-agents.inputs.nixpkgs.follows = "nixpkgs";
 
     # Mentci workspace.
     mentci-tools.url = "github:LiGoldragon/mentci-tools";
