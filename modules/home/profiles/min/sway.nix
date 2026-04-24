@@ -49,7 +49,7 @@ let
   swayConfigString = import ./swayConf.nix swayArguments;
 
 in
-mkIf size.is.min {
+mkIf size.atLeastMin {
   wayland.windowManager.sway = {
     enable = true;
     wrapperFeatures = {

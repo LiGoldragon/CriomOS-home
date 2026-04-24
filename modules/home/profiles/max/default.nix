@@ -32,7 +32,7 @@ let
   ];
 
 in
-lib.mkIf size.is.max {
+lib.mkIf size.atLeastMax {
   home = {
     packages =
       with pkgs;

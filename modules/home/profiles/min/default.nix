@@ -59,7 +59,7 @@ let
 
   hasLargeAI = largeAIHost != null;
 
-  terminalFontFamily = if size.is.med then "IosevkaTerm Nerd Font" else "DejaVu Sans Mono";
+  terminalFontFamily = if size.atLeastMed then "IosevkaTerm Nerd Font" else "DejaVu Sans Mono";
 
   # Todo(Those data files should be in a top arg called data)
   colemakZedKeys = criomos-lib.importJSON ./../../../data/ZedKeymaps/goldragon-colemak.json;
@@ -382,7 +382,7 @@ let
 
 in
 assert builtins.length largeAIModels > 0;
-mkIf size.is.min {
+mkIf size.atLeastMin {
   fonts.fontconfig = {
     enable = true;
     # TODO
@@ -396,7 +396,7 @@ mkIf size.is.min {
 
   services = {
     dunst = {
-      enable = !size.is.min;
+      enable = !size.atLeastMin;
       settings = {
         global = {
           geometry = "300x5-30+50";

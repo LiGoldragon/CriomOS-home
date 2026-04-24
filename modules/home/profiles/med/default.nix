@@ -100,7 +100,7 @@ let
   ];
 
 in
-lib.mkIf size.is.med {
+lib.mkIf size.atLeastMed {
   programs = {
     starship = {
       enable = true;

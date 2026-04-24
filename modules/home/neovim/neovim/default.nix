@@ -64,13 +64,13 @@ let
 
   vimlPloginz =
     minVimLPloginz
-    ++ (optionals size.is.med medVimlPlogins)
-    ++ (optionals size.is.max maxVimlPlogins);
+    ++ (optionals size.atLeastMed medVimlPlogins)
+    ++ (optionals size.atLeastMax maxVimlPlogins);
 
   luaPloginz =
     minLuaPloginz
-    ++ (optionals size.is.med medLuaPloginz)
-    ++ (optionals size.is.max maxLuaPloginz);
+    ++ (optionals size.atLeastMed medLuaPloginz)
+    ++ (optionals size.atLeastMax maxLuaPloginz);
 
   minLuaPloginz = with aolPloginz; [
     plenary-nvim
@@ -194,7 +194,7 @@ let
   };
 
   langServers =
-    (optionalAttrs size.is.med medLangServers) // (optionalAttrs size.is.max maxLangServers);
+    (optionalAttrs size.atLeastMed medLangServers) // (optionalAttrs size.atLeastMax maxLangServers);
 
   medKod =
     ''
@@ -291,8 +291,8 @@ let
     + minKod
     + themeKod
     + (readFile ./expressline.lua)
-    + (optionalString size.is.med (
-      medLuaKod + optionalString size.is.max maxLuaKod
+    + (optionalString size.atLeastMed (
+      medLuaKod + optionalString size.atLeastMax maxLuaKod
     ));
 
   luaVimrc = writeText "vimrc.lua" initLuaKod;
@@ -320,12 +320,12 @@ in
   home = {
     packages =
       minPackages
-      ++ (optionals size.is.med (
-        medPackages ++ (optionals size.is.max maxPackages)
+      ++ (optionals size.atLeastMed (
+        medPackages ++ (optionals size.atLeastMax maxPackages)
       ));
 
     sessionVariables = {
-      EDITOR = if size.is.med then "nvr -cc split --remote-wait +'set bufhidden=wipe'" else "nvim";
+      EDITOR = if size.atLeastMed then "nvr -cc split --remote-wait +'set bufhidden=wipe'" else "nvim";
     };
   };
 
