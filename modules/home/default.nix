@@ -18,10 +18,10 @@
 { config, lib, horizon ? null, user ? null, inputs ? null, ... }:
 {
   imports = [
-    # Compositor home module from niri-flake. Pulled in here so
-    # CriomOS doesn't need niri-flake as a direct input — it just
-    # consumes homeModules.default and the niri config rides along.
-  ] ++ lib.optional (inputs != null) inputs.niri-flake.homeModules.config;
+    # Compositor home module from niri-flake — pulled in only when the
+    # consumer actually has niri-flake in its flake inputs (it's the
+    # consumer's choice whether to depend on niri). Skip otherwise.
+  ] ++ lib.optional (inputs != null && inputs ? niri-flake) inputs.niri-flake.homeModules.config;
 
   config = { };
 }
