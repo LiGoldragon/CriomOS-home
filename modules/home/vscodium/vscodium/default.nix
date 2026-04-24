@@ -7,7 +7,7 @@
   ...
 }:
 let
-  inherit (user.methods) sizedAtLeast;
+  inherit (user) sizedAtLeast;
   inherit (criomos-lib) mkJsonMerge;
 
   system = pkgs.stdenv.hostPlatform.system;

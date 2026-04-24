@@ -1,8 +1,8 @@
 { pkgs, lib, config, user, constants, horizon, ... }:
 let
   terminal = "${pkgs.ghostty}/bin/ghostty";
-  inherit (user.methods) useFastRepeat;
-  inherit (horizon.node.methods) behavesAs;
+  inherit (user) useFastRepeat;
+  inherit (horizon.node) behavesAs;
 
   a = config.lib.niri.actions;
 

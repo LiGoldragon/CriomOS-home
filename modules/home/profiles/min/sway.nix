@@ -13,7 +13,7 @@ let
     optionalString
     ;
   inherit (criomos-lib) matchSize;
-  inherit (user.methods)
+  inherit (user)
     sizedAtLeast
     useColemak
     isMultimediaDev

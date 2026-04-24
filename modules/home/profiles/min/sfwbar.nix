@@ -5,7 +5,7 @@
   ...
 }:
 let
-  inherit (horizon.node.methods) behavesAs;
+  inherit (horizon.node) behavesAs;
   colors = config.lib.stylix.colors.withHashtag;
 in
 lib.mkIf behavesAs.edge {

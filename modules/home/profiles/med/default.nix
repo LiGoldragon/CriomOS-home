@@ -14,7 +14,7 @@ let
   inherit (pkdjz) kynvyrt;
   inherit (criomos-lib) mkJsonMerge;
   inherit (user) githubId;
-  inherit (user.methods) useColemak sizedAtLeast;
+  inherit (user) useColemak sizedAtLeast;
   system = pkgs.stdenv.hostPlatform.system;
   inherit (pkgs) mksh;
 

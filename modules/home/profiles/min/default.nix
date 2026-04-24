@@ -22,7 +22,7 @@ let
     ;
   inherit (pkdjz) kynvyrt;
   inherit (horizon) node;
-  inherit (user.methods)
+  inherit (user)
     useColemak
     hasPreCriome
     gitSigningKey
@@ -50,12 +50,12 @@ let
     if matches != {} then builtins.head (builtins.attrValues matches) else null;
 
   largeAINodeName =
-    if node.methods.behavesAs.largeAI then node.name
+    if node.behavesAs.largeAI then node.name
     else if largeAINodeEntry != null then largeAINodeEntry.name
     else null;
 
   largeAIHost =
-    if node.methods.behavesAs.largeAI then "127.0.0.1"
+    if node.behavesAs.largeAI then "127.0.0.1"
     else if largeAINodeEntry != null then largeAINodeEntry.criomeDomainName
     else null;
 

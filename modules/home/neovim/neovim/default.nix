@@ -20,7 +20,7 @@ let
     optionals
     optionalAttrs
     ;
-  inherit (user.methods) sizedAtLeast useColemak;
+  inherit (user) sizedAtLeast useColemak;
   inherit (horizon) node;
   inherit (pkgs) parinfer-rust writeText;
   inherit (pkdjz) vimPloginz;

@@ -8,7 +8,7 @@
 let
   inherit (builtins) readFile toString;
   inherit (lib) mkIf optionalString;
-  inherit (user.methods) useColemak sizedAtLeast;
+  inherit (user) useColemak sizedAtLeast;
 
   badDomains = [
     "www.reddit.com"

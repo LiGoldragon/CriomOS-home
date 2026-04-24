@@ -7,7 +7,7 @@
 }:
 let
   inherit (lib) optionals;
-  inherit (user.methods) isMultimediaDev sizedAtLeast;
+  inherit (user) isMultimediaDev sizedAtLeast;
 
   codingPackages = with pkgs; [
     pandoc
