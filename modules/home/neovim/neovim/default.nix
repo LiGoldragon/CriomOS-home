@@ -19,7 +19,7 @@ let
     optionals
     optionalAttrs
     ;
-  inherit (user) sizedAtLeast useColemak;
+  inherit (user) size useColemak;
   inherit (horizon) node;
   inherit (pkgs) parinfer-rust writeText;
 
@@ -64,13 +64,13 @@ let
 
   vimlPloginz =
     minVimLPloginz
-    ++ (optionals sizedAtLeast.med medVimlPlogins)
-    ++ (optionals sizedAtLeast.max maxVimlPlogins);
+    ++ (optionals size.is.med medVimlPlogins)
+    ++ (optionals size.is.max maxVimlPlogins);
 
   luaPloginz =
     minLuaPloginz
-    ++ (optionals sizedAtLeast.med medLuaPloginz)
-    ++ (optionals sizedAtLeast.max maxLuaPloginz);
+    ++ (optionals size.is.med medLuaPloginz)
+    ++ (optionals size.is.max maxLuaPloginz);
 
   minLuaPloginz = with aolPloginz; [
     plenary-nvim
@@ -194,7 +194,7 @@ let
   };
 
   langServers =
-    (optionalAttrs sizedAtLeast.med medLangServers) // (optionalAttrs sizedAtLeast.max maxLangServers);
+    (optionalAttrs size.is.med medLangServers) // (optionalAttrs size.is.max maxLangServers);
 
   medKod =
     ''
@@ -247,7 +247,7 @@ let
   };
 
   nioviNix = {
-    inherit lsp_capabilities langServers sizedAtLeast;
+    inherit lsp_capabilities langServers size;
   };
 
   nioviNixFile = writeText "niovi-nix.json" (toJSON nioviNix);
@@ -291,8 +291,8 @@ let
     + minKod
     + themeKod
     + (readFile ./expressline.lua)
-    + (optionalString sizedAtLeast.med (
-      medLuaKod + optionalString sizedAtLeast.max maxLuaKod
+    + (optionalString size.is.med (
+      medLuaKod + optionalString size.is.max maxLuaKod
     ));
 
   luaVimrc = writeText "vimrc.lua" initLuaKod;
@@ -320,12 +320,12 @@ in
   home = {
     packages =
       minPackages
-      ++ (optionals sizedAtLeast.med (
-        medPackages ++ (optionals sizedAtLeast.max maxPackages)
+      ++ (optionals size.is.med (
+        medPackages ++ (optionals size.is.max maxPackages)
       ));
 
     sessionVariables = {
-      EDITOR = if sizedAtLeast.med then "nvr -cc split --remote-wait +'set bufhidden=wipe'" else "nvim";
+      EDITOR = if size.is.med then "nvr -cc split --remote-wait +'set bufhidden=wipe'" else "nvim";
     };
   };
 

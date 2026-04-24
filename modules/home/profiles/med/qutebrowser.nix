@@ -8,7 +8,7 @@
 let
   inherit (builtins) readFile toString;
   inherit (lib) mkIf optionalString;
-  inherit (user) useColemak sizedAtLeast;
+  inherit (user) useColemak size;
 
   badDomains = [
     "www.reddit.com"
@@ -105,7 +105,7 @@ let
   domainListBlok = builtins.concatStringsSep "\n" mkDomainsList;
 
 in
-lib.mkIf sizedAtLeast.med {
+lib.mkIf size.is.med {
   home = {
     packages = [ pkgs.qutebrowser ];
 

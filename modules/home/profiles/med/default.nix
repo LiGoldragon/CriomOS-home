@@ -14,7 +14,7 @@ let
   tomlFormat = pkgs.formats.toml { };
   yamlFormat = pkgs.formats.yaml { };
   inherit (user) githubId;
-  inherit (user) useColemak sizedAtLeast;
+  inherit (user) useColemak size;
   system = pkgs.stdenv.hostPlatform.system;
   inherit (pkgs) mksh;
 
@@ -100,7 +100,7 @@ let
   ];
 
 in
-lib.mkIf sizedAtLeast.med {
+lib.mkIf size.is.med {
   programs = {
     starship = {
       enable = true;

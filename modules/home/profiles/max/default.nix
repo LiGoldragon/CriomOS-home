@@ -6,7 +6,7 @@
 }:
 let
   inherit (lib) optionals;
-  inherit (user) isMultimediaDev sizedAtLeast;
+  inherit (user) isMultimediaDev size;
 
   codingPackages = with pkgs; [
     pandoc
@@ -32,7 +32,7 @@ let
   ];
 
 in
-lib.mkIf sizedAtLeast.max {
+lib.mkIf size.is.max {
   home = {
     packages =
       with pkgs;

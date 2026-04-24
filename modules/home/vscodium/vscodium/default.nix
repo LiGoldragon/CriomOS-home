@@ -7,7 +7,7 @@
   ...
 }:
 let
-  inherit (user) sizedAtLeast;
+  inherit (user) size;
   inherit (criomos-lib) mkJsonMerge;
 
   system = pkgs.stdenv.hostPlatform.system;
@@ -109,7 +109,7 @@ let
   };
 
 in
-lib.mkIf sizedAtLeast.med {
+lib.mkIf size.is.med {
 
   programs.vscode = {
     enable = true;

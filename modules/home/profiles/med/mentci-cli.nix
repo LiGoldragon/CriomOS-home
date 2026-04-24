@@ -6,9 +6,9 @@
   ...
 }:
 let
-  inherit (user) sizedAtLeast;
+  inherit (user) size;
   system = pkgs.stdenv.hostPlatform.system;
 in
-lib.mkIf sizedAtLeast.med {
+lib.mkIf size.is.med {
   home.packages = [ inputs.mentci-tools.packages.${system}.cli ];
 }

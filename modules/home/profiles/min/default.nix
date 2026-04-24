@@ -24,7 +24,7 @@ let
     hasPubKey
     gitSigningKey
     matrixId
-    sizedAtLeast
+    size
     isMultimediaDev
     emailAddress
     ;
@@ -59,7 +59,7 @@ let
 
   hasLargeAI = largeAIHost != null;
 
-  terminalFontFamily = if sizedAtLeast.med then "IosevkaTerm Nerd Font" else "DejaVu Sans Mono";
+  terminalFontFamily = if size.is.med then "IosevkaTerm Nerd Font" else "DejaVu Sans Mono";
 
   # Todo(Those data files should be in a top arg called data)
   colemakZedKeys = criomos-lib.importJSON ./../../../data/ZedKeymaps/goldragon-colemak.json;
@@ -382,7 +382,7 @@ let
 
 in
 assert builtins.length largeAIModels > 0;
-mkIf sizedAtLeast.min {
+mkIf size.is.min {
   fonts.fontconfig = {
     enable = true;
     # TODO
@@ -396,7 +396,7 @@ mkIf sizedAtLeast.min {
 
   services = {
     dunst = {
-      enable = !sizedAtLeast.min;
+      enable = !size.is.min;
       settings = {
         global = {
           geometry = "300x5-30+50";

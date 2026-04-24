@@ -14,7 +14,7 @@ let
     ;
   inherit (criomos-lib) matchSize;
   inherit (user)
-    sizedAtLeast
+    size
     useColemak
     isMultimediaDev
     ;
@@ -49,7 +49,7 @@ let
   swayConfigString = import ./swayConf.nix swayArguments;
 
 in
-mkIf sizedAtLeast.min {
+mkIf size.is.min {
   wayland.windowManager.sway = {
     enable = true;
     wrapperFeatures = {
