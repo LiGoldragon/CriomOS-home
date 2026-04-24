@@ -1,7 +1,7 @@
-{ pkdjz, pkgs, ... }:
+{ pkgs, ... }:
 let
   config = { };
-  configFile = pkdjz.exportJSON "element-config.json" config;
+  configFile = pkgs.writeText "element-config.json" (builtins.toJSON config);
 
 in
 {

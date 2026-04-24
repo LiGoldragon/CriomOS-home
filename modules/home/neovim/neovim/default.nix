@@ -1,7 +1,6 @@
 {
   lib,
   pkgs,
-  pkdjz,
   user,
   config,
   horizon,
@@ -23,9 +22,12 @@ let
   inherit (user) sizedAtLeast useColemak;
   inherit (horizon) node;
   inherit (pkgs) parinfer-rust writeText;
-  inherit (pkdjz) vimPloginz;
 
-  aolPloginz = pkgs.vimPlugins // vimPloginz;
+  # Was: pkgs.vimPlugins // pkdjz.vimPloginz (pkdjz layer removed).
+  # Project-specific vimPloginz extras are now absent — surface
+  # missing references at build time and add proper packages as
+  # needed.
+  aolPloginz = pkgs.vimPlugins;
 
   minVimLPloginz = with aolPloginz; [
     dwm-vim
@@ -329,7 +331,7 @@ in
 
   programs = {
     neovim = {
-      package = pkdjz.neovim;
+      package = pkgs.neovim-unwrapped;
       enable = true;
       withRuby = false;
       vimAlias = true;

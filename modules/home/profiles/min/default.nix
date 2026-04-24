@@ -2,11 +2,9 @@
   lib,
   pkgs,
   criomos-lib,
-  pkdjz,
   user,
   horizon,
   config,
-  world,
   inputs,
   # Todo(data)
   ...
@@ -20,17 +18,17 @@ let
     mkIf
     optional
     ;
-  inherit (pkdjz) kynvyrt;
   inherit (horizon) node;
   inherit (user)
     useColemak
-    hasPreCriome
+    hasPubKey
     gitSigningKey
-    matrixID
+    matrixId
     sizedAtLeast
     isMultimediaDev
+    emailAddress
     ;
-  inherit (user) githubId name methods;
+  inherit (user) githubId name;
   inherit (pkgs) writeText;
 
   homeDir = config.home.homeDirectory;
@@ -171,7 +169,6 @@ let
     stdenv.cc
     # Rust
     cargo
-    # pkdjz.nightlyRustDevEnv # TODO: debug - breaks zsh completions
     # Nix
     nil
     nixfmt
@@ -383,10 +380,6 @@ let
     fi
   '';
 
-  worldPackages = with world; [
-    skrips.user
-  ];
-
 in
 assert builtins.length largeAIModels > 0;
 mkIf sizedAtLeast.min {
@@ -425,7 +418,7 @@ mkIf sizedAtLeast.min {
       defaultCacheTtlSsh = 3600;
       maxCacheTtlSsh = 86400;
       enableSshSupport = true;
-      sshKeys = (optional hasPreCriome user.preCriomes.${node.name}.keygrip);
+      sshKeys = (optional hasPubKey user.pubKeys.${node.name}.keygrip);
     };
 
     mpd = {
@@ -530,12 +523,12 @@ mkIf sizedAtLeast.min {
 
     git = {
       enable = true;
-      signing = mkIf hasPreCriome {
+      signing = mkIf hasPubKey {
         key = gitSigningKey;
         signByDefault = true;
       };
       settings = {
-        user.email = methods.emailAddress;
+        user.email = emailAddress;
         user.name = name;
         pull.rebase = true;
         init.defaultBranch = "main";
@@ -568,9 +561,9 @@ mkIf sizedAtLeast.min {
         };
         user = {
           name = name;
-          email = methods.emailAddress;
+          email = emailAddress;
         };
-        signing = mkIf hasPreCriome {
+        signing = mkIf hasPubKey {
           behavior = "own";
           backend = "gpg";
           key = gitSigningKey;
@@ -659,7 +652,7 @@ mkIf sizedAtLeast.min {
   };
 
   home = {
-    packages = fontPackages ++ nixpkgsPackages ++ worldPackages ++ AIPackages ++ [
+    packages = fontPackages ++ nixpkgsPackages ++ AIPackages ++ [
       nordvpnSeed
       pkgs.wl-gammarelay-rs
       nightshift

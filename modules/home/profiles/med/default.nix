@@ -2,8 +2,6 @@
   lib,
   user,
   pkgs,
-  pkdjz,
-  world,
   inputs,
   criomos-lib,
   ...
@@ -11,8 +9,10 @@
 let
   inherit (builtins) readFile toJSON;
   inherit (lib) optionalString optionals;
-  inherit (pkdjz) kynvyrt;
   inherit (criomos-lib) mkJsonMerge;
+
+  tomlFormat = pkgs.formats.toml { };
+  yamlFormat = pkgs.formats.yaml { };
   inherit (user) githubId;
   inherit (user) useColemak sizedAtLeast;
   system = pkgs.stdenv.hostPlatform.system;
@@ -83,8 +83,6 @@ let
       zola
       git-series
       tree-sitter
-      # Python
-      world.kibord.kpBootCli
       # Manuals
       unbound.man
     ]
@@ -149,25 +147,17 @@ lib.mkIf sizedAtLeast.med {
         gitProtocol = "ssh";
       };
 
-      ".config/rustfmt/rustfmt.toml".source = kynvyrt {
-        name = "rustfmt.toml";
-        format = "toml";
-        value = {
-          edition = "2021";
-        };
+      ".config/rustfmt/rustfmt.toml".source = tomlFormat.generate "rustfmt.toml" {
+        edition = "2021";
       };
 
-      ".config/luaformatter/config.yaml".source = kynvyrt {
-        name = "luaFormatterConfig.yaml";
-        format = "yaml";
-        value = {
-          indent_width = 2;
-          continuation_indent_width = 2;
-          align_args = false;
-          align_parameter = false;
-          align_table_field = false;
-          spaces_inside_table_braces = true;
-        };
+      ".config/luaformatter/config.yaml".source = yamlFormat.generate "luaFormatterConfig.yaml" {
+        indent_width = 2;
+        continuation_indent_width = 2;
+        align_args = false;
+        align_parameter = false;
+        align_table_field = false;
+        spaces_inside_table_braces = true;
       };
 
       # start('pythonConfigs')
