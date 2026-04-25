@@ -687,14 +687,20 @@ mkIf size.atLeastMin {
       };
   };
 
-  programs.pi-mentci = {
-    enable = piMentci != null;
-    package = piMentci;
+  # programs.pi-mentci option only exists when pi-mentci's homeModule
+  # is imported (which itself requires inputs.pi-mentci). Defensive
+  # gate — same architecture issue as the rest of the broken-input
+  # cleanup. Skip when the module isn't available.
+  programs = lib.mkIf (inputs ? pi-mentci) {
+    pi-mentci = {
+      enable = piMentci != null;
+      package = piMentci;
 
-    agent = {
-      enable = hasLargeAI;
-      settings = piAgent.settings;
-      models = piAgent.models;
+      agent = {
+        enable = hasLargeAI;
+        settings = piAgent.settings;
+        models = piAgent.models;
+      };
     };
   };
 
