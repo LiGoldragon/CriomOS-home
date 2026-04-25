@@ -2,20 +2,16 @@
   lib,
   user,
   pkgs,
-  inputs,
-  criomos-lib,
   ...
 }:
 let
   inherit (builtins) readFile toJSON;
   inherit (lib) optionalString optionals;
-  inherit (criomos-lib) mkJsonMerge;
 
   tomlFormat = pkgs.formats.toml { };
   yamlFormat = pkgs.formats.yaml { };
   inherit (user) githubId;
   inherit (user) useColemak size;
-  system = pkgs.stdenv.hostPlatform.system;
   inherit (pkgs) mksh;
 
   tokenaizdWrangler = pkgs.writeScriptBin "wrangler" ''
@@ -135,7 +131,9 @@ lib.mkIf size.atLeastMed {
         lazygit
         #== rust
         spotify-player
-        inputs.mentci.packages.${system}.mentci-codium
+        # inputs.mentci.packages.${system}.mentci-codium — `inputs.mentci`
+        # not declared in CriomOS-home flake; stale ref. Drop until the
+        # mentci-tools flake actually exposes a mentci-codium attr.
       ]
       ++ graphicalPackages
       ++ codingPackages ++ lispDevPackages;
@@ -171,18 +169,7 @@ lib.mkIf size.atLeastMed {
     };
   };
 
-  xdg.desktopEntries.mentci-codium = {
-    name = "Mentci Codium";
-    comment = "VSCodium with Mentci devshell environment";
-    exec = "${inputs.mentci.packages.${system}.mentci-codium}/bin/mentci-codium";
-    icon = "vscodium";
-    terminal = false;
-    categories = [ "Development" "IDE" "TextEditor" ];
-  };
-
-  home.activation.mergeMentciMcp = mkJsonMerge {
-    inherit lib pkgs;
-    file = "$HOME/.claude.json";
-    nixSettings = { mcpServers = inputs.mentci.mcpSettings.${system}.default; };
-  };
+  # mentci-codium desktop entry + .claude.json MCP merge — both depend
+  # on `inputs.mentci` which is not declared in CriomOS-home's flake.
+  # Stale leftover. Drop until mentci-tools exposes the right surface.
 }

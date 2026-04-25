@@ -36,35 +36,11 @@ let
 
   ovsx = inputs.nix-vscode-extensions.extensions.${system}.open-vsx;
 
-  askiWasm = inputs.aski.packages.${pkgs.system}.tree-sitter-aski-wasm;
-
-  vscode-aski =
-    pkgs.buildNpmPackage {
-      pname = "vscode-extension-criome-vscode-aski";
-      version = "0.3.0";
-      src = inputs.vscode-aski;
-      npmDepsHash = "sha256-0JjCGpgLQM79CUhV6//fEcJJr79BmtqPIq9a2mtWDiQ=";
-      dontNpmBuild = true;
-      buildPhase = ''
-        npx esbuild src/extension.ts --bundle --outfile=out/extension.js --external:vscode --external:web-tree-sitter --format=cjs --platform=node
-      '';
-      installPhase = ''
-        extDir=$out/share/vscode/extensions/criome.vscode-aski
-        mkdir -p $extDir $extDir/grammars
-        cp -r out syntaxes package.json language-configuration.json $extDir/
-        # WASM + queries from aski flake (pure Nix build)
-        cp ${askiWasm}/tree-sitter-aski.wasm $extDir/grammars/
-        cp -r ${askiWasm}/queries $extDir/
-        # web-tree-sitter WASM needed at runtime
-        mkdir -p $extDir/node_modules/web-tree-sitter
-        cp -rL node_modules/web-tree-sitter/. $extDir/node_modules/web-tree-sitter/
-      '';
-      passthru = {
-        vscodeExtPublisher = "criome";
-        vscodeExtName = "vscode-aski";
-        vscodeExtUniqueId = "criome.vscode-aski";
-      };
-    };
+  # vscode-aski extension + askiWasm helper depended on `inputs.aski`
+  # and `inputs.vscode-aski` — neither declared in CriomOS-home flake.
+  # Stale leftover from a previous design where aski lived as its own
+  # input. Dropped here; revive when there's a real aski crate to
+  # integrate.
 
   nixSettings = {
     # Theme — stylix generates base16 theme, darkman switches via portal
@@ -121,7 +97,7 @@ lib.mkIf size.atLeastMed {
         ovsx.google.geminicodeassist
         ovsx.openai.chatgpt
         ovsx.cdervis.vscode-pi
-        vscode-aski
+        # vscode-aski — dropped, see above
         pkgs.vscode-extensions.mkhl.direnv
         pkgs.vscode-extensions.jnoortheen.nix-ide
       ];

@@ -190,25 +190,31 @@ let
 
   unixDeveloperPackages = unixUtilities ++ programmingTools;
 
-  piMentci = inputs.pi-mentci.packages.${pkgs.stdenv.hostPlatform.system}.default or null;
+  # pi-mentci is a CriomOS-home flake input but consumers (CriomOS
+  # userHomes.nix) pass their own `inputs` via extraSpecialArgs, which
+  # don't include CriomOS-home's inputs. Defensive gate until that
+  # architecture is fixed (see CriomOS-home/modules/home/default.nix).
+  piMentci =
+    if inputs ? pi-mentci
+    then inputs.pi-mentci.packages.${pkgs.stdenv.hostPlatform.system}.default or null
+    else null;
   piAgent =
-    inputs.pi-mentci.lib.agent.fromLargeAI {
+    if inputs ? pi-mentci
+    then inputs.pi-mentci.lib.agent.fromLargeAI {
       inherit largeAIConfig;
       gatewayProvider = if largeAINodeName != null then largeAINodeName else "local";
       gatewayBaseUrl =
         if hasLargeAI
         then "http://${largeAIHost}:${toString largeAIConfig.serverPort}/v1"
         else null;
-    };
+    }
+    else { settings = { }; models = [ ]; };
 
-  codex = inputs.codex-cli.packages.${pkgs.stdenv.hostPlatform.system}.default;
-
-  AIPackages = [
-    pkgs.gemini-cli
-    codex
-    pkgs.opencode
-    pkgs.llama-cpp
-  ];
+  # codex-cli was referenced as inputs.codex-cli but is NOT declared
+  # in CriomOS-home/flake.nix anywhere — stale leftover. Dropped from
+  # AIPackages (also dropping gemini-cli, opencode, llama-cpp per the
+  # bloat-audit suggestion to require explicit per-user opt-in).
+  AIPackages = [ ];
 
   nixpkgsPackages =
     with pkgs;
