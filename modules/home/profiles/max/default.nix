@@ -5,19 +5,21 @@
   ...
 }:
 let
-  inherit (lib) optionals;
+  inherit (lib) optionals mkIf mkMerge;
   inherit (user) isMultimediaDev size;
 
   codingPackages = with pkgs; [
     pandoc
   ];
 
-  semaDevPackages = with pkgs; [
+  # Per Li 2026-04-25: gimp, krita, calibre, inkscape stay Max-tier.
+  # discord-ptb, firefox-bin removed.
+  maxMultimediaPackages = with pkgs; [
     krita
     calibre
     virt-manager
     gimp
-    discord-ptb
+    inkscape
   ];
 
   candidatePackages = with pkgs; [
@@ -32,9 +34,12 @@ let
   ];
 
 in
-lib.mkIf size.atLeastMax {
-  home = {
-    packages =
+mkMerge [
+  # Large-tier baseline: most "max profile" packages are now Large per
+  # the bulk size-Max -> Large rule. Specific heavy items that stay
+  # Max-only are wrapped in their own mkIf below.
+  (mkIf size.atLeastLarge {
+    home.packages =
       with pkgs;
       [
         # freecad # broken
@@ -42,17 +47,22 @@ lib.mkIf size.atLeastMax {
         gitkraken
       ]
       ++ windowsEmulationsPackages
-      ++ codingPackages
-      ++ (optionals isMultimediaDev semaDevPackages);
-  };
+      ++ codingPackages;
 
-  programs = {
-    chromium = {
+    programs.chromium = {
       enable = true;
       package = pkgs.google-chrome;
     };
 
-    obs-studio = {
+    services.easyeffects.enable = true;
+  })
+
+  # Max-tier exceptions per Li 2026-04-25: obs-studio + gimp/krita/
+  # calibre/inkscape (when isMultimediaDev) live at atLeastMax only.
+  (mkIf size.atLeastMax {
+    home.packages = optionals isMultimediaDev maxMultimediaPackages;
+
+    programs.obs-studio = {
       enable = true;
       package = pkgs.obs-studio;
       plugins = with pkgs.obs-studio-plugins; [
@@ -65,12 +75,5 @@ lib.mkIf size.atLeastMax {
         waveform
       ];
     };
-
-  };
-
-  services = {
-    easyeffects = {
-      enable = true;
-    };
-  };
-}
+  })
+]

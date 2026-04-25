@@ -65,12 +65,12 @@ let
   vimlPloginz =
     minVimLPloginz
     ++ (optionals size.atLeastMed medVimlPlogins)
-    ++ (optionals size.atLeastMax maxVimlPlogins);
+    ++ (optionals size.atLeastLarge maxVimlPlogins);
 
   luaPloginz =
     minLuaPloginz
     ++ (optionals size.atLeastMed medLuaPloginz)
-    ++ (optionals size.atLeastMax maxLuaPloginz);
+    ++ (optionals size.atLeastLarge maxLuaPloginz);
 
   minLuaPloginz = with aolPloginz; [
     plenary-nvim
@@ -193,8 +193,10 @@ let
     };
   };
 
+  # All LSPs gated atLeastMax per Li 2026-04-25 — rust-analyzer alone
+  # is ~600MB; opt-in via Max-tier user only.
   langServers =
-    (optionalAttrs size.atLeastMed medLangServers) // (optionalAttrs size.atLeastMax maxLangServers);
+    (optionalAttrs size.atLeastMax medLangServers) // (optionalAttrs size.atLeastMax maxLangServers);
 
   medKod =
     ''
@@ -292,7 +294,7 @@ let
     + themeKod
     + (readFile ./expressline.lua)
     + (optionalString size.atLeastMed (
-      medLuaKod + optionalString size.atLeastMax maxLuaKod
+      medLuaKod + optionalString size.atLeastLarge maxLuaKod
     ));
 
   luaVimrc = writeText "vimrc.lua" initLuaKod;
@@ -321,7 +323,7 @@ in
     packages =
       minPackages
       ++ (optionals size.atLeastMed (
-        medPackages ++ (optionals size.atLeastMax maxPackages)
+        medPackages ++ (optionals size.atLeastLarge maxPackages)
       ));
 
     sessionVariables = {

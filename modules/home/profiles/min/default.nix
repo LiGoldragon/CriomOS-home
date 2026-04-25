@@ -113,7 +113,6 @@ let
     libva-utils
     ffmpeg-full
     # start("GTK")
-    appflowy
     gitg
     pwvucontrol # Pipewire audio GTK UI
     sonata
