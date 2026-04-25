@@ -595,13 +595,13 @@ mkIf size.atLeastMin {
       };
 
       initContent =
-        builtins.readFile ../nonNix/zshrc
+        builtins.readFile ../../nonNix/zshrc
         + ''
           if [[ $options[zle] = on ]]; then
           . ${pkgs.zsh-fzf-tab}/share/fzf-tab/fzf-tab.zsh
           fi
         ''
-        + (optionalString useColemak (builtins.readFile ../nonNix/colemak.zsh));
+        + (optionalString useColemak (builtins.readFile ../../nonNix/colemak.zsh));
     };
 
     wofi = {
