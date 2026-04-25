@@ -49,14 +49,17 @@
       #     inputs, not whatever the consumer passed via extraSpecialArgs.
       # This is the architecture fix for the home-tcj wire-up — see
       # /home/li/git/CriomOS/reports/0019.
-      homeModules.default = { ... }: {
+      homeModules.default = { lib, ... }: {
         imports = [
           coreModule
           inputs.stylix.homeModules.stylix
           inputs.niri-flake.homeModules.config
           inputs.noctalia.homeModules.default
         ];
-        _module.args.inputs = inputs;
+        # mkForce because the consumer (e.g. CriomOS userHomes.nix)
+        # also passes its own `inputs` via extraSpecialArgs, which
+        # would otherwise win the priority race.
+        _module.args.inputs = lib.mkForce inputs;
       };
     };
 }
