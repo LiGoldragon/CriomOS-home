@@ -33,31 +33,19 @@ let
 
   homeDir = config.home.homeDirectory;
 
-  # Unified LLM config — single source of truth
-  largeAIConfigPath = ../../../data/config/largeAI/llm.json;
-  largeAIConfig = builtins.fromJSON (builtins.readFile largeAIConfigPath);
+  # LLM client config — STUBBED 2026-04-25.
+  # Was reading ../../../data/config/largeAI/llm.json (which lives in
+  # CriomOS, not CriomOS-home) and using legacy schema names
+  # (typeIs.largeAI / behavesAs.largeAI — current is largeAi). The
+  # whole client-side largeAI discovery should move to a horizon-
+  # derived field (e.g. horizon.cluster.largeAiEndpoint) so home
+  # modules consume from horizon, not from a sibling repo's data dir.
+  # For now: degrade gracefully — pi-mentci agent.enable becomes false.
+  largeAIConfig = { models = [{}]; serverPort = 0; };
   largeAIModels = largeAIConfig.models;
-
-  # Discover the largeAI node from the cluster topology
-  largeAINodeEntry =
-    let
-      matches = lib.filterAttrs
-        (_: n: (n.typeIs.largeAI or false) || (n.typeIs."largeAI-router" or false))
-        horizon.exNodes;
-    in
-    if matches != {} then builtins.head (builtins.attrValues matches) else null;
-
-  largeAINodeName =
-    if node.behavesAs.largeAI then node.name
-    else if largeAINodeEntry != null then largeAINodeEntry.name
-    else null;
-
-  largeAIHost =
-    if node.behavesAs.largeAI then "127.0.0.1"
-    else if largeAINodeEntry != null then largeAINodeEntry.criomeDomainName
-    else null;
-
-  hasLargeAI = largeAIHost != null;
+  largeAINodeName = null;
+  largeAIHost = null;
+  hasLargeAI = false;
 
   terminalFontFamily = if size.atLeastMed then "IosevkaTerm Nerd Font" else "DejaVu Sans Mono";
 
@@ -380,7 +368,6 @@ let
   '';
 
 in
-assert builtins.length largeAIModels > 0;
 mkIf size.atLeastMin {
   fonts.fontconfig = {
     enable = true;
