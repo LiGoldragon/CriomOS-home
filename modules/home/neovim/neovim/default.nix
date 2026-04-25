@@ -98,7 +98,7 @@ let
     formatter-nvim
   ];
 
-  maxLuaPloginz = with vimPlugins; [
+  maxLuaPloginz = with aolPloginz; [
     lspsaga-nvim
   ];
 

@@ -42,15 +42,18 @@ let
   # modules consume from horizon, not from a sibling repo's data dir.
   # For now: degrade gracefully — pi-mentci agent.enable becomes false.
   largeAIConfig = { models = [{}]; serverPort = 0; };
-  largeAIModels = largeAIConfig.models;
   largeAINodeName = null;
   largeAIHost = null;
   hasLargeAI = false;
 
   terminalFontFamily = if size.atLeastMed then "IosevkaTerm Nerd Font" else "DejaVu Sans Mono";
 
-  # Todo(Those data files should be in a top arg called data)
-  colemakZedKeys = criomos-lib.importJSON ./../../../data/ZedKeymaps/goldragon-colemak.json;
+  # Was reading ./../../../data/ZedKeymaps/goldragon-colemak.json
+  # (resolved out of CriomOS-home; the file doesn't exist anywhere
+  # since the colemak Zed keymap was never moved across the split).
+  # Stubbed to empty per Li 2026-04-25 home-tcj wire-up; revisit if
+  # someone actually wants Zed colemak support.
+  colemakZedKeys = { };
 
   fzfColemakBinds = import ./fzfColemak.nix;
 
