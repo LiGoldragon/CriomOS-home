@@ -18,14 +18,27 @@
 { config, lib, horizon ? null, user ? null, inputs ? null, ... }:
 {
   imports = [
-    ./base.nix
-    ./profiles/min
-    ./profiles/med
-    ./profiles/max
-    ./neovim/neovim
-    ./vscodium/vscodium
-    # ./emacs/emacs — TODO: blocked on pkdjz.mkEmacs (emacs-plb bead).
-    #                When CriomOS-emacs lands, add this.
+    # The natural list — base + profiles + editors:
+    #   ./base.nix
+    #   ./profiles/min
+    #   ./profiles/med
+    #   ./profiles/max
+    #   ./neovim/neovim
+    #   ./vscodium/vscodium
+    #   ./emacs/emacs (blocked on pkdjz.mkEmacs — emacs-plb bead)
+    #
+    # Currently DISABLED. Wire-up attempt 2026-04-25 surfaced an
+    # architecture issue: every home module reads `inputs.<X>` for
+    # inputs that are declared in CriomOS-home's own flake (stylix,
+    # niri-flake, noctalia, pi-mentci, mentci-tools), but consumers
+    # like CriomOS userHomes.nix pass their OWN `inputs` via
+    # extraSpecialArgs. CriomOS-home's flake inputs are not visible
+    # to its own home modules through that channel.
+    #
+    # Proper fix: have CriomOS-home's homeModules.default inject its
+    # own inputs (and import the upstream homeModules for stylix /
+    # noctalia / pi-mentci that those refs depend on). Tracked as a
+    # follow-up to home-tcj. See reports/0019 for the full audit.
   ]
   # Compositor home module from niri-flake — pulled in only when the
   # consumer actually has niri-flake in its flake inputs (it's the
