@@ -145,6 +145,21 @@
         "type": "github"
       }
     },
+    "criomos-lib": {
+      "locked": {
+        "lastModified": 1777127525,
+        "narHash": "sha256-XIzbj3o66yZFxPDyUUa8OvolDv0wIWCgbh2wy711i7Y=",
+        "owner": "LiGoldragon",
+        "repo": "CriomOS-lib",
+        "rev": "68cd54456432ac0220252c4a073259b6db859b08",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LiGoldragon",
+        "repo": "CriomOS-lib",
+        "type": "github"
+      }
+    },
     "fenix": {
       "inputs": {
         "nixpkgs": [
@@ -497,6 +512,7 @@
     "root": {
       "inputs": {
         "blueprint": "blueprint",
+        "criomos-lib": "criomos-lib",
         "home-manager": "home-manager",
         "mentci-tools": "mentci-tools",
         "niri-flake": "niri-flake",

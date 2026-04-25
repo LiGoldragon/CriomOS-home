@@ -29,7 +29,6 @@
     ./profiles/max
     ./neovim/neovim
     ./vscodium/vscodium
-    # ./emacs/emacs — blocked on pkdjz.mkEmacs (emacs-plb bead).
   ];
 
   config = { };

@@ -28,6 +28,9 @@
     mentci-tools.url = "github:LiGoldragon/mentci-tools";
     mentci-tools.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Shared helpers (importJSON, mkJsonMerge) cross-consumed with CriomOS.
+    criomos-lib.url = "github:LiGoldragon/CriomOS-lib";
+
     # Emacs — replaces legacy pkdjz/mkEmacs. Planned split.
     #   criomos-emacs.url = "github:LiGoldragon/CriomOS-emacs";
     #   criomos-emacs.inputs.nixpkgs.follows = "nixpkgs";
@@ -60,6 +63,7 @@
         # also passes its own `inputs` via extraSpecialArgs, which
         # would otherwise win the priority race.
         _module.args.inputs = lib.mkForce inputs;
+        _module.args.criomos-lib = lib.mkForce inputs.criomos-lib.lib;
       };
     };
 }
