@@ -687,22 +687,16 @@ mkIf size.atLeastMin {
       };
   };
 
-  # programs.pi-mentci option only exists when pi-mentci's homeModule
-  # is imported (which itself requires inputs.pi-mentci). Defensive
-  # gate — same architecture issue as the rest of the broken-input
-  # cleanup. Note this is OUTSIDE `programs = { ... }` (which is
-  # defined at line 441) — using mkIf as a top-level attr value with
-  # the field path baked in to avoid the duplicate `programs` key.
-  programs.pi-mentci = lib.mkIf (inputs ? pi-mentci) {
-    enable = piMentci != null;
-    package = piMentci;
-
-    agent = {
-      enable = hasLargeAI;
-      settings = piAgent.settings;
-      models = piAgent.models;
-    };
-  };
+  # programs.pi-mentci block dropped 2026-04-25:
+  # - The option is provided by pi-mentci's homeModule, which would
+  #   need to be in `imports` of this module's parent.
+  # - pi-mentci is a CriomOS-home flake input, but consumers (CriomOS
+  #   userHomes.nix) pass their own `inputs` via extraSpecialArgs and
+  #   don't propagate CriomOS-home's. So `inputs.pi-mentci` is absent.
+  # - mkIf (inputs ? pi-mentci) doesn't help — module system validates
+  #   option paths exist even when mkIf is false.
+  # Restore once the architecture issue is fixed (CriomOS-home should
+  # inject its own inputs at flake level, not rely on consumers).
 
   systemd = {
     user.services = {
