@@ -14,12 +14,6 @@ let
   inherit (user) useColemak size;
   inherit (pkgs) mksh;
 
-  tokenaizdWrangler = pkgs.writeScriptBin "wrangler" ''
-    #!${mksh}/bin/mksh
-    export CLOUDFLARE_API_TOKEN=''${CLOUDFLARE_API_TOKEN:-''$(${pkgs.gopass}/bin/gopass show -o cloudflare.com/token)}
-    exec "${pkgs.nodePackages_latest.wrangler}/bin/wrangler" "$@"
-  '';
-
   tokenizedHub = pkgs.writeScriptBin "hub" ''
     #!${mksh}/bin/mksh
     export GITHUB_TOKEN=''${GITHUB_TOKEN:-''$(${pkgs.gopass}/bin/gopass show -o github.com/token)}
@@ -65,8 +59,6 @@ let
       sdcv # cli dictionary
       jq
       djvulibre
-      # NodeJS
-      # tokenaizdWrangler
       #== go
       ghq
       elvish
@@ -81,12 +73,7 @@ let
       tree-sitter
       # Manuals
       unbound.man
-    ]
-    ++ (with nodePackages; [
-      stylelint
-      postcss
-      prettier
-    ]);
+    ];
 
   graphicalPackages = with pkgs; [
     ledger-live-desktop
