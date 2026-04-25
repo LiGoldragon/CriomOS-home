@@ -220,8 +220,8 @@ in
     home = {
       username = user.name;
       homeDirectory = "/home/" + user.name;
-      # TODO
-      stateVersion = "25.05";
+      # stateVersion comes from the consumer (CriomOS userHomes.nix sets
+      # it to 26.05); base.nix used to hardcode 25.05 which conflicted.
       packages = [
         (pkgs.writeShellScriptBin "theme-dark" ''${pkgs.darkman}/bin/darkman set dark'')
         (pkgs.writeShellScriptBin "theme-light" ''${pkgs.darkman}/bin/darkman set light'')
