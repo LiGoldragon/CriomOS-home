@@ -27,13 +27,36 @@
     # Mentci workspace.
     mentci-tools.url = "github:LiGoldragon/mentci-tools";
     mentci-tools.inputs.nixpkgs.follows = "nixpkgs";
-    pi-mentci.url = "github:LiGoldragon/pi-mentci";
-    pi-mentci.inputs.nixpkgs.follows = "nixpkgs";
 
     # Emacs — replaces legacy pkdjz/mkEmacs. Planned split.
     #   criomos-emacs.url = "github:LiGoldragon/CriomOS-emacs";
     #   criomos-emacs.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = inputs: inputs.blueprint { inherit inputs; };
+  outputs =
+    inputs:
+    let
+      bp = inputs.blueprint { inherit inputs; };
+      coreModule = bp.homeModules.default;
+    in
+    bp
+    // {
+      # Wrap blueprint's auto-discovered homeModules.default so that:
+      # (1) upstream homeModules from CriomOS-home's own flake inputs
+      #     (stylix, niri-flake, noctalia) are imported, exposing their
+      #     option paths to the modules that consume them;
+      # (2) the `inputs` arg seen inside our home modules is OUR flake's
+      #     inputs, not whatever the consumer passed via extraSpecialArgs.
+      # This is the architecture fix for the home-tcj wire-up — see
+      # /home/li/git/CriomOS/reports/0019.
+      homeModules.default = { ... }: {
+        imports = [
+          coreModule
+          inputs.stylix.homeModules.stylix
+          inputs.niri-flake.homeModules.config
+          inputs.noctalia.homeModules.default
+        ];
+        _module.args.inputs = inputs;
+      };
+    };
 }

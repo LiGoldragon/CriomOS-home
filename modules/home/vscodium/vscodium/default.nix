@@ -36,11 +36,7 @@ let
 
   ovsx = inputs.nix-vscode-extensions.extensions.${system}.open-vsx;
 
-  # vscode-aski extension + askiWasm helper depended on `inputs.aski`
-  # and `inputs.vscode-aski` — neither declared in CriomOS-home flake.
-  # Stale leftover from a previous design where aski lived as its own
-  # input. Dropped here; revive when there's a real aski crate to
-  # integrate.
+  # All aski-related code dropped per Li 2026-04-25.
 
   nixSettings = {
     # Theme — stylix generates base16 theme, darkman switches via portal
@@ -97,7 +93,6 @@ lib.mkIf size.atLeastMed {
         ovsx.google.geminicodeassist
         ovsx.openai.chatgpt
         ovsx.cdervis.vscode-pi
-        # vscode-aski — dropped, see above
         pkgs.vscode-extensions.mkhl.direnv
         pkgs.vscode-extensions.jnoortheen.nix-ide
       ];

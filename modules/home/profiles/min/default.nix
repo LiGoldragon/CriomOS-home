@@ -33,19 +33,6 @@ let
 
   homeDir = config.home.homeDirectory;
 
-  # LLM client config — STUBBED 2026-04-25.
-  # Was reading ../../../data/config/largeAI/llm.json (which lives in
-  # CriomOS, not CriomOS-home) and using legacy schema names
-  # (typeIs.largeAI / behavesAs.largeAI — current is largeAi). The
-  # whole client-side largeAI discovery should move to a horizon-
-  # derived field (e.g. horizon.cluster.largeAiEndpoint) so home
-  # modules consume from horizon, not from a sibling repo's data dir.
-  # For now: degrade gracefully — pi-mentci agent.enable becomes false.
-  largeAIConfig = { models = [{}]; serverPort = 0; };
-  largeAINodeName = null;
-  largeAIHost = null;
-  hasLargeAI = false;
-
   terminalFontFamily = if size.atLeastMed then "IosevkaTerm Nerd Font" else "DejaVu Sans Mono";
 
   # Was reading ./../../../data/ZedKeymaps/goldragon-colemak.json
@@ -190,30 +177,8 @@ let
 
   unixDeveloperPackages = unixUtilities ++ programmingTools;
 
-  # pi-mentci is a CriomOS-home flake input but consumers (CriomOS
-  # userHomes.nix) pass their own `inputs` via extraSpecialArgs, which
-  # don't include CriomOS-home's inputs. Defensive gate until that
-  # architecture is fixed (see CriomOS-home/modules/home/default.nix).
-  piMentci =
-    if inputs ? pi-mentci
-    then inputs.pi-mentci.packages.${pkgs.stdenv.hostPlatform.system}.default or null
-    else null;
-  piAgent =
-    if inputs ? pi-mentci
-    then inputs.pi-mentci.lib.agent.fromLargeAI {
-      inherit largeAIConfig;
-      gatewayProvider = if largeAINodeName != null then largeAINodeName else "local";
-      gatewayBaseUrl =
-        if hasLargeAI
-        then "http://${largeAIHost}:${toString largeAIConfig.serverPort}/v1"
-        else null;
-    }
-    else { settings = { }; models = [ ]; };
-
-  # codex-cli was referenced as inputs.codex-cli but is NOT declared
-  # in CriomOS-home/flake.nix anywhere — stale leftover. Dropped from
-  # AIPackages (also dropping gemini-cli, opencode, llama-cpp per the
-  # bloat-audit suggestion to require explicit per-user opt-in).
+  # pi-mentci dropped per Li 2026-04-25.
+  # AI CLIs (codex-cli, gemini-cli, opencode, llama-cpp) also dropped.
   AIPackages = [ ];
 
   nixpkgsPackages =
@@ -687,16 +652,8 @@ mkIf size.atLeastMin {
       };
   };
 
-  # programs.pi-mentci block dropped 2026-04-25:
-  # - The option is provided by pi-mentci's homeModule, which would
-  #   need to be in `imports` of this module's parent.
-  # - pi-mentci is a CriomOS-home flake input, but consumers (CriomOS
-  #   userHomes.nix) pass their own `inputs` via extraSpecialArgs and
-  #   don't propagate CriomOS-home's. So `inputs.pi-mentci` is absent.
-  # - mkIf (inputs ? pi-mentci) doesn't help — module system validates
-  #   option paths exist even when mkIf is false.
-  # Restore once the architecture issue is fixed (CriomOS-home should
-  # inject its own inputs at flake level, not rely on consumers).
+  # programs.pi-mentci block dropped 2026-04-25 — pi-mentci itself
+  # dropped from CriomOS-home flake.nix inputs.
 
   systemd = {
     user.services = {
@@ -777,16 +734,6 @@ mkIf size.atLeastMin {
       expand_wildcards = true
     '';
 
-    dataFile."mime/packages/aski.xml".text = ''
-      <?xml version="1.0" encoding="UTF-8"?>
-      <mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
-        <mime-type type="text/x-aski">
-          <comment>Aski source</comment>
-          <glob pattern="*.aski"/>
-        </mime-type>
-      </mime-info>
-    '';
-
     mimeApps = {
       enable = true;
       defaultApplications =
@@ -796,7 +743,6 @@ mkIf size.atLeastMin {
           defaultAudioPlayer = "mpv.desktop";
         in
         {
-          "text/x-aski" = "emacs.desktop";
           "audio/x-m4b" = defaultAudioPlayer;
           "application/zip" = "org.gnome.FileRoller.desktop";
 
