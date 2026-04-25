@@ -18,10 +18,19 @@
 { config, lib, horizon ? null, user ? null, inputs ? null, ... }:
 {
   imports = [
-    # Compositor home module from niri-flake — pulled in only when the
-    # consumer actually has niri-flake in its flake inputs (it's the
-    # consumer's choice whether to depend on niri). Skip otherwise.
-  ] ++ lib.optional (inputs != null && inputs ? niri-flake) inputs.niri-flake.homeModules.config;
+    ./base.nix
+    ./profiles/min
+    ./profiles/med
+    ./profiles/max
+    ./neovim/neovim
+    ./vscodium/vscodium
+    # ./emacs/emacs — TODO: blocked on pkdjz.mkEmacs (emacs-plb bead).
+    #                When CriomOS-emacs lands, add this.
+  ]
+  # Compositor home module from niri-flake — pulled in only when the
+  # consumer actually has niri-flake in its flake inputs (it's the
+  # consumer's choice whether to depend on niri). Skip otherwise.
+  ++ lib.optional (inputs != null && inputs ? niri-flake) inputs.niri-flake.homeModules.config;
 
   config = { };
 }
