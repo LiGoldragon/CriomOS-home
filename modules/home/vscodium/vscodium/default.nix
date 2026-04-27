@@ -90,6 +90,7 @@ lib.mkIf size.atLeastMed {
     profiles.default = {
       extensions = [
         visualjj
+        ovsx.anthropic.claude-code
         ovsx.google.geminicodeassist
         ovsx.openai.chatgpt
         ovsx.cdervis.vscode-pi
