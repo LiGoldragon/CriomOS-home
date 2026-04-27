@@ -10,8 +10,6 @@ let
   inherit (user) size;
   inherit (criomos-lib) mkJsonMerge;
 
-  system = pkgs.stdenv.hostPlatform.system;
-
   # `pkgs.open-vsx` comes from CriomOS-pkgs's overlay-applied
   # nix-vscode-extensions overlay — built in our pkgs context where
   # config.allowUnfree = true, so unfree extensions like
