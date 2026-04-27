@@ -24,6 +24,21 @@
     nix-vscode-extensions.url = "github:nix-community/nix-vscode-extensions";
     nix-vscode-extensions.inputs.nixpkgs.follows = "nixpkgs";
 
+    # visualjj VSIX — fetched as a versioned flake input so the lock-
+    # file hash (auto-resolved by nix flake update) replaces a manual
+    # sha256. The nix-vscode-extensions flake's visualjj has a
+    # nixpkgs-side meta.license = unfree gate that fires inside
+    # home-manager's extension evaluation even when allowUnfree is set,
+    # so we keep using `buildVscodeMarketplaceExtension` and source the
+    # VSIX from this input. Bump the version in the URL when upstream
+    # ships a new release; `nix flake update visualjj-vsix` then picks
+    # up the new content hash without any code edit.
+    visualjj-vsix = {
+      type = "file";
+      url = "https://open-vsx.org/api/visualjj/visualjj/linux-x64/0.28.1/file/visualjj.visualjj-0.28.1@linux-x64.vsix";
+      flake = false;
+    };
+
     # Mentci workspace.
     mentci-tools.url = "github:LiGoldragon/mentci-tools";
     mentci-tools.inputs.nixpkgs.follows = "nixpkgs";

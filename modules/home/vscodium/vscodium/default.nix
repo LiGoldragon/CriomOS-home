@@ -14,21 +14,21 @@ let
 
   ovsx = inputs.nix-vscode-extensions.extensions.${system}.open-vsx;
 
-  # Patch the bundled native `jj` binary's interpreter so it runs on
-  # NixOS. The flake-input variant ships the linux-x64 VSIX as-is, with
-  # the binary linked against `/lib64/ld-linux-x86-64.so.2` which doesn't
-  # exist on a NixOS system. Override the upstream derivation's
-  # postInstall instead of refetching the VSIX manually — keeps the
-  # extension version tracked by the flake-lock daily auto-update.
-  #
-  # Also relax the upstream's `meta.license = unfree` to a redistributable
-  # marker so home-manager's extensions-immutable evaluation accepts it
-  # when our consumer pkgs has allowUnfree = true. The license override is
-  # purely meta — doesn't change the binary, just lets nix's unfree gate
-  # let it through. Without this the flake-input variant fails with
-  # 'Refusing to evaluate package ... has an unfree license'.
-  visualjj = ovsx.visualjj.visualjj.overrideAttrs (old: {
-    postInstall = (old.postInstall or "") + ''
+  # visualjj — VSIX comes from `inputs.visualjj-vsix` (a `type = file`
+  # flake input pinned to a versioned open-vsx URL), buildVscodeMarketplaceExtension
+  # wraps it. Avoids both manual sha256 maintenance AND the
+  # nix-vscode-extensions unfree-license gate that fires inside
+  # home-manager's extension evaluation even with allowUnfree set.
+  # `postInstall` patchelf step targets the bundled native jj binary
+  # which ships linked against `/lib64/ld-linux-x86-64.so.2`.
+  visualjj = pkgs.vscode-utils.buildVscodeMarketplaceExtension {
+    mktplcRef = {
+      name = "visualjj";
+      publisher = "visualjj";
+      version = "0.28.1";
+    };
+    vsix = inputs.visualjj-vsix;
+    postInstall = ''
       jj=$out/share/vscode/extensions/visualjj.visualjj/dist/bin/jj
       if [ -f "$jj" ]; then
         ${pkgs.patchelf}/bin/patchelf \
@@ -37,15 +37,7 @@ let
           "$jj"
       fi
     '';
-    # nixpkgs' unfree gate checks `meta.license.free` (not the ambient
-    # `allowUnfree` config) per-package. `unfreeRedistributable` still
-    # has `free = false`, so the gate fires regardless. Override the
-    # specific bit instead — just sets the gate to pass without
-    # mis-stating the actual license.
-    meta = (old.meta or {}) // {
-      license = (old.meta.license or {}) // { free = true; };
-    };
-  });
+  };
 
   # All aski-related code dropped per Li 2026-04-25.
 
