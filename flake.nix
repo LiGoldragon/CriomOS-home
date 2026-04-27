@@ -31,6 +31,13 @@
     # Shared helpers (importJSON, mkJsonMerge) cross-consumed with CriomOS.
     criomos-lib.url = "github:LiGoldragon/CriomOS-lib";
 
+    # AI coding agents (daily auto-updates) — Li uses claude-code +
+    # codex 12h/day, regression dropped them in the 2026-04-25 trim.
+    llm-agents.url = "github:numtide/llm-agents.nix";
+    llm-agents.inputs.nixpkgs.follows = "nixpkgs";
+    codex-cli.url = "github:sadjow/codex-cli-nix";
+    codex-cli.inputs.nixpkgs.follows = "nixpkgs";
+
     # Emacs — replaces legacy pkdjz/mkEmacs. Planned split.
     #   criomos-emacs.url = "github:LiGoldragon/CriomOS-emacs";
     #   criomos-emacs.inputs.nixpkgs.follows = "nixpkgs";
