@@ -10,6 +10,15 @@ let
   inherit (user) size;
   inherit (criomos-lib) mkJsonMerge;
 
+  # Flake inputs of `type = "file"` always materialize as a store path
+  # named `source` (no extension). nixpkgs' `unpack-vsix-setup-hook`
+  # dispatches on the file extension though — `.vsix` triggers unzip.
+  # Wrap each VSIX-input in a tiny rename derivation so the hook
+  # recognizes it.
+  vsixFromInput = name: input: pkgs.runCommand name { } ''
+    cp ${input} $out
+  '';
+
   # `pkgs.open-vsx` comes from CriomOS-pkgs's overlay-applied
   # nix-vscode-extensions overlay — built in our pkgs context where
   # config.allowUnfree = true, so unfree extensions like
@@ -32,7 +41,7 @@ let
       publisher = "visualjj";
       version = "0.28.1";
     };
-    vsix = inputs.visualjj-vsix;
+    vsix = vsixFromInput "visualjj-0.28.1.vsix" inputs.visualjj-vsix;
     postInstall = ''
       jj=$out/share/vscode/extensions/visualjj.visualjj/dist/bin/jj
       if [ -f "$jj" ]; then
@@ -53,7 +62,7 @@ let
       publisher = "anthropic";
       version = "2.1.120";
     };
-    vsix = inputs.claude-code-vsix;
+    vsix = vsixFromInput "claude-code-2.1.120.vsix" inputs.claude-code-vsix;
   };
 
   # All aski-related code dropped per Li 2026-04-25.
