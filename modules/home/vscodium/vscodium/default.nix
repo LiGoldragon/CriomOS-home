@@ -12,18 +12,16 @@ let
 
   system = pkgs.stdenv.hostPlatform.system;
 
-  visualjj = pkgs.vscode-utils.buildVscodeMarketplaceExtension {
-    mktplcRef = {
-      name = "visualjj";
-      publisher = "visualjj";
-      version = "0.27.0";
-    };
-    vsix = pkgs.fetchurl {
-      name = "visualjj-0.27.0-linux-x64.vsix";
-      url = "https://open-vsx.org/api/visualjj/visualjj/linux-x64/0.27.0/file/visualjj.visualjj-0.27.0@linux-x64.vsix";
-      hash = "sha256-4w/A3C9WWfKbZF3LnaLR9aZ78hvU+lrEXS8nnMbgzeA=";
-    };
-    postInstall = ''
+  ovsx = inputs.nix-vscode-extensions.extensions.${system}.open-vsx;
+
+  # Patch the bundled native `jj` binary's interpreter so it runs on
+  # NixOS. The flake-input variant ships the linux-x64 VSIX as-is, with
+  # the binary linked against `/lib64/ld-linux-x86-64.so.2` which doesn't
+  # exist on a NixOS system. Override the upstream derivation's
+  # postInstall instead of refetching the VSIX manually — keeps the
+  # extension version tracked by the flake-lock daily auto-update.
+  visualjj = ovsx.visualjj.visualjj.overrideAttrs (old: {
+    postInstall = (old.postInstall or "") + ''
       jj=$out/share/vscode/extensions/visualjj.visualjj/dist/bin/jj
       if [ -f "$jj" ]; then
         ${pkgs.patchelf}/bin/patchelf \
@@ -32,9 +30,7 @@ let
           "$jj"
       fi
     '';
-  };
-
-  ovsx = inputs.nix-vscode-extensions.extensions.${system}.open-vsx;
+  });
 
   # All aski-related code dropped per Li 2026-04-25.
 
