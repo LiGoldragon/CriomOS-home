@@ -20,6 +20,13 @@ let
   # exist on a NixOS system. Override the upstream derivation's
   # postInstall instead of refetching the VSIX manually — keeps the
   # extension version tracked by the flake-lock daily auto-update.
+  #
+  # Also relax the upstream's `meta.license = unfree` to a redistributable
+  # marker so home-manager's extensions-immutable evaluation accepts it
+  # when our consumer pkgs has allowUnfree = true. The license override is
+  # purely meta — doesn't change the binary, just lets nix's unfree gate
+  # let it through. Without this the flake-input variant fails with
+  # 'Refusing to evaluate package ... has an unfree license'.
   visualjj = ovsx.visualjj.visualjj.overrideAttrs (old: {
     postInstall = (old.postInstall or "") + ''
       jj=$out/share/vscode/extensions/visualjj.visualjj/dist/bin/jj
@@ -30,6 +37,9 @@ let
           "$jj"
       fi
     '';
+    meta = (old.meta or {}) // {
+      license = lib.licenses.unfreeRedistributable;
+    };
   });
 
   # All aski-related code dropped per Li 2026-04-25.
