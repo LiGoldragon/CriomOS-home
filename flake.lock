@@ -190,6 +190,18 @@
         "type": "github"
       }
     },
+    "claude-code-vsix": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-sJEsDsFwS9omFqmtXQduTOuvQsscYUgQ6s3zNr6kWaY=",
+        "type": "file",
+        "url": "https://open-vsx.org/api/anthropic/claude-code/linux-x64/2.1.120/file/anthropic.claude-code-2.1.120@linux-x64.vsix"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://open-vsx.org/api/anthropic/claude-code/linux-x64/2.1.120/file/anthropic.claude-code-2.1.120@linux-x64.vsix"
+      }
+    },
     "codex-cli": {
       "inputs": {
         "flake-utils": "flake-utils",
@@ -532,26 +544,6 @@
         "type": "github"
       }
     },
-    "nix-vscode-extensions": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1777086133,
-        "narHash": "sha256-tsVUcRrip2UQrTWvFzyhq10fVH3DswSXsWEyji6ErWA=",
-        "owner": "nix-community",
-        "repo": "nix-vscode-extensions",
-        "rev": "261bbbfd0be8768a33e5c4a95d77e29b5a7898b4",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nix-community",
-        "repo": "nix-vscode-extensions",
-        "type": "github"
-      }
-    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1775305101,
@@ -672,13 +664,13 @@
     "root": {
       "inputs": {
         "blueprint": "blueprint",
+        "claude-code-vsix": "claude-code-vsix",
         "codex-cli": "codex-cli",
         "criomos-lib": "criomos-lib",
         "home-manager": "home-manager",
         "llm-agents": "llm-agents",
         "mentci-tools": "mentci-tools",
         "niri-flake": "niri-flake",
-        "nix-vscode-extensions": "nix-vscode-extensions",
         "nixpkgs": "nixpkgs_2",
         "noctalia": "noctalia",
         "stylix": "stylix",

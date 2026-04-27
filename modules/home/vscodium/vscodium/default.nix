@@ -46,6 +46,18 @@ let
     '';
   };
 
+  # Same flake-input-as-VSIX pattern as visualjj — nix-vscode-extensions
+  # provides claude-code but its meta.license = unfree trips a check
+  # that allowUnfree=true at every level couldn't bypass.
+  claude-code-codium = pkgs.vscode-utils.buildVscodeMarketplaceExtension {
+    mktplcRef = {
+      name = "claude-code";
+      publisher = "anthropic";
+      version = "2.1.120";
+    };
+    vsix = inputs.claude-code-vsix;
+  };
+
   # All aski-related code dropped per Li 2026-04-25.
 
   nixSettings = {
@@ -100,7 +112,7 @@ lib.mkIf size.atLeastMed {
     profiles.default = {
       extensions = [
         visualjj
-        ovsx.anthropic.claude-code
+        claude-code-codium
         ovsx.google.geminicodeassist
         ovsx.openai.chatgpt
         ovsx.cdervis.vscode-pi

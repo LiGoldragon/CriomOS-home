@@ -42,6 +42,21 @@
       flake = false;
     };
 
+    # claude-code VSIX — same `type = file` pattern as visualjj. Both
+    # nix-vscode-extensions and the nixpkgs-side definition tag claude-
+    # code as `meta.license = unfree`, which trips home-manager's
+    # vscode-extensions evaluation regardless of allowUnfree being
+    # set at every layer we tried (CriomOS-pkgs's pkgs.config, the
+    # overlay-extended pkgs, even nixpkgs.config.allowUnfree at the
+    # nixos level via mkOverride 0). Bypassing the catalogue + using
+    # buildVscodeMarketplaceExtension on the raw VSIX sidesteps the
+    # gate entirely.
+    claude-code-vsix = {
+      type = "file";
+      url = "https://open-vsx.org/api/anthropic/claude-code/linux-x64/2.1.120/file/anthropic.claude-code-2.1.120@linux-x64.vsix";
+      flake = false;
+    };
+
     # Mentci workspace.
     mentci-tools.url = "github:LiGoldragon/mentci-tools";
     mentci-tools.inputs.nixpkgs.follows = "nixpkgs";
