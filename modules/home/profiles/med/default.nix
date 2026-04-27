@@ -118,9 +118,6 @@ lib.mkIf size.atLeastMed {
         lazygit
         #== rust
         spotify-player
-        # inputs.mentci.packages.${system}.mentci-codium — `inputs.mentci`
-        # not declared in CriomOS-home flake; stale ref. Drop until the
-        # mentci-tools flake actually exposes a mentci-codium attr.
       ]
       ++ graphicalPackages
       ++ codingPackages ++ lispDevPackages;
@@ -155,8 +152,4 @@ lib.mkIf size.atLeastMed {
 
     };
   };
-
-  # mentci-codium desktop entry + .claude.json MCP merge — both depend
-  # on `inputs.mentci` which is not declared in CriomOS-home's flake.
-  # Stale leftover. Drop until mentci-tools exposes the right surface.
 }
