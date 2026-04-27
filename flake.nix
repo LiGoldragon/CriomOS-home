@@ -57,9 +57,14 @@
       flake = false;
     };
 
-    # Mentci workspace.
-    mentci-tools.url = "github:LiGoldragon/mentci-tools";
-    mentci-tools.inputs.nixpkgs.follows = "nixpkgs";
+    # `bd` issue tracker — Go upstream, packaged inline in
+    # modules/home/profiles/med/cli-tools.nix via buildGoModule.
+    # Pinned to a release tag so vendorHash stays stable.
+    beads.url = "github:gastownhall/beads?ref=v1.0.2";
+
+    # `substack` CLI — its own flake, exposes packages.<system>.default.
+    substack-cli.url = "github:LiGoldragon/substack-cli";
+    substack-cli.inputs.nixpkgs.follows = "nixpkgs";
 
     # Shared helpers (importJSON, mkJsonMerge) cross-consumed with CriomOS.
     criomos-lib.url = "github:LiGoldragon/CriomOS-lib";
