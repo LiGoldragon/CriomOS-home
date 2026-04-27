@@ -35,13 +35,6 @@ let
 
   terminalFontFamily = if size.atLeastMed then "IosevkaTerm Nerd Font" else "DejaVu Sans Mono";
 
-  # Was reading ./../../../data/ZedKeymaps/goldragon-colemak.json
-  # (resolved out of CriomOS-home; the file doesn't exist anywhere
-  # since the colemak Zed keymap was never moved across the split).
-  # Stubbed to empty per Li 2026-04-25 home-tcj wire-up; revisit if
-  # someone actually wants Zed colemak support.
-  colemakZedKeys = { };
-
   fzfColemakBinds = import ./fzfColemak.nix;
 
   fzfBinds = (optionals useColemak fzfColemakBinds);
@@ -560,17 +553,6 @@ mkIf size.atLeastMin {
       };
     };
 
-    # TODO broken
-    zed-editor = {
-      enable = true;
-      package = pkgs.zed-editor;
-      extraPackages = with pkgs; [ ];
-      userKeymaps = optionalAttrs useColemak colemakZedKeys;
-      userSettings = {
-          vim_mode = true;
-        };
-      extensions = [ ];
-    };
 
     bottom = {
       enable = true;
