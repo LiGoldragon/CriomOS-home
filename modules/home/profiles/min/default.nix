@@ -669,7 +669,16 @@ mkIf size.atLeastMin {
         Unit = {
           Description = "DBus interface for display temperature, brightness and gamma control";
           PartOf = [ "graphical-session.target" ];
-          After = [ "graphical-session.target" ];
+          # `graphical-session-pre.target` (not `.target`) — otherwise the
+          # nightshift-sync chain (After=wl-gammarelay-rs, WantedBy=
+          # graphical-session.target) creates a 3-node ordering cycle
+          # (graphical-session.target → nightshift-sync → wl-gammarelay-rs
+          # → graphical-session.target via After+WantedBy) that systemd
+          # resolves by deleting nightshift-sync from the boot
+          # transaction, leaving the screen permanently neutral. Archive
+          # incident a415e3e (2026-04-26 zeus). Pre-target fires before
+          # the main target so the dependency walks one direction only.
+          After = [ "graphical-session-pre.target" ];
         };
         Service = {
           ExecStart = "${pkgs.wl-gammarelay-rs}/bin/wl-gammarelay-rs";

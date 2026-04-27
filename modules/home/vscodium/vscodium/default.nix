@@ -80,8 +80,13 @@ let
     "git.autoRepositoryDetection" = true;
     "visualjj.showSourceControlColocated" = true;
 
-    # direnv — auto-reload on .envrc change
-    "direnv.restart.automatic" = true;
+    # direnv — explicitly do NOT auto-restart the extension host on
+    # direnv state changes. Auto-restart kills every in-flight Claude
+    # Code agent in the sidebar/panel when the user crosses a directory
+    # with/without `.envrc`, edits flake.lock, or hits a watch_file
+    # path. Archive incident 2026-04-26: lost two agents to a single jj
+    # commit+push from a mentci-rooted Codium window.
+    "direnv.restart.automatic" = false;
 
     # Nix
     "nix.enableLanguageServer" = true;
