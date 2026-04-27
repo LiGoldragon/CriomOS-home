@@ -12,7 +12,14 @@ let
 
   system = pkgs.stdenv.hostPlatform.system;
 
-  ovsx = inputs.nix-vscode-extensions.extensions.${system}.open-vsx;
+  # `pkgs.open-vsx` comes from CriomOS-pkgs's overlay-applied
+  # nix-vscode-extensions overlay — built in our pkgs context where
+  # config.allowUnfree = true, so unfree extensions like
+  # anthropic.claude-code resolve cleanly. Reading from the flake
+  # input's own outputs (inputs.nix-vscode-extensions.extensions.<system>.open-vsx)
+  # would use their pkgs which has allowUnfree commented out and
+  # rejects the package.
+  ovsx = pkgs.open-vsx;
 
   # visualjj — VSIX comes from `inputs.visualjj-vsix` (a `type = file`
   # flake input pinned to a versioned open-vsx URL), buildVscodeMarketplaceExtension

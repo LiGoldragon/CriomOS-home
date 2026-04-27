@@ -21,8 +21,11 @@
     stylix.inputs.nixpkgs.follows = "nixpkgs";
 
     # Editor — vscodium extensions.
-    nix-vscode-extensions.url = "github:nix-community/nix-vscode-extensions";
-    nix-vscode-extensions.inputs.nixpkgs.follows = "nixpkgs";
+    # Note: the open-vsx + vscode-marketplace catalogues come into
+    # scope via `pkgs.open-vsx` from CriomOS-pkgs (which applies
+    # nix-vscode-extensions's overlay against a pkgs that has
+    # allowUnfree=true). This file consumes `pkgs.open-vsx` directly,
+    # so no nix-vscode-extensions input is needed here.
 
     # visualjj VSIX — fetched as a versioned flake input so the lock-
     # file hash (auto-resolved by nix flake update) replaces a manual
