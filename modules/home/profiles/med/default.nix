@@ -2,6 +2,7 @@
   lib,
   user,
   pkgs,
+  inputs,
   ...
 }:
 let
@@ -13,6 +14,9 @@ let
   inherit (user) githubId;
   inherit (user) useColemak size;
   inherit (pkgs) mksh;
+
+  system = pkgs.stdenv.hostPlatform.system;
+  mentciPackages = inputs.mentci-tools.packages.${system};
 
   tokenizedHub = pkgs.writeScriptBin "hub" ''
     #!${mksh}/bin/mksh
@@ -101,7 +105,7 @@ lib.mkIf size.atLeastMed {
 
   home = {
     packages =
-      with pkgs;
+      (with pkgs;
       [
         # start('bash')
         taskwarrior3
@@ -118,7 +122,12 @@ lib.mkIf size.atLeastMed {
         lazygit
         #== rust
         spotify-player
-      ]
+      ])
+      # Mentci workspace CLIs — beads (issue tracker) and substack
+      # (publishing). Both are exposed by the mentci-tools flake input;
+      # other CLIs in that flake (annas, dolt, linkup) intentionally
+      # not pulled in here.
+      ++ [ mentciPackages.beads mentciPackages.substack ]
       ++ graphicalPackages
       ++ codingPackages ++ lispDevPackages;
 
