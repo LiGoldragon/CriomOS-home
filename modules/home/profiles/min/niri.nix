@@ -181,8 +181,11 @@ in
         # Launch
         "Mod+Shift+Return".action = a.spawn terminal;
         "Mod+O" = { action = a.toggle-overview; repeat = false; };
-        "Mod+D".action = a.spawn "noctalia-shell" "ipc" "call" "launcher" "toggle";
-        "Mod+Space".action = a.spawn "noctalia-shell" "ipc" "call" "launcher" "toggle";
+        # Absolute paths so niri can spawn these at boot regardless of
+        # the user-PATH propagation race that surfaced today on
+        # ouranos's first boot of the new criomos.
+        "Mod+D".action = a.spawn "${pkgs.noctalia-shell}/bin/noctalia-shell" "ipc" "call" "launcher" "toggle";
+        "Mod+Space".action = a.spawn "${pkgs.noctalia-shell}/bin/noctalia-shell" "ipc" "call" "launcher" "toggle";
 
         # Window
         "Mod+Q".action = a.close-window;
