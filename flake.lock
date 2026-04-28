@@ -449,11 +449,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1777402083,
-        "narHash": "sha256-PxMWczACK7i98rC3XiiyG8vyAczyOmgA2s0k544QeSA=",
+        "lastModified": 1777403095,
+        "narHash": "sha256-3IVy/nwbg/glCf2yzUO/fdCiNmSv9D/0UDxJF4xaFlw=",
         "owner": "LiGoldragon",
         "repo": "hexis",
-        "rev": "731fc95a2af0fd23fc1a7822e91b529191a75dba",
+        "rev": "a78ce878d1d1f773b3be9720eec228ad3b10e402",
         "type": "github"
       },
       "original": {
