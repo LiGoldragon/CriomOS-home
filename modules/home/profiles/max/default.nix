@@ -2,6 +2,8 @@
   lib,
   pkgs,
   user,
+  inputs,
+  hexis,
   ...
 }:
 let
@@ -51,7 +53,32 @@ mkMerge [
 
     programs.chromium = {
       enable = true;
-      package = pkgs.google-chrome;
+      # Wrap google-chrome so the chrome 144 MCP autoConnect toggle
+      # ("Allow remote debugging for this browser instance" at
+      # chrome://inspect/#remote-debugging) gets seeded `true` on first
+      # launch via hexis once-mode. The toggle persists at
+      # `/devtools/remote_debugging/user-enabled` in `Local State`
+      # (Chrome's global state file, not Default/Preferences).
+      # Once seeded, the user owns it forever; toggling it off in the
+      # UI sticks because the once-marker prevents re-seeding.
+      #
+      # processName="chrome" — the actual Chrome binary process is
+      # `chrome`; `google-chrome` is just the launcher script. The
+      # pgrep guard skips hexis apply if Chrome is already running,
+      # avoiding a race against the in-memory copy of Local State.
+      package = inputs.hexis.lib.wrapWithHexis {
+        inherit pkgs hexis;
+        name = "google-chrome";
+        processName = "chrome";
+        package = pkgs.google-chrome;
+        file = "$HOME/.config/google-chrome/Local State";
+        declared = {
+          devtools.remote_debugging.user-enabled = true;
+        };
+        modes = {
+          "/devtools/remote_debugging/user-enabled" = "once";
+        };
+      };
     };
 
     services.easyeffects.enable = true;
