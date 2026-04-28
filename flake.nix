@@ -66,8 +66,15 @@
     substack-cli.url = "github:LiGoldragon/substack-cli";
     substack-cli.inputs.nixpkgs.follows = "nixpkgs";
 
-    # Shared helpers (importJSON, mkJsonMerge) cross-consumed with CriomOS.
+    # Shared helpers (importJSON) cross-consumed with CriomOS. The
+    # mkJsonMerge helper was retired in favour of hexis (below).
     criomos-lib.url = "github:LiGoldragon/CriomOS-lib";
+
+    # Managed-mutable config reconciliation — replaces the broken
+    # shallow-merge `mkJsonMerge`. Provides `hexis apply` plus an HM
+    # helper at `inputs.hexis.lib.mkManagedConfig`.
+    hexis.url = "github:LiGoldragon/hexis";
+    hexis.inputs.nixpkgs.follows = "nixpkgs";
 
     # AI coding agents (daily auto-updates) — Li uses claude-code +
     # codex 12h/day, regression dropped them in the 2026-04-25 trim.
@@ -97,7 +104,7 @@
       #     inputs, not whatever the consumer passed via extraSpecialArgs.
       # This is the architecture fix for the home-tcj wire-up — see
       # /home/li/git/CriomOS/reports/0019.
-      homeModules.default = { lib, ... }: {
+      homeModules.default = { lib, pkgs, ... }: {
         imports = [
           coreModule
           inputs.stylix.homeModules.stylix
@@ -109,6 +116,10 @@
         # would otherwise win the priority race.
         _module.args.inputs = lib.mkForce inputs;
         _module.args.criomos-lib = lib.mkForce inputs.criomos-lib.lib;
+        # Resolve the hexis binary once here so consumers don't repeat
+        # `inputs.hexis.packages.${pkgs.stdenv.hostPlatform.system}.default`
+        # at every call site.
+        _module.args.hexis = lib.mkForce inputs.hexis.packages.${pkgs.stdenv.hostPlatform.system}.default;
       };
     };
 }

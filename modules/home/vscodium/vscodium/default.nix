@@ -3,12 +3,11 @@
   lib,
   user,
   inputs,
-  criomos-lib,
+  hexis,
   ...
 }:
 let
   inherit (user) size;
-  inherit (criomos-lib) mkJsonMerge;
 
   # Flake inputs of `type = "file"` always materialize as a store path
   # named `source` (no extension). nixpkgs' `unpack-vsix-setup-hook`
@@ -181,9 +180,15 @@ lib.mkIf size.atLeastMed {
     "application/x-shellscript"
   ]);
 
-  home.activation.mergeVscodiumSettings = mkJsonMerge {
-    inherit lib pkgs;
+  # Replaces the broken `mkJsonMerge` shallow-merge helper. hexis does
+  # a real RFC-7396-shaped deep merge: declared keys win where they
+  # speak, user drift survives at any pointer declared doesn't mention.
+  # All keys default to `ensure` mode here — declared overlays the
+  # defaults, user overrides survive at sibling keys (the
+  # `[python].wordWrap`-clobber case the old helper got wrong).
+  home.activation.mergeVscodiumSettings = inputs.hexis.lib.mkManagedConfig {
+    inherit lib pkgs hexis;
     file = "$HOME/.config/VSCodium/User/settings.json";
-    inherit nixSettings;
+    declared = nixSettings;
   };
 }
