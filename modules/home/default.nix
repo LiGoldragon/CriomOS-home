@@ -25,7 +25,24 @@
   imports = [
     ./base.nix
     ./profiles/min
+    # Sibling .nix files in profiles/min/ are individual HM modules, not
+    # imported transitively by the directory import (Nix only auto-loads
+    # default.nix). Archive's homeModule/default.nix listed each one
+    # explicitly; the new-criomos rewrite missed the carry-over, so
+    # niri.nix + sfwbar.nix sat as orphans on disk and were silently
+    # skipped — the niri keybinds, criomos-lock-{session,listener}
+    # services, and the noctalia bar widget config never made it into
+    # the home-manager generation. Re-introducing them as explicit
+    # imports.
+    ./profiles/min/niri.nix
+    # Despite the filename, this configures programs.noctalia-shell
+    # (bar widgets, idle timer, lock timeout). Without it the user
+    # gets noctalia's upstream defaults.
+    ./profiles/min/sfwbar.nix
     ./profiles/med
+    ./profiles/med/cli-tools.nix
+    ./profiles/med/element.nix
+    ./profiles/med/qutebrowser.nix
     ./profiles/max
     ./neovim/neovim
     ./vscodium/vscodium
