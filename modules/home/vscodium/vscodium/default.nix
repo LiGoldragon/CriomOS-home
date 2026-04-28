@@ -56,6 +56,14 @@ let
   # Same flake-input-as-VSIX pattern as visualjj — nix-vscode-extensions
   # provides claude-code but its meta.license = unfree trips a check
   # that allowUnfree=true at every level couldn't bypass.
+  #
+  # The VSIX ships a generic-Linux ELF at `resources/native-binary/claude`
+  # which fails on NixOS with 'Could not start dynamically linked
+  # executable ... NixOS cannot run dynamically linked executables
+  # intended for generic linux environments out of the box'. Replace it
+  # with a symlink to the properly-nix-built binary from the
+  # llm-agents.nix flake input (which is the same upstream Anthropic
+  # CLI, just nix-packaged with the right interpreter + rpath).
   claude-code-codium = pkgs.vscode-utils.buildVscodeMarketplaceExtension {
     mktplcRef = {
       name = "claude-code";
@@ -63,6 +71,13 @@ let
       version = "2.1.120";
     };
     vsix = vsixFromInput "claude-code-2.1.120.vsix" inputs.claude-code-vsix;
+    postInstall = ''
+      bin_dir=$out/share/vscode/extensions/anthropic.claude-code/resources/native-binary
+      if [ -d "$bin_dir" ]; then
+        rm -f "$bin_dir/claude"
+        ln -s "${inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.claude-code}/bin/claude" "$bin_dir/claude"
+      fi
+    '';
   };
 
   # All aski-related code dropped per Li 2026-04-25.
