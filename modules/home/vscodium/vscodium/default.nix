@@ -140,7 +140,6 @@ lib.mkIf size.atLeastMed {
       extensions = [
         visualjj
         claude-code-codium
-        ovsx.google.geminicodeassist
         ovsx.openai.chatgpt
         ovsx.cdervis.vscode-pi
         pkgs.vscode-extensions.mkhl.direnv
