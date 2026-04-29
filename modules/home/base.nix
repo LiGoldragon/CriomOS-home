@@ -2,6 +2,7 @@
   pkgs,
   lib,
   user,
+  horizon ? null,
   ...
 }:
 let
@@ -232,6 +233,19 @@ in
     };
 
     gtk.enable = false;
+
+    # On headless hosts (LargeAiRouter, headless servers — no video
+    # output) the system D-Bus has no `ca.desrt.dconf` provider
+    # registered, so home-manager's dconfSettings activation step
+    # fails with "ServiceUnknown" trying to apply the dconf entries
+    # that stylix populates. Gate the activation off; stylix's dconf
+    # entries become inert (the GTK/portal apps that would read them
+    # don't run on these hosts anyway). Per Node-Horizon Toggle Policy
+    # — `horizon.node.hasVideoOutput` is the canonical "this host has
+    # a screen / GUI session" predicate.
+    dconf.enable = lib.mkIf (
+      horizon != null && !horizon.node.hasVideoOutput
+    ) false;
 
     programs.zsh.initContent = lib.mkBefore terminalInitHook;
 
