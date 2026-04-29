@@ -697,6 +697,23 @@
         "type": "github"
       }
     },
+    "pi-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1777397609,
+        "narHash": "sha256-XZUnKk+B9kWn51kRfMkfInYCz+5hVuWQBvgOm9PO9bo=",
+        "owner": "badlogic",
+        "repo": "pi-mono",
+        "rev": "6b48e4ac6b4c0cd766ce61928a3fc4c304283adb",
+        "type": "github"
+      },
+      "original": {
+        "owner": "badlogic",
+        "ref": "v0.70.6",
+        "repo": "pi-mono",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "beads": "beads",
@@ -710,6 +727,7 @@
         "niri-flake": "niri-flake",
         "nixpkgs": "nixpkgs_2",
         "noctalia": "noctalia",
+        "pi-src": "pi-src",
         "stylix": "stylix",
         "substack-cli": "substack-cli",
         "visualjj-vsix": "visualjj-vsix"

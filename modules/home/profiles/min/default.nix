@@ -170,16 +170,15 @@ let
 
   unixDeveloperPackages = unixUtilities ++ programmingTools;
 
-  # pi-mentci dropped per Li 2026-04-25.
-  # AI CLIs restored 2026-04-27 — claude-code + codex are Li's daily
-  # workflow (12h/day); the 2026-04-25 trim wrongly dropped them
-  # together with pi-mentci. Match archive's AIPackages list.
+  # pi-mentci wrapper dropped 2026-04-25; pi itself returns 2026-04-29
+  # built directly from inputs.pi-src via packages/pi/default.nix.
   AIPackages = [
     pkgs.gemini-cli
     inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.claude-code
     inputs.codex-cli.packages.${pkgs.stdenv.hostPlatform.system}.default
     pkgs.opencode
     pkgs.llama-cpp
+    (pkgs.callPackage ../../../../packages/pi { inherit inputs; })
   ];
 
   nixpkgsPackages =

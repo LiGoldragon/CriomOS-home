@@ -83,6 +83,16 @@
     codex-cli.url = "github:sadjow/codex-cli-nix";
     codex-cli.inputs.nixpkgs.follows = "nixpkgs";
 
+    # `pi` (badlogic/pi-mono coding-agent CLI) — TypeScript npm
+    # monorepo with no upstream flake. Consumed as a non-flake source
+    # input and built locally via `packages/pi/default.nix`
+    # (buildNpmPackage over the `packages/coding-agent` workspace).
+    # Replaces the previous pi-mentci wrapper flake (dropped 2026-04-25).
+    pi-src = {
+      url = "github:badlogic/pi-mono?ref=v0.70.6";
+      flake = false;
+    };
+
     # Emacs — replaces legacy pkdjz/mkEmacs. Planned split.
     #   criomos-emacs.url = "github:LiGoldragon/CriomOS-emacs";
     #   criomos-emacs.inputs.nixpkgs.follows = "nixpkgs";
