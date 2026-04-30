@@ -12,14 +12,25 @@ let
     # Quickshell matches IPC instances by QML path; ${pkgs.noctalia-shell}'s
     # baked-in path diverges from the running instance after an HM rebuild,
     # so resolve the live binary and config path from the running process.
-    pid="$(${pkgs.procps}/bin/pgrep -u "$UID" -f '/bin/quickshell$' | ${pkgs.coreutils}/bin/head -n1 || true)"
+    # Match the live process name, not the full argv. The current
+    # QuickShell invocation includes "-p <config>" after the binary path,
+    # so the old '/bin/quickshell$' regex stopped matching and broke both
+    # Mod+L and logind-triggered locks.
+    pid="$(${pkgs.procps}/bin/pgrep -u "$UID" quickshell | ${pkgs.coreutils}/bin/head -n1 || true)"
     if [ -z "$pid" ]; then
       echo "criomos-lock-session: no running quickshell instance" >&2
       exit 1
     fi
 
     qs_bin="$(${pkgs.coreutils}/bin/readlink "/proc/$pid/exe")"
-    qs_path="$(${pkgs.gawk}/bin/awk 'BEGIN{RS="\0"} /^QS_CONFIG_PATH=/{sub(/^QS_CONFIG_PATH=/,""); print; exit}' "/proc/$pid/environ")"
+    # Recent noctalia launches pass the config path on argv as
+    # 'quickshell -p <path>' rather than exporting QS_CONFIG_PATH.
+    # Prefer argv so the lock helper follows the actual live instance,
+    # then fall back to the env var for older launches.
+    qs_path="$(${pkgs.gawk}/bin/awk 'BEGIN{RS="\0"} seen { print; exit } $0 == "-p" { seen = 1 }' "/proc/$pid/cmdline")"
+    if [ -z "$qs_path" ]; then
+      qs_path="$(${pkgs.gawk}/bin/awk 'BEGIN{RS="\0"} /^QS_CONFIG_PATH=/{sub(/^QS_CONFIG_PATH=/,""); print; exit}' "/proc/$pid/environ")"
+    fi
     if [ -z "$qs_bin" ] || [ -z "$qs_path" ]; then
       echo "criomos-lock-session: missing exe or QS_CONFIG_PATH for pid $pid" >&2
       exit 1
