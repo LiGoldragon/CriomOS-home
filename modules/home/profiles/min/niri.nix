@@ -114,6 +114,7 @@ in
   programs.niri = {
     settings = {
       prefer-no-csd = true;
+      xwayland-satellite.path = "${pkgs.xwayland-satellite}/bin/xwayland-satellite";
 
       input = {
         keyboard = {
@@ -170,6 +171,13 @@ in
           geometry-corner-radius =
             let r = 8.0; in { top-left = r; top-right = r; bottom-left = r; bottom-right = r; };
           clip-to-geometry = true;
+        }
+        {
+          matches = [
+            { app-id = "SolarFire|SolarFire\\.exe|solarfire"; }
+            { title = "Solar Fire|SolarFire"; }
+          ];
+          open-floating = false;
         }
       ];
 
