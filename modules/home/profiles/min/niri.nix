@@ -1,4 +1,12 @@
-{ pkgs, lib, config, user, constants, horizon, ... }:
+{
+  pkgs,
+  lib,
+  config,
+  user,
+  constants,
+  horizon,
+  ...
+}:
 let
   terminal = "${pkgs.ghostty}/bin/ghostty";
   inherit (user) useFastRepeat;
@@ -6,19 +14,19 @@ let
 
   a = config.lib.niri.actions;
 
-  lockSession = pkgs.writeShellScript "criomos-lock-session" ''
+  noctaliaIpc = pkgs.writeShellScript "criomos-noctalia-ipc" ''
     set -eu
 
     # Quickshell matches IPC instances by QML path; ${pkgs.noctalia-shell}'s
     # baked-in path diverges from the running instance after an HM rebuild,
-    # so resolve the live binary and config path from the running process.
+    # so resolve the live binary and config path from the running process
+    # before sending IPC commands.
     # Match the live process name, not the full argv. The current
     # QuickShell invocation includes "-p <config>" after the binary path,
-    # so the old '/bin/quickshell$' regex stopped matching and broke both
-    # Mod+L and logind-triggered locks.
+    # so full-argv matching is fragile across upstream launch changes.
     pid="$(${pkgs.procps}/bin/pgrep -u "$UID" quickshell | ${pkgs.coreutils}/bin/head -n1 || true)"
     if [ -z "$pid" ]; then
-      echo "criomos-lock-session: no running quickshell instance" >&2
+      echo "criomos-noctalia-ipc: no running quickshell instance" >&2
       exit 1
     fi
 
@@ -32,11 +40,17 @@ let
       qs_path="$(${pkgs.gawk}/bin/awk 'BEGIN{RS="\0"} /^QS_CONFIG_PATH=/{sub(/^QS_CONFIG_PATH=/,""); print; exit}' "/proc/$pid/environ")"
     fi
     if [ -z "$qs_bin" ] || [ -z "$qs_path" ]; then
-      echo "criomos-lock-session: missing exe or QS_CONFIG_PATH for pid $pid" >&2
+      echo "criomos-noctalia-ipc: missing exe or QS_CONFIG_PATH for pid $pid" >&2
       exit 1
     fi
 
-    "$qs_bin" -p "$qs_path" ipc call lockScreen lock
+    exec "$qs_bin" -p "$qs_path" ipc call "$@"
+  '';
+
+  lockSession = pkgs.writeShellScript "criomos-lock-session" ''
+    set -eu
+
+    ${noctaliaIpc} lockScreen lock
 
     ${pkgs.coreutils}/bin/sleep 3
     ${pkgs.niri}/bin/niri msg action power-off-monitors || true
@@ -169,7 +183,15 @@ in
       window-rules = [
         {
           geometry-corner-radius =
-            let r = 8.0; in { top-left = r; top-right = r; bottom-left = r; bottom-right = r; };
+            let
+              r = 8.0;
+            in
+            {
+              top-left = r;
+              top-right = r;
+              bottom-left = r;
+              bottom-right = r;
+            };
           clip-to-geometry = true;
         }
         {
@@ -184,27 +206,51 @@ in
       spawn-at-startup = [
         { command = [ "mako" ]; }
         { command = [ "noctalia-shell" ]; }
-        { command = [ "${pkgs.networkmanagerapplet}/bin/nm-applet" "--indicator" ]; }
+        {
+          command = [
+            "${pkgs.networkmanagerapplet}/bin/nm-applet"
+            "--indicator"
+          ];
+        }
         { command = [ "${pkgs.blueman}/bin/blueman-applet" ]; }
       ];
 
       animations = {
-        window-open.kind.easing = { curve = "ease-out-expo"; duration-ms = 200; };
-        window-close.kind.easing = { curve = "ease-out-quad"; duration-ms = 150; };
-        workspace-switch.kind.easing = { curve = "ease-out-expo"; duration-ms = 250; };
-        horizontal-view-movement.kind.easing = { curve = "ease-out-expo"; duration-ms = 200; };
-        config-notification-open-close.kind.easing = { curve = "ease-out-quad"; duration-ms = 200; };
+        window-open.kind.easing = {
+          curve = "ease-out-expo";
+          duration-ms = 200;
+        };
+        window-close.kind.easing = {
+          curve = "ease-out-quad";
+          duration-ms = 150;
+        };
+        workspace-switch.kind.easing = {
+          curve = "ease-out-expo";
+          duration-ms = 250;
+        };
+        horizontal-view-movement.kind.easing = {
+          curve = "ease-out-expo";
+          duration-ms = 200;
+        };
+        config-notification-open-close.kind.easing = {
+          curve = "ease-out-quad";
+          duration-ms = 200;
+        };
       };
 
       binds = {
         # Launch
         "Mod+Shift+Return".action = a.spawn terminal;
-        "Mod+O" = { action = a.toggle-overview; repeat = false; };
-        # Absolute paths so niri can spawn these at boot regardless of
-        # the user-PATH propagation race that surfaced today on
-        # ouranos's first boot of the new criomos.
-        "Mod+D".action = a.spawn "${pkgs.noctalia-shell}/bin/noctalia-shell" "ipc" "call" "launcher" "toggle";
-        "Mod+Space".action = a.spawn "${pkgs.noctalia-shell}/bin/noctalia-shell" "ipc" "call" "launcher" "toggle";
+        "Mod+O" = {
+          action = a.toggle-overview;
+          repeat = false;
+        };
+        # Route through the live QuickShell instance. Directly invoking
+        # ${pkgs.noctalia-shell}/bin/noctalia-shell can miss the running
+        # instance after a profile rebuild because QuickShell IPC is keyed
+        # by the QML/config path baked into the live process.
+        "Mod+D".action = a.spawn noctaliaIpc "launcher" "toggle";
+        "Mod+Space".action = a.spawn noctaliaIpc "launcher" "toggle";
 
         # Window
         "Mod+Q".action = a.close-window;
@@ -278,8 +324,10 @@ in
         };
 
         # Screenshot
-        "Print".action = a.spawn "sh" "-c" ''mkdir -p ~/${constants.fileSystem.screenshots} && grim ~/${constants.fileSystem.screenshots}/$(date +%Y%m%d-%H%M%S).png'';
-        "Mod+P".action = a.spawn "sh" "-c" ''grim - | wl-copy'';
+        "Print".action =
+          a.spawn "sh" "-c"
+            "mkdir -p ~/${constants.fileSystem.screenshots} && grim ~/${constants.fileSystem.screenshots}/$(date +%Y%m%d-%H%M%S).png";
+        "Mod+P".action = a.spawn "sh" "-c" "grim - | wl-copy";
         "Mod+Print".action = a.spawn "sh" "-c" ''grim -g "$(slurp)" - | wl-copy'';
 
         # Volume
