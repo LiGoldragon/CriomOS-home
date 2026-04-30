@@ -249,8 +249,8 @@ in
         # ${pkgs.noctalia-shell}/bin/noctalia-shell can miss the running
         # instance after a profile rebuild because QuickShell IPC is keyed
         # by the QML/config path baked into the live process.
-        "Mod+D".action = a.spawn noctaliaIpc "launcher" "toggle";
-        "Mod+Space".action = a.spawn noctaliaIpc "launcher" "toggle";
+        "Mod+D".action = a.spawn "${noctaliaIpc}" "launcher" "toggle";
+        "Mod+Space".action = a.spawn "${noctaliaIpc}" "launcher" "toggle";
 
         # Window
         "Mod+Q".action = a.close-window;
