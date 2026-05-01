@@ -85,6 +85,15 @@ let
         done
   '';
 
+  syncSessionEnvironment = pkgs.writeShellScript "criomos-sync-session-environment" ''
+    set -eu
+
+    ${pkgs.systemd}/bin/systemctl --user import-environment \
+      DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE
+    ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd \
+      DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE
+  '';
+
 in
 {
   programs.niri.settings.environment = {
@@ -204,6 +213,7 @@ in
       ];
 
       spawn-at-startup = [
+        { command = [ "${syncSessionEnvironment}" ]; }
         { command = [ "mako" ]; }
         { command = [ "noctalia-shell" ]; }
         {
