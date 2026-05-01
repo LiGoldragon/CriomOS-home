@@ -44,5 +44,6 @@ lib.mkIf size.atLeastMed {
   home.packages = [
     beads
     inputs.substack-cli.packages.${system}.default
+    inputs.gascity.packages.${system}.default
   ];
 }

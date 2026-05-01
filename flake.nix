@@ -62,6 +62,12 @@
     # Pinned to a release tag so vendorHash stays stable.
     beads.url = "github:gastownhall/beads?ref=v1.0.2";
 
+    # `gc` (Gas City) — multi-agent orchestration SDK. Consumes our
+    # nix packaging flake which builds upstream gastownhall/gascity
+    # via buildGo125Module.
+    gascity.url = "github:LiGoldragon/gascity-nix";
+    gascity.inputs.nixpkgs.follows = "nixpkgs";
+
     # `substack` CLI — its own flake, exposes packages.<system>.default.
     substack-cli.url = "github:LiGoldragon/substack-cli";
     substack-cli.inputs.nixpkgs.follows = "nixpkgs";
