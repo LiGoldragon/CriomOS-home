@@ -1,30 +1,23 @@
-# Agent Bootstrap — CriomOS-home
+# Agent instructions — CriomOS-home
 
-## First thing
+You **MUST** read AGENTS.md at `github:ligoldragon/lore` — the workspace contract.
 
-Run `bd list --status open` to see what's already on the table.
+You **MUST** read CriomOS's AGENTS.md (sibling repo) — CriomOS-cluster rules apply here.
 
-Read `docs/ROADMAP.md`.
+## Repo role
 
-## Scope
-
-Home-manager modules for the CriomOS desktop profile. This repo owns:
+Home-manager modules for the CriomOS desktop profile. Owns:
 
 - Niri compositor config, noctalia-shell IPC, stylix theming.
 - Vscodium + extensions, Claude-for-Linux wrapper.
 - Qutebrowser, Firefox, Element.
-- Emacs — consumed from `criomos-emacs` once split.
+- Emacs (consumed from `CriomOS-emacs`).
 - Profile ladder: `min`, `med`, `max`.
 
-It does NOT own:
+NixOS-level concerns (networking, services, users) live in `CriomOS`; horizon schema and method computation live in `horizon-rs`.
 
-- NixOS-level concerns (networking, services, users). Those are in `CriomOS`.
-- Horizon schema or method computation. Those are in `horizon-rs`.
+First thing: run `bd list --status open`. Read `docs/ROADMAP.md`.
 
-## Hard rules (inherited)
+## Carve-outs
 
-- Jujutsu only.
-- Never live-activate HM generations with compositor / input changes.
-- Never SIGHUP niri.
-- Push before real builds.
-- Never print Nix store paths into agent context.
+- Live-activating HM generations with compositor / input changes risks losing the session. Apply through a safe path (rebuild + new login).
