@@ -57,14 +57,9 @@
       flake = false;
     };
 
-    # `bd` issue tracker — Go upstream, packaged inline in
-    # modules/home/profiles/med/cli-tools.nix via buildGoModule.
-    # Pinned to a release tag so vendorHash stays stable.
-    beads.url = "github:gastownhall/beads?ref=v1.0.2";
-
     # `gc` (Gas City) — multi-agent orchestration SDK. Consumes our
     # nix packaging flake which builds upstream gastownhall/gascity
-    # via buildGo125Module.
+    # via buildGo125Module. `bd` itself comes from nixpkgs.
     gascity.url = "github:LiGoldragon/gascity-nix";
     gascity.inputs.nixpkgs.follows = "nixpkgs";
 
