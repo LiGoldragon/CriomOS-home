@@ -29,5 +29,4 @@ CANON. Active.
 
 ## Cross-cutting context
 
-- Project-wide architecture:
-  [criome/ARCHITECTURE.md](https://github.com/LiGoldragon/criome/blob/main/ARCHITECTURE.md)
+- Project-wide architecture: criome's `ARCHITECTURE.md`.
