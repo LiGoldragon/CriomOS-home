@@ -10,9 +10,7 @@ let
   system = pkgs.stdenv.hostPlatform.system;
 
   # `beads` (bd) — issue tracker for AI-supervised coding workflows.
-  # Built from `inputs.beads` (gastownhall/beads upstream Go source);
-  # buildGoModule recipe ported from mentci-tools/packages/beads.nix
-  # to drop the mentci-tools indirection.
+  # Built from `inputs.beads` (gastownhall/beads upstream Go source).
   beads = pkgs.buildGoModule {
     pname = "beads";
     version = "1.0.2";
