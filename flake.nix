@@ -67,6 +67,15 @@
     substack-cli.url = "github:LiGoldragon/substack-cli";
     substack-cli.inputs.nixpkgs.follows = "nixpkgs";
 
+    # `annas` — Anna's Archive book/article search + download CLI. Upstream
+    # (iosifache/annas-mcp) has no flake; consumed as non-flake source and
+    # built inline via buildGoModule in modules/home/profiles/med/cli-tools.nix.
+    # Wrapped with gopass-driven env injection (see lore/annas/basic-usage.md).
+    annas-mcp = {
+      url = "github:LiGoldragon/annas-mcp?ref=v0.0.5";
+      flake = false;
+    };
+
     # Shared helpers (importJSON) cross-consumed with CriomOS. The
     # mkJsonMerge helper was retired in favour of hexis (below).
     criomos-lib.url = "github:LiGoldragon/CriomOS-lib";

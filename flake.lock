@@ -1,5 +1,22 @@
 {
   "nodes": {
+    "annas-mcp": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1771799301,
+        "narHash": "sha256-XicM7tU5jD8B8n7JJDQ/84koBiLb8XF4+WBQ4LCUoRU=",
+        "owner": "LiGoldragon",
+        "repo": "annas-mcp",
+        "rev": "5a2b9c50e87de5639fa6057e0ff911dcccbbd962",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LiGoldragon",
+        "ref": "v0.0.5",
+        "repo": "annas-mcp",
+        "type": "github"
+      }
+    },
     "base16": {
       "inputs": {
         "fromYaml": "fromYaml"
@@ -720,6 +737,7 @@
     },
     "root": {
       "inputs": {
+        "annas-mcp": "annas-mcp",
         "blueprint": "blueprint",
         "claude-code-vsix": "claude-code-vsix",
         "codex-cli": "codex-cli",
