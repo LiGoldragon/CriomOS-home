@@ -25,6 +25,7 @@
   imports = [
     ./base.nix
     ./profiles/min
+    ./profiles/min/pi-models.nix
     # Sibling .nix files in profiles/min/ are individual HM modules, not
     # imported transitively by the directory import (Nix only auto-loads
     # default.nix). Archive's homeModule/default.nix listed each one
