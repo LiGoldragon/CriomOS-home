@@ -495,6 +495,11 @@ mkIf size.atLeastMin {
         github.user = githubId;
         ghq.root = "/git";
         hub.protocol = "ssh";
+        # gas-city's bd-init script does `git config --global beads.role
+        # maintainer` if unset. ~/.config/git/config is read-only (this
+        # very file), so the write fails. Pre-set it declaratively so
+        # the script's check passes without writing.
+        beads.role = "maintainer";
       };
     };
 
