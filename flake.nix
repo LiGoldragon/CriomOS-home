@@ -2,7 +2,7 @@
   description = "CriomOS-home — home profile. Standalone home-manager flake consumed by CriomOS.";
 
   inputs = {
-    nixpkgs.url = "github:LiGoldragon/nixpkgs?ref=nixos-unstable";
+    nixpkgs.url = "github:LiGoldragon/nixpkgs?ref=main";
 
     blueprint.url = "github:numtide/blueprint";
     blueprint.inputs.nixpkgs.follows = "nixpkgs";
