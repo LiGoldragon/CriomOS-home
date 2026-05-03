@@ -10,6 +10,14 @@
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
+    system.url = "path:./stubs/no-system";
+
+    pkgs.url = "github:LiGoldragon/CriomOS-pkgs";
+    pkgs.inputs.nixpkgs.follows = "nixpkgs";
+    pkgs.inputs.system.follows = "system";
+
+    horizon.url = "path:./stubs/no-horizon";
+
     # Compositor + shell.
     niri-flake.url = "github:sodiboo/niri-flake";
     niri-flake.inputs.nixpkgs.follows = "nixpkgs";
@@ -118,9 +126,34 @@
     let
       bp = inputs.blueprint { inherit inputs; };
       coreModule = bp.homeModules.default;
+      horizon = inputs.horizon.horizon;
+      pkgs = inputs.pkgs.pkgs;
+
+      mkHomeConfiguration =
+        userName: user:
+        inputs.home-manager.lib.homeManagerConfiguration {
+          inherit pkgs;
+          extraSpecialArgs = {
+            inherit horizon user;
+          };
+          modules = [
+            inputs.self.homeModules.default
+            (
+              { lib, ... }:
+              {
+                nixpkgs.overlays = lib.mkForce pkgs.overlays;
+                home.username = userName;
+                home.homeDirectory = "/home/${userName}";
+                home.stateVersion = "26.05";
+              }
+            )
+          ];
+        };
     in
     bp
     // {
+      homeConfigurations = builtins.mapAttrs mkHomeConfiguration horizon.users;
+
       # Wrap blueprint's auto-discovered homeModules.default so that:
       # (1) upstream homeModules from CriomOS-home's own flake inputs
       #     (stylix, niri-flake, noctalia) are imported, exposing their

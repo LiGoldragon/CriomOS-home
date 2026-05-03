@@ -6,9 +6,8 @@ Split out from legacy CriomOS so that:
 
 1. `CriomOS` stays network-neutral and free of desktop-shell inputs
    (niri, noctalia, stylix, emacs sources, vscodium extensions).
-2. Non-CriomOS NixOS hosts can consume the same home profile via
-   `home-manager switch --flake github:LiGoldragon/CriomOS-home#<user>@<host>`
-   once standalone wiring lands.
+2. Home-only deploys can evaluate this flake directly while passing the
+   same projected `horizon` and `system` inputs used by CriomOS.
 
 **Status:** scaffold. Tracks [docs/ROADMAP.md](docs/ROADMAP.md).
 
@@ -17,8 +16,18 @@ Split out from legacy CriomOS so that:
 From `CriomOS`:
 ```nix
 inputs.criomos-home.url = "github:LiGoldragon/CriomOS-home";
-# … CriomOS feeds horizon.user into homeModules.default via _module.args
+inputs.criomos-home.inputs.horizon.follows = "horizon";
+inputs.criomos-home.inputs.system.follows = "system";
+inputs.criomos-home.inputs.pkgs.follows = "pkgs";
 ```
+
+Direct home-only deploys build:
+
+```text
+homeConfigurations.<user>.activationPackage
+```
+
+with `horizon` and `system` overridden by lojix.
 
 ## Layout
 

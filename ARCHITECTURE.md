@@ -1,7 +1,8 @@
 # ARCHITECTURE — CriomOS-home
 
-home-manager profile as a CriomOS module. nix-flake-shaped;
-imported by [CriomOS](https://github.com/LiGoldragon/CriomOS).
+home-manager profile as a standalone flake and CriomOS module.
+Imported by [CriomOS](https://github.com/LiGoldragon/CriomOS) for full
+system deploys and evaluated directly for home-only deploys.
 
 ## Role
 
@@ -17,6 +18,8 @@ Owns:
 
 - `modules/` — home-manager modules.
 - `packages/` — user-scoped packages and configurations.
+- `homeConfigurations` — direct Home Manager activation packages keyed
+  by projected horizon users.
 
 Does not own:
 
