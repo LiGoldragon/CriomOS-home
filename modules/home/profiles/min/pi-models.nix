@@ -33,12 +33,12 @@ let
   };
 
   piModelsConfig = {
-    providers."criomos-largeai" = {
+    providers.prometheus = {
       api = "openai-completions";
       baseUrl = "http://${endpointNode.criomeDomainName}:${toString (inventory.serverPort or 11434)}/v1";
       # Pi requires an API key value for custom providers. The llama.cpp
       # router does not require one unless /var/lib/llama/api-key is non-empty.
-      apiKey = "unused-local-key";
+      apiKey = "sk-no-key-required";
       compat = {
         supportsStore = false;
         supportsDeveloperRole = false;
@@ -51,11 +51,25 @@ let
       models = map mkPiModel inventory.models;
     };
   };
+
+  piSettingsConfig = {
+    defaultProvider = "prometheus";
+    enabledModels = map (model: "prometheus/${model.modelId}") inventory.models;
+  };
 in
 lib.mkIf (size.atLeastMin && endpointNode != null) {
   home.activation.mergePiModels = inputs.hexis.lib.mkManagedConfig {
     inherit lib pkgs hexis;
     file = "$HOME/.pi/agent/models.json";
     declared = piModelsConfig;
+  };
+
+  home.activation.mergePiSettings = inputs.hexis.lib.mkManagedConfig {
+    inherit lib pkgs hexis;
+    file = "$HOME/.pi/agent/settings.json";
+    declared = piSettingsConfig;
+    modes = {
+      "/enabledModels" = "always";
+    };
   };
 }
