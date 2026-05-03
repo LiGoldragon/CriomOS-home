@@ -600,11 +600,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1777835961,
-        "narHash": "sha256-ysJDVAL1hNSK/5BAUsN0xA8crpYoLkuqjTZgzsb1vec=",
+        "lastModified": 1777840651,
+        "narHash": "sha256-MwxHcu+D2mMA4O4nax4Kk/peQW8PgUazbUjvSmH3FkI=",
         "owner": "LiGoldragon",
         "repo": "lojix-cli",
-        "rev": "3c961ec49e8b4bd7e1571908d5d415c1a50b7cb7",
+        "rev": "d99105261480e1af5ac0c4e605bf90f5ae506dac",
         "type": "github"
       },
       "original": {
