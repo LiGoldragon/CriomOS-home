@@ -136,6 +136,7 @@
         # would otherwise win the priority race.
         _module.args.inputs = lib.mkForce inputs;
         _module.args.criomos-lib = lib.mkForce inputs.criomos-lib.lib;
+        _module.args.constants = lib.mkForce inputs.criomos-lib.lib.constants;
         # Resolve the hexis binary once here so consumers don't repeat
         # `inputs.hexis.packages.${pkgs.stdenv.hostPlatform.system}.default`
         # at every call site.
