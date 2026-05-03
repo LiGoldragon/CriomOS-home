@@ -170,6 +170,10 @@ let
 
   unixDeveloperPackages = unixUtilities ++ programmingTools;
 
+  deploymentPackages = [
+    inputs.lojix-cli.packages.${pkgs.stdenv.hostPlatform.system}.default
+  ];
+
   # pi-mentci wrapper dropped 2026-04-25; pi itself returns 2026-04-29
   # built directly from inputs.pi-src via packages/pi/default.nix.
   AIPackages = [
@@ -453,8 +457,26 @@ mkIf size.atLeastMin {
       '';
       colorSchemes = {
         "Equilibrium Dark" = {
-          ansi = [ "#0c1118" "#f04339" "#7f8b00" "#bb8801" "#008dd1" "#6a7fd2" "#00948b" "#afaba2" ];
-          brights = [ "#7b776e" "#df5923" "#949088" "#22262d" "#cac6bd" "#e3488e" "#181c22" "#e7e2d9" ];
+          ansi = [
+            "#0c1118"
+            "#f04339"
+            "#7f8b00"
+            "#bb8801"
+            "#008dd1"
+            "#6a7fd2"
+            "#00948b"
+            "#afaba2"
+          ];
+          brights = [
+            "#7b776e"
+            "#df5923"
+            "#949088"
+            "#22262d"
+            "#cac6bd"
+            "#e3488e"
+            "#181c22"
+            "#e7e2d9"
+          ];
           background = "#0c1118";
           foreground = "#afaba2";
           cursor_bg = "#afaba2";
@@ -463,8 +485,26 @@ mkIf size.atLeastMin {
           selection_fg = "#afaba2";
         };
         "Equilibrium Light" = {
-          ansi = [ "#f5f0e7" "#d02023" "#637200" "#9d6f00" "#0073b5" "#4e66b6" "#007a72" "#43474e" ];
-          brights = [ "#73777f" "#bf3e05" "#5a5f66" "#d8d4cb" "#2c3138" "#c42775" "#e7e2d9" "#181c22" ];
+          ansi = [
+            "#f5f0e7"
+            "#d02023"
+            "#637200"
+            "#9d6f00"
+            "#0073b5"
+            "#4e66b6"
+            "#007a72"
+            "#43474e"
+          ];
+          brights = [
+            "#73777f"
+            "#bf3e05"
+            "#5a5f66"
+            "#d8d4cb"
+            "#2c3138"
+            "#c42775"
+            "#e7e2d9"
+            "#181c22"
+          ];
           background = "#f5f0e7";
           foreground = "#43474e";
           cursor_bg = "#43474e";
@@ -557,7 +597,6 @@ mkIf size.atLeastMin {
       };
     };
 
-
     bottom = {
       enable = true;
       settings = { };
@@ -606,44 +645,48 @@ mkIf size.atLeastMin {
   };
 
   home = {
-    packages = fontPackages ++ nixpkgsPackages ++ AIPackages ++ [
-      nordvpnSeed
-      pkgs.wl-gammarelay-rs
-      nightshift
-      brightness
-    ];
+    packages =
+      fontPackages
+      ++ nixpkgsPackages
+      ++ deploymentPackages
+      ++ AIPackages
+      ++ [
+        nordvpnSeed
+        pkgs.wl-gammarelay-rs
+        nightshift
+        brightness
+      ];
 
-    file =
-      {
-        ".local/bin/xdg-open" = {
-          executable = true;
-          text = ''
-            #!/bin/sh
-            exec ${pkgs.handlr-regex}/bin/handlr open "$@"
-          '';
-        };
-
-        ".config/IJHack/QtPass.conf".text = ''
-          [General]
-          autoclearSeconds=20
-          passwordLength=32
-          useTrayIcon=false
-          hideContent=false
-          hidePassword=true
-          clipBoardType=1
-          hideOnClose=false
-          passExecutable=${waylandPass}/bin/pass
-          passTemplate=login\nurl
-          pwgenExecutable=${pkgs.pwgen}/bin/pwgen
-          startMinimized=false
-          templateAllFields=false
-          useAutoclear=true
-          useTrayIcon=false
-          version=${pkgs.qtpass.version}
+    file = {
+      ".local/bin/xdg-open" = {
+        executable = true;
+        text = ''
+          #!/bin/sh
+          exec ${pkgs.handlr-regex}/bin/handlr open "$@"
         '';
-
-        ".config/broot/conf.toml".text = brootConfig;
       };
+
+      ".config/IJHack/QtPass.conf".text = ''
+        [General]
+        autoclearSeconds=20
+        passwordLength=32
+        useTrayIcon=false
+        hideContent=false
+        hidePassword=true
+        clipBoardType=1
+        hideOnClose=false
+        passExecutable=${waylandPass}/bin/pass
+        passTemplate=login\nurl
+        pwgenExecutable=${pkgs.pwgen}/bin/pwgen
+        startMinimized=false
+        templateAllFields=false
+        useAutoclear=true
+        useTrayIcon=false
+        version=${pkgs.qtpass.version}
+      '';
+
+      ".config/broot/conf.toml".text = brootConfig;
+    };
   };
 
   # programs.pi-mentci block dropped 2026-04-25 — pi-mentci itself
@@ -677,7 +720,10 @@ mkIf size.atLeastMin {
         Unit = {
           Description = "Sync color temperature to current dark/light mode";
           Requires = [ "wl-gammarelay-rs.service" ];
-          After = [ "wl-gammarelay-rs.service" "darkman.service" ];
+          After = [
+            "wl-gammarelay-rs.service"
+            "darkman.service"
+          ];
         };
         Service = {
           Type = "simple";

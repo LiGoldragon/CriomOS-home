@@ -93,6 +93,11 @@
     codex-cli.url = "github:sadjow/codex-cli-nix";
     codex-cli.inputs.nixpkgs.follows = "nixpkgs";
 
+    # CriomOS deploy CLI. This is the Nota-first deploy tool used for
+    # system, OS-only, and direct home deployments.
+    lojix-cli.url = "github:LiGoldragon/lojix-cli";
+    lojix-cli.inputs.nixpkgs.follows = "nixpkgs";
+
     # `pi` (badlogic/pi-mono coding-agent CLI) — TypeScript npm
     # monorepo with no upstream flake. Consumed as a non-flake source
     # input and built locally via `packages/pi/default.nix`
@@ -124,23 +129,25 @@
       #     inputs, not whatever the consumer passed via extraSpecialArgs.
       # This is the architecture fix for the home-tcj wire-up — see
       # /home/li/git/CriomOS/reports/0019.
-      homeModules.default = { lib, pkgs, ... }: {
-        imports = [
-          coreModule
-          inputs.stylix.homeModules.stylix
-          inputs.niri-flake.homeModules.config
-          inputs.noctalia.homeModules.default
-        ];
-        # mkForce because the consumer (e.g. CriomOS userHomes.nix)
-        # also passes its own `inputs` via extraSpecialArgs, which
-        # would otherwise win the priority race.
-        _module.args.inputs = lib.mkForce inputs;
-        _module.args.criomos-lib = lib.mkForce inputs.criomos-lib.lib;
-        _module.args.constants = lib.mkForce inputs.criomos-lib.lib.constants;
-        # Resolve the hexis binary once here so consumers don't repeat
-        # `inputs.hexis.packages.${pkgs.stdenv.hostPlatform.system}.default`
-        # at every call site.
-        _module.args.hexis = lib.mkForce inputs.hexis.packages.${pkgs.stdenv.hostPlatform.system}.default;
-      };
+      homeModules.default =
+        { lib, pkgs, ... }:
+        {
+          imports = [
+            coreModule
+            inputs.stylix.homeModules.stylix
+            inputs.niri-flake.homeModules.config
+            inputs.noctalia.homeModules.default
+          ];
+          # mkForce because the consumer (e.g. CriomOS userHomes.nix)
+          # also passes its own `inputs` via extraSpecialArgs, which
+          # would otherwise win the priority race.
+          _module.args.inputs = lib.mkForce inputs;
+          _module.args.criomos-lib = lib.mkForce inputs.criomos-lib.lib;
+          _module.args.constants = lib.mkForce inputs.criomos-lib.lib.constants;
+          # Resolve the hexis binary once here so consumers don't repeat
+          # `inputs.hexis.packages.${pkgs.stdenv.hostPlatform.system}.default`
+          # at every call site.
+          _module.args.hexis = lib.mkForce inputs.hexis.packages.${pkgs.stdenv.hostPlatform.system}.default;
+        };
     };
 }
