@@ -10,6 +10,15 @@ let
   system = pkgs.stdenv.hostPlatform.system;
   gasCityPackage = inputs.gascity.packages.${system}.default;
   criopolisOrchestratorPackage = inputs.orchestrator.packages.${system}.default;
+  gasCityRuntimePath = lib.makeBinPath [
+    gasCityPackage
+    pkgs.beads
+    pkgs.dolt
+    pkgs.tmux
+    pkgs.lsof
+    pkgs.procps
+    pkgs.util-linux
+  ];
 
   # `annas` — Anna's Archive book/article search + download CLI.
   # Upstream binary is `annas-mcp`; we ship it as `annas` so the
@@ -63,4 +72,27 @@ lib.mkIf size.atLeastMed {
     pkgs.procps      # pgrep
     pkgs.util-linux  # flock
   ];
+
+  systemd.user.services.criopolis-orchestrator = {
+    Unit = {
+      Description = "Criopolis cascade orchestrator daemon";
+      After = [ "gascity-supervisor.service" ];
+      Wants = [ "gascity-supervisor.service" ];
+    };
+
+    Install.WantedBy = [ "default.target" ];
+
+    Service = {
+      Type = "simple";
+      ExecStart = "${criopolisOrchestratorPackage}/bin/orchestrator --city /home/li/Criopolis";
+      Restart = "always";
+      RestartSec = "5s";
+      StandardOutput = "append:/home/li/.gc/orchestrator.log";
+      StandardError = "append:/home/li/.gc/orchestrator.log";
+      Environment = [
+        "GC_HOME=/home/li/.gc"
+        "PATH=${gasCityRuntimePath}:/run/current-system/sw/bin"
+      ];
+    };
+  };
 }
