@@ -8,6 +8,8 @@
 let
   inherit (user) size;
   system = pkgs.stdenv.hostPlatform.system;
+  gasCityPackage = inputs.gascity.packages.${system}.default;
+  criopolisOrchestratorPackage = inputs.orchestrator.packages.${system}.default;
 
   # `annas` — Anna's Archive book/article search + download CLI.
   # Upstream binary is `annas-mcp`; we ship it as `annas` so the
@@ -47,7 +49,8 @@ in
 lib.mkIf size.atLeastMed {
   home.packages = [
     inputs.substack-cli.packages.${system}.default
-    inputs.gascity.packages.${system}.default
+    gasCityPackage
+    criopolisOrchestratorPackage
     annas
 
     # Gas City + bd share the same MEOW stack at runtime: bd drives

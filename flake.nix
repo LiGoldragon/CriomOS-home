@@ -71,6 +71,11 @@
     gascity.url = "github:LiGoldragon/gascity-nix";
     gascity.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Criopolis cascade dispatcher daemon.
+    orchestrator.url = "github:LiGoldragon/orchestrator";
+    orchestrator.inputs.nixpkgs.follows = "nixpkgs";
+    orchestrator.inputs.gascity-nix.follows = "gascity";
+
     # `substack` CLI — its own flake, exposes packages.<system>.default.
     substack-cli.url = "github:LiGoldragon/substack-cli";
     substack-cli.inputs.nixpkgs.follows = "nixpkgs";
