@@ -112,7 +112,7 @@
     # (buildNpmPackage over the `packages/coding-agent` workspace).
     # Replaces the previous pi-mentci wrapper flake (dropped 2026-04-25).
     pi-src = {
-      url = "github:badlogic/pi-mono?ref=v0.70.6";
+      url = "github:badlogic/pi-mono?ref=v0.72.1";
       flake = false;
     };
 

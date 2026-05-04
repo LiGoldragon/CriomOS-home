@@ -1,7 +1,7 @@
 { pkgs, inputs, ... }:
 pkgs.buildNpmPackage (finalAttrs: {
   pname = "pi";
-  version = "0.70.6";
+  version = "0.72.1";
 
   src = inputs.pi-src;
 
@@ -13,7 +13,7 @@ pkgs.buildNpmPackage (finalAttrs: {
   # at runtime. Install the whole monorepo and stitch in the `pi`
   # binary ourselves in postInstall.
 
-  npmDepsHash = "sha256-pEVIqp9rbuHFE6eqSmADmIXWAPey1VbD7qmOJwksz1o=";
+  npmDepsHash = "sha256-KUC1xQK6oJXtg962YeLOnO76uTdR10/VNa9iiCdT3VM=";
 
   makeCacheWritable = true;
 
@@ -59,7 +59,9 @@ pkgs.buildNpmPackage (finalAttrs: {
 
     mkdir -p $out/bin
     chmod +x $out/lib/pi-monorepo/packages/coding-agent/dist/cli.js
-    ln -s $out/lib/pi-monorepo/packages/coding-agent/dist/cli.js $out/bin/pi
+    makeWrapper "$out/lib/pi-monorepo/packages/coding-agent/dist/cli.js" "$out/bin/pi" \
+      --run 'if [ -z "''${PI_PACKAGE_DIR:-}" ]; then export PI_PACKAGE_DIR="$HOME/.local/share/criomos/pi/package"; fi' \
+      --run 'export LINKUP_API_KEY="''${LINKUP_API_KEY:-$(${pkgs.gopass}/bin/gopass show -o linkup.so/api-key 2>/dev/null || true)}"'
 
     runHook postInstall
   '';
@@ -68,6 +70,7 @@ pkgs.buildNpmPackage (finalAttrs: {
   # tree even though pi-coding-agent itself doesn't use it directly)
   # builds with node-gyp against pkg-config-discovered system libs.
   nativeBuildInputs = with pkgs; [
+    makeWrapper
     pkg-config
     python3
   ];

@@ -17,6 +17,8 @@ let
   inherit (user) size;
 
   inventory = fromJSON (readFile (inputs.criomos-lib + "/data/largeAI/llm.json"));
+  pi = pkgs.callPackage ../../../../packages/pi { inherit inputs; };
+  pi-linkup = pkgs.callPackage ../../../../packages/pi-linkup { };
 
   clusterNodes = [ horizon.node ] ++ lib.attrValues (horizon.exNodes or { });
   routerNode = lib.findFirst (node: node.typeIs.largeAiRouter or false) null clusterNodes;
@@ -55,9 +57,16 @@ let
   piSettingsConfig = {
     defaultProvider = "prometheus";
     enabledModels = map (model: "prometheus/${model.modelId}") inventory.models;
+    packages = [
+      "packages/pi-linkup"
+    ];
   };
 in
 lib.mkIf (size.atLeastMin && endpointNode != null) {
+  home.file.".local/share/criomos/pi/package".source = "${pi}/lib/pi-monorepo/packages/coding-agent";
+
+  home.file.".pi/agent/packages/pi-linkup".source = "${pi-linkup}/share/pi-packages/pi-linkup";
+
   home.activation.mergePiModels = inputs.hexis.lib.mkManagedConfig {
     inherit lib pkgs hexis;
     file = "$HOME/.pi/agent/models.json";
@@ -70,6 +79,7 @@ lib.mkIf (size.atLeastMin && endpointNode != null) {
     declared = piSettingsConfig;
     modes = {
       "/enabledModels" = "always";
+      "/packages" = "always";
     };
   };
 }
