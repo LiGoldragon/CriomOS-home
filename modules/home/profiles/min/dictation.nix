@@ -64,7 +64,7 @@ mkIf (size.atLeastMin && behavesAs.edge) {
     threads = 0
 
     [injection]
-    backends = ["ydotool", "clipboard"]
+    backends = ["ydotool"]
     ydotool_timeout = "5s"
     wtype_timeout = "5s"
     clipboard_timeout = "3s"

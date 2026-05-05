@@ -26,7 +26,6 @@ pkgs.buildGoModule rec {
       --prefix PATH : ${
         pkgs.lib.makeBinPath [
           pkgs.pipewire
-          pkgs.wl-clipboard
           pkgs.libnotify
           pkgs.ydotool
         ]
