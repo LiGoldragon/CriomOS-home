@@ -1,5 +1,13 @@
 { pkgs, ... }:
 
+let
+  wtypeForHyprvoice = pkgs.writeShellScriptBin "wtype" ''
+    set -eu
+
+    delay_ms="''${HYPRVOICE_WTYPE_DELAY_MS:-10}"
+    exec ${pkgs.wtype}/bin/wtype -d "$delay_ms" "$@"
+  '';
+in
 pkgs.buildGoModule rec {
   pname = "hyprvoice";
   version = "1.0.2";
@@ -27,7 +35,7 @@ pkgs.buildGoModule rec {
         pkgs.lib.makeBinPath [
           pkgs.pipewire
           pkgs.libnotify
-          pkgs.wtype
+          wtypeForHyprvoice
           pkgs.wl-clipboard
         ]
       }
