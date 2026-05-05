@@ -28,6 +28,7 @@ pkgs.buildGoModule rec {
           pkgs.pipewire
           pkgs.libnotify
           pkgs.ydotool
+          pkgs.wl-clipboard
         ]
       }
   '';

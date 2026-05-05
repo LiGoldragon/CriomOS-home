@@ -64,7 +64,9 @@ mkIf (size.atLeastMin && behavesAs.edge) {
     threads = 0
 
     [injection]
-    backends = ["ydotool"]
+    # ydotool is the typing path; clipboard remains available as a secondary
+    # backend, but it is not the fix for layout-broken self-insertion.
+    backends = ["ydotool", "clipboard"]
     ydotool_timeout = "5s"
     wtype_timeout = "5s"
     clipboard_timeout = "3s"
