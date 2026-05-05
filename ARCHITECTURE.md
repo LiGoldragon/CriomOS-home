@@ -11,6 +11,8 @@ files, package selections, and integration with
 [CriomOS-emacs](https://github.com/LiGoldragon/CriomOS-emacs).
 
 Detailed staging lives in [`docs/ROADMAP.md`](docs/ROADMAP.md).
+Pi extension packaging lives in
+[`docs/pi-extensions.md`](docs/pi-extensions.md).
 
 ## Boundaries
 
