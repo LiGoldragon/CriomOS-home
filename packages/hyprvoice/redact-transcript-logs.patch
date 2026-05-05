@@ -1,0 +1,134 @@
+diff --git a/internal/llm/adapter_groq.go b/internal/llm/adapter_groq.go
+index 0d0f5bc..42fd1cc 100644
+--- a/internal/llm/adapter_groq.go
++++ b/internal/llm/adapter_groq.go
+@@ -68,6 +68,6 @@ func (a *GroqAdapter) Process(ctx context.Context, text string) (string, error)
+ 	}
+ 
+ 	result := resp.Choices[0].Message.Content
+-	log.Printf("groq-llm-adapter: processed in %v: %q -> %q", duration, text, result)
++	log.Printf("groq-llm-adapter: processed in %v (%d chars -> %d chars)", duration, len(text), len(result))
+ 	return result, nil
+ }
+diff --git a/internal/llm/adapter_openai.go b/internal/llm/adapter_openai.go
+index 601066f..6247a2b 100644
+--- a/internal/llm/adapter_openai.go
++++ b/internal/llm/adapter_openai.go
+@@ -66,6 +66,6 @@ func (a *OpenAIAdapter) Process(ctx context.Context, text string) (string, error
+ 	}
+ 
+ 	result := resp.Choices[0].Message.Content
+-	log.Printf("openai-llm-adapter: processed in %v: %q -> %q", duration, text, result)
++	log.Printf("openai-llm-adapter: processed in %v (%d chars -> %d chars)", duration, len(text), len(result))
+ 	return result, nil
+ }
+diff --git a/internal/pipeline/pipeline.go b/internal/pipeline/pipeline.go
+index 534c75f..459ec98 100644
+--- a/internal/pipeline/pipeline.go
++++ b/internal/pipeline/pipeline.go
+@@ -297,7 +297,7 @@ func (p *Pipeline) handleInject(ctx context.Context) {
+ 		p.sendError("Transcription Error", "Failed to retrieve transcription", err)
+ 		return
+ 	}
+-	log.Printf("Pipeline: Final transcription text: %s", transcriptionText)
++	log.Printf("Pipeline: final transcription ready (%d chars)", len(transcriptionText))
+ 
+ 	// LLM post-processing phase
+ 	textToInject := transcriptionText
+@@ -326,7 +326,7 @@ func (p *Pipeline) handleInject(ctx context.Context) {
+ 				log.Printf("Pipeline: LLM processing failed: %v, using raw transcription", err)
+ 			} else {
+ 				textToInject = processed
+-				log.Printf("Pipeline: LLM processed text: %s", textToInject)
++				log.Printf("Pipeline: LLM processed text ready (%d chars)", len(textToInject))
+ 			}
+ 		}
+ 		p.setStatus(Injecting)
+diff --git a/internal/transcriber/adapter_deepgram.go b/internal/transcriber/adapter_deepgram.go
+index edf70c2..c4c62d0 100644
+--- a/internal/transcriber/adapter_deepgram.go
++++ b/internal/transcriber/adapter_deepgram.go
+@@ -324,7 +324,7 @@ func (a *DeepgramAdapter) handleMessages(ctx context.Context) {
+ 				if transcript != "" {
+ 					isFinal := resp.IsFinal || resp.SpeechFinal
+ 					if isFinal {
+-						log.Printf("deepgram: final: %q", transcript)
++						log.Printf("deepgram: final transcription ready (%d chars)", len(transcript))
+ 						// signal finalization (non-blocking)
+ 						select {
+ 						case a.finalizeDone <- struct{}{}:
+diff --git a/internal/transcriber/adapter_elevenlabs.go b/internal/transcriber/adapter_elevenlabs.go
+index 6010b20..3ac03df 100644
+--- a/internal/transcriber/adapter_elevenlabs.go
++++ b/internal/transcriber/adapter_elevenlabs.go
+@@ -126,6 +126,6 @@ func (a *ElevenLabsAdapter) Transcribe(ctx context.Context, audioData []byte) (s
+ 		return "", fmt.Errorf("decode response: %w", err)
+ 	}
+ 
+-	log.Printf("elevenlabs-adapter: transcribed %d bytes in %v: %q", len(audioData), duration, result.Text)
++	log.Printf("elevenlabs-adapter: transcribed %d bytes in %v (%d chars)", len(audioData), duration, len(result.Text))
+ 	return result.Text, nil
+ }
+diff --git a/internal/transcriber/adapter_elevenlabs_streaming.go b/internal/transcriber/adapter_elevenlabs_streaming.go
+index 2796817..d5ce0df 100644
+--- a/internal/transcriber/adapter_elevenlabs_streaming.go
++++ b/internal/transcriber/adapter_elevenlabs_streaming.go
+@@ -282,7 +282,7 @@ func (a *ElevenLabsStreamingAdapter) handleMessages(ctx context.Context, conn *w
+ 
+ 		case "committed_transcript", "committed_transcript_with_timestamps":
+ 			// final result
+-			log.Printf("elevenlabs-streaming: committed: %q", msg.Text)
++			log.Printf("elevenlabs-streaming: committed transcript ready (%d chars)", len(msg.Text))
+ 			if msg.Text != "" {
+ 				a.resultsCh <- TranscriptionResult{Text: msg.Text, IsFinal: true}
+ 			}
+diff --git a/internal/transcriber/adapter_openai.go b/internal/transcriber/adapter_openai.go
+index a0e7491..1c8700b 100644
+--- a/internal/transcriber/adapter_openai.go
++++ b/internal/transcriber/adapter_openai.go
+@@ -84,6 +84,6 @@ func (a *OpenAIAdapter) Transcribe(ctx context.Context, audioData []byte) (strin
+ 		return "", fmt.Errorf("%s transcription: %w", a.providerName, err)
+ 	}
+ 
+-	log.Printf("%s-adapter: transcribed %d bytes in %v: %q", a.providerName, len(audioData), duration, resp.Text)
++	log.Printf("%s-adapter: transcribed %d bytes in %v (%d chars)", a.providerName, len(audioData), duration, len(resp.Text))
+ 	return resp.Text, nil
+ }
+diff --git a/internal/transcriber/adapter_openai_realtime.go b/internal/transcriber/adapter_openai_realtime.go
+index ca4c1c3..5f542cc 100644
+--- a/internal/transcriber/adapter_openai_realtime.go
++++ b/internal/transcriber/adapter_openai_realtime.go
+@@ -384,7 +384,7 @@ func (a *OpenAIRealtimeAdapter) handleMessages(ctx context.Context, conn *websoc
+ 
+ 	case "conversation.item.input_audio_transcription.completed":
+ 		// final transcription result
+-		log.Printf("openai-realtime: transcription completed: %q", event.Transcript)
++		log.Printf("openai-realtime: transcription completed (%d chars)", len(event.Transcript))
+ 		if event.Transcript != "" {
+ 			a.resultsCh <- TranscriptionResult{Text: event.Transcript, IsFinal: true}
+ 		}
+diff --git a/internal/transcriber/adapter_whisper_cpp.go b/internal/transcriber/adapter_whisper_cpp.go
+index 61f7a24..da2df01 100644
+--- a/internal/transcriber/adapter_whisper_cpp.go
++++ b/internal/transcriber/adapter_whisper_cpp.go
+@@ -103,6 +103,6 @@ func (a *WhisperCppAdapter) Transcribe(ctx context.Context, audioData []byte) (s
+ 	// parse output - whisper-cli outputs transcription text directly (with -nt flag)
+ 	text := strings.TrimSpace(stdout.String())
+ 
+-	log.Printf("whisper-cpp: transcribed %d bytes in %v: %q", len(audioData), duration, text)
++	log.Printf("whisper-cpp: transcribed %d bytes in %v (%d chars)", len(audioData), duration, len(text))
+ 	return text, nil
+ }
+diff --git a/internal/transcriber/simple_transcriber.go b/internal/transcriber/simple_transcriber.go
+index 9d8b0b8..114c650 100644
+--- a/internal/transcriber/simple_transcriber.go
++++ b/internal/transcriber/simple_transcriber.go
+@@ -112,7 +112,7 @@ func (t *SimpleTranscriber) Stop(ctx context.Context) error {
+ 		return fmt.Errorf("transcription failed: %w", err)
+ 	}
+ 
+-	log.Printf("transcriber: transcription completed: %q", text)
++	log.Printf("transcriber: transcription completed (%d chars)", len(text))
+ 
+ 	t.transcriptionMu.Lock()
+ 	t.transcriptionText = text

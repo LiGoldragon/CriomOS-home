@@ -4,7 +4,7 @@ let
   wtypeForHyprvoice = pkgs.writeShellScriptBin "wtype" ''
     set -eu
 
-    delay_ms="''${HYPRVOICE_WTYPE_DELAY_MS:-10}"
+    delay_ms="''${HYPRVOICE_WTYPE_DELAY_MS:-25}"
     exec ${pkgs.wtype}/bin/wtype -d "$delay_ms" "$@"
   '';
 in
@@ -21,6 +21,7 @@ pkgs.buildGoModule rec {
 
   vendorHash = "sha256-b1IsFlhj+xTQT/4PzL97YjVjjS7TQtcIsbeK3dLOxR4=";
   subPackages = [ "cmd/hyprvoice" ];
+  patches = [ ./redact-transcript-logs.patch ];
 
   env.CGO_ENABLED = "0";
   nativeBuildInputs = [ pkgs.makeWrapper ];

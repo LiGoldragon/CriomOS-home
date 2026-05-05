@@ -65,7 +65,7 @@ mkIf (size.atLeastMin && behavesAs.edge) {
     # available as the explicit non-typing backend.
     backends = ["wtype", "clipboard"]
     ydotool_timeout = "5s"
-    wtype_timeout = "5s"
+    wtype_timeout = "60s"
     clipboard_timeout = "3s"
 
     [notifications]
