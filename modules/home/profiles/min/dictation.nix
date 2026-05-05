@@ -25,7 +25,6 @@ let
     fi
 
     export OPENAI_API_KEY
-    export YDOTOOL_SOCKET="''${YDOTOOL_SOCKET:-/run/ydotoold/socket}"
 
     exec ${hyprvoice}/bin/hyprvoice serve
   '';
@@ -33,12 +32,10 @@ let
   startHyprvoice = pkgs.writeShellScript "criomos-start-hyprvoice" ''
     set -eu
 
-    export YDOTOOL_SOCKET="''${YDOTOOL_SOCKET:-/run/ydotoold/socket}"
-
     ${pkgs.systemd}/bin/systemctl --user import-environment \
-      DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_RUNTIME_DIR YDOTOOL_SOCKET
+      DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_RUNTIME_DIR
     ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd \
-      DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_RUNTIME_DIR YDOTOOL_SOCKET
+      DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_RUNTIME_DIR
 
     exec ${pkgs.systemd}/bin/systemctl --user restart hyprvoice.service
   '';
@@ -64,9 +61,9 @@ mkIf (size.atLeastMin && behavesAs.edge) {
     threads = 0
 
     [injection]
-    # ydotool is the typing path; clipboard remains available as a secondary
-    # backend, but it is not the fix for layout-broken self-insertion.
-    backends = ["ydotool", "clipboard"]
+    # wtype uses Wayland virtual-keyboard text injection; clipboard remains
+    # available as the explicit non-typing backend.
+    backends = ["wtype", "clipboard"]
     ydotool_timeout = "5s"
     wtype_timeout = "5s"
     clipboard_timeout = "3s"
@@ -92,9 +89,6 @@ mkIf (size.atLeastMin && behavesAs.edge) {
       ExecStart = "${hyprvoiceServe}";
       Restart = "on-failure";
       RestartSec = 2;
-      Environment = [
-        "YDOTOOL_SOCKET=/run/ydotoold/socket"
-      ];
     };
   };
 

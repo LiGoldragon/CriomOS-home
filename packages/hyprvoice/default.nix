@@ -27,7 +27,7 @@ pkgs.buildGoModule rec {
         pkgs.lib.makeBinPath [
           pkgs.pipewire
           pkgs.libnotify
-          pkgs.ydotool
+          pkgs.wtype
           pkgs.wl-clipboard
         ]
       }
