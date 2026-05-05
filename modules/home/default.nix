@@ -15,7 +15,14 @@
 #            them to inner modules that need them (e.g. niri-flake's
 #            home module).
 
-{ config, lib, horizon ? null, user ? null, inputs ? null, ... }:
+{
+  config,
+  lib,
+  horizon ? null,
+  user ? null,
+  inputs ? null,
+  ...
+}:
 {
   # Note: stylix.homeModules.stylix + niri-flake.homeModules.config +
   # noctalia.homeModules.default are imported by the wrapper in
@@ -36,6 +43,7 @@
     # the home-manager generation. Re-introducing them as explicit
     # imports.
     ./profiles/min/niri.nix
+    ./profiles/min/dictation.nix
     # Despite the filename, this configures programs.noctalia-shell
     # (bar widgets, idle timer, lock timeout). Without it the user
     # gets noctalia's upstream defaults.

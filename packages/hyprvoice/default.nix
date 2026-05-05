@@ -1,0 +1,43 @@
+{ pkgs, ... }:
+
+pkgs.buildGoModule rec {
+  pname = "hyprvoice";
+  version = "1.0.2";
+
+  src = pkgs.fetchFromGitHub {
+    owner = "LeonardoTrapani";
+    repo = "hyprvoice";
+    rev = "v${version}";
+    hash = "sha256-ng17y53L9cyxSjupSGKyZkBXOGneJrjprjvODYch6EE=";
+  };
+
+  vendorHash = "sha256-b1IsFlhj+xTQT/4PzL97YjVjjS7TQtcIsbeK3dLOxR4=";
+  subPackages = [ "cmd/hyprvoice" ];
+
+  env.CGO_ENABLED = "0";
+  nativeBuildInputs = [ pkgs.makeWrapper ];
+
+  preCheck = ''
+    export CI=true
+  '';
+
+  postInstall = ''
+    wrapProgram $out/bin/hyprvoice \
+      --prefix PATH : ${
+        pkgs.lib.makeBinPath [
+          pkgs.pipewire
+          pkgs.wl-clipboard
+          pkgs.libnotify
+          pkgs.ydotool
+        ]
+      }
+  '';
+
+  meta = {
+    description = "Voice-powered typing for Wayland desktops";
+    homepage = "https://github.com/LeonardoTrapani/hyprvoice";
+    license = pkgs.lib.licenses.mit;
+    mainProgram = "hyprvoice";
+    platforms = pkgs.lib.platforms.linux;
+  };
+}
