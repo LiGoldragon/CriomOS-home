@@ -2,20 +2,23 @@
 
 ## Patch risk
 
-This patch updates the `gascity` flake input from `gascity-nix 972fd56`
-(v1.0.0 plus Codex model patch deploy) to `gascity-nix 61894aa`
-(gascity source pinned to session sleep managed default). The main
-runtime risk is that the next home or system activation receives the
-newer `gc` binary and therefore changes non-always agent idle-sleep
-defaults.
+This patch updates the `gascity` flake input from `gascity-nix 61894aa`
+(gascity source pinned to session sleep managed default) to
+`gascity-nix d6009c3` (gascity source pinned to session wake metadata
+no-op suppression). The main runtime risk is that the next home or
+system activation receives the newer `gc` binary and therefore changes
+stable-session metadata write behavior in running cities.
 
 ## Coverage
 
-`nix flake metadata --json github:LiGoldragon/CriomOS-home/908b205`
-shows the `gascity` lock at
-`61894aa60908dc548e97de1ccf50f6146026f69e`.
-`nix build github:LiGoldragon/gascity-nix/61894aa#default --refresh
---no-link` succeeds.
+`nix flake lock --update-input gascity` updated only the `gascity`
+node in `flake.lock`. `nix build .#default --refresh` in the
+`gascity-nix d6009c3` worktree succeeds, and `./result/bin/gc version
+--long` reports `a720d067c0fcc9b77054222da5be6fac98091217`.
+`nix flake metadata --json . | jq -r
+'.locks.nodes.gascity.locked.rev, .locks.nodes.gascity.locked.narHash'`
+reports `d6009c31f03eb1ed6705fc6c5cedfcc82329dd45` and
+`sha256-FJknRVEegO+Ckvy3ebp6t2N1e4F+8dOM3pdHRRPFqyY=`.
 
 Full `nix flake check github:LiGoldragon/CriomOS-home/908b205
 --refresh` fails because blueprint exposes
