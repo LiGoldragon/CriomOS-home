@@ -645,6 +645,10 @@ mkIf size.atLeastMin {
   };
 
   home = {
+    sessionVariables = {
+      ENABLE_CLAUDEAI_MCP_SERVERS = "false";
+    };
+
     packages =
       fontPackages
       ++ nixpkgsPackages
