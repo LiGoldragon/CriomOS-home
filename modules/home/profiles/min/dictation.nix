@@ -94,7 +94,7 @@ mkIf (size.atLeastMin && behavesAs.edge) {
     [transcription]
     provider = "openai"
     model = "gpt-4o-transcribe"
-    language = ""
+    language = "en"
     streaming = false
     threads = 0
 
