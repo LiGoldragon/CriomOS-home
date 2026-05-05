@@ -1,6 +1,7 @@
 {
   config,
   horizon,
+  inputs,
   lib,
   pkgs,
   user,
@@ -14,7 +15,7 @@ let
   a = config.lib.niri.actions;
 
   hyprvoice = pkgs.callPackage ../../../../packages/hyprvoice { };
-  voxtype = pkgs.callPackage ../../../../packages/voxtype { };
+  whisrs = pkgs.callPackage ../../../../packages/whisrs { inherit inputs; };
 
   hyprvoiceServe = pkgs.writeShellScript "hyprvoice-serve" ''
     set -eu
@@ -30,25 +31,24 @@ let
     exec ${hyprvoice}/bin/hyprvoice serve
   '';
 
-  voxtypeServe = pkgs.writeShellScript "voxtype-daemon" ''
+  whisrsServe = pkgs.writeShellScript "whisrs-daemon" ''
     set -eu
 
-    VOXTYPE_WHISPER_API_KEY="$(${pkgs.gopass}/bin/gopass show -o openai/api-key)"
-    if [ -z "$VOXTYPE_WHISPER_API_KEY" ]; then
-      echo "voxtype-daemon: gopass openai/api-key returned an empty key" >&2
+    WHISRS_OPENAI_API_KEY="$(${pkgs.gopass}/bin/gopass show -o openai/api-key)"
+    if [ -z "$WHISRS_OPENAI_API_KEY" ]; then
+      echo "whisrs-daemon: gopass openai/api-key returned an empty key" >&2
       exit 1
     fi
 
-    export VOXTYPE_WHISPER_API_KEY
-    export PATH="${
-      lib.makeBinPath [
-        pkgs.libnotify
-        pkgs.wl-clipboard
-        pkgs.wtype
-      ]
-    }:$PATH"
+    uid="$(${pkgs.coreutils}/bin/id -u)"
+    runtime_dir="''${XDG_RUNTIME_DIR:-/run/user/$uid}"
+    export XDG_DATA_HOME="$runtime_dir/whisrs-data"
+    ${pkgs.coreutils}/bin/mkdir -p "$XDG_DATA_HOME"
 
-    exec ${voxtype}/bin/voxtype daemon --no-hotkey
+    export WHISRS_OPENAI_API_KEY
+    export RUST_LOG="whisrs=info,warn"
+
+    exec ${whisrs}/bin/whisrsd
   '';
 
   startHyprvoice = pkgs.writeShellScript "criomos-start-hyprvoice" ''
@@ -62,21 +62,23 @@ let
     exec ${pkgs.systemd}/bin/systemctl --user restart hyprvoice.service
   '';
 
-  startVoxtype = pkgs.writeShellScript "criomos-start-voxtype" ''
+  startWhisrs = pkgs.writeShellScript "criomos-start-whisrs" ''
     set -eu
 
     ${pkgs.systemd}/bin/systemctl --user import-environment \
-      DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_RUNTIME_DIR
+      DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_RUNTIME_DIR \
+      HYPRLAND_INSTANCE_SIGNATURE NIRI_SOCKET SWAYSOCK XKB_DEFAULT_LAYOUT XKB_DEFAULT_VARIANT
     ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd \
-      DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_RUNTIME_DIR
+      DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_RUNTIME_DIR \
+      HYPRLAND_INSTANCE_SIGNATURE NIRI_SOCKET SWAYSOCK XKB_DEFAULT_LAYOUT XKB_DEFAULT_VARIANT
 
-    exec ${pkgs.systemd}/bin/systemctl --user restart voxtype.service
+    exec ${pkgs.systemd}/bin/systemctl --user restart whisrs.service
   '';
 in
 mkIf (size.atLeastMin && behavesAs.edge) {
   home.packages = [
     hyprvoice
-    voxtype
+    whisrs
     pkgs.wl-clipboard
     pkgs.wtype
   ];
@@ -114,48 +116,27 @@ mkIf (size.atLeastMin && behavesAs.edge) {
     enabled = false
   '';
 
-  xdg.configFile."voxtype/config.toml".text = ''
-    engine = "whisper"
-    state_file = "auto"
-
-    [hotkey]
-    enabled = false
-    mode = "toggle"
+  xdg.configFile."whisrs/config.toml".text = ''
+    [general]
+    backend = "openai"
+    language = "en"
+    notify = false
+    remove_filler_words = false
+    audio_feedback = false
+    tray = false
+    overlay = false
+    vocabulary = ["Codex", "Claude", "CriomOS", "Niri", "Colemak", "OpenAI", "gopass", "whisrs", "Hyprvoice"]
+    prompt = "Transcribe spoken English as dictated text. Preserve technical names from the vocabulary. Do not translate."
 
     [audio]
     device = "default"
-    sample_rate = 16000
-    max_duration_secs = 300
 
-    [audio.feedback]
-    enabled = false
+    [input]
+    key_delay_ms = 2
 
-    [whisper]
-    mode = "remote"
-    remote_endpoint = "https://api.openai.com"
-    remote_model = "gpt-4o-transcribe"
-    language = "en"
-    translate = false
-    remote_timeout_secs = 120
-
-    [output]
-    mode = "paste"
-    fallback_to_clipboard = false
-    auto_submit = false
-    append_text = " "
-    shift_enter_newlines = false
-    paste_keys = "ctrl+v"
-    restore_clipboard = true
-    restore_clipboard_delay_ms = 500
-
-    [output.notification]
-    on_recording_start = true
-    on_recording_stop = true
-    on_transcription = false
-
-    [text]
-    spoken_punctuation = false
-    smart_auto_submit = false
+    [openai]
+    api_key = ""
+    model = "gpt-4o-transcribe"
   '';
 
   systemd.user.services.hyprvoice = {
@@ -174,9 +155,9 @@ mkIf (size.atLeastMin && behavesAs.edge) {
     };
   };
 
-  systemd.user.services.voxtype = {
+  systemd.user.services.whisrs = {
     Unit = {
-      Description = "Voxtype dictation daemon";
+      Description = "whisrs dictation daemon";
       After = [ "graphical-session.target" ];
       PartOf = [ "graphical-session.target" ];
     };
@@ -184,30 +165,40 @@ mkIf (size.atLeastMin && behavesAs.edge) {
     Install.WantedBy = [ "graphical-session.target" ];
 
     Service = {
-      ExecStart = "${voxtypeServe}";
+      ExecStart = "${whisrsServe}";
       Restart = "on-failure";
       RestartSec = 2;
+      PassEnvironment = [
+        "DISPLAY"
+        "WAYLAND_DISPLAY"
+        "XDG_CURRENT_DESKTOP"
+        "XDG_SESSION_TYPE"
+        "XDG_RUNTIME_DIR"
+        "HYPRLAND_INSTANCE_SIGNATURE"
+        "NIRI_SOCKET"
+        "SWAYSOCK"
+        "XKB_DEFAULT_LAYOUT"
+        "XKB_DEFAULT_VARIANT"
+      ];
     };
   };
 
   programs.niri.settings = {
     spawn-at-startup = [
       { command = [ "${startHyprvoice}" ]; }
-      { command = [ "${startVoxtype}" ]; }
+      { command = [ "${startWhisrs}" ]; }
     ];
 
     binds."Mod+V" = {
-      action = a.spawn "${hyprvoice}/bin/hyprvoice" "toggle";
+      action = a.spawn "${whisrs}/bin/whisrs" "toggle";
       repeat = false;
       hotkey-overlay.title = "Voice Typing";
     };
 
     binds."Mod+Shift+V" = {
-      action =
-        a.spawn "${voxtype}/bin/voxtype" "record" "toggle" "--paste" "--no-auto-submit"
-          "--no-smart-auto-submit";
+      action = a.spawn "${hyprvoice}/bin/hyprvoice" "toggle";
       repeat = false;
-      hotkey-overlay.title = "Voice Typing (Voxtype)";
+      hotkey-overlay.title = "Voice Typing (Hyprvoice)";
     };
   };
 }

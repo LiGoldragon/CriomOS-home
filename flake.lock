@@ -222,6 +222,21 @@
     },
     "crane": {
       "locked": {
+        "lastModified": 1777830388,
+        "narHash": "sha256-2uoQAqUk2H0ijQtGiWAyNeQYGYc6yfAcRRLlJAz4Gp8=",
+        "owner": "ipetkov",
+        "repo": "crane",
+        "rev": "d459c1350e96ce1a7e3859c513ef5e9869d67d6f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ipetkov",
+        "repo": "crane",
+        "type": "github"
+      }
+    },
+    "crane_2": {
+      "locked": {
         "lastModified": 1777335812,
         "narHash": "sha256-bEg5xoAxAwsyfnGhkEX7RJViTIBIYPd8ISg4O1c0HFc=",
         "owner": "ipetkov",
@@ -235,7 +250,7 @@
         "type": "github"
       }
     },
-    "crane_2": {
+    "crane_3": {
       "locked": {
         "lastModified": 1776635034,
         "narHash": "sha256-OEOJrT3ZfwbChzODfIH4GzlNTtOFuZFWPtW7jIeR8xU=",
@@ -250,7 +265,7 @@
         "type": "github"
       }
     },
-    "crane_3": {
+    "crane_4": {
       "locked": {
         "lastModified": 1777830388,
         "narHash": "sha256-2uoQAqUk2H0ijQtGiWAyNeQYGYc6yfAcRRLlJAz4Gp8=",
@@ -265,7 +280,7 @@
         "type": "github"
       }
     },
-    "crane_4": {
+    "crane_5": {
       "locked": {
         "lastModified": 1776635034,
         "narHash": "sha256-OEOJrT3ZfwbChzODfIH4GzlNTtOFuZFWPtW7jIeR8xU=",
@@ -552,7 +567,7 @@
     "hexis": {
       "inputs": {
         "blueprint": "blueprint_2",
-        "crane": "crane",
+        "crane": "crane_2",
         "fenix": "fenix",
         "nixpkgs": [
           "nixpkgs"
@@ -630,7 +645,7 @@
     },
     "lojix-cli": {
       "inputs": {
-        "crane": "crane_2",
+        "crane": "crane_3",
         "fenix": "fenix_2",
         "nixpkgs": [
           "nixpkgs"
@@ -832,7 +847,7 @@
     },
     "orchestrator": {
       "inputs": {
-        "crane": "crane_3",
+        "crane": "crane_4",
         "fenix": "fenix_3",
         "gascity-nix": [
           "gascity"
@@ -902,6 +917,7 @@
         "blueprint": "blueprint",
         "claude-code-vsix": "claude-code-vsix",
         "codex-cli": "codex-cli",
+        "crane": "crane",
         "criomos-lib": "criomos-lib",
         "gascity": "gascity",
         "hexis": "hexis",
@@ -918,7 +934,8 @@
         "stylix": "stylix",
         "substack-cli": "substack-cli",
         "system": "system",
-        "visualjj-vsix": "visualjj-vsix"
+        "visualjj-vsix": "visualjj-vsix",
+        "whisrs-src": "whisrs-src"
       }
     },
     "rust-analyzer-src": {
@@ -1024,7 +1041,7 @@
     },
     "substack-cli": {
       "inputs": {
-        "crane": "crane_4",
+        "crane": "crane_5",
         "fenix": "fenix_4",
         "flake-utils": "flake-utils_3",
         "nixpkgs": [
@@ -1293,6 +1310,23 @@
       "original": {
         "type": "file",
         "url": "https://open-vsx.org/api/visualjj/visualjj/linux-x64/0.28.1/file/visualjj.visualjj-0.28.1@linux-x64.vsix"
+      }
+    },
+    "whisrs-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1777763012,
+        "narHash": "sha256-8Sg6YYzsrTVmz6cQKxRxSkgVR/dmFD90L2L0GrahC3U=",
+        "owner": "y0sif",
+        "repo": "whisrs",
+        "rev": "af25e63350f56b84983c2ebf6bd782dd4a4764fa",
+        "type": "github"
+      },
+      "original": {
+        "owner": "y0sif",
+        "ref": "v0.1.11",
+        "repo": "whisrs",
+        "type": "github"
       }
     },
     "xwayland-satellite-stable": {

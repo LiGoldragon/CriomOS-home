@@ -7,6 +7,8 @@
     blueprint.url = "github:numtide/blueprint";
     blueprint.inputs.nixpkgs.follows = "nixpkgs";
 
+    crane.url = "github:ipetkov/crane";
+
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -79,6 +81,14 @@
     # `substack` CLI — its own flake, exposes packages.<system>.default.
     substack-cli.url = "github:LiGoldragon/substack-cli";
     substack-cli.inputs.nixpkgs.follows = "nixpkgs";
+
+    # `whisrs` — Linux/Niri dictation tool. Consumed as source and packaged
+    # locally as a cloud-only build so the daily OpenAI path does not compile
+    # local whisper.cpp support.
+    whisrs-src = {
+      url = "github:y0sif/whisrs/v0.1.11";
+      flake = false;
+    };
 
     # `annas` — Anna's Archive book/article search + download CLI. Upstream
     # (iosifache/annas-mcp) has no flake; consumed as non-flake source and

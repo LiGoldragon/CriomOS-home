@@ -1,0 +1,29 @@
+diff --git a/src/daemon/main.rs b/src/daemon/main.rs
+--- a/src/daemon/main.rs
++++ b/src/daemon/main.rs
+@@ -568,16 +568,22 @@ async fn main() -> Result<()> {
+     let (config, config_warning) = load_config();
+     validate_config(&config);
+     let notify = config.general.notify;
+-
++
+     // Notify user if config parsing failed and defaults are being used.
+     if let Some(msg) = config_warning {
+         if notify {
+             send_notification("whisrs", &msg);
+         }
+     }
+-
++
+     let backend = create_backend(&config);
+-
++    // Backend constructors copy the API key into their own state. Clear
++    // vendor key environment variables before spawning compositor,
++    // clipboard, notification, or systemctl helper commands.
++    std::env::remove_var("WHISRS_OPENAI_API_KEY");
++    std::env::remove_var("WHISRS_GROQ_API_KEY");
++    std::env::remove_var("WHISRS_DEEPGRAM_API_KEY");
++
+     // Wait for compositor environment on boot (WAYLAND_DISPLAY, etc.).
+     // Must run before window tracker detection and any clipboard operations.
+     import_compositor_env().await;
