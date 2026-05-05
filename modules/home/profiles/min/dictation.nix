@@ -84,6 +84,8 @@ mkIf (size.atLeastMin && behavesAs.edge) {
       PartOf = [ "graphical-session.target" ];
     };
 
+    Install.WantedBy = [ "graphical-session.target" ];
+
     Service = {
       ExecStart = "${hyprvoiceServe}";
       Restart = "on-failure";
