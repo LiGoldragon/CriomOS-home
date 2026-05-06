@@ -608,9 +608,11 @@ mkIf size.atLeastMed {
   };
 
   home = {
+    # mkForce because the neovim and (formerly) vscodium modules also
+    # define EDITOR/VISUAL — emacsclient is the cluster default editor.
     sessionVariables = {
-      EDITOR = "emacsclient -c";
-      VISUAL = "emacsclient -c";
+      EDITOR = lib.mkForce "emacsclient -c";
+      VISUAL = lib.mkForce "emacsclient -c";
     };
     file = {
       ".emacs.d/init.el".text = initEl;
