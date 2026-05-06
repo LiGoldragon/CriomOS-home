@@ -2,32 +2,41 @@
 
 ## Patch risk
 
-This patch updates the `gascity` flake input from `gascity-nix d6009c3`
+This patch updates the `gascity` flake input from `gascity-nix db66862`
 (gascity source pinned to session wake metadata no-op suppression) to
-`gascity-nix db66862` (gascity source pinned to
-`6462edf36cefa88bde03f19439173a3bc821a708`).
+`gascity-nix 7c2809e` (gascity source pinned to
+`2ebf4885dbc0183a78d0799355f141de85056857`).
 
 The new `gc` includes the upstream issue-prefix SQL repair and the
-stable-session no-op wake failure cleanup fix. The main runtime risk is
-that the next home or system activation receives this newer `gc` binary
-and therefore changes stable-session metadata write behavior in running
-cities.
+stable-session no-op wake failure cleanup fix, plus an explicit wake fix
+for dormant sessions. The main runtime risk is that the next home or
+system activation receives this newer `gc` binary and therefore changes
+session wake behavior in running cities: `gc session wake` now records a
+one-shot start request for asleep, suspended, drained, and stopped
+sessions instead of only clearing wake blockers.
 
 ## Coverage
 
 `nix flake update gascity` updated only the `gascity` node in
-`flake.lock`. The new lock reports `db668627ca3293c45778390ecf1b193c74607246`
-and `sha256-Am0C72J0bfG85YJDiWst3TaiuTpFsVPgdzlsIWJW5nc=`.
+`flake.lock`. The new lock reports `7c2809edd3d9ad7ce887b48b9fff60dbd37fd55f`
+and `sha256-NaOV3DCSQ2uKgXkOBczzd1i0jY3MvjbOuliuGYG7fmo=`.
 
-`nix build .#default --refresh` in the `gascity-nix db66862` worktree
+`nix build .#gascity` in the `gascity-nix 7c2809e` worktree
 succeeds, and `gc version --long` for that package reports
-`6462edf36cefa88bde03f19439173a3bc821a708`.
+`2ebf4885dbc0183a78d0799355f141de85056857`.
 
 `test-city` reproduced the dolt write-amp pattern against stock
 `gascity 1.0.0`. It then validated this exact package through the
 `run-idle-gascity-nix-source` lane: after startup, Dolt commits stayed
 flat at 14, events stayed flat at 12, and Dolt CPU fell from the initial
 startup burst to idle-level usage instead of continuing the write loop.
+
+Additional `test-city` PATH testing found the dormant wake regression in
+the previous pin: after `gc session suspend auditor` stopped the runtime,
+`gc session wake auditor` returned success but did not restart the
+on-demand named session, and the controller later reaped it as stale. The
+new Gas City commit adds targeted tests for explicit wake metadata and is
+being revalidated through the lifecycle churn lane after activation.
 
 ## Cross-repo effects
 
