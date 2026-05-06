@@ -1,0 +1,37 @@
+diff --git a/src/daemon/main.rs b/src/daemon/main.rs
+--- a/src/daemon/main.rs
++++ b/src/daemon/main.rs
+@@ -1207,8 +1207,9 @@ async fn run_streaming_pipeline(
+         }
+     }
+ 
+-    // Save to history if we got any text.
++    // Save to clipboard/history if we got any text.
+     if !full_text.is_empty() {
++        copy_transcript_to_clipboard(&full_text).await;
+         let duration_secs = pipeline_start.elapsed().as_secs_f64();
+         save_history_entry(&full_text, &backend_name, &language, duration_secs);
+     }
+@@ -1365,4 +1366,6 @@ async fn process_recording_batch(
+         }
+     }
+ 
++    copy_transcript_to_clipboard(&text).await;
++
+     match output {
+@@ -1470,6 +1472,15 @@ fn copy_text_to_clipboard(text: &str) -> Result<()> {
+         .context("failed to copy text to clipboard")
+ }
+ 
++async fn copy_transcript_to_clipboard(text: &str) {
++    let text = text.to_string();
++    match tokio::task::spawn_blocking(move || copy_text_to_clipboard(&text)).await {
++        Ok(Ok(())) => {}
++        Ok(Err(e)) => warn!("failed to copy transcript backup to clipboard: {e}"),
++        Err(e) => warn!("clipboard backup task panicked: {e}"),
++    }
++}
++
+ fn build_transcription_config(config: &Config) -> TranscriptionConfig {
+     TranscriptionConfig {
+         language: config.general.language.clone(),

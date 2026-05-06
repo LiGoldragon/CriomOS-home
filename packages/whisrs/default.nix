@@ -33,6 +33,7 @@ craneLib.buildPackage (
     patches = [
       ./privacy.patch
       ./clipboard-mode.patch
+      ./transcript-recovery.patch
       ./tray-icon-theme.patch
     ];
 

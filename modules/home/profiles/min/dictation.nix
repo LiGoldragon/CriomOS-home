@@ -25,10 +25,13 @@ let
       exit 1
     fi
 
-    uid="$(${pkgs.coreutils}/bin/id -u)"
-    runtime_dir="''${XDG_RUNTIME_DIR:-/run/user/$uid}"
-    export XDG_DATA_HOME="$runtime_dir/whisrs-data"
-    ${pkgs.coreutils}/bin/mkdir -p "$XDG_DATA_HOME"
+    export XDG_DATA_HOME="''${XDG_DATA_HOME:-$HOME/.local/share}"
+    ${pkgs.coreutils}/bin/install -d -m 700 "$XDG_DATA_HOME/whisrs"
+    if [ -e "$XDG_DATA_HOME/whisrs/history.jsonl" ]; then
+      ${pkgs.coreutils}/bin/chmod 600 "$XDG_DATA_HOME/whisrs/history.jsonl"
+    else
+      ${pkgs.coreutils}/bin/install -m 600 /dev/null "$XDG_DATA_HOME/whisrs/history.jsonl"
+    fi
 
     export WHISRS_OPENAI_API_KEY
     export RUST_LOG="whisrs=info,warn"
