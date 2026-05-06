@@ -1,40 +1,41 @@
-# Risk note — cr-ygc4tl CriomOS-home pin
+# Risk note — Gas City dolt-amp fix pin
 
 ## Patch risk
 
-This patch updates the `gascity` flake input from `gascity-nix 61894aa`
-(gascity source pinned to session sleep managed default) to
-`gascity-nix d6009c3` (gascity source pinned to session wake metadata
-no-op suppression). The main runtime risk is that the next home or
-system activation receives the newer `gc` binary and therefore changes
-stable-session metadata write behavior in running cities.
+This patch updates the `gascity` flake input from `gascity-nix d6009c3`
+(gascity source pinned to session wake metadata no-op suppression) to
+`gascity-nix db66862` (gascity source pinned to
+`6462edf36cefa88bde03f19439173a3bc821a708`).
+
+The new `gc` includes the upstream issue-prefix SQL repair and the
+stable-session no-op wake failure cleanup fix. The main runtime risk is
+that the next home or system activation receives this newer `gc` binary
+and therefore changes stable-session metadata write behavior in running
+cities.
 
 ## Coverage
 
-`nix flake lock --update-input gascity` updated only the `gascity`
-node in `flake.lock`. `nix build .#default --refresh` in the
-`gascity-nix d6009c3` worktree succeeds, and `./result/bin/gc version
---long` reports `a720d067c0fcc9b77054222da5be6fac98091217`.
-`nix flake metadata --json . | jq -r
-'.locks.nodes.gascity.locked.rev, .locks.nodes.gascity.locked.narHash'`
-reports `d6009c31f03eb1ed6705fc6c5cedfcc82329dd45` and
-`sha256-FJknRVEegO+Ckvy3ebp6t2N1e4F+8dOM3pdHRRPFqyY=`.
+`nix flake update gascity` updated only the `gascity` node in
+`flake.lock`. The new lock reports `db668627ca3293c45778390ecf1b193c74607246`
+and `sha256-Am0C72J0bfG85YJDiWst3TaiuTpFsVPgdzlsIWJW5nc=`.
 
-Full `nix flake check github:LiGoldragon/CriomOS-home/908b205
---refresh` fails because blueprint exposes
-`checks.x86_64-linux.pkgs-formatter-__ignoreNulls` as a non-derivation.
-The same failure occurs on parent commit `CriomOS-home 7bb3082`
-(Document Pi extension packaging), so this is pre-existing and not
-introduced by the lock update.
+`nix build .#default --refresh` in the `gascity-nix db66862` worktree
+succeeds, and `gc version --long` for that package reports
+`6462edf36cefa88bde03f19439173a3bc821a708`.
+
+`test-city` reproduced the dolt write-amp pattern against stock
+`gascity 1.0.0`. It then validated this exact package through the
+`run-idle-gascity-nix-source` lane: after startup, Dolt commits stayed
+flat at 14, events stayed flat at 12, and Dolt CPU fell from the initial
+startup burst to idle-level usage instead of continuing the write loop.
 
 ## Cross-repo effects
 
 `CriomOS-home` feeds the operator home profile and is also consumed by
-CriomOS. Mayor or Li must still run the authorized deployment path; this
-patch does not activate Home Manager, run `lojix-cli`, or restart
-supervised sessions.
+CriomOS. This patch is intended for the authorized `lojix-cli`
+activation path so the `gc` on `PATH` comes from the fixed package.
 
 ## Reviewer focus
 
-Review `flake.lock` first. The intended diff is only the `gascity`
+Review `flake.lock` first. The intended lock diff is only the `gascity`
 node's `rev`, `narHash`, and `lastModified`.

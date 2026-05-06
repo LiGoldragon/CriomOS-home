@@ -534,11 +534,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778010720,
-        "narHash": "sha256-FJknRVEegO+Ckvy3ebp6t2N1e4F+8dOM3pdHRRPFqyY=",
+        "lastModified": 1778022276,
+        "narHash": "sha256-Am0C72J0bfG85YJDiWst3TaiuTpFsVPgdzlsIWJW5nc=",
         "owner": "LiGoldragon",
         "repo": "gascity-nix",
-        "rev": "d6009c31f03eb1ed6705fc6c5cedfcc82329dd45",
+        "rev": "db668627ca3293c45778390ecf1b193c74607246",
         "type": "github"
       },
       "original": {
