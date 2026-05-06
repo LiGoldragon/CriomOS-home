@@ -147,38 +147,11 @@ lib.mkIf size.atLeastMed {
     };
   };
 
-  home.sessionVariables = {
-    EDITOR = lib.mkForce "codium --wait";
-    VISUAL = lib.mkForce "codium --wait";
-  };
-
-  xdg.mimeApps.defaultApplications = builtins.listToAttrs (map (t: {
-    name = t;
-    value = "codium.desktop";
-  }) [
-    "text/plain"
-    "text/markdown"
-    "text/x-markdown"
-    "text/x-python"
-    "text/x-shellscript"
-    "text/x-c"
-    "text/x-c++"
-    "text/x-rust"
-    "text/x-go"
-    "text/x-java"
-    "text/x-toml"
-    "text/x-nix"
-    "text/x-lua"
-    "text/x-diff"
-    "text/x-log"
-    "text/csv"
-    "text/xml"
-    "application/json"
-    "application/x-yaml"
-    "application/xml"
-    "application/toml"
-    "application/x-shellscript"
-  ]);
+  # Codium's `EDITOR=codium --wait` and `xdg.mimeApps.defaultApplications`
+  # force-block were removed 2026-05-07 — emacsclient is the cluster
+  # default editor (configured in profiles/med/emacs.nix). Codium stays
+  # in the desktop chooser via its `.desktop` entry; this module just
+  # installs and configures it, no longer claims defaults.
 
   # Replaces the broken `mkJsonMerge` shallow-merge helper. hexis does
   # a real RFC-7396-shaped deep merge: declared keys win where they

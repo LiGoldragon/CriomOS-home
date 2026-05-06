@@ -552,6 +552,48 @@ let
     ;;; init.el ends here.
   '';
 
+  # Default-editor MIME types. The Emacs-shipped emacsclient.desktop
+  # only declares a narrow C/C++/Pascal/TeX set; we register
+  # emacsclient as the default for the cluster's full text / source
+  # set. Text types not in this list still fall through to whichever
+  # other registered .desktop matches (e.g. codium for some boutique
+  # types), preserving chooser flexibility.
+  defaultEditorMimeTypes = [
+    "text/plain"
+    "text/markdown"
+    "text/x-markdown"
+    "text/english"
+    "text/x-makefile"
+    "text/x-c"
+    "text/x-c++"
+    "text/x-c++hdr"
+    "text/x-c++src"
+    "text/x-chdr"
+    "text/x-csrc"
+    "text/x-java"
+    "text/x-moc"
+    "text/x-pascal"
+    "text/x-tcl"
+    "text/x-tex"
+    "text/x-python"
+    "text/x-rust"
+    "text/x-go"
+    "text/x-shellscript"
+    "text/x-toml"
+    "text/x-nix"
+    "text/x-lua"
+    "text/x-diff"
+    "text/x-log"
+    "text/csv"
+    "text/xml"
+    "application/json"
+    "application/x-yaml"
+    "application/xml"
+    "application/toml"
+    "application/x-shellscript"
+    "x-scheme-handler/org-protocol"
+  ];
+
 in
 mkIf size.atLeastMed {
   programs.emacs = {
@@ -566,8 +608,44 @@ mkIf size.atLeastMed {
   };
 
   home = {
-    sessionVariables.EDITOR = "emacsclient -c";
-    file.".emacs.d/init.el".text = initEl;
+    sessionVariables = {
+      EDITOR = "emacsclient -c";
+      VISUAL = "emacsclient -c";
+    };
+    file = {
+      ".emacs.d/init.el".text = initEl;
+
+      # User-local emacsclient.desktop with a full MIME list so the
+      # xdg-open chooser offers it for markdown / python / rust / json /
+      # yaml / nix / etc., not just the narrow set the Emacs package
+      # ships. Wins over the package-shipped entry by being earlier in
+      # XDG_DATA_DIRS. `Exec` uses the daemon-and-fallback form so a
+      # missing daemon is not a hard error.
+      ".local/share/applications/emacsclient.desktop".text = ''
+        [Desktop Entry]
+        Name=Emacs (Client)
+        GenericName=Text Editor
+        Comment=Edit text via emacsclient (daemon-attached)
+        Exec=emacsclient -c -a emacs %F
+        Icon=emacs
+        Type=Application
+        Terminal=false
+        Categories=Development;TextEditor;
+        StartupNotify=true
+        StartupWMClass=Emacs
+        Keywords=emacs;emacsclient;
+        MimeType=${lib.concatStringsSep ";" defaultEditorMimeTypes};
+        Actions=new-window;new-instance;
+
+        [Desktop Action new-window]
+        Name=New Window
+        Exec=emacsclient -c -a emacs %F
+
+        [Desktop Action new-instance]
+        Name=New Instance
+        Exec=emacs %F
+      '';
+    };
 
     # CLI tools the in-buffer formatters and language modes invoke.
     packages = with pkgs; [
@@ -578,4 +656,11 @@ mkIf size.atLeastMed {
       fd
     ];
   };
+
+  xdg.mimeApps.defaultApplications = builtins.listToAttrs (
+    map (mimeType: {
+      name = mimeType;
+      value = "emacsclient.desktop";
+    }) defaultEditorMimeTypes
+  );
 }
