@@ -21,9 +21,9 @@ diff --git a/src/tray/service.rs b/src/tray/service.rs
 +    fn icon_name(&self) -> String {
 +        let state = self.state.lock().unwrap();
 +        match state.current {
-+            State::Idle => "whisrs-idle",
-+            State::Recording => "whisrs-recording",
-+            State::Transcribing => "whisrs-transcribing",
++            State::Idle => "whisrs-idle.svg",
++            State::Recording => "whisrs-recording.svg",
++            State::Transcribing => "whisrs-transcribing.svg",
 +        }
 +        .to_string()
 +    }

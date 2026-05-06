@@ -64,7 +64,7 @@ craneLib.buildPackage (
         }
 
       wrapProgram $out/bin/whisrsd \
-        --set WHISRS_ICON_THEME_PATH $out/share/icons/hicolor \
+        --set WHISRS_ICON_THEME_PATH $out/share/icons/hicolor/scalable/status \
         --prefix PATH : ${
           pkgs.lib.makeBinPath [
             pkgs.niri
