@@ -50,6 +50,8 @@
     ./profiles/min/sfwbar.nix
     ./profiles/med
     ./profiles/med/cli-tools.nix
+    ./profiles/med/codium.nix
+    ./profiles/med/emacs.nix
     # NOT importing ./profiles/med/element.nix here — that file declares
     # `systemd.services.nginx-element` (system-level, not user). It belongs
     # in a CriomOS NixOS module, not in this home-manager aggregate.
