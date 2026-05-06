@@ -132,7 +132,7 @@ mkIf (size.atLeastMin && behavesAs.edge) {
     device = "default"
 
     [input]
-    key_delay_ms = 6
+    key_delay_ms = 12
 
     [openai]
     api_key = ""
