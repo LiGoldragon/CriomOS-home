@@ -594,6 +594,8 @@ let
     "x-scheme-handler/org-protocol"
   ];
 
+  isPreferredEditor = user.preferredEditor == "Emacs";
+
 in
 mkIf size.atLeastMed {
   programs.emacs = {
@@ -608,9 +610,11 @@ mkIf size.atLeastMed {
   };
 
   home = {
-    # mkForce because the neovim and (formerly) vscodium modules also
-    # define EDITOR/VISUAL — emacsclient is the cluster default editor.
-    sessionVariables = {
+    # EDITOR/VISUAL are claimed only when this user's projected
+    # preferredEditor is Emacs. mkForce because the neovim module
+    # also defines them. The vscodium module makes the symmetric
+    # claim when the user's preferredEditor is Codium.
+    sessionVariables = lib.mkIf isPreferredEditor {
       EDITOR = lib.mkForce "emacsclient -c";
       VISUAL = lib.mkForce "emacsclient -c";
     };
@@ -659,10 +663,12 @@ mkIf size.atLeastMed {
     ];
   };
 
-  xdg.mimeApps.defaultApplications = builtins.listToAttrs (
-    map (mimeType: {
-      name = mimeType;
-      value = "emacsclient.desktop";
-    }) defaultEditorMimeTypes
+  xdg.mimeApps.defaultApplications = lib.mkIf isPreferredEditor (
+    builtins.listToAttrs (
+      map (mimeType: {
+        name = mimeType;
+        value = "emacsclient.desktop";
+      }) defaultEditorMimeTypes
+    )
   );
 }
