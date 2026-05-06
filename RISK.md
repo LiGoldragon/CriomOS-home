@@ -2,28 +2,28 @@
 
 ## Patch risk
 
-This patch updates the `gascity` flake input from `gascity-nix 3aa2e01`
-(gascity source pinned to the drain write wake fix) to
-`gascity-nix 5f6d5d4` (gascity source pinned to
-`881f57bd5cc8d927ca1dcc1e5e5c1b036246ff8a`).
+This patch updates the `gascity` flake input from `gascity-nix 5f6d5d4`
+(gascity source pinned to the builtin-pack pruning fix) to
+`gascity-nix 8c51b8f` (gascity source pinned to
+`4e9947249320618b8a2a1d94d13e8a2715360d5a`).
 
 The new `gc` keeps the previous wake and managed bd fixes and adds
-managed builtin-pack pruning. The main runtime risk is that the next
-home or system activation receives a `gc` binary that treats
-`.gc/system/packs` as an exact managed projection: stale files left by
-older Gas City binaries are removed on start or reload. That is intended
-for bundled pack files, but any user-edited file under `.gc/system/packs`
-would be removed instead of preserved.
+two Criopolis repair fixes: the daemon-only Dolt compactor order is
+disabled, and cached no-op metadata writes are suppressed before they
+reach `bd update`. The main runtime risk is that a legitimate metadata
+refresh that intentionally writes an identical value no longer advances
+the bead's `updated_at`; consumers should treat unchanged metadata as no
+state transition.
 
 ## Coverage
 
 `nix flake update gascity` updated only the `gascity` node in
-`flake.lock`. The new lock reports `5f6d5d427d9111143e06ed5fe1b7a223e0b256fb`
-and `sha256-VqeR97mY5ZrL/FPNymdJnPIoOz2XQATXdyct8XhfS8A=`.
+`flake.lock`. The new lock reports `8c51b8fc9a88d69272857a0098023f1a1b49294d`
+and `sha256-Z2pM7q6tGue4spDRzGEhRON8jOyq5CQAeTP/Xst4aHg=`.
 
-`nix build .#gascity` in the `gascity-nix 5f6d5d4` worktree
+`nix build .#gascity` in the `gascity-nix 8c51b8f` worktree
 succeeds, and `gc version --long` for that package reports
-`881f57bd5cc8d927ca1dcc1e5e5c1b036246ff8a`.
+`4e9947249320618b8a2a1d94d13e8a2715360d5a`.
 
 `test-city` reproduced the dolt write-amp pattern against stock
 `gascity 1.0.0`. It then validated this exact package through the
@@ -41,13 +41,13 @@ drain-completion write that could clear a newer pending create claim.
 The latest Gas City commit adds a second guard for stale drain writes
 that read before the wake claim commits and land afterward.
 
-The live Criopolis repair loop exposed a stale `order-tracking-sweep`
-system-pack projection whose command no longer exists in current Gas
-City. Removing that stale projection stopped fresh order failures, and
-`gc doctor --verbose` reported 39 passed. Gas City commit `881f57bd`
-adds targeted coverage for pruning stale managed builtin files; a
-broader `go test ./cmd/gc` run timed out in an existing bd recovery
-status path outside the builtin-pack materialization tests.
+The live Criopolis repair loop then exposed two additional production
+misbehaviors: `mol-dog-compactor` was being poured to dog agents even
+though its formula is daemon-only, and the mayor/control-dispatcher
+session beads were emitting unchanged `bead.updated` events every few
+seconds. Gas City commit `4e994724` adds targeted coverage for both:
+disabled builtin order scanning and CachingStore identical-metadata
+no-op writes.
 
 ## Cross-repo effects
 
