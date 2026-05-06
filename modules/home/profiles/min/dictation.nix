@@ -120,7 +120,7 @@ mkIf (size.atLeastMin && behavesAs.edge) {
     [general]
     backend = "openai"
     language = "en"
-    notify = false
+    notify = true
     remove_filler_words = false
     audio_feedback = false
     tray = false
