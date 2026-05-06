@@ -2,31 +2,34 @@
 
 ## Patch risk
 
-This patch updates the `gascity` flake input from `gascity-nix 8c51b8f`
-(gascity source pinned to the first idle-churn fix) to
-`gascity-nix d4daa0e` (gascity source pinned to
-`5b14365c244728960aa6ab13bfa34580b67a555a`).
+This patch updates the `gascity` flake input from `gascity-nix d4daa0e`
+(gascity source pinned to the session reconciliation fix) to
+`gascity-nix 93e2059` (gascity source pinned to
+`0bc6e58522eacdf3da7f2567724d97c9ab7b4ad7`).
 
 The new `gc` keeps the previous wake, managed bd, stale builtin-pack,
 daemon-only compactor disablement, and cached metadata no-op fixes. It adds
 the direct session reconciler guard for already-clear wake failure metadata
-and pending-create in-flight accounting.
+and pending-create in-flight accounting, plus a follow-up fix for stopped
+pending-create sessions.
 
 The main runtime risk is that a legitimate metadata refresh that
 intentionally writes an identical value no longer advances the bead's
 `updated_at`; consumers should treat unchanged metadata as no state
-transition. Pending-create accounting also delays retries until the startup
-timeout expires instead of immediately minting another pool session.
+transition. Pending-create accounting still delays true `state=creating`
+retries until the startup timeout expires instead of immediately minting
+another pool session, but `state=stopped` pending-create claims retry on the
+next tick.
 
 ## Coverage
 
 `nix flake update gascity` updated only the `gascity` node in
-`flake.lock`. The new lock reports `d4daa0e9ec1a628b0d55cf71bf02322e44e18d1c`
-and `sha256-jDPLaeysNtlmOatN1vFU5O2YZ/Odnz8O5YMuppITmwc=`.
+`flake.lock`. The new lock reports `93e2059cfc3fd96c7cd157c189b238fbd01913a7`
+and `sha256-Q6k0NKxv59hsR0cs0eqDRO6yfnCllujy0WGvdNVTdQk=`.
 
-`nix build .#gascity` in the `gascity-nix d4daa0e` worktree
+`nix build .#gascity` in the `gascity-nix 93e2059` worktree
 succeeds, and `gc version --long` for that package reports
-`5b14365c244728960aa6ab13bfa34580b67a555a`.
+`0bc6e58522eacdf3da7f2567724d97c9ab7b4ad7`.
 
 `test-city` reproduced the dolt write-amp pattern against stock
 `gascity 1.0.0`. It then validated this exact package through the
@@ -53,6 +56,12 @@ disabled builtin order scanning and CachingStore identical-metadata
 no-op writes. The live loop still showed mayor/control-dispatcher writes,
 so `5b14365c` adds a direct `clearWakeFailures` no-op guard and regression
 tests for that reconciler path.
+
+Restarting Criopolis with `5b14365c` then exposed a five-minute mayor wake
+delay: the bead was `state=stopped` with `pending_create_claim=true`, so the
+new pending-create throttle treated it as still in-flight until the startup
+timeout. Gas City commit `0bc6e585` narrows the throttle to actual
+`state=creating` starts.
 
 ## Cross-repo effects
 
