@@ -32,6 +32,9 @@ lib.mkIf behavesAs.edge {
         right = [
           {
             id = "Tray";
+            colorizeIcons = false;
+            drawerEnabled = true;
+            hidePassive = false;
             pinned = [ "whisrs*" ];
           }
           {

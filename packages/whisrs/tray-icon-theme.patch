@@ -1,0 +1,33 @@
+diff --git a/src/tray/service.rs b/src/tray/service.rs
+--- a/src/tray/service.rs
++++ b/src/tray/service.rs
+@@ -1,7 +1,8 @@
+ //! System tray implementation using ksni (StatusNotifierItem).
+ 
++use std::env;
+ use std::sync::{Arc, Mutex};
+ 
+ use ksni::{Icon, ToolTip, TrayMethods};
+ use tokio::sync::watch;
+ use tracing::{info, warn};
+@@ -75,6 +76,20 @@ impl ksni::Tray for WhisrsTray {
+         }
+     }
+ 
++    fn icon_theme_path(&self) -> String {
++        env::var("WHISRS_ICON_THEME_PATH").unwrap_or_default()
++    }
++
++    fn icon_name(&self) -> String {
++        let state = self.state.lock().unwrap();
++        match state.current {
++            State::Idle => "whisrs-idle",
++            State::Recording => "whisrs-recording",
++            State::Transcribing => "whisrs-transcribing",
++        }
++        .to_string()
++    }
++
+     fn icon_pixmap(&self) -> Vec<Icon> {
+         let state = self.state.lock().unwrap();
+         let data = match state.current {

@@ -33,6 +33,7 @@ craneLib.buildPackage (
     patches = [
       ./privacy.patch
       ./clipboard-mode.patch
+      ./tray-icon-theme.patch
     ];
 
     nativeBuildInputs = commonArguments.nativeBuildInputs ++ [
@@ -49,6 +50,9 @@ craneLib.buildPackage (
     postInstall = ''
       install -Dm644 ${inputs.whisrs-src}/contrib/whisrs.1 $out/share/man/man1/whisrs.1
       install -Dm644 ${inputs.whisrs-src}/contrib/whisrsd.1 $out/share/man/man1/whisrsd.1
+      install -Dm644 ${./whisrs-idle.svg} $out/share/icons/hicolor/scalable/status/whisrs-idle.svg
+      install -Dm644 ${./whisrs-recording.svg} $out/share/icons/hicolor/scalable/status/whisrs-recording.svg
+      install -Dm644 ${./whisrs-transcribing.svg} $out/share/icons/hicolor/scalable/status/whisrs-transcribing.svg
 
       mv $out/bin/whisrs $out/bin/whisrs-unwrapped
       makeWrapper $out/bin/whisrs-unwrapped $out/bin/whisrs \
@@ -60,6 +64,7 @@ craneLib.buildPackage (
         }
 
       wrapProgram $out/bin/whisrsd \
+        --set WHISRS_ICON_THEME_PATH $out/share/icons/hicolor \
         --prefix PATH : ${
           pkgs.lib.makeBinPath [
             pkgs.niri
