@@ -63,7 +63,7 @@ mkIf (size.atLeastMin && behavesAs.edge) {
     notify = true
     remove_filler_words = false
     audio_feedback = false
-    tray = false
+    tray = true
     overlay = false
     vocabulary = ["Codex", "Claude", "CriomOS", "Niri", "Colemak", "OpenAI", "gopass", "whisrs", "Hyprvoice"]
     prompt = "Transcribe spoken English as dictated text. Preserve technical names from the vocabulary. Do not translate."

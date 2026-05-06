@@ -9,7 +9,7 @@ let
     src = craneLib.cleanCargoSource inputs.whisrs-src;
 
     strictDeps = true;
-    cargoExtraArgs = "--no-default-features";
+    cargoExtraArgs = "--no-default-features --features tray";
 
     nativeBuildInputs = with pkgs; [
       pkg-config
