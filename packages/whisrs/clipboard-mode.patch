@@ -1,0 +1,121 @@
+diff --git a/src/cli/main.rs b/src/cli/main.rs
+index d18e60f..e7a77c4 100644
+--- a/src/cli/main.rs
++++ b/src/cli/main.rs
+@@ -47,0 +48,2 @@ enum SubCmd {
++    /// Toggle recording on/off and copy the transcript to the clipboard
++    ToggleCopy,
+@@ -103,0 +106,3 @@ async fn main() -> anyhow::Result<()> {
++        SubCmd::ToggleCopy => {
++            send_command(Command::ToggleCopy).await?;
++        }
+diff --git a/src/daemon/main.rs b/src/daemon/main.rs
+index 11551db..e62c549 100644
+--- a/src/daemon/main.rs
++++ b/src/daemon/main.rs
+@@ -40,0 +41,6 @@ struct CommandModeContext {
++#[derive(Debug, Clone, Copy, PartialEq, Eq)]
++enum DictationOutput {
++    Keyboard,
++    Clipboard,
++}
++
+@@ -50,0 +57,2 @@ struct DaemonState {
++    /// Output mode for the active normal dictation recording.
++    recording_output: DictationOutput,
+@@ -62,0 +71 @@ impl DaemonState {
++            recording_output: DictationOutput::Keyboard,
+@@ -710 +719,4 @@ async fn handle_command(
+-        Command::Toggle => handle_toggle(daemon_state, context).await,
++        Command::Toggle => handle_toggle(daemon_state, context, DictationOutput::Keyboard).await,
++        Command::ToggleCopy => {
++            handle_toggle(daemon_state, context, DictationOutput::Clipboard).await
++        }
+@@ -741,0 +754 @@ async fn handle_toggle(
++    requested_output: DictationOutput,
+@@ -849,0 +863 @@ async fn handle_toggle(
++            ds.recording_output = requested_output;
+@@ -867,0 +882 @@ async fn handle_toggle(
++                    ds.recording_output = DictationOutput::Keyboard;
+@@ -894,0 +910,2 @@ async fn handle_toggle(
++                    let recording_output = ds.recording_output;
++                    ds.recording_output = DictationOutput::Keyboard;
+@@ -914 +931,7 @@ async fn handle_toggle(
+-                        process_recording_batch(capture, window_id.as_deref(), &context).await
++                        process_recording_batch(
++                            capture,
++                            window_id.as_deref(),
++                            &context,
++                            recording_output,
++                        )
++                        .await
+@@ -946,2 +969,19 @@ async fn handle_toggle(
+-                                        let preview = truncate_preview(&text, 77);
+-                                        send_notification("whisrs", &format!("Done: {preview}"));
++                                        match recording_output {
++                                            DictationOutput::Keyboard => {
++                                                let preview = truncate_preview(&text, 77);
++                                                send_notification(
++                                                    "whisrs",
++                                                    &format!("Done: {preview}"),
++                                                );
++                                            }
++                                            DictationOutput::Clipboard => {
++                                                if text.is_empty() {
++                                                    send_notification("whisrs", "Nothing copied");
++                                                } else {
++                                                    send_notification(
++                                                        "whisrs",
++                                                        "Copied transcript to clipboard",
++                                                    );
++                                                }
++                                            }
++                                        }
+@@ -1193,0 +1234 @@ async fn process_recording_batch(
++    output: DictationOutput,
+@@ -1323,7 +1364,20 @@ async fn process_recording_batch(
+-    // Type the text at the cursor.
+-    let text_clone = text.clone();
+-    let key_delay = std::time::Duration::from_millis(context.config.input.key_delay_ms);
+-    if let Err(e) =
+-        tokio::task::spawn_blocking(move || type_text_at_cursor(&text_clone, key_delay)).await?
+-    {
+-        warn!("failed to type text: {e}");
++    match output {
++        DictationOutput::Keyboard => {
++            let text_clone = text.clone();
++            let key_delay = std::time::Duration::from_millis(context.config.input.key_delay_ms);
++            if let Err(e) = tokio::task::spawn_blocking(move || {
++                type_text_at_cursor(&text_clone, key_delay)
++            })
++            .await?
++            {
++                warn!("failed to type text: {e}");
++            }
++        }
++        DictationOutput::Clipboard => {
++            let text_clone = text.clone();
++            if let Err(e) =
++                tokio::task::spawn_blocking(move || copy_text_to_clipboard(&text_clone)).await?
++            {
++                warn!("failed to copy text to clipboard: {e}");
++            }
++        }
+@@ -1402,0 +1457,10 @@ fn type_text_at_cursor(text: &str, key_delay: std::time::Duration) -> Result<()>
++fn copy_text_to_clipboard(text: &str) -> Result<()> {
++    use whisrs::input::clipboard::ClipboardOps;
++    use whisrs::input::ClipboardHandler;
++
++    let clipboard = ClipboardOps::detect();
++    clipboard
++        .set_text(text)
++        .context("failed to copy text to clipboard")
++}
++
+diff --git a/src/lib.rs b/src/lib.rs
+index ce1fd66..134ff69 100644
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -27,0 +28,2 @@ pub enum Command {
++    #[serde(rename = "toggle-copy")]
++    ToggleCopy,

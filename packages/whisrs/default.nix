@@ -30,7 +30,10 @@ craneLib.buildPackage (
   // {
     inherit cargoArtifacts;
 
-    patches = [ ./privacy.patch ];
+    patches = [
+      ./privacy.patch
+      ./clipboard-mode.patch
+    ];
 
     nativeBuildInputs = commonArguments.nativeBuildInputs ++ [
       pkgs.makeWrapper

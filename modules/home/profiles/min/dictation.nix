@@ -14,22 +14,7 @@ let
 
   a = config.lib.niri.actions;
 
-  hyprvoice = pkgs.callPackage ../../../../packages/hyprvoice { };
   whisrs = pkgs.callPackage ../../../../packages/whisrs { inherit inputs; };
-
-  hyprvoiceServe = pkgs.writeShellScript "hyprvoice-serve" ''
-    set -eu
-
-    OPENAI_API_KEY="$(${pkgs.gopass}/bin/gopass show -o openai/api-key)"
-    if [ -z "$OPENAI_API_KEY" ]; then
-      echo "hyprvoice-serve: gopass openai/api-key returned an empty key" >&2
-      exit 1
-    fi
-
-    export OPENAI_API_KEY
-
-    exec ${hyprvoice}/bin/hyprvoice serve
-  '';
 
   whisrsServe = pkgs.writeShellScript "whisrs-daemon" ''
     set -eu
@@ -51,17 +36,6 @@ let
     exec ${whisrs}/bin/whisrsd
   '';
 
-  startHyprvoice = pkgs.writeShellScript "criomos-start-hyprvoice" ''
-    set -eu
-
-    ${pkgs.systemd}/bin/systemctl --user import-environment \
-      DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_RUNTIME_DIR
-    ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd \
-      DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_RUNTIME_DIR
-
-    exec ${pkgs.systemd}/bin/systemctl --user restart hyprvoice.service
-  '';
-
   startWhisrs = pkgs.writeShellScript "criomos-start-whisrs" ''
     set -eu
 
@@ -77,44 +51,10 @@ let
 in
 mkIf (size.atLeastMin && behavesAs.edge) {
   home.packages = [
-    hyprvoice
     whisrs
     pkgs.wl-clipboard
     pkgs.wtype
   ];
-
-  xdg.configFile."hyprvoice/config.toml".text = ''
-    [recording]
-    sample_rate = 16000
-    channels = 1
-    format = "s16"
-    buffer_size = 8192
-    device = ""
-    channel_buffer_size = 30
-    timeout = "5m"
-
-    [transcription]
-    provider = "openai"
-    model = "gpt-4o-transcribe"
-    language = "en"
-    streaming = false
-    threads = 0
-
-    [injection]
-    # wtype uses Wayland virtual-keyboard text injection; clipboard remains
-    # available as the explicit non-typing backend.
-    backends = ["wtype", "clipboard"]
-    ydotool_timeout = "5s"
-    wtype_timeout = "60s"
-    clipboard_timeout = "3s"
-
-    [notifications]
-    enabled = true
-    type = "desktop"
-
-    [llm]
-    enabled = false
-  '';
 
   xdg.configFile."whisrs/config.toml".text = ''
     [general]
@@ -132,28 +72,12 @@ mkIf (size.atLeastMin && behavesAs.edge) {
     device = "default"
 
     [input]
-    key_delay_ms = 12
+    key_delay_ms = 2
 
     [openai]
     api_key = ""
     model = "gpt-4o-transcribe"
   '';
-
-  systemd.user.services.hyprvoice = {
-    Unit = {
-      Description = "Hyprvoice dictation daemon";
-      After = [ "graphical-session.target" ];
-      PartOf = [ "graphical-session.target" ];
-    };
-
-    Install.WantedBy = [ "graphical-session.target" ];
-
-    Service = {
-      ExecStart = "${hyprvoiceServe}";
-      Restart = "on-failure";
-      RestartSec = 2;
-    };
-  };
 
   systemd.user.services.whisrs = {
     Unit = {
@@ -185,7 +109,6 @@ mkIf (size.atLeastMin && behavesAs.edge) {
 
   programs.niri.settings = {
     spawn-at-startup = [
-      { command = [ "${startHyprvoice}" ]; }
       { command = [ "${startWhisrs}" ]; }
     ];
 
@@ -196,9 +119,9 @@ mkIf (size.atLeastMin && behavesAs.edge) {
     };
 
     binds."Mod+Shift+V" = {
-      action = a.spawn "${hyprvoice}/bin/hyprvoice" "toggle";
+      action = a.spawn "${whisrs}/bin/whisrs" "toggle-copy";
       repeat = false;
-      hotkey-overlay.title = "Voice Typing (Hyprvoice)";
+      hotkey-overlay.title = "Voice Typing (Copy)";
     };
   };
 }
