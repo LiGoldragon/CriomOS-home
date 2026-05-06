@@ -30,8 +30,14 @@ lib.mkIf behavesAs.edge {
           { id = "Workspace"; }
         ];
         right = [
-          { id = "Tray"; }
-          { id = "Battery"; displayMode = "graphic"; }
+          {
+            id = "Tray";
+            pinned = [ "whisrs*" ];
+          }
+          {
+            id = "Battery";
+            displayMode = "graphic";
+          }
           { id = "Volume"; }
           { id = "Brightness"; }
           { id = "ControlCenter"; }
