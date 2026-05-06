@@ -4,8 +4,8 @@
 
 This patch updates the `gascity` flake input from `gascity-nix db66862`
 (gascity source pinned to session wake metadata no-op suppression) to
-`gascity-nix 7c2809e` (gascity source pinned to
-`2ebf4885dbc0183a78d0799355f141de85056857`).
+`gascity-nix 8008d1f` (gascity source pinned to
+`cdaac218b92a913139214c0cf91277bc697b021c`).
 
 The new `gc` includes the upstream issue-prefix SQL repair and the
 stable-session no-op wake failure cleanup fix, plus an explicit wake fix
@@ -18,12 +18,12 @@ sessions instead of only clearing wake blockers.
 ## Coverage
 
 `nix flake update gascity` updated only the `gascity` node in
-`flake.lock`. The new lock reports `7c2809edd3d9ad7ce887b48b9fff60dbd37fd55f`
-and `sha256-NaOV3DCSQ2uKgXkOBczzd1i0jY3MvjbOuliuGYG7fmo=`.
+`flake.lock`. The new lock reports `8008d1f833a7cfe9b7e300717c75f7d6e1ae7efe`
+and `sha256-jIrJRlAx0WtrfDd3DwWcTEZ3Litt0j8RY3Qt+zTHGO0=`.
 
-`nix build .#gascity` in the `gascity-nix 7c2809e` worktree
+`nix build .#gascity` in the `gascity-nix 8008d1f` worktree
 succeeds, and `gc version --long` for that package reports
-`2ebf4885dbc0183a78d0799355f141de85056857`.
+`cdaac218b92a913139214c0cf91277bc697b021c`.
 
 `test-city` reproduced the dolt write-amp pattern against stock
 `gascity 1.0.0`. It then validated this exact package through the
@@ -35,8 +35,9 @@ Additional `test-city` PATH testing found the dormant wake regression in
 the previous pin: after `gc session suspend auditor` stopped the runtime,
 `gc session wake auditor` returned success but did not restart the
 on-demand named session, and the controller later reaped it as stale. The
-new Gas City commit adds targeted tests for explicit wake metadata and is
-being revalidated through the lifecycle churn lane after activation.
+new Gas City commits add targeted tests for explicit wake metadata and the
+active-with-user-hold race observed during suspend drain. The lifecycle
+churn lane is being revalidated after activation.
 
 ## Cross-repo effects
 
