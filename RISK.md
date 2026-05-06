@@ -2,28 +2,31 @@
 
 ## Patch risk
 
-This patch updates the `gascity` flake input from `gascity-nix 5f6d5d4`
-(gascity source pinned to the builtin-pack pruning fix) to
-`gascity-nix 8c51b8f` (gascity source pinned to
-`4e9947249320618b8a2a1d94d13e8a2715360d5a`).
+This patch updates the `gascity` flake input from `gascity-nix 8c51b8f`
+(gascity source pinned to the first idle-churn fix) to
+`gascity-nix d4daa0e` (gascity source pinned to
+`5b14365c244728960aa6ab13bfa34580b67a555a`).
 
-The new `gc` keeps the previous wake and managed bd fixes and adds
-two Criopolis repair fixes: the daemon-only Dolt compactor order is
-disabled, and cached no-op metadata writes are suppressed before they
-reach `bd update`. The main runtime risk is that a legitimate metadata
-refresh that intentionally writes an identical value no longer advances
-the bead's `updated_at`; consumers should treat unchanged metadata as no
-state transition.
+The new `gc` keeps the previous wake, managed bd, stale builtin-pack,
+daemon-only compactor disablement, and cached metadata no-op fixes. It adds
+the direct session reconciler guard for already-clear wake failure metadata
+and pending-create in-flight accounting.
+
+The main runtime risk is that a legitimate metadata refresh that
+intentionally writes an identical value no longer advances the bead's
+`updated_at`; consumers should treat unchanged metadata as no state
+transition. Pending-create accounting also delays retries until the startup
+timeout expires instead of immediately minting another pool session.
 
 ## Coverage
 
 `nix flake update gascity` updated only the `gascity` node in
-`flake.lock`. The new lock reports `8c51b8fc9a88d69272857a0098023f1a1b49294d`
-and `sha256-Z2pM7q6tGue4spDRzGEhRON8jOyq5CQAeTP/Xst4aHg=`.
+`flake.lock`. The new lock reports `d4daa0e9ec1a628b0d55cf71bf02322e44e18d1c`
+and `sha256-jDPLaeysNtlmOatN1vFU5O2YZ/Odnz8O5YMuppITmwc=`.
 
-`nix build .#gascity` in the `gascity-nix 8c51b8f` worktree
+`nix build .#gascity` in the `gascity-nix d4daa0e` worktree
 succeeds, and `gc version --long` for that package reports
-`4e9947249320618b8a2a1d94d13e8a2715360d5a`.
+`5b14365c244728960aa6ab13bfa34580b67a555a`.
 
 `test-city` reproduced the dolt write-amp pattern against stock
 `gascity 1.0.0`. It then validated this exact package through the
@@ -45,9 +48,11 @@ The live Criopolis repair loop then exposed two additional production
 misbehaviors: `mol-dog-compactor` was being poured to dog agents even
 though its formula is daemon-only, and the mayor/control-dispatcher
 session beads were emitting unchanged `bead.updated` events every few
-seconds. Gas City commit `4e994724` adds targeted coverage for both:
+seconds. Gas City commit `4e994724` added targeted coverage for both:
 disabled builtin order scanning and CachingStore identical-metadata
-no-op writes.
+no-op writes. The live loop still showed mayor/control-dispatcher writes,
+so `5b14365c` adds a direct `clearWakeFailures` no-op guard and regression
+tests for that reconciler path.
 
 ## Cross-repo effects
 
