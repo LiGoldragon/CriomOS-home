@@ -4,8 +4,8 @@
 
 This patch updates the `gascity` flake input from `gascity-nix db66862`
 (gascity source pinned to session wake metadata no-op suppression) to
-`gascity-nix 8008d1f` (gascity source pinned to
-`cdaac218b92a913139214c0cf91277bc697b021c`).
+`gascity-nix 5e81ad2` (gascity source pinned to
+`b56bc3cc807fb8ab30160bd15057dcda453c8e38`).
 
 The new `gc` includes the upstream issue-prefix SQL repair and the
 stable-session no-op wake failure cleanup fix, plus an explicit wake fix
@@ -18,12 +18,12 @@ sessions instead of only clearing wake blockers.
 ## Coverage
 
 `nix flake update gascity` updated only the `gascity` node in
-`flake.lock`. The new lock reports `8008d1f833a7cfe9b7e300717c75f7d6e1ae7efe`
-and `sha256-jIrJRlAx0WtrfDd3DwWcTEZ3Litt0j8RY3Qt+zTHGO0=`.
+`flake.lock`. The new lock reports `5e81ad2863064721976ff04f0afc37b9edc9bd90`
+and `sha256-0NULnjvnh4OxOofGvaf/Kqk/n6DjB0MSSIFPew144LY=`.
 
-`nix build .#gascity` in the `gascity-nix 8008d1f` worktree
+`nix build .#gascity` in the `gascity-nix 5e81ad2` worktree
 succeeds, and `gc version --long` for that package reports
-`cdaac218b92a913139214c0cf91277bc697b021c`.
+`b56bc3cc807fb8ab30160bd15057dcda453c8e38`.
 
 `test-city` reproduced the dolt write-amp pattern against stock
 `gascity 1.0.0`. It then validated this exact package through the
@@ -35,9 +35,10 @@ Additional `test-city` PATH testing found the dormant wake regression in
 the previous pin: after `gc session suspend auditor` stopped the runtime,
 `gc session wake auditor` returned success but did not restart the
 on-demand named session, and the controller later reaped it as stale. The
-new Gas City commits add targeted tests for explicit wake metadata and the
-active-with-user-hold race observed during suspend drain. The lifecycle
-churn lane is being revalidated after activation.
+new Gas City commits add targeted tests for explicit wake metadata, the
+active-with-user-hold race observed during suspend drain, and the stale
+drain-completion write that could clear a newer pending create claim. The
+lifecycle churn lane is being revalidated after activation.
 
 ## Cross-repo effects
 
