@@ -31,6 +31,7 @@
   # _module.args.inputs).
   imports = [
     ./text-scale.nix
+    ./desktop-database.nix
     ./base.nix
     ./profiles/min
     ./profiles/min/pi-models.nix

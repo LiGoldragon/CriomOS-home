@@ -17,6 +17,8 @@ mkIf size.atLeastMed {
   # Written as `home.file` rather than `xdg.desktopEntries` because the
   # latter was producing no output in the home-manager generation here
   # (cause not pinned down; home.file is the unambiguous path).
+  # Cache refresh (so the chooser actually sees this file) is wired
+  # cluster-wide in `modules/home/desktop-database.nix`.
   home.file.".local/share/applications/codium.desktop".text = ''
     [Desktop Entry]
     Actions=new-empty-window
