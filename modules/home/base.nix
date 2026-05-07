@@ -8,6 +8,18 @@ let
   darkScheme = ./ignis.yaml;
   lightScheme = ./ignis-light.yaml;
 
+  # User-driven text size. Maps the per-user `textSize` ladder
+  # (ExtraSmall / Small / Medium / Large / ExtraLarge) onto a base
+  # font point size. Each consumer (ghostty, wezterm, emacs, codium)
+  # interprets `fontPt` in its own unit.
+  fontPt = {
+    ExtraSmall = 11;
+    Small = 12;
+    Medium = 14;
+    Large = 16;
+    ExtraLarge = 18;
+  }.${user.textSize};
+
   parseScheme = scheme:
     (lib.importJSON (pkgs.runCommand "base16-to-json" {
       nativeBuildInputs = [ pkgs.yq-go ];
@@ -159,7 +171,7 @@ GTKEOF
       mkdir -p "$HOME/.config/ghostty"
       cat > "$HOME/.config/ghostty/config" << 'GHOSTTY'
 font-family = IosevkaTerm Nerd Font
-font-size = 14
+font-size = ${toString fontPt}
 window-decoration = false
 gtk-titlebar = false
 window-theme = ghostty

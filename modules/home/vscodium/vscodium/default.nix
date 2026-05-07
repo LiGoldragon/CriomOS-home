@@ -126,6 +126,24 @@ let
     "editor.minimap.enabled" = false;
     "files.trimTrailingWhitespace" = true;
     "files.insertFinalNewline" = true;
+
+    # User-driven text size. fontPt mirrors the cluster textSize
+    # ladder (see base.nix); window.zoomLevel scales the whole
+    # Codium UI on top of that so panels/menus track too.
+    "editor.fontSize" = {
+      ExtraSmall = 11;
+      Small = 12;
+      Medium = 14;
+      Large = 16;
+      ExtraLarge = 18;
+    }.${user.textSize};
+    "window.zoomLevel" = {
+      ExtraSmall = -1;
+      Small = -0.5;
+      Medium = 0;
+      Large = 0.5;
+      ExtraLarge = 1;
+    }.${user.textSize};
   };
 
 in

@@ -10,6 +10,17 @@
   ...
 }:
 let
+  # Per-user text size mapped to terminal font point size. See
+  # base.nix for the canonical mapping; duplicated here so this
+  # module stays self-contained without `_module.args` plumbing.
+  fontPt = {
+    ExtraSmall = 11;
+    Small = 12;
+    Medium = 14;
+    Large = 16;
+    ExtraLarge = 18;
+  }.${user.textSize};
+
   inherit (builtins) toString readFile toJSON;
   inherit (lib)
     optionalAttrs
@@ -455,7 +466,7 @@ mkIf size.atLeastMin {
 
         return {
           font = wezterm.font("IosevkaTerm Nerd Font"),
-          font_size = 14.0,
+          font_size = ${toString fontPt}.0,
           color_scheme = scheme_for_appearance(wezterm.gui.get_appearance()),
           window_decorations = "NONE",
           hide_tab_bar_if_only_one_tab = true,

@@ -134,7 +134,7 @@ let
     (electric-pair-mode 1)
     (recentf-mode 1)
     (run-at-time nil (* 5 60) 'recentf-save-list)
-    (set-face-attribute 'default nil :font "IosevkaTerm Nerd Font" :height 140)
+    (set-face-attribute 'default nil :font "IosevkaTerm Nerd Font" :height ${toString emacsHeight})
     (custom-set-variables
      '(make-backup-files nil)
      '(recentf-max-menu-items 1024)
@@ -595,6 +595,17 @@ let
   ];
 
   isPreferredEditor = user.preferredEditor == "Emacs";
+
+  # Emacs `:height` is in 1/10 pt units. Mapping mirrors the cluster
+  # textSize ladder (see base.nix).
+  fontPt = {
+    ExtraSmall = 11;
+    Small = 12;
+    Medium = 14;
+    Large = 16;
+    ExtraLarge = 18;
+  }.${user.textSize};
+  emacsHeight = fontPt * 10;
 
 in
 mkIf size.atLeastMed {
