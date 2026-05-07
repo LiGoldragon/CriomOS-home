@@ -4,6 +4,7 @@
   user,
   inputs,
   hexis,
+  textScale,
   ...
 }:
 let
@@ -127,23 +128,12 @@ let
     "files.trimTrailingWhitespace" = true;
     "files.insertFinalNewline" = true;
 
-    # User-driven text size. fontPt mirrors the cluster textSize
-    # ladder (see base.nix); window.zoomLevel scales the whole
-    # Codium UI on top of that so panels/menus track too.
-    "editor.fontSize" = {
-      ExtraSmall = 11;
-      Small = 12;
-      Medium = 14;
-      Large = 16;
-      ExtraLarge = 18;
-    }.${user.textSize};
-    "window.zoomLevel" = {
-      ExtraSmall = -1;
-      Small = -0.5;
-      Medium = 0;
-      Large = 0.5;
-      ExtraLarge = 1;
-    }.${user.textSize};
+    # User-driven UI size. window.zoomLevel scales every surface
+    # in Codium uniformly (chrome, panels, editor) — one knob, one
+    # mental model. We deliberately do NOT also override
+    # editor.fontSize: combining the two is multiplicative and
+    # makes the editor pane drift away from the chrome.
+    "window.zoomLevel" = textScale.codiumZoom;
   };
 
 in

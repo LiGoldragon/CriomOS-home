@@ -2,23 +2,16 @@
   pkgs,
   lib,
   user,
+  textScale,
   ...
 }:
 let
   darkScheme = ./ignis.yaml;
   lightScheme = ./ignis-light.yaml;
 
-  # User-driven text size. Maps the per-user `textSize` ladder
-  # (ExtraSmall / Small / Medium / Large / ExtraLarge) onto a base
-  # font point size. Each consumer (ghostty, wezterm, emacs, codium)
-  # interprets `fontPt` in its own unit.
-  fontPt = {
-    ExtraSmall = 11;
-    Small = 12;
-    Medium = 14;
-    Large = 16;
-    ExtraLarge = 18;
-  }.${user.textSize};
+  # `textScale.fontPt` comes from `modules/home/text-scale.nix`
+  # (single source of truth for the textSize ladder).
+  inherit (textScale) fontPt;
 
   parseScheme = scheme:
     (lib.importJSON (pkgs.runCommand "base16-to-json" {
@@ -316,7 +309,18 @@ in
           package = pkgs.dejavu_fonts;
           name = "DejaVu Serif";
         };
-        sizes.terminal = 14;
+        # All four font-size categories track the user's textSize
+        # ladder (via the `textScale.fontPt` arg). Stylix targets
+        # for ghostty/wezterm/vscode/emacs are off — those modules
+        # set fonts directly — but stylix-driven apps (waybar,
+        # rofi/wofi, etc., when their targets are on) pick up the
+        # right sizes from here.
+        sizes = {
+          terminal = fontPt;
+          applications = fontPt;
+          desktop = fontPt - 2;
+          popups = fontPt - 2;
+        };
       };
     };
   };

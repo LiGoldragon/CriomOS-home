@@ -30,6 +30,7 @@
   # CriomOS-home's own flake inputs (the wrapper overrides
   # _module.args.inputs).
   imports = [
+    ./text-scale.nix
     ./base.nix
     ./profiles/min
     ./profiles/min/pi-models.nix

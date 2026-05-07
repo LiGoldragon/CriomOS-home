@@ -6,20 +6,12 @@
   horizon,
   config,
   inputs,
+  textScale,
   # Todo(data)
   ...
 }:
 let
-  # Per-user text size mapped to terminal font point size. See
-  # base.nix for the canonical mapping; duplicated here so this
-  # module stays self-contained without `_module.args` plumbing.
-  fontPt = {
-    ExtraSmall = 11;
-    Small = 12;
-    Medium = 14;
-    Large = 16;
-    ExtraLarge = 18;
-  }.${user.textSize};
+  inherit (textScale) fontPt;
 
   inherit (builtins) toString readFile toJSON;
   inherit (lib)

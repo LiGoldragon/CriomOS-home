@@ -2,11 +2,13 @@
   lib,
   pkgs,
   user,
+  textScale,
   ...
 }:
 let
   inherit (lib) mkIf;
   inherit (user) size;
+  inherit (textScale) emacsHeight;
 
   emacsBase = pkgs.emacs-pgtk;
 
@@ -595,17 +597,6 @@ let
   ];
 
   isPreferredEditor = user.preferredEditor == "Emacs";
-
-  # Emacs `:height` is in 1/10 pt units. Mapping mirrors the cluster
-  # textSize ladder (see base.nix).
-  fontPt = {
-    ExtraSmall = 11;
-    Small = 12;
-    Medium = 14;
-    Large = 16;
-    ExtraLarge = 18;
-  }.${user.textSize};
-  emacsHeight = fontPt * 10;
 
 in
 mkIf size.atLeastMed {
