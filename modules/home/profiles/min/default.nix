@@ -426,7 +426,15 @@ mkIf size.atLeastMin {
     };
 
     wezterm = {
-      enable = false;
+      # Enabled but not the default terminal. Ghostty stays the default;
+      # WezTerm is configured for two reasons:
+      # (1) operator picked it as Persona's first harness adapter — the
+      #     headless mux + `wezterm cli` (spawn/list/get-text/send-text)
+      #     is what the agent-pane orchestration shim wraps;
+      # (2) parity styling so opening WezTerm directly looks consistent
+      #     with the rest of the cluster (IosevkaTerm Nerd Font,
+      #     Equilibrium dark/light schemes).
+      enable = true;
       extraConfig = ''
         local function scheme_for_appearance(appearance)
           if appearance:find "Dark" then
@@ -453,6 +461,15 @@ mkIf size.atLeastMin {
           hide_tab_bar_if_only_one_tab = true,
           enable_wayland = true,
           enable_kitty_keyboard = true,
+
+          -- Local unix-domain mux. `wezterm cli` auto-finds the socket,
+          -- so Persona's harness shim (persona-harness-wezterm) can
+          -- spawn / list / read / inject panes without an open GUI.
+          -- Without this block, mux ops require an explicit env var
+          -- (PERSONA_WEZTERM_PREFER_MUX=1).
+          unix_domains = {
+            { name = "unix" },
+          },
         }
       '';
       colorSchemes = {
