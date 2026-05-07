@@ -110,6 +110,33 @@ mkIf (size.atLeastMin && behavesAs.edge) {
     };
   };
 
+  # When the network comes back after a transcription drop, retry every
+  # spooled recording through whisrs's current backend. `--auto`
+  # suppresses per-entry stdout chatter and only logs failures; the
+  # daemon writes successful transcripts to history.jsonl + clipboard.
+  # The unit is one-shot, depends on whisrs.service (so the daemon
+  # exists to receive the IPC), and binds to network-online so
+  # systemd fires it at the right moment.
+  systemd.user.services.whisrs-spool-retry = {
+    Unit = {
+      Description = "Retry whisrs spooled recordings when the network returns";
+      Requires = [ "whisrs.service" ];
+      After = [
+        "whisrs.service"
+        "network-online.target"
+      ];
+      Wants = [ "network-online.target" ];
+    };
+    Service = {
+      Type = "oneshot";
+      # Sleep 2s before retrying so the daemon is fully up after a
+      # cold boot ordering with network-online.target.
+      ExecStart = "${pkgs.bash}/bin/bash -c 'sleep 2; ${whisrs}/bin/whisrs spool retry --all --auto || true'";
+      RemainAfterExit = false;
+    };
+    Install.WantedBy = [ "network-online.target" ];
+  };
+
   programs.niri.settings = {
     spawn-at-startup = [
       { command = [ "${startWhisrs}" ]; }
