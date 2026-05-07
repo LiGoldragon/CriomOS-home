@@ -71,9 +71,13 @@ lib.mkIf behavesAs.edge {
       max-visible = 3;
       group-by = "app-name";
 
+      # Critical-urgency notifications get a longer timeout than the
+      # 5s default so they're easier to catch when heads-down, but
+      # never sticky-forever — every notification clears itself
+      # eventually so the user doesn't accumulate a click-away queue.
       "urgency=critical" = {
         border-color = lib.mkForce "${colors.base08}cc";
-        default-timeout = 0;
+        default-timeout = 30000;
       };
     };
   };
