@@ -463,7 +463,15 @@ mkIf size.atLeastMin {
           window_decorations = "NONE",
           hide_tab_bar_if_only_one_tab = true,
           enable_wayland = true,
-          enable_kitty_keyboard = true,
+          -- Kitty keyboard protocol kept Shift+Enter distinguishable
+          -- from Enter in TUIs (originally added in criomos-archive
+          -- 151696f for tmux/Shift+Enter). Disabled because it
+          -- swallows the bracketed-paste-mode handshake — claude-code
+          -- and other paste-aware TUIs received pasted text as
+          -- individual keystrokes, with the first newline submitting
+          -- the input. Use Ctrl+J for "newline without submit" in
+          -- TUIs that need it; tmux is no longer in the stack.
+          enable_kitty_keyboard = false,
 
           -- Local unix-domain mux. `wezterm cli` auto-finds the socket,
           -- so Persona's harness shim (persona-harness-wezterm) can
