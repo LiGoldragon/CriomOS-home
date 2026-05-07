@@ -82,6 +82,10 @@ craneLib.buildPackage (
             pkgs.systemd
             pkgs.libnotify
             pkgs.coreutils
+            # ffmpeg is the daemon's encoder for OPUS-in-OGG spool
+            # files (per spool-recovery.patch's `encode_opus_ogg`).
+            # Headless build is enough — we never decode video.
+            pkgs.ffmpeg-headless
           ]
         }
     '';

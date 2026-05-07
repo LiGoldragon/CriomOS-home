@@ -1,8 +1,8 @@
 diff --git a/src/audio/recovery.rs b/src/audio/recovery.rs
-index c6ca85f..0622c6f 100644
+index c6ca85f..d50cd47 100644
 --- a/src/audio/recovery.rs
 +++ b/src/audio/recovery.rs
-@@ -1,7 +1,12 @@
+@@ -1,24 +1,189 @@
 -//! Audio recovery: save unprocessed audio to disk when transcription fails.
 +//! Audio recovery: spool audio to disk when transcription fails so the
 +//! recording survives a network drop, daemon crash, or power loss until
@@ -16,19 +16,28 @@ index c6ca85f..0622c6f 100644
 +//! this directory; on successful retry the file is deleted and the
 +//! transcript is appended to history.
  
++use std::io::Write;
  use std::path::PathBuf;
++use std::process::{Command, Stdio};
  
-@@ -10,15 +15,104 @@ use tracing::{info, warn};
+ use anyhow::Context;
+ use tracing::{info, warn};
  
- use super::capture::encode_wav;
+-use super::capture::encode_wav;
++use super::capture::{encode_wav, SAMPLE_RATE};
  
 -/// Return the recovery directory path (`~/.cache/whisrs/recovery/`).
 -pub fn recovery_dir() -> PathBuf {
-+/// Filename prefix for spooled WAV files.
++/// Filename prefix for spooled audio files (`.wav` legacy, `.ogg` current).
 +const SPOOL_PREFIX: &str = "spool_";
-+/// Legacy prefix used when files lived under the cache dir; migration
-+/// reads both prefixes.
++/// Legacy filename prefix from when files lived under the cache dir.
 +const LEGACY_PREFIX: &str = "recovery_";
++
++/// Filename extensions accepted in the spool directory. `.wav` is the
++/// legacy uncompressed form; `.ogg` is OPUS-in-OGG which is ~10× smaller
++/// for speech and stays under OpenAI's 25 MB upload limit on long
++/// recordings (a 30-minute WAV is ~57 MB; the same as OPUS is ~5–7 MB).
++const SPOOL_EXTENSIONS: &[&str] = &[".ogg", ".wav"];
 +
 +/// Return the spool directory path (`$XDG_STATE_HOME/whisrs/spool/`).
 +///
@@ -122,11 +131,75 @@ index c6ca85f..0622c6f 100644
 +    Ok(moved)
 +}
 +
-+/// Save raw PCM samples as a timestamped WAV file in the spool directory.
++/// Encode raw PCM (i16, mono, `SAMPLE_RATE` Hz) into OPUS wrapped in an
++/// OGG container by piping through `ffmpeg`. Returns the encoded bytes.
++///
++/// Spawned via subprocess rather than via a libopus Rust binding so we
++/// don't take a system-library dependency at link time. `ffmpeg` is on
++/// the daemon's PATH (see CriomOS-home's `packages/whisrs/default.nix`
++/// `wrapProgram` block) and supports `libopus` natively.
++///
++/// Bitrate 24 kbit/s is well-tuned for speech — large enough to stay
++/// transparent for human voices, small enough that a 30-minute
++/// recording lands at ~5–6 MB (vs ~57 MB as raw WAV at 16 kHz mono).
++fn encode_opus_ogg(samples: &[i16]) -> anyhow::Result<Vec<u8>> {
++    let mut child = Command::new("ffmpeg")
++        .args([
++            "-loglevel",
++            "error",
++            "-f",
++            "s16le",
++            "-ar",
++            &SAMPLE_RATE.to_string(),
++            "-ac",
++            "1",
++            "-i",
++            "pipe:0",
++            "-c:a",
++            "libopus",
++            "-b:a",
++            "24k",
++            "-application",
++            "voip",
++            "-f",
++            "ogg",
++            "pipe:1",
++        ])
++        .stdin(Stdio::piped())
++        .stdout(Stdio::piped())
++        .stderr(Stdio::piped())
++        .spawn()
++        .context("failed to spawn ffmpeg for opus encode")?;
++
++    {
++        let stdin = child.stdin.as_mut().context("ffmpeg stdin missing")?;
++        let mut buf = Vec::with_capacity(samples.len() * 2);
++        for sample in samples {
++            buf.extend_from_slice(&sample.to_le_bytes());
++        }
++        stdin
++            .write_all(&buf)
++            .context("failed to write samples to ffmpeg stdin")?;
++    }
++
++    let output = child
++        .wait_with_output()
++        .context("failed to wait on ffmpeg")?;
++    if !output.status.success() {
++        let stderr = String::from_utf8_lossy(&output.stderr);
++        anyhow::bail!("ffmpeg opus encode failed: {stderr}");
++    }
++    Ok(output.stdout)
++}
++
++/// Save raw PCM samples as a timestamped audio file in the spool
++/// directory. Tries OPUS-in-OGG first (smaller; needed to stay under
++/// OpenAI's 25 MB upload limit on long recordings); falls back to WAV
++/// if `ffmpeg` is unavailable or fails so the recording is never lost.
  ///
  /// Returns the path to the saved file on success.
  pub fn save_recovery_audio(samples: &[i16]) -> anyhow::Result<PathBuf> {
-@@ -26,20 +120,20 @@ pub fn save_recovery_audio(samples: &[i16]) -> anyhow::Result<PathBuf> {
+@@ -26,65 +191,111 @@ pub fn save_recovery_audio(samples: &[i16]) -> anyhow::Result<PathBuf> {
          anyhow::bail!("no audio samples to save for recovery");
      }
  
@@ -138,31 +211,70 @@ index c6ca85f..0622c6f 100644
  
      let timestamp = chrono::Local::now().format("%Y-%m-%dT%H-%M-%S");
 -    let filename = format!("recovery_{timestamp}.wav");
-+    let filename = format!("{SPOOL_PREFIX}{timestamp}.wav");
-     let path = dir.join(&filename);
+-    let path = dir.join(&filename);
  
 -    let wav_data = encode_wav(samples).context("failed to encode recovery audio as WAV")?;
-+    let wav_data = encode_wav(samples).context("failed to encode spool audio as WAV")?;
-     std::fs::write(&path, &wav_data)
+-    std::fs::write(&path, &wav_data)
 -        .with_context(|| format!("failed to write recovery file: {}", path.display()))?;
-+        .with_context(|| format!("failed to write spool file: {}", path.display()))?;
++    match encode_opus_ogg(samples) {
++        Ok(opus_bytes) => {
++            let filename = format!("{SPOOL_PREFIX}{timestamp}.ogg");
++            let path = dir.join(&filename);
++            std::fs::write(&path, &opus_bytes)
++                .with_context(|| format!("failed to write spool file: {}", path.display()))?;
++            info!(
++                "saved spool audio (opus) to {} ({} bytes)",
++                path.display(),
++                opus_bytes.len()
++            );
++            Ok(path)
++        }
++        Err(opus_err) => {
++            warn!(
++                "opus encode failed ({opus_err:#}); falling back to WAV — \
++                 recording is preserved but spool file will be larger"
++            );
++            let filename = format!("{SPOOL_PREFIX}{timestamp}.wav");
++            let path = dir.join(&filename);
++            let wav_data = encode_wav(samples).context("failed to encode spool audio as WAV")?;
++            std::fs::write(&path, &wav_data)
++                .with_context(|| format!("failed to write spool file: {}", path.display()))?;
++            info!(
++                "saved spool audio (wav) to {} ({} bytes)",
++                path.display(),
++                wav_data.len()
++            );
++            Ok(path)
++        }
++    }
++}
  
-     info!(
+-    info!(
 -        "saved recovery audio to {} ({} bytes)",
-+        "saved spool audio to {} ({} bytes)",
-         path.display(),
-         wav_data.len()
-     );
-@@ -47,57 +141,67 @@ pub fn save_recovery_audio(samples: &[i16]) -> anyhow::Result<PathBuf> {
-     Ok(path)
+-        path.display(),
+-        wav_data.len()
+-    );
++fn has_spool_extension(name: &str) -> bool {
++    SPOOL_EXTENSIONS.iter().any(|ext| name.ends_with(ext))
++}
+ 
+-    Ok(path)
++fn strip_spool_extension(name: &str) -> Option<&str> {
++    for ext in SPOOL_EXTENSIONS {
++        if let Some(stem) = name.strip_suffix(ext) {
++            return Some(stem);
++        }
++    }
++    None
  }
  
 -/// Clean up old recovery files, keeping only the most recent `keep` files.
 -pub fn cleanup_old_recoveries(keep: usize) {
 -    let dir = recovery_dir();
-+/// Iterate the spool directory and return all spooled WAV paths,
-+/// sorted oldest-first. Reads `SPOOL_PREFIX` only — anything from the
-+/// legacy prefix should have been migrated by `migrate_legacy_recovery_dir`.
++/// Iterate the spool directory and return all spooled audio paths
++/// (`.ogg` and legacy `.wav`), sorted oldest-first. Reads `SPOOL_PREFIX`
++/// only — anything from the legacy prefix should have been migrated by
++/// `migrate_legacy_recovery_dir`.
 +pub fn list_spool_paths() -> Vec<PathBuf> {
 +    let dir = spool_dir();
      if !dir.exists() {
@@ -178,7 +290,7 @@ index c6ca85f..0622c6f 100644
 -                    && e.file_name().to_string_lossy().ends_with(".wav")
 +                let name = e.file_name();
 +                let name_str = name.to_string_lossy();
-+                name_str.starts_with(SPOOL_PREFIX) && name_str.ends_with(".wav")
++                name_str.starts_with(SPOOL_PREFIX) && has_spool_extension(&name_str)
              })
 +            .map(|e| e.path())
              .collect(),
@@ -209,28 +321,31 @@ index c6ca85f..0622c6f 100644
 -    for entry in entries.into_iter().take(to_remove) {
 -        if let Err(e) = std::fs::remove_file(entry.path()) {
 -            warn!("failed to remove old recovery file: {e}");
--        }
 +/// Resolve a spool entry by its filename stem (e.g.
-+/// `2026-05-07T15-04-18`) to its full path. Returns `None` if the
-+/// entry doesn't exist.
++/// `2026-05-07T15-04-18`) to its full path. Tries each accepted
++/// extension; returns `None` if no file with that id exists.
 +pub fn spool_path_for_id(id: &str) -> Option<PathBuf> {
-+    let path = spool_dir().join(format!("{SPOOL_PREFIX}{id}.wav"));
-+    if path.exists() {
-+        Some(path)
-+    } else {
-+        None
++    let dir = spool_dir();
++    for ext in SPOOL_EXTENSIONS {
++        let path = dir.join(format!("{SPOOL_PREFIX}{id}{ext}"));
++        if path.exists() {
++            return Some(path);
+         }
      }
- }
- 
-+/// Extract the id (filename stem after the prefix) from a spool path.
-+pub fn spool_id_for_path(path: &std::path::Path) -> Option<String> {
-+    let name = path.file_name()?.to_string_lossy();
-+    let stem = name.strip_prefix(SPOOL_PREFIX)?.strip_suffix(".wav")?;
-+    Some(stem.to_string())
++    None
 +}
 +
++/// Extract the id (filename stem after the prefix and before the
++/// extension) from a spool path.
++pub fn spool_id_for_path(path: &std::path::Path) -> Option<String> {
++    let name = path.file_name()?.to_string_lossy();
++    let after_prefix = name.strip_prefix(SPOOL_PREFIX)?;
++    let stem = strip_spool_extension(after_prefix)?;
++    Some(stem.to_string())
+ }
+ 
  #[cfg(test)]
- mod tests {
+@@ -92,12 +303,12 @@ mod tests {
      use super::*;
  
      #[test]
@@ -247,7 +362,7 @@ index c6ca85f..0622c6f 100644
          );
      }
  
-@@ -108,18 +212,9 @@ mod tests {
+@@ -108,18 +319,9 @@ mod tests {
      }
  
      #[test]
@@ -849,3 +964,28 @@ index 134ff69..70906bb 100644
  }
  
  /// Daemon state.
+diff --git a/src/transcription/openai_rest.rs b/src/transcription/openai_rest.rs
+index ad39886..486973f 100644
+--- a/src/transcription/openai_rest.rs
++++ b/src/transcription/openai_rest.rs
+@@ -89,9 +89,18 @@ impl TranscriptionBackend for OpenAIRestBackend {
+             config.language
+         );
+ 
++        // Detect the wire format from magic bytes so the multipart
++        // file_name + MIME match what we're actually sending. OpenAI's
++        // API accepts both wav and ogg; using the wrong filename or
++        // MIME causes silent decoding failures.
++        let (file_name, mime) = match audio.first().map(|_| &audio[..audio.len().min(4)]) {
++            Some(b"OggS") => ("audio.ogg", "audio/ogg"),
++            Some(b"RIFF") => ("audio.wav", "audio/wav"),
++            _ => ("audio.wav", "audio/wav"),
++        };
+         let file_part = multipart::Part::bytes(audio.to_vec())
+-            .file_name("audio.wav")
+-            .mime_str("audio/wav")?;
++            .file_name(file_name)
++            .mime_str(mime)?;
+ 
+         // whisper-1 supports verbose_json; gpt-4o-transcribe models only support json/text.
+         let response_format = if config.model.starts_with("whisper") {
