@@ -8,7 +8,7 @@
   ...
 }:
 let
-  terminal = "${pkgs.ghostty}/bin/ghostty";
+  terminal = "${pkgs.wezterm}/bin/wezterm";
   inherit (user) useFastRepeat;
   inherit (horizon.node) behavesAs;
 

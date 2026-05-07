@@ -457,8 +457,18 @@ mkIf size.atLeastMin {
         end)
 
         return {
-          font = wezterm.font("IosevkaTerm Nerd Font"),
+          -- Pin weight to Regular. Without this, wezterm's font matcher
+          -- can pick a thinner Iosevka variant (ExtraLight / Light)
+          -- whose glyphs are noticeably harder to read at the same
+          -- nominal size than ghostty's pick.
+          font = wezterm.font("IosevkaTerm Nerd Font", { weight = "Regular" }),
           font_size = ${toString fontPt}.0,
+          -- Sharpen rendering. `Light` hinting + horizontal-LCD
+          -- subpixel keeps the same visual weight as ghostty on
+          -- typical Wayland/Pango setups; without these wezterm
+          -- looks washed-out at small sizes.
+          freetype_load_target = "Light",
+          freetype_render_target = "HorizontalLcd",
           color_scheme = scheme_for_appearance(wezterm.gui.get_appearance()),
           window_decorations = "NONE",
           hide_tab_bar_if_only_one_tab = true,
