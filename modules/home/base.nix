@@ -107,15 +107,10 @@ let
   '';
 
   /*
-    Generate fzf color string from base16 palette.
-  */
-  mkFzfColors = c:
-    "--color=bg:${c.base00},bg+:${c.base01},fg:${c.base04},fg+:${c.base06}" +
-    ",hl:${c.base0D},hl+:${c.base0D},info:${c.base0A},marker:${c.base0C}" +
-    ",prompt:${c.base0A},spinner:${c.base0C},pointer:${c.base0C},header:${c.base0D}";
-
-  /*
     OSC escape sequences for terminal color switching.
+    Used by the zsh init hook below; the chroma daemon's
+    apply-script (modules/home/profiles/min/chroma.nix) emits the
+    same form on every theme switch.
   */
   mkOscSequence = c:
     let osc = n: color: ''\033]4;${toString n};${color}\007'';
@@ -127,86 +122,15 @@ let
       \033]10;${c.base05}\007\033]11;${c.base00}\007\033]12;${c.base05}\007'';
 
   /*
-    mkApplyScript: darkman calls this on sunrise/sunset.
-    Writes real config files and reloads every app that doesn't
-    follow the XDG portal natively.
-  */
-  mkApplyScript = { mode, scheme }:
-    let
-      c = parseScheme scheme;
-      oscSeq = mkOscSequence c;
-      dconfMode = if mode == "dark" then "prefer-dark" else "prefer-light";
-      gtkTheme = if mode == "dark" then "adw-gtk3-dark" else "adw-gtk3";
-      iconTheme = if mode == "dark" then "Papirus-Dark" else "Papirus-Light";
-      emacsTheme = if mode == "dark" then "ignis-dark" else "ignis-light";
-      fzfColors = mkFzfColors c;
-    in
-    pkgs.writeShellScript "apply-${mode}" ''
-      # --- Portal + dconf (Firefox, Electron, Qt) ---
-      ${pkgs.dconf}/bin/dconf write /org/gnome/desktop/interface/color-scheme "'${dconfMode}'"
-      ${pkgs.dconf}/bin/dconf write /org/gnome/desktop/interface/gtk-theme "'${gtkTheme}'"
-      ${pkgs.dconf}/bin/dconf write /org/gnome/desktop/interface/icon-theme "'${iconTheme}'"
-
-      # --- GTK settings.ini (GTK3 reads file, not dconf) ---
-      for v in gtk-3.0 gtk-4.0; do
-        mkdir -p "$HOME/.config/$v"
-        cat > "$HOME/.config/$v/settings.ini" << 'GTKEOF'
-[Settings]
-gtk-theme-name=${gtkTheme}
-gtk-cursor-theme-name=Bibata-Modern-Classic
-gtk-cursor-theme-size=24
-gtk-font-name=DejaVu Sans 12
-gtk-icon-theme-name=${iconTheme}
-GTKEOF
-      done
-
-      # --- Ghostty config (darkman owns this file) ---
-      mkdir -p "$HOME/.config/ghostty"
-      cat > "$HOME/.config/ghostty/config" << 'GHOSTTY'
-font-family = IosevkaTerm Nerd Font
-font-size = ${toString fontPt}
-window-decoration = false
-gtk-titlebar = false
-window-theme = ghostty
-background = ${c.base00}
-foreground = ${c.base05}
-GHOSTTY
-
-      # --- Terminals: OSC sequences to all PTYs ---
-      SEQ="${oscSeq}"
-      for pty in /dev/pts/[0-9]*; do
-        printf "$SEQ" > "$pty" 2>/dev/null || true
-      done
-
-      # --- Emacs ---
-      ${pkgs.emacs-pgtk}/bin/emacsclient --eval "(progn (add-to-list 'custom-theme-load-path \"${emacsThemeDir}\") (mapc #'disable-theme custom-enabled-themes) (load-theme '${emacsTheme} t))" 2>/dev/null || true
-
-      # --- fzf colors (sourced by new shells) ---
-      mkdir -p "''${XDG_STATE_HOME:-$HOME/.local/state}/darkman"
-      echo "export FZF_DEFAULT_OPTS=\"\$FZF_DEFAULT_OPTS ${fzfColors}\"" \
-        > "''${XDG_STATE_HOME:-$HOME/.local/state}/darkman/fzf-theme.sh"
-
-      # Night shift: decoupled from theme — handled by separate service
-
-      # --- Persist mode ---
-      echo "${mode}" > "''${XDG_STATE_HOME:-$HOME/.local/state}/darkman/current-mode"
-    '';
-
-  applyDark = mkApplyScript {
-    mode = "dark"; scheme = darkScheme;
-  };
-  applyLight = mkApplyScript {
-    mode = "light"; scheme = lightScheme;
-  };
-
-  /*
     Shell hook: new terminals get correct colors + fzf theme.
+    Reads the persisted mode written by chroma's apply-script
+    (`$XDG_STATE_HOME/chroma/current-mode`).
   */
   darkOsc = mkOscSequence dark;
   lightOsc = mkOscSequence light;
   terminalInitHook = ''
-    __darkman_init_theme() {
-      local state="''${XDG_STATE_HOME:-$HOME/.local/state}/darkman"
+    __chroma_init_theme() {
+      local state="''${XDG_STATE_HOME:-$HOME/.local/state}/chroma"
       local mode
       mode=$(cat "$state/current-mode" 2>/dev/null) || return
       if [ "$mode" = "light" ]; then
@@ -216,7 +140,7 @@ GHOSTTY
       fi
       [ -f "$state/fzf-theme.sh" ] && source "$state/fzf-theme.sh"
     }
-    __darkman_init_theme
+    __chroma_init_theme
   '';
 
 in
@@ -228,8 +152,9 @@ in
       # stateVersion comes from the consumer (CriomOS userHomes.nix sets
       # it to 26.05); base.nix used to hardcode 25.05 which conflicted.
       packages = [
-        (pkgs.writeShellScriptBin "theme-dark" ''${pkgs.darkman}/bin/darkman set dark'')
-        (pkgs.writeShellScriptBin "theme-light" ''${pkgs.darkman}/bin/darkman set light'')
+        # `theme-dark` / `theme-light` shell wrappers + the chroma
+        # daemon + apply-script live in
+        # modules/home/profiles/min/chroma.nix.
         pkgs.papirus-icon-theme
         pkgs.adw-gtk3
       ];
@@ -240,42 +165,13 @@ in
 
     programs.zsh.initContent = lib.mkBefore terminalInitHook;
 
-    home.activation.reapplyDarkman =
-      lib.hm.dag.entryAfter [ "reloadSystemd" ] ''
-        ${pkgs.systemd}/bin/systemctl --user restart darkman.service 2>/dev/null || true
-        sleep 0.5
-        mode=$(cat "''${XDG_STATE_HOME:-$HOME/.local/state}/darkman/current-mode" 2>/dev/null) || true
-        if [ -n "$mode" ]; then
-          ${pkgs.darkman}/bin/darkman set "$mode" 2>/dev/null || true
-        fi
-      '';
-
-    services.darkman = {
-      enable = true;
-      settings = {
-        lat = 36.7;
-        lng = -4.4;
-        usegeoclue = true;
-        dbusserver = true;
-        portal = true;
-      };
-      darkModeScripts.switch = ''
-        ${applyDark}
-        systemctl --user --no-block start nightshift-sync || true
-      '';
-      lightModeScripts.switch = ''
-        ${applyLight}
-        systemctl --user --no-block start nightshift-sync || true
-      '';
-    };
-
     stylix = {
       enable = true;
       autoEnable = true;
       polarity = "dark";
       base16Scheme = darkScheme;
       targets = {
-        # Darkman switches dark/light via dconf at runtime
+        # Chroma switches dark/light via dconf at runtime
         emacs.enable = false;
         ghostty.enable = false;
         vscode.enable = false;

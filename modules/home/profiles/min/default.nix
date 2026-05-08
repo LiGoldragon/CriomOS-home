@@ -271,82 +271,13 @@ let
     print "seeded $KEY_FILE"
   '';
 
-  busctlBin = "${pkgs.systemd}/bin/busctl";
-  gammaRelayBus = "rs.wl-gammarelay / rs.wl.gammarelay";
-
-  nightTemp = 2700;
-  dayTemp = 6500;
-  transitionMinutes = 90;
-  transitionSteps = 15;
-
-  nightshift = pkgs.writeShellScriptBin "nightshift" ''
-    set_temp() { ${busctlBin} --user set-property ${gammaRelayBus} Temperature q "$1"; }
-    get_temp() { ${busctlBin} --user get-property ${gammaRelayBus} Temperature 2>/dev/null | awk '{print $2}'; }
-
-    NIGHT=${toString nightTemp}
-    DAY=${toString dayTemp}
-    MINUTES=${toString transitionMinutes}
-    STEPS=${toString transitionSteps}
-
-    # Apply correct temperature for current mode — instant on first call,
-    # then gradual if already at screen during transition.
-    apply() {
-      target=$1
-      current=$(get_temp)
-      diff=$((current - target))
-      [ $diff -lt 0 ] && diff=$((-diff))
-
-      # If far from target (>500K off), jump immediately (login, wake, resume)
-      if [ $diff -gt 500 ]; then
-        set_temp "$target"
-        return
-      fi
-
-      # Already close — do a short gradual transition (5 minutes)
-      steps=10
-      interval=30
-      from=$current
-      for i in $(seq 1 $steps); do
-        elapsed=$(( $(date +%s) - start_time ))
-        temp=$(( from + (target - from) * i / steps ))
-        set_temp "$temp"
-        [ "$i" -lt "$steps" ] && sleep "$interval"
-      done
-      set_temp "$target"
-    }
-
-    start_time=$(date +%s)
-
-    case "''${1:-sync}" in
-      sync)
-        mode=$(${pkgs.darkman}/bin/darkman get 2>/dev/null) || {
-          hour=$(date +%H)
-          if [ "$hour" -ge 20 ] || [ "$hour" -lt 7 ]; then
-            mode="dark"
-          else
-            mode="light"
-          fi
-        }
-        if [ "$mode" = "dark" ]; then
-          apply $NIGHT
-        else
-          apply $DAY
-        fi
-        ;;
-      on)       apply $NIGHT ;;
-      off)      apply $DAY ;;
-      instant)  set_temp "''${2:-$NIGHT}" ;;
-      *)        set_temp "$1" ;;
-    esac
-  '';
-
-  brightness = pkgs.writeShellScriptBin "brightness" ''
-    if [ -z "$1" ]; then
-      ${busctlBin} --user get-property ${gammaRelayBus} Brightness
-    else
-      ${busctlBin} --user set-property ${gammaRelayBus} Brightness d "$1"
-    fi
-  '';
+  # nightshift + brightness shell wrappers retired — the chroma
+  # daemon (modules/home/profiles/min/chroma.nix) now owns the
+  # warmth and brightness axes. Kept until the daemon's
+  # CLI / apply path was wired into the dispatcher; archive
+  # incident `a415e3e` (zeus 2026-04-26, the systemd cycle that
+  # the nightshift-sync chain produced) is what motivated the
+  # consolidation.
 
 in
 mkIf size.atLeastMin {
@@ -695,8 +626,9 @@ mkIf size.atLeastMin {
       ++ [
         nordvpnSeed
         pkgs.wl-gammarelay-rs
-        nightshift
-        brightness
+        # chroma daemon + CLI live in the chroma module
+        # (modules/home/profiles/min/chroma.nix); it owns the
+        # warmth + brightness paths now.
       ];
 
     file = {
@@ -740,15 +672,12 @@ mkIf size.atLeastMin {
         Unit = {
           Description = "DBus interface for display temperature, brightness and gamma control";
           PartOf = [ "graphical-session.target" ];
-          # `graphical-session-pre.target` (not `.target`) — otherwise the
-          # nightshift-sync chain (After=wl-gammarelay-rs, WantedBy=
-          # graphical-session.target) creates a 3-node ordering cycle
-          # (graphical-session.target → nightshift-sync → wl-gammarelay-rs
-          # → graphical-session.target via After+WantedBy) that systemd
-          # resolves by deleting nightshift-sync from the boot
-          # transaction, leaving the screen permanently neutral. Archive
-          # incident a415e3e (2026-04-26 zeus). Pre-target fires before
-          # the main target so the dependency walks one direction only.
+          # `graphical-session-pre.target` rather than `.target`:
+          # avoids the cycle that the (now-retired) nightshift-sync
+          # chain produced — see archive incident a415e3e
+          # (2026-04-26 zeus). chroma-daemon is `After =
+          # wl-gammarelay-rs.service`, which keeps the dependency
+          # graph walking one direction only.
           After = [ "graphical-session-pre.target" ];
         };
         Service = {
@@ -758,50 +687,9 @@ mkIf size.atLeastMin {
         Install.WantedBy = [ "graphical-session.target" ];
       };
 
-      nightshift-sync = {
-        Unit = {
-          Description = "Sync color temperature to current dark/light mode";
-          Requires = [ "wl-gammarelay-rs.service" ];
-          After = [
-            "wl-gammarelay-rs.service"
-            "darkman.service"
-          ];
-        };
-        Service = {
-          Type = "simple";
-          ExecStartPre = "${pkgs.coreutils}/bin/sleep 1";
-          ExecStart = "${nightshift}/bin/nightshift sync";
-        };
-        Install.WantedBy = [ "graphical-session.target" ];
-      };
-
-      nightshift-on = {
-        Unit = {
-          Description = "Warm color temperature transition";
-          Requires = [ "wl-gammarelay-rs.service" ];
-          After = [ "wl-gammarelay-rs.service" ];
-          Conflicts = [ "nightshift-off.service" ];
-        };
-        Service = {
-          Type = "oneshot";
-          ExecStart = "${nightshift}/bin/nightshift on";
-          RemainAfterExit = false;
-        };
-      };
-
-      nightshift-off = {
-        Unit = {
-          Description = "Neutral color temperature transition";
-          Requires = [ "wl-gammarelay-rs.service" ];
-          After = [ "wl-gammarelay-rs.service" ];
-          Conflicts = [ "nightshift-on.service" ];
-        };
-        Service = {
-          Type = "oneshot";
-          ExecStart = "${nightshift}/bin/nightshift off";
-          RemainAfterExit = false;
-        };
-      };
+      # The three nightshift-* services and the brightness shell
+      # were retired when chroma landed; the daemon owns those
+      # paths now. See modules/home/profiles/min/chroma.nix.
     };
   };
 
@@ -818,6 +706,9 @@ mkIf size.atLeastMin {
         export SDL_VIDEODRIVER=wayland
         export MOZ_ENABLE_WAYLAND=1
         export _JAVA_AWT_WM_NONREPARENTING=1
+        # chroma daemon socket — the system creates /run/chroma/
+        # mode 0770 root:chroma; non-group users cannot enter it.
+        export CHROMA_SOCKET="/run/chroma/$(${pkgs.coreutils}/bin/id -u).sock"
       '';
     };
 

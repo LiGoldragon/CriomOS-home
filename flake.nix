@@ -121,6 +121,12 @@
     lojix-cli.url = "github:LiGoldragon/lojix-cli";
     lojix-cli.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Chroma — unified visual-state daemon (theme + warmth + brightness).
+    # Replaces darkman + the nightshift-* services + the brightness shell
+    # wrapper. Consumed in modules/home/profiles/min/chroma.nix.
+    chroma.url = "github:LiGoldragon/chroma";
+    chroma.inputs.nixpkgs.follows = "nixpkgs";
+
     # `pi` (badlogic/pi-mono coding-agent CLI) — TypeScript npm
     # monorepo with no upstream flake. Consumed as a non-flake source
     # input and built locally via `packages/pi/default.nix`

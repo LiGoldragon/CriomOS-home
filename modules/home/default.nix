@@ -46,6 +46,10 @@
     # imports.
     ./profiles/min/niri.nix
     ./profiles/min/dictation.nix
+    # Chroma — visual-state daemon (theme + warmth + brightness).
+    # Replaces darkman + nightshift + the brightness shell wrapper.
+    # Per-user systemd unit + apply script + default config.nota.
+    ./profiles/min/chroma.nix
     # Despite the filename, this configures programs.noctalia-shell
     # (bar widgets, idle timer, lock timeout). Without it the user
     # gets noctalia's upstream defaults.
