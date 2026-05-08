@@ -387,6 +387,38 @@ mkIf size.atLeastMin {
           end
         end)
 
+        -- Workaround for wezterm/wezterm#6685 — Ctrl+Shift+C
+        -- silently fails to write the CLIPBOARD register on
+        -- Niri (and KWin 6.5+).
+        --
+        -- Root cause: WezTerm assumes the compositor re-sends
+        -- `wl_data_device.selection` on every focus change.
+        -- Spec-correct compositors (Niri; post-6.5 KWin) don't,
+        -- so WezTerm's clipboard offer state goes stale and
+        -- `set_selection` calls get silently ignored.
+        -- Re-asserting the current clipboard on focus-in
+        -- produces the selection event WezTerm needs to refresh
+        -- its internal state.
+        --
+        -- This does NOT clobber the clipboard:
+        -- `wl-paste -n | wl-copy` is idempotent — current
+        -- content gets written back as itself. Clipboard
+        -- managers dedupe consecutive identical entries, so no
+        -- history pollution either.
+        --
+        -- REMOVE this handler when wezterm/wezterm#7034 ("fix:
+        -- save the wayland selection offer to every
+        -- CopyAndPaste") merges upstream and lands in the
+        -- nixpkgs wezterm pin. To verify the upstream fix is
+        -- in: copy text from any non-wezterm app, focus a
+        -- wezterm window directly (do not focus another
+        -- wezterm window first), paste — if the text pastes
+        -- without the focus dance, the fix is in and this
+        -- block can be deleted.
+        wezterm.on("window-focus-changed", function(window, pane)
+          wezterm.run_child_process { "sh", "-c", "wl-paste -n | wl-copy" }
+        end)
+
         return {
           -- Pin weight to Regular. Without this, wezterm's font matcher
           -- can pick a thinner Iosevka variant (ExtraLight / Light)
