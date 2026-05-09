@@ -57,6 +57,7 @@ let
       # Persist first so newly spawned shells see the requested mode
       # immediately, even while slower GUI clients are still catching up.
       echo "${mode}" > "$state_dir/current-mode"
+      ${pkgs.coreutils}/bin/date +%s%N > "$state_dir/wezterm-reload"
       echo "export FZF_DEFAULT_OPTS=\"\$FZF_DEFAULT_OPTS ${fzfColors}\"" \
         > "$state_dir/fzf-theme.sh"
 

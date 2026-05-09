@@ -370,21 +370,57 @@ mkIf size.min {
       #     Equilibrium dark/light schemes).
       enable = true;
       extraConfig = ''
-        local function scheme_for_appearance(appearance)
-          if appearance:find "Dark" then
+        local function chroma_state_dir()
+          return os.getenv("XDG_STATE_HOME") or (wezterm.home_dir .. "/.local/state")
+        end
+
+        local function chroma_mode_file()
+          return chroma_state_dir() .. "/chroma/current-mode"
+        end
+
+        local function chroma_reload_file()
+          return chroma_state_dir() .. "/chroma/wezterm-reload"
+        end
+
+        wezterm.add_to_config_reload_watch_list(chroma_reload_file())
+
+        local function chroma_mode()
+          local file = io.open(chroma_mode_file(), "r")
+          if file == nil then
+            return "dark"
+          end
+
+          local mode = file:read("*l")
+          file:close()
+          if mode == "light" then
+            return "light"
+          end
+          return "dark"
+        end
+
+        local function scheme_for_mode(mode)
+          if mode == "dark" then
             return "Equilibrium Dark"
           else
             return "Equilibrium Light"
           end
         end
 
-        wezterm.on("window-config-reloaded", function(window, pane)
+        local function chroma_scheme()
+          return scheme_for_mode(chroma_mode())
+        end
+
+        local function apply_chroma_scheme(window)
           local overrides = window:get_config_overrides() or {}
-          local scheme = scheme_for_appearance(window:get_appearance())
+          local scheme = chroma_scheme()
           if overrides.color_scheme ~= scheme then
             overrides.color_scheme = scheme
             window:set_config_overrides(overrides)
           end
+        end
+
+        wezterm.on("window-config-reloaded", function(window, pane)
+          apply_chroma_scheme(window)
         end)
 
         -- Workaround for wezterm/wezterm#6685 — pending fix
@@ -415,7 +451,7 @@ mkIf size.min {
           -- looks washed-out at small sizes.
           freetype_load_target = "Light",
           freetype_render_target = "HorizontalLcd",
-          color_scheme = scheme_for_appearance(wezterm.gui.get_appearance()),
+          color_scheme = chroma_scheme(),
           -- Codex marks selected file/mention rows as ANSI cyan + bold. Keep
           -- bold typographic so WezTerm does not remap it through base16's
           -- auxiliary bright-cyan slot, which is near-background in light mode.
