@@ -156,7 +156,7 @@ let
   '';
 
 in
-mkIf (size.atLeastMin && behavesAs.edge) {
+mkIf (size.min && behavesAs.edge) {
   home.packages = [
     chromaPackage
     chromaApplyTheme

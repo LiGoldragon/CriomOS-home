@@ -40,7 +40,7 @@ mkMerge [
   # Large-tier baseline: most "max profile" packages are now Large per
   # the bulk size-Max -> Large rule. Specific heavy items that stay
   # Max-only are wrapped in their own mkIf below.
-  (mkIf size.atLeastLarge {
+  (mkIf size.large {
     home.packages =
       with pkgs;
       [
@@ -85,8 +85,8 @@ mkMerge [
   })
 
   # Max-tier exceptions per Li 2026-04-25: obs-studio + gimp/krita/
-  # calibre/inkscape (when isMultimediaDev) live at atLeastMax only.
-  (mkIf size.atLeastMax {
+  # calibre/inkscape (when isMultimediaDev) live at size.max only.
+  (mkIf size.max {
     home.packages = optionals isMultimediaDev maxMultimediaPackages;
 
     programs.obs-studio = {

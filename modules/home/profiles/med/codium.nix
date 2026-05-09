@@ -7,7 +7,7 @@ let
   inherit (lib) mkIf;
   inherit (user) size;
 in
-mkIf size.atLeastMed {
+mkIf size.medium {
   # The system codium.desktop ships without a `MimeType=` line, so
   # xdg-open's chooser dialog never offers Codium even when
   # mimeapps.list lists it as default. This user-local entry wins by

@@ -137,7 +137,7 @@ let
   };
 
 in
-lib.mkIf size.atLeastMed {
+lib.mkIf size.medium {
 
   programs.vscode = {
     enable = true;

@@ -599,7 +599,7 @@ let
   isPreferredEditor = user.preferredEditor == "Emacs";
 
 in
-mkIf size.atLeastMed {
+mkIf size.medium {
   programs.emacs = {
     enable = true;
     package = emacsWithPackages;

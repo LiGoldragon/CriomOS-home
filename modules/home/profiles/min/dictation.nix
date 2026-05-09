@@ -52,7 +52,7 @@ let
     exec ${pkgs.systemd}/bin/systemctl --user restart whisrs.service
   '';
 in
-mkIf (size.atLeastMin && behavesAs.edge) {
+mkIf (size.min && behavesAs.edge) {
   home.packages = [
     whisrs
     pkgs.wl-clipboard

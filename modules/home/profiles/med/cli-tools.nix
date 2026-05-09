@@ -46,7 +46,7 @@ let
     '';
   };
 in
-lib.mkIf size.atLeastMed {
+lib.mkIf size.medium {
   home.packages = [
     inputs.substack-cli.packages.${system}.default
     gasCityPackage

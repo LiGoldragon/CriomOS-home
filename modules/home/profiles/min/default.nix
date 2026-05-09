@@ -36,7 +36,7 @@ let
 
   homeDir = config.home.homeDirectory;
 
-  terminalFontFamily = if size.atLeastMed then "IosevkaTerm Nerd Font" else "DejaVu Sans Mono";
+  terminalFontFamily = if size.medium then "IosevkaTerm Nerd Font" else "DejaVu Sans Mono";
 
   fzfColemakBinds = import ./fzfColemak.nix;
 
@@ -280,7 +280,7 @@ let
   # consolidation.
 
 in
-mkIf size.atLeastMin {
+mkIf size.min {
   fonts.fontconfig = {
     enable = true;
     # TODO
@@ -294,7 +294,7 @@ mkIf size.atLeastMin {
 
   services = {
     dunst = {
-      enable = !size.atLeastMin;
+      enable = !size.min;
       settings = {
         global = {
           geometry = "300x5-30+50";

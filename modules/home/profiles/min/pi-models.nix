@@ -62,7 +62,7 @@ let
     ];
   };
 in
-lib.mkIf (size.atLeastMin && endpointNode != null) {
+lib.mkIf (size.min && endpointNode != null) {
   home.file.".local/share/criomos/pi/package".source = "${pi}/lib/pi-monorepo/packages/coding-agent";
 
   home.file.".pi/agent/packages/pi-linkup".source = "${pi-linkup}/share/pi-packages/pi-linkup";

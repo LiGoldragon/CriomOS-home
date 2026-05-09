@@ -37,8 +37,8 @@ let
     waybarEksek = nixProfileExec "waybar";
     swaylockEksek = nixProfileExec "swaylock";
     browser =
-      if size.atLeastMed then "${nixProfileExec "qutebrowser"}"
-      else if size.atLeastMin then termBrowser
+      if size.medium then "${nixProfileExec "qutebrowser"}"
+      else if size.min then termBrowser
       else "";
     launcher = "${nixProfileExec "wofi"} --show drun";
     shellTerm = shellLaunch "export SHELL=${zshEksek}; exec ${terminal} ${zshEksek}";
@@ -47,7 +47,7 @@ let
   swayConfigString = import ./swayConf.nix swayArguments;
 
 in
-mkIf size.atLeastMin {
+mkIf size.min {
   wayland.windowManager.sway = {
     enable = true;
     wrapperFeatures = {

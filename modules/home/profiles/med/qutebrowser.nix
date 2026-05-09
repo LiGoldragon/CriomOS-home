@@ -105,7 +105,7 @@ let
   domainListBlok = builtins.concatStringsSep "\n" mkDomainsList;
 
 in
-lib.mkIf size.atLeastMed {
+lib.mkIf size.medium {
   home = {
     packages = [ pkgs.qutebrowser ];
 
