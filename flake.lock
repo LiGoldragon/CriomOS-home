@@ -197,11 +197,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778352946,
-        "narHash": "sha256-/xPx7NtOwmTnG33MOJHEeAHHkoBZaq6kVCUCiTr2kcs=",
+        "lastModified": 1778360574,
+        "narHash": "sha256-ttSpi7HDnE1RECegFqt1VhV/jYbVsQK62WxFTHG2Ing=",
         "owner": "LiGoldragon",
         "repo": "chroma",
-        "rev": "041169a6ec2b215facb75c131e7276eb87baa395",
+        "rev": "4f26e8f418bc6e6f096afa7b4a505ea31f7473c2",
         "type": "github"
       },
       "original": {
