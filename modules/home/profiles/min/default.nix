@@ -729,9 +729,6 @@ mkIf size.min {
         export SDL_VIDEODRIVER=wayland
         export MOZ_ENABLE_WAYLAND=1
         export _JAVA_AWT_WM_NONREPARENTING=1
-        # chroma daemon socket — the system creates /run/chroma/
-        # mode 0770 root:chroma; non-group users cannot enter it.
-        export CHROMA_SOCKET="/run/chroma/$(${pkgs.coreutils}/bin/id -u).sock"
       '';
     };
 

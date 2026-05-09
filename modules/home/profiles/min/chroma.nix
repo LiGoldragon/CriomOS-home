@@ -132,7 +132,8 @@ let
 
   chromaPackage = inputs.chroma.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
-  # Default config.nota — placeholder until the daemon's parser lands.
+  # Default config.nota. Chroma reads ApplyCommand from here today;
+  # schedule execution is still staged behind the daemon scheduler.
   # Can be edited freely; home-manager only writes it on activation if
   # the file is missing.
   defaultConfig = ''
@@ -182,21 +183,19 @@ mkIf (size.min && behavesAs.edge) {
     };
     Service = {
       ExecStart = "${chromaPackage}/bin/chroma-daemon";
-      # Group-controlled socket directory created by CriomOS
-      # (users.groups.chroma + systemd.tmpfiles for /run/chroma/).
-      # Only members of the `chroma` group can bind here.
-      Environment = [
-        "CHROMA_SOCKET=/run/chroma/%U.sock"
-      ];
+      # Chroma defaults to $XDG_RUNTIME_DIR/chroma.sock. Keep the
+      # service and CLI on the same per-user runtime socket; do not
+      # depend on a freshly-granted supplementary group in a live
+      # graphical session.
       Restart = "on-failure";
       RestartSec = "2s";
     };
     Install.WantedBy = [ "graphical-session.target" ];
   };
 
-  # Drop a default config.nota on first activation; the daemon's
-  # config-parsing landing in a future commit will pick it up. Until
-  # then, the daemon ignores it.
+  # Drop a default config.nota on first activation. The daemon reads
+  # ApplyCommand from this file, while scheduled fires are still future
+  # work.
   home.activation.chromaConfigSeed = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     config_dir="''${XDG_CONFIG_HOME:-$HOME/.config}/chroma"
     if [ ! -f "$config_dir/config.nota" ]; then
