@@ -30,18 +30,6 @@ let
         ''
     )).palette;
 
-  mkOscSequence =
-    c:
-    let
-      osc = n: color: ''\033]4;${toString n};${color}\007'';
-    in
-    ''
-      ${osc 0 c.base00}${osc 1 c.base08}${osc 2 c.base0B}${osc 3 c.base0A}\
-      ${osc 4 c.base0D}${osc 5 c.base0E}${osc 6 c.base0C}${osc 7 c.base05}\
-      ${osc 8 c.base03}${osc 9 c.base08}${osc 10 c.base0B}${osc 11 c.base0A}\
-      ${osc 12 c.base0D}${osc 13 c.base0E}${osc 14 c.base0C}${osc 15 c.base07}\
-      \033]10;${c.base05}\007\033]11;${c.base00}\007\033]12;${c.base05}\007'';
-
   mkFzfColors =
     c:
     "--color=bg:${c.base00},bg+:${c.base01},fg:${c.base04},fg+:${c.base06}"
@@ -64,6 +52,15 @@ let
       fzfColors = mkFzfColors c;
     in
     pkgs.writeShellScript "chroma-apply-${mode}" ''
+      state_dir="''${XDG_STATE_HOME:-$HOME/.local/state}/chroma"
+      mkdir -p "$state_dir"
+
+      # Persist first so newly spawned shells see the requested mode
+      # immediately, even while slower GUI clients are still catching up.
+      echo "${mode}" > "$state_dir/current-mode"
+      echo "export FZF_DEFAULT_OPTS=\"\$FZF_DEFAULT_OPTS ${fzfColors}\"" \
+        > "$state_dir/fzf-theme.sh"
+
       # Portal + dconf (Firefox, Electron, Qt apps).
       ${pkgs.dconf}/bin/dconf write /org/gnome/desktop/interface/color-scheme "'${dconfMode}'"
       ${pkgs.dconf}/bin/dconf write /org/gnome/desktop/interface/gtk-theme "'${gtkTheme}'"
@@ -94,22 +91,13 @@ let
       foreground = ${c.base05}
       GHOSTTY
 
-      # OSC sequences to every live PTY.
-      SEQ="${oscSeq}"
-      for pty in /dev/pts/[0-9]*; do
-        printf "$SEQ" > "$pty" 2>/dev/null || true
-      done
+      # Do not broadcast OSC sequences into /dev/pts. A theme switch
+      # must not write into unrelated live TUI panes, and one stalled
+      # PTY can block the whole Chroma request. New shells apply
+      # terminal colours from current-mode in base.nix.
 
       # Emacs (any running emacsclient-reachable daemon).
-      ${pkgs.emacs-pgtk}/bin/emacsclient --eval "(progn (add-to-list 'custom-theme-load-path \"$HOME/.config/emacs-ignis-themes\") (mapc #'disable-theme custom-enabled-themes) (load-theme '${emacsTheme} t))" 2>/dev/null || true
-
-      # fzf colours (sourced by new shells).
-      mkdir -p "''${XDG_STATE_HOME:-$HOME/.local/state}/chroma"
-      echo "export FZF_DEFAULT_OPTS=\"\$FZF_DEFAULT_OPTS ${fzfColors}\"" \
-        > "''${XDG_STATE_HOME:-$HOME/.local/state}/chroma/fzf-theme.sh"
-
-      # Persisted current mode (read by zsh init in new shells).
-      echo "${mode}" > "''${XDG_STATE_HOME:-$HOME/.local/state}/chroma/current-mode"
+      ${pkgs.coreutils}/bin/timeout 2s ${pkgs.emacs-pgtk}/bin/emacsclient --eval "(progn (add-to-list 'custom-theme-load-path \"$HOME/.config/emacs-ignis-themes\") (mapc #'disable-theme custom-enabled-themes) (load-theme '${emacsTheme} t))" 2>/dev/null || true
     '';
 
   applyDark = mkApplyScript {
@@ -132,6 +120,8 @@ let
 
   chromaPackage = inputs.chroma.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
+  profileApplyCommand = "${config.home.homeDirectory}/.nix-profile/bin/chroma-apply-theme";
+
   # Default config.nota. Chroma reads ApplyCommand from here today;
   # schedule execution is still staged behind the daemon scheduler.
   # Can be edited freely; home-manager only writes it on activation if
@@ -139,7 +129,7 @@ let
   defaultConfig = ''
     (Config
       (Theme
-        (ApplyCommand "${chromaApplyTheme}/bin/chroma-apply-theme")
+        (ApplyCommand "${profileApplyCommand}")
         (Schedule
           (Waypoint (CivilDawn (SignedMinutes 0)) Light)
           (Waypoint (CivilDusk (SignedMinutes 0)) Dark)))
@@ -202,6 +192,10 @@ mkIf (size.min && behavesAs.edge) {
       mkdir -p "$config_dir"
       cat > "$config_dir/config.nota" << 'CHROMA_DEFAULT_CONFIG'
     ${defaultConfig}CHROMA_DEFAULT_CONFIG
+    elif grep -q '^[[:space:]]*(ApplyCommand "/nix/store/.*-chroma-apply-theme/bin/chroma-apply-theme")' "$config_dir/config.nota"; then
+      ${pkgs.gnused}/bin/sed -i \
+        's|^[[:space:]]*(ApplyCommand "/nix/store/.*-chroma-apply-theme/bin/chroma-apply-theme")|        (ApplyCommand "${profileApplyCommand}")|' \
+        "$config_dir/config.nota"
     fi
   '';
 }

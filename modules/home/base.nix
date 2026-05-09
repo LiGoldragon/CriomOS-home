@@ -108,9 +108,9 @@ let
 
   /*
     OSC escape sequences for terminal color switching.
-    Used by the zsh init hook below; the chroma daemon's
-    apply-script (modules/home/profiles/min/chroma.nix) emits the
-    same form on every theme switch.
+    Used by the zsh init hook below. Chroma persists the current mode;
+    shells apply terminal colours for their own PTY at startup instead
+    of a daemon broadcasting into every live /dev/pts entry.
   */
   mkOscSequence = c:
     let osc = n: color: ''\033]4;${toString n};${color}\007'';
