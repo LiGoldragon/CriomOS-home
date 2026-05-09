@@ -430,6 +430,12 @@ mkIf size.min {
           -- the input. Use Ctrl+J for "newline without submit" in
           -- TUIs that need it; tmux is no longer in the stack.
           enable_kitty_keyboard = false,
+          keys = {
+            -- Codex treats Ctrl+J / raw LF as "insert newline". With Kitty
+            -- keyboard disabled, Shift+Enter otherwise collapses to Enter and
+            -- submits the prompt.
+            { key = "Enter", mods = "SHIFT", action = wezterm.action.SendString("\x0a") },
+          },
 
           -- Local unix-domain mux. `wezterm cli` auto-finds the socket,
           -- so Persona's harness shim (persona-harness-wezterm) can
