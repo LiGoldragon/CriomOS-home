@@ -188,6 +188,7 @@ mkIf (size.min && behavesAs.edge) {
   # work.
   home.activation.chromaConfigSeed = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     config_dir="''${XDG_CONFIG_HOME:-$HOME/.config}/chroma"
+    state_dir="''${XDG_STATE_HOME:-$HOME/.local/state}/chroma"
     if [ ! -f "$config_dir/config.nota" ]; then
       mkdir -p "$config_dir"
       cat > "$config_dir/config.nota" << 'CHROMA_DEFAULT_CONFIG'
@@ -197,5 +198,11 @@ mkIf (size.min && behavesAs.edge) {
         's|^[[:space:]]*(ApplyCommand "/nix/store/.*-chroma-apply-theme/bin/chroma-apply-theme")|        (ApplyCommand "${profileApplyCommand}")|' \
         "$config_dir/config.nota"
     fi
+
+    mkdir -p "$state_dir"
+    if [ ! -f "$state_dir/current-mode" ]; then
+      echo "dark" > "$state_dir/current-mode"
+    fi
+    ${pkgs.coreutils}/bin/date +%s%N > "$state_dir/wezterm-reload"
   '';
 }
