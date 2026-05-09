@@ -4,7 +4,6 @@
   user,
   inputs,
   hexis,
-  textScale,
   ...
 }:
 let
@@ -128,12 +127,12 @@ let
     "files.trimTrailingWhitespace" = true;
     "files.insertFinalNewline" = true;
 
-    # User-driven UI size. window.zoomLevel scales every surface
-    # in Codium uniformly (chrome, panels, editor) — one knob, one
-    # mental model. We deliberately do NOT also override
-    # editor.fontSize: combining the two is multiplicative and
-    # makes the editor pane drift away from the chrome.
-    "window.zoomLevel" = textScale.codiumZoom;
+    # window.zoomLevel scales every surface in Codium uniformly
+    # (chrome, panels, editor) — one knob, one mental model. We
+    # deliberately do NOT also override editor.fontSize: combining
+    # the two is multiplicative and makes the editor pane drift
+    # away from the chrome.
+    "window.zoomLevel" = -0.5;
   };
 
 in

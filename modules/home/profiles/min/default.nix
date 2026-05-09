@@ -6,13 +6,10 @@
   horizon,
   config,
   inputs,
-  textScale,
   # Todo(data)
   ...
 }:
 let
-  inherit (textScale) fontPt;
-
   inherit (builtins) toString readFile toJSON;
   inherit (lib)
     optionalAttrs
@@ -425,7 +422,7 @@ mkIf size.atLeastMin {
           -- whose glyphs are noticeably harder to read at the same
           -- nominal size than ghostty's pick.
           font = wezterm.font("IosevkaTerm Nerd Font", { weight = "Regular" }),
-          font_size = ${toString fontPt}.0,
+          font_size = 12.0,
           -- Sharpen rendering. `Light` hinting + horizontal-LCD
           -- subpixel keeps the same visual weight as ghostty on
           -- typical Wayland/Pango setups; without these wezterm

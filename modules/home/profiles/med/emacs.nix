@@ -2,13 +2,11 @@
   lib,
   pkgs,
   user,
-  textScale,
   ...
 }:
 let
   inherit (lib) mkIf;
   inherit (user) size;
-  inherit (textScale) emacsHeight;
 
   emacsBase = pkgs.emacs-pgtk;
 
@@ -136,7 +134,7 @@ let
     (electric-pair-mode 1)
     (recentf-mode 1)
     (run-at-time nil (* 5 60) 'recentf-save-list)
-    (set-face-attribute 'default nil :font "IosevkaTerm Nerd Font" :height ${toString emacsHeight})
+    (set-face-attribute 'default nil :font "IosevkaTerm Nerd Font" :height 120)
     (custom-set-variables
      '(make-backup-files nil)
      '(recentf-max-menu-items 1024)
