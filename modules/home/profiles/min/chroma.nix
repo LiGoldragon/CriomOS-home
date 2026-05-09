@@ -3,12 +3,14 @@
   pkgs,
   lib,
   inputs,
-  size,
-  behavesAs,
+  user,
+  horizon,
   ...
 }:
 let
   inherit (lib) mkIf;
+  inherit (horizon.node) behavesAs;
+  inherit (user) size;
 
   # ─── Palette parsing (shared shape, kept local to this module) ───────
   darkScheme = ../../ignis.yaml;
