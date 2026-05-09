@@ -149,6 +149,23 @@
       coreModule = bp.homeModules.default;
       horizon = inputs.horizon.horizon;
       pkgs = inputs.pkgs.pkgs;
+      lib = inputs.nixpkgs.lib;
+      packageCheckNames =
+        system:
+        builtins.listToAttrs (
+          map (packageName: {
+            name = "pkgs-${packageName}";
+            value = true;
+          }) (builtins.attrNames (bp.packages.${system} or { }))
+        );
+      derivationChecks = builtins.mapAttrs (
+        _system: checks:
+        lib.filterAttrs (
+          name: value:
+          lib.isDerivation value
+          && (!lib.hasPrefix "pkgs-" name || builtins.hasAttr name (packageCheckNames _system))
+        ) checks
+      ) (bp.checks or { });
 
       mkHomeConfiguration =
         userName: user:
@@ -173,6 +190,8 @@
     in
     bp
     // {
+      checks = derivationChecks;
+
       homeConfigurations = builtins.mapAttrs mkHomeConfiguration horizon.users;
 
       # Wrap blueprint's auto-discovered homeModules.default so that:
