@@ -594,7 +594,12 @@ let
     "x-scheme-handler/org-protocol"
   ];
 
-  isPreferredEditor = user.preferredEditor == "Emacs";
+  # Originally gated on `user.preferredEditor` — orphan field
+  # that never landed in horizon-rs. Hardcoded true: Emacs is
+  # the workspace's primary editor (goldragon datom has every
+  # user with `style = Emacs`). Restore the gate when a real
+  # editor-preference field exists on the User schema.
+  isPreferredEditor = true;
 
 in
 mkIf size.atLeastMed {
