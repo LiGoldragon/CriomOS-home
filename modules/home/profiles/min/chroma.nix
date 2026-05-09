@@ -44,7 +44,6 @@ let
     }:
     let
       c = parseScheme scheme;
-      oscSeq = mkOscSequence c;
       dconfMode = if mode == "dark" then "prefer-dark" else "prefer-light";
       gtkTheme = if mode == "dark" then "adw-gtk3-dark" else "adw-gtk3";
       iconTheme = if mode == "dark" then "Papirus-Dark" else "Papirus-Light";
