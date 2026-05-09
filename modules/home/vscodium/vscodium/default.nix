@@ -4,6 +4,7 @@
   user,
   inputs,
   hexis,
+  textScale,
   ...
 }:
 let
@@ -127,12 +128,12 @@ let
     "files.trimTrailingWhitespace" = true;
     "files.insertFinalNewline" = true;
 
-    # window.zoomLevel scales every surface in Codium uniformly
-    # (chrome, panels, editor) — one knob, one mental model. We
-    # deliberately do NOT also override editor.fontSize: combining
-    # the two is multiplicative and makes the editor pane drift
-    # away from the chrome.
-    "window.zoomLevel" = -0.5;
+    # User-driven UI size. window.zoomLevel scales every surface
+    # in Codium uniformly (chrome, panels, editor) — one knob, one
+    # mental model. We deliberately do NOT also override
+    # editor.fontSize: combining the two is multiplicative and
+    # makes the editor pane drift away from the chrome.
+    "window.zoomLevel" = textScale.codiumZoom;
   };
 
 in
@@ -154,20 +155,17 @@ lib.mkIf size.atLeastMed {
     };
   };
 
-  # EDITOR/VISUAL and xdg-mime defaults were originally gated on
-  # `user.preferredEditor == "Codium"` — orphan field that never
-  # landed in horizon-rs (intent was a UserProposal.editor enum;
-  # implementation never followed). Hardcoded `false` so these
-  # Codium-specific defaults stay dormant; med/emacs.nix already
-  # claims EDITOR=emacsclient unconditionally now that the
-  # preferredEditor gate there is hardcoded `true`. Restore the
-  # mkIf when a real editor-preference field exists on User.
-  home.sessionVariables = lib.mkIf false {
+  # EDITOR/VISUAL and xdg-mime defaults claimed only when the user's
+  # projected preferredEditor is Codium (set per-user in horizon via
+  # UserProposal.editor; smart-defaulted to Codium for non-code-devs
+  # and Emacs for code-devs when absent). The med/emacs.nix module
+  # makes the symmetric claim when preferredEditor is Emacs.
+  home.sessionVariables = lib.mkIf (user.preferredEditor == "Codium") {
     EDITOR = lib.mkForce "codium --wait";
     VISUAL = lib.mkForce "codium --wait";
   };
 
-  xdg.mimeApps.defaultApplications = lib.mkIf false (
+  xdg.mimeApps.defaultApplications = lib.mkIf (user.preferredEditor == "Codium") (
     builtins.listToAttrs (map (t: {
       name = t;
       value = "codium.desktop";

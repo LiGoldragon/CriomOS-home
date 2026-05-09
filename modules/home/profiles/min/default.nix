@@ -6,10 +6,13 @@
   horizon,
   config,
   inputs,
+  textScale,
   # Todo(data)
   ...
 }:
 let
+  inherit (textScale) fontPt;
+
   inherit (builtins) toString readFile toJSON;
   inherit (lib)
     optionalAttrs
@@ -422,7 +425,7 @@ mkIf size.atLeastMin {
           -- whose glyphs are noticeably harder to read at the same
           -- nominal size than ghostty's pick.
           font = wezterm.font("IosevkaTerm Nerd Font", { weight = "Regular" }),
-          font_size = 12.0,
+          font_size = ${toString fontPt}.0,
           -- Sharpen rendering. `Light` hinting + horizontal-LCD
           -- subpixel keeps the same visual weight as ghostty on
           -- typical Wayland/Pango setups; without these wezterm
@@ -433,21 +436,15 @@ mkIf size.atLeastMin {
           window_decorations = "NONE",
           hide_tab_bar_if_only_one_tab = true,
           enable_wayland = true,
-          -- Kitty keyboard protocol — distinguishes Shift+Enter,
-          -- Ctrl+arrow, Cmd+arrow, etc. from their unmodified
-          -- counterparts so TUIs (codex, claude-code) can bind them.
-          -- Without this, Shift+Enter and plain Enter share the same
-          -- byte sequence, and codex/claude-code's TUI sees only
-          -- Enter — which submits instead of inserting a newline.
-          --
-          -- Re-enabled after the upstream fix in claude-code 2.1.119
-          -- ("multi-line paste losing newlines in terminals using
-          -- kitty keyboard protocol sequences inside bracketed
-          -- paste"). Before that fix, claude-code's bracketed-paste
-          -- start marker arrived CSI-u-encoded and was not
-          -- recognized — pastes deserialized as individual
-          -- keystrokes and the first newline submitted the buffer.
-          enable_kitty_keyboard = true,
+          -- Kitty keyboard protocol kept Shift+Enter distinguishable
+          -- from Enter in TUIs (originally added in criomos-archive
+          -- 151696f for tmux/Shift+Enter). Disabled because it
+          -- swallows the bracketed-paste-mode handshake — claude-code
+          -- and other paste-aware TUIs received pasted text as
+          -- individual keystrokes, with the first newline submitting
+          -- the input. Use Ctrl+J for "newline without submit" in
+          -- TUIs that need it; tmux is no longer in the stack.
+          enable_kitty_keyboard = false,
 
           -- Local unix-domain mux. `wezterm cli` auto-finds the socket,
           -- so Persona's harness shim (persona-harness-wezterm) can

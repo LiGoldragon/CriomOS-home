@@ -5,12 +5,14 @@
   inputs,
   user,
   horizon,
+  textScale,
   ...
 }:
 let
   inherit (lib) mkIf;
   inherit (horizon.node) behavesAs;
   inherit (user) size;
+  inherit (textScale) fontPt;
 
   # ─── Palette parsing (shared shape, kept local to this module) ───────
   darkScheme = ../../ignis.yaml;
@@ -84,7 +86,7 @@ let
       mkdir -p "$HOME/.config/ghostty"
       cat > "$HOME/.config/ghostty/config" << 'GHOSTTY'
       font-family = IosevkaTerm Nerd Font
-      font-size = 12
+      font-size = ${toString fontPt}
       window-decoration = false
       gtk-titlebar = false
       window-theme = ghostty

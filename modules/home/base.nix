@@ -2,11 +2,16 @@
   pkgs,
   lib,
   user,
+  textScale,
   ...
 }:
 let
   darkScheme = ./ignis.yaml;
   lightScheme = ./ignis-light.yaml;
+
+  # `textScale.fontPt` comes from `modules/home/text-scale.nix`
+  # (single source of truth for the textSize ladder).
+  inherit (textScale) fontPt;
 
   parseScheme = scheme:
     (lib.importJSON (pkgs.runCommand "base16-to-json" {
@@ -200,15 +205,17 @@ in
           package = pkgs.dejavu_fonts;
           name = "DejaVu Serif";
         };
-        # Stylix targets for ghostty/wezterm/vscode/emacs are off
-        # — those modules set fonts directly — but stylix-driven
-        # apps (waybar, rofi/wofi, etc., when their targets are
-        # on) pick up the right sizes from here.
+        # All four font-size categories track the user's textSize
+        # ladder (via the `textScale.fontPt` arg). Stylix targets
+        # for ghostty/wezterm/vscode/emacs are off — those modules
+        # set fonts directly — but stylix-driven apps (waybar,
+        # rofi/wofi, etc., when their targets are on) pick up the
+        # right sizes from here.
         sizes = {
-          terminal = 12;
-          applications = 12;
-          desktop = 10;
-          popups = 10;
+          terminal = fontPt;
+          applications = fontPt;
+          desktop = fontPt - 2;
+          popups = fontPt - 2;
         };
       };
     };

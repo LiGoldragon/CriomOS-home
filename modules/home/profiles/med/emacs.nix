@@ -2,11 +2,13 @@
   lib,
   pkgs,
   user,
+  textScale,
   ...
 }:
 let
   inherit (lib) mkIf;
   inherit (user) size;
+  inherit (textScale) emacsHeight;
 
   emacsBase = pkgs.emacs-pgtk;
 
@@ -134,7 +136,7 @@ let
     (electric-pair-mode 1)
     (recentf-mode 1)
     (run-at-time nil (* 5 60) 'recentf-save-list)
-    (set-face-attribute 'default nil :font "IosevkaTerm Nerd Font" :height 120)
+    (set-face-attribute 'default nil :font "IosevkaTerm Nerd Font" :height ${toString emacsHeight})
     (custom-set-variables
      '(make-backup-files nil)
      '(recentf-max-menu-items 1024)
@@ -594,12 +596,7 @@ let
     "x-scheme-handler/org-protocol"
   ];
 
-  # Originally gated on `user.preferredEditor` — orphan field
-  # that never landed in horizon-rs. Hardcoded true: Emacs is
-  # the workspace's primary editor (goldragon datom has every
-  # user with `style = Emacs`). Restore the gate when a real
-  # editor-preference field exists on the User schema.
-  isPreferredEditor = true;
+  isPreferredEditor = user.preferredEditor == "Emacs";
 
 in
 mkIf size.atLeastMed {
