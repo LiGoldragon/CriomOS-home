@@ -5,14 +5,12 @@
   inputs,
   user,
   horizon,
-  textScale,
   ...
 }:
 let
   inherit (lib) mkIf;
   inherit (horizon.node) behavesAs;
   inherit (user) size;
-  inherit (textScale) fontPt;
 
   # ─── Palette parsing (shared shape, kept local to this module) ───────
   darkScheme = ../../ignis.yaml;
@@ -36,6 +34,18 @@ let
     + ",hl:${c.base0D},hl+:${c.base0D},info:${c.base0A},marker:${c.base0C}"
     + ",prompt:${c.base0A},spinner:${c.base0C},pointer:${c.base0C},header:${c.base0D}";
 
+  mkOscSequence =
+    c:
+    let
+      osc = n: color: ''\033]4;${toString n};${color}\007'';
+    in
+    ''
+      ${osc 0 c.base00}${osc 1 c.base08}${osc 2 c.base0B}${osc 3 c.base0A}\
+      ${osc 4 c.base0D}${osc 5 c.base0E}${osc 6 c.base0C}${osc 7 c.base05}\
+      ${osc 8 c.base03}${osc 9 c.base08}${osc 10 c.base0B}${osc 11 c.base0A}\
+      ${osc 12 c.base0D}${osc 13 c.base0E}${osc 14 c.base0C}${osc 15 c.base07}\
+      \033]10;${c.base05}\007\033]11;${c.base00}\007\033]12;${c.base05}\007'';
+
   # ─── Apply script — invoked by chroma-daemon on theme switch ─────────
   mkApplyScript =
     {
@@ -44,11 +54,8 @@ let
     }:
     let
       c = parseScheme scheme;
-      dconfMode = if mode == "dark" then "prefer-dark" else "prefer-light";
-      gtkTheme = if mode == "dark" then "adw-gtk3-dark" else "adw-gtk3";
-      iconTheme = if mode == "dark" then "Papirus-Dark" else "Papirus-Light";
-      emacsTheme = if mode == "dark" then "ignis-dark" else "ignis-light";
       fzfColors = mkFzfColors c;
+      oscSequence = mkOscSequence c;
     in
     pkgs.writeShellScript "chroma-apply-${mode}" ''
       state_dir="''${XDG_STATE_HOME:-$HOME/.local/state}/chroma"
@@ -61,43 +68,23 @@ let
       echo "export FZF_DEFAULT_OPTS=\"\$FZF_DEFAULT_OPTS ${fzfColors}\"" \
         > "$state_dir/fzf-theme.sh"
 
-      # Portal + dconf (Firefox, Electron, Qt apps).
-      ${pkgs.dconf}/bin/dconf write /org/gnome/desktop/interface/color-scheme "'${dconfMode}'"
-      ${pkgs.dconf}/bin/dconf write /org/gnome/desktop/interface/gtk-theme "'${gtkTheme}'"
-      ${pkgs.dconf}/bin/dconf write /org/gnome/desktop/interface/icon-theme "'${iconTheme}'"
-
-      # GTK 3 / 4 settings.ini (apps that read the file, not dconf).
-      for v in gtk-3.0 gtk-4.0; do
-        mkdir -p "$HOME/.config/$v"
-        cat > "$HOME/.config/$v/settings.ini" << 'GTKEOF'
-      [Settings]
-      gtk-theme-name=${gtkTheme}
-      gtk-cursor-theme-name=Bibata-Modern-Classic
-      gtk-cursor-theme-size=24
-      gtk-font-name=DejaVu Sans 12
-      gtk-icon-theme-name=${iconTheme}
-      GTKEOF
+      # Running terminals update through their own PTY. Each write is
+      # forked and timeout-bounded; one wedged pane can no longer hold
+      # the whole theme switch hostage.
+      osc_sequence='${oscSequence}'
+      for pty in /dev/pts/[0-9]*; do
+        [ -w "$pty" ] || continue
+        ${pkgs.util-linux}/bin/setsid --fork \
+          ${pkgs.coreutils}/bin/timeout 0.2s \
+          ${pkgs.bash}/bin/bash -c 'printf "%b" "$1" > "$2"' \
+          chroma-terminal-colors "$osc_sequence" "$pty" \
+          >/dev/null 2>&1 || true
       done
 
-      # Ghostty config (regenerated each switch).
-      mkdir -p "$HOME/.config/ghostty"
-      cat > "$HOME/.config/ghostty/config" << 'GHOSTTY'
-      font-family = IosevkaTerm Nerd Font
-      font-size = ${toString fontPt}
-      window-decoration = false
-      gtk-titlebar = false
-      window-theme = ghostty
-      background = ${c.base00}
-      foreground = ${c.base05}
-      GHOSTTY
-
-      # Do not broadcast OSC sequences into /dev/pts. A theme switch
-      # must not write into unrelated live TUI panes, and one stalled
-      # PTY can block the whole Chroma request. New shells apply
-      # terminal colours from current-mode in base.nix.
-
-      # Emacs (any running emacsclient-reachable daemon).
-      ${pkgs.coreutils}/bin/timeout 2s ${pkgs.emacs-pgtk}/bin/emacsclient --eval "(progn (add-to-list 'custom-theme-load-path \"$HOME/.config/emacs-ignis-themes\") (mapc #'disable-theme custom-enabled-themes) (load-theme '${emacsTheme} t))" 2>/dev/null || true
+      # Deliberately no dconf, GTK, Ghostty file rewrite, or Emacs RPC
+      # here. Those are desktop/app theme mutations, not terminal color
+      # changes, and global appearance writes make WezTerm stall while
+      # it reacts to portal/dconf state.
     '';
 
   applyDark = mkApplyScript {

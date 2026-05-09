@@ -171,7 +171,7 @@ in
       polarity = "dark";
       base16Scheme = darkScheme;
       targets = {
-        # Chroma switches dark/light via dconf at runtime
+        # Chroma switches terminal colors from its own state.
         emacs.enable = false;
         ghostty.enable = false;
         vscode.enable = false;
