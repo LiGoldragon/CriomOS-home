@@ -414,6 +414,10 @@ mkIf size.min {
           freetype_load_target = "Light",
           freetype_render_target = "HorizontalLcd",
           color_scheme = scheme_for_appearance(wezterm.gui.get_appearance()),
+          -- Codex marks selected file/mention rows as ANSI cyan + bold. Keep
+          -- bold typographic so WezTerm does not remap it through base16's
+          -- auxiliary bright-cyan slot, which is near-background in light mode.
+          bold_brightens_ansi_colors = "No",
           window_decorations = "NONE",
           hide_tab_bar_if_only_one_tab = true,
           enable_wayland = true,
