@@ -395,9 +395,11 @@ mkIf size.min {
         -- changes; Ctrl+Shift+C then silently fails. Re-
         -- asserting the clipboard on focus refreshes WezTerm's
         -- view. `wl-paste -n | wl-copy` is idempotent — no
-        -- clobber. Remove when #7034 lands in nixpkgs.
+        -- clobber. Keep this backgrounded: WezTerm's
+        -- `run_child_process` waits in the GUI event handler.
+        -- Remove when #7034 lands in nixpkgs.
         wezterm.on("window-focus-changed", function(window, pane)
-          wezterm.run_child_process { "sh", "-c", "wl-paste -n | wl-copy" }
+          wezterm.background_child_process { "sh", "-c", "wl-paste -n | wl-copy" }
         end)
 
         return {
