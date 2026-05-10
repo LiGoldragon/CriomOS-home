@@ -120,40 +120,13 @@ let
   '';
 
   /*
-    OSC escape sequences for terminal color switching.
-    Used by the zsh init hook below. Chroma persists the current mode;
-    shells apply terminal colours for their own PTY at startup instead
-    of a daemon broadcasting into every live /dev/pts entry.
+    Shell hook: new shells source Chroma's fzf state. Terminal
+    colours are owned by terminal-native config paths, not by
+    shell-startup OSC sequences.
   */
-  mkOscSequence =
-    c:
-    let
-      osc = n: color: ''\033]4;${toString n};${color}\007'';
-    in
-    ''
-      ${osc 0 c.base00}${osc 1 c.base08}${osc 2 c.base0B}${osc 3 c.base0A}\
-      ${osc 4 c.base0D}${osc 5 c.base0E}${osc 6 c.base0C}${osc 7 c.base05}\
-      ${osc 8 c.base03}${osc 9 c.base08}${osc 10 c.base0B}${osc 11 c.base0A}\
-      ${osc 12 c.base0D}${osc 13 c.base0E}${osc 14 c.base0C}${osc 15 c.base07}\
-      \033]10;${c.base05}\007\033]11;${c.base00}\007\033]12;${c.base05}\007'';
-
-  /*
-    Shell hook: new terminals get correct colors + fzf theme.
-    Reads the persisted mode written by Chroma's terminal concern
-    (`$XDG_STATE_HOME/chroma/current-mode`).
-  */
-  darkOsc = mkOscSequence dark;
-  lightOsc = mkOscSequence light;
   terminalInitHook = ''
     __chroma_init_theme() {
       local state="''${XDG_STATE_HOME:-$HOME/.local/state}/chroma"
-      local mode
-      mode=$(cat "$state/current-mode" 2>/dev/null) || return
-      if [ "$mode" = "light" ]; then
-        printf "${lightOsc}"
-      else
-        printf "${darkOsc}"
-      fi
       [ -f "$state/fzf-theme.sh" ] && source "$state/fzf-theme.sh"
     }
     __chroma_init_theme
@@ -168,8 +141,7 @@ in
       # stateVersion comes from the consumer (CriomOS userHomes.nix sets
       # it to 26.05); base.nix used to hardcode 25.05 which conflicted.
       packages = [
-        # `theme-dark` / `theme-light` shell wrappers + the chroma
-        # daemon + apply-script live in
+        # Chroma owns visual-state switching in
         # modules/home/profiles/min/chroma.nix.
         pkgs.papirus-icon-theme
         pkgs.adw-gtk3
@@ -187,7 +159,7 @@ in
       polarity = "dark";
       base16Scheme = darkScheme;
       targets = {
-        # Chroma switches terminal colors from its own state.
+        # Chroma owns terminal-adjacent state and native app themes.
         emacs.enable = false;
         ghostty.enable = false;
         vscode.enable = false;
