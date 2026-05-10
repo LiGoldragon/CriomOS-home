@@ -90,6 +90,13 @@ Build from pushed origin with `--refresh` before treating package changes
 as verified. Home activation should restart `whisrs.service`; do not
 signal niri.
 
+For Niri settings, repo changes and builds are not live runtime state. After
+pushing, run lojix `HomeOnly ... Activate`, then ask the running compositor to
+load the activated config with `niri msg action load-config-file`. This IPC
+reload is not a process signal; SIGHUP remains forbidden. Only test window
+rules, keybindings, or other Niri runtime settings after both activation and
+reload have happened.
+
 ---
 
 ## See also
