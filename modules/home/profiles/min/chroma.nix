@@ -83,9 +83,8 @@ mkIf (size.min && behavesAs.edge) {
     ${defaultConfig}CHROMA_DEFAULT_CONFIG
       fi
 
-      if [ ! -f "$state_dir/current-mode" ]; then
-        echo "dark" > "$state_dir/current-mode"
-      fi
-      ${pkgs.coreutils}/bin/date +%s%N > "$state_dir/wezterm-reload"
+    if [ ! -f "$state_dir/current-mode" ]; then
+      echo "dark" > "$state_dir/current-mode"
+    fi
   '';
 }

@@ -378,12 +378,6 @@ mkIf size.min {
           return chroma_state_dir() .. "/chroma/current-mode"
         end
 
-        local function chroma_reload_file()
-          return chroma_state_dir() .. "/chroma/wezterm-reload"
-        end
-
-        wezterm.add_to_config_reload_watch_list(chroma_reload_file())
-
         local function chroma_mode()
           local file = io.open(chroma_mode_file(), "r")
           if file == nil then
