@@ -404,19 +404,6 @@ mkIf size.min {
           return scheme_for_mode(chroma_mode())
         end
 
-        local function apply_chroma_scheme(window)
-          local overrides = window:get_config_overrides() or {}
-          local scheme = chroma_scheme()
-          if overrides.color_scheme ~= scheme then
-            overrides.color_scheme = scheme
-            window:set_config_overrides(overrides)
-          end
-        end
-
-        wezterm.on("window-config-reloaded", function(window, pane)
-          apply_chroma_scheme(window)
-        end)
-
         -- Workaround for wezterm/wezterm#6685 — pending fix
         -- in PR #7034. On Niri / KWin ≥6.5, WezTerm's
         -- clipboard offer state goes stale because spec-
