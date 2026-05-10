@@ -6,14 +6,11 @@
   horizon,
   config,
   inputs,
-  textScale,
   # Todo(data)
   ...
 }:
 let
-  inherit (textScale) fontPt;
-
-  inherit (builtins) toString readFile toJSON;
+  inherit (builtins) toJSON;
   inherit (lib)
     optionalAttrs
     optionalString
@@ -35,8 +32,6 @@ let
   inherit (pkgs) writeText;
 
   homeDir = config.home.homeDirectory;
-
-  terminalFontFamily = if size.medium then "IosevkaTerm Nerd Font" else "DejaVu Sans Mono";
 
   fzfColemakBinds = import ./fzfColemak.nix;
 
@@ -357,173 +352,6 @@ mkIf size.min {
     ghostty = {
       enable = true;
       installVimSyntax = true;
-    };
-
-    wezterm = {
-      # Enabled but not the default terminal. Ghostty stays the default;
-      # WezTerm is configured for two reasons:
-      # (1) operator picked it as Persona's first harness adapter — the
-      #     headless mux + `wezterm cli` (spawn/list/get-text/send-text)
-      #     is what the agent-pane orchestration shim wraps;
-      # (2) parity styling so opening WezTerm directly looks consistent
-      #     with the rest of the cluster (IosevkaTerm Nerd Font,
-      #     Equilibrium dark/light schemes).
-      enable = true;
-      extraConfig = ''
-        local function chroma_state_dir()
-          return os.getenv("XDG_STATE_HOME") or (wezterm.home_dir .. "/.local/state")
-        end
-
-        local function chroma_mode_file()
-          return chroma_state_dir() .. "/chroma/current-mode"
-        end
-
-        local function chroma_mode()
-          local file = io.open(chroma_mode_file(), "r")
-          if file == nil then
-            return "dark"
-          end
-
-          local mode = file:read("*l")
-          file:close()
-          if mode == "light" then
-            return "light"
-          end
-          return "dark"
-        end
-
-        local function scheme_for_mode(mode)
-          if mode == "dark" then
-            return "Equilibrium Dark"
-          else
-            return "Equilibrium Light"
-          end
-        end
-
-        local function chroma_scheme()
-          return scheme_for_mode(chroma_mode())
-        end
-
-        -- Workaround for wezterm/wezterm#6685 — pending fix
-        -- in PR #7034. On Niri / KWin ≥6.5, WezTerm's
-        -- clipboard offer state goes stale because spec-
-        -- correct compositors stop re-sending
-        -- `wl_data_device.selection` on intra-client focus
-        -- changes; Ctrl+Shift+C then silently fails. Re-
-        -- asserting the clipboard on focus refreshes WezTerm's
-        -- view. `wl-paste -n | wl-copy` is idempotent — no
-        -- clobber. Keep this backgrounded: WezTerm's
-        -- `run_child_process` waits in the GUI event handler.
-        -- Remove when #7034 lands in nixpkgs.
-        wezterm.on("window-focus-changed", function(window, pane)
-          wezterm.background_child_process { "sh", "-c", "wl-paste -n | wl-copy" }
-        end)
-
-        return {
-          -- Pin weight to Regular. Without this, wezterm's font matcher
-          -- can pick a thinner Iosevka variant (ExtraLight / Light)
-          -- whose glyphs are noticeably harder to read at the same
-          -- nominal size than ghostty's pick.
-          font = wezterm.font("IosevkaTerm Nerd Font", { weight = "Regular" }),
-          font_size = ${toString fontPt}.0,
-          -- Sharpen rendering. `Light` hinting + horizontal-LCD
-          -- subpixel keeps the same visual weight as ghostty on
-          -- typical Wayland/Pango setups; without these wezterm
-          -- looks washed-out at small sizes.
-          freetype_load_target = "Light",
-          freetype_render_target = "HorizontalLcd",
-          color_scheme = chroma_scheme(),
-          -- Codex marks selected file/mention rows as ANSI cyan + bold. Keep
-          -- bold typographic so WezTerm does not remap it through base16's
-          -- auxiliary bright-cyan slot, which is near-background in light mode.
-          bold_brightens_ansi_colors = "No",
-          window_decorations = "NONE",
-          hide_tab_bar_if_only_one_tab = true,
-          enable_wayland = true,
-          -- Kitty keyboard protocol kept Shift+Enter distinguishable
-          -- from Enter in TUIs (originally added in criomos-archive
-          -- 151696f for tmux/Shift+Enter). Disabled because it
-          -- swallows the bracketed-paste-mode handshake — claude-code
-          -- and other paste-aware TUIs received pasted text as
-          -- individual keystrokes, with the first newline submitting
-          -- the input. Use Ctrl+J for "newline without submit" in
-          -- TUIs that need it; tmux is no longer in the stack.
-          enable_kitty_keyboard = false,
-          keys = {
-            -- Codex treats Ctrl+J / raw LF as "insert newline". With Kitty
-            -- keyboard disabled, Shift+Enter otherwise collapses to Enter and
-            -- submits the prompt.
-            { key = "Enter", mods = "SHIFT", action = wezterm.action.SendString("\x0a") },
-          },
-
-          -- Local unix-domain mux. `wezterm cli` auto-finds the socket,
-          -- so Persona's harness shim (persona-harness-wezterm) can
-          -- spawn / list / read / inject panes without an open GUI.
-          -- Without this block, mux ops require an explicit env var
-          -- (PERSONA_WEZTERM_PREFER_MUX=1).
-          unix_domains = {
-            { name = "unix" },
-          },
-        }
-      '';
-      colorSchemes = {
-        "Equilibrium Dark" = {
-          ansi = [
-            "#0c1118"
-            "#f04339"
-            "#7f8b00"
-            "#bb8801"
-            "#008dd1"
-            "#6a7fd2"
-            "#00948b"
-            "#afaba2"
-          ];
-          brights = [
-            "#7b776e"
-            "#df5923"
-            "#949088"
-            "#22262d"
-            "#cac6bd"
-            "#e3488e"
-            "#181c22"
-            "#e7e2d9"
-          ];
-          background = "#0c1118";
-          foreground = "#afaba2";
-          cursor_bg = "#afaba2";
-          cursor_fg = "#0c1118";
-          selection_bg = "#22262d";
-          selection_fg = "#afaba2";
-        };
-        "Equilibrium Light" = {
-          ansi = [
-            "#f5f0e7"
-            "#d02023"
-            "#637200"
-            "#9d6f00"
-            "#0073b5"
-            "#4e66b6"
-            "#007a72"
-            "#43474e"
-          ];
-          brights = [
-            "#73777f"
-            "#bf3e05"
-            "#5a5f66"
-            "#d8d4cb"
-            "#2c3138"
-            "#c42775"
-            "#e7e2d9"
-            "#181c22"
-          ];
-          background = "#f5f0e7";
-          foreground = "#43474e";
-          cursor_bg = "#43474e";
-          cursor_fg = "#f5f0e7";
-          selection_bg = "#d8d4cb";
-          selection_fg = "#43474e";
-        };
-      };
     };
 
     fzf = {

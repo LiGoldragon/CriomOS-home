@@ -250,7 +250,7 @@ in
 
       binds = {
         # Launch
-        "Mod+Shift+Return".action = a.spawn terminal;
+        "Mod+Shift+Return".action = a.spawn terminal "+new-window";
         "Mod+O" = {
           action = a.toggle-overview;
           repeat = false;
