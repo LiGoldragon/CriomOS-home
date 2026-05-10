@@ -167,6 +167,8 @@ in
         scale = 1.0;
       };
 
+      workspaces.criomos-agent-tests = { };
+
       layout = {
         gaps = 8;
         default-column-width.proportion = 1.0;
@@ -207,6 +209,7 @@ in
           matches = [
             { app-id = "^org\\.criome\\.AgentTestWindow$"; }
           ];
+          open-on-workspace = "criomos-agent-tests";
           open-focused = false;
         }
         {
