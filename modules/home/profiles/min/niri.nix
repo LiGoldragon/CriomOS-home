@@ -205,6 +205,12 @@ in
         }
         {
           matches = [
+            { app-id = "^org\\.criome\\.AgentTestWindow$"; }
+          ];
+          open-focused = false;
+        }
+        {
+          matches = [
             { app-id = "SolarFire|SolarFire\\.exe|solarfire"; }
             { title = "Solar Fire|SolarFire"; }
           ];
