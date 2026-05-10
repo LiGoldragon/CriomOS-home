@@ -52,7 +52,6 @@ mkIf (size.min && behavesAs.edge) {
   home.packages = [
     chromaPackage
     pkgs.dconf
-    pkgs.emacs-pgtk
   ];
 
   systemd.user.services.chroma-daemon = {
