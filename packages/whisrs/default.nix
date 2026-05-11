@@ -73,7 +73,7 @@ craneLib.buildPackage (
         }
 
       wrapProgram $out/bin/whisrs-recall \
-        --prefix PATH : ${
+        --suffix PATH : ${
           pkgs.lib.makeBinPath [
             pkgs.fuzzel
             pkgs.wl-clipboard

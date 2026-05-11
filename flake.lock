@@ -1426,11 +1426,11 @@
     "whisrs-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1778503029,
-        "narHash": "sha256-8wkc9NHMbrTYDspfsgcO+mK1IXBbq8wIIXYM4MObSWQ=",
+        "lastModified": 1778506234,
+        "narHash": "sha256-OdO8OU9h8SYQ3kbys234/OP+e2Zd8RTY1bbJfYpTr78=",
         "owner": "LiGoldragon",
         "repo": "whisrs",
-        "rev": "ea2d1e0c4a8ed33913792f88664e6d35aa825ccb",
+        "rev": "f4531fe6c176ca10fc7e2733e58c1cb3dcca5140",
         "type": "github"
       },
       "original": {
