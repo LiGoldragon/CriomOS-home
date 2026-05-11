@@ -1,7 +1,10 @@
 {
   lib,
   config,
+  hexis,
   horizon,
+  inputs,
+  pkgs,
   ...
 }:
 let
@@ -48,19 +51,23 @@ lib.mkIf behavesAs.edge {
         ];
       };
     };
-    plugins = {
+  };
+
+  home.activation.mergeNoctaliaPlugins = inputs.hexis.lib.mkManagedConfig {
+    inherit lib pkgs hexis;
+    file = "$HOME/.config/noctalia/plugins.json";
+    declared = {
       version = 2;
-      sources = [
-        {
-          name = "Noctalia Plugins";
-          url = "https://github.com/noctalia-dev/noctalia-plugins";
-          enabled = false;
-        }
-      ];
-      states.whisrs-level = {
-        enabled = true;
-        sourceUrl = "https://github.com/noctalia-dev/noctalia-plugins";
+      states = {
+        whisrs-level = {
+          enabled = true;
+          sourceUrl = "https://github.com/noctalia-dev/noctalia-plugins";
+        };
       };
+    };
+    modes = {
+      "/version" = "always";
+      "/states/whisrs-level" = "always";
     };
   };
 
