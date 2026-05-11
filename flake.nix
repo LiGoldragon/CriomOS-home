@@ -174,6 +174,7 @@
         checks
         // {
           whisrs-recall = checkPkgs.callPackage ./checks/whisrs-recall { inherit inputs; };
+          whisrs-level-widget = checkPkgs.callPackage ./checks/whisrs-level-widget { };
         }
       ) derivationChecks;
 

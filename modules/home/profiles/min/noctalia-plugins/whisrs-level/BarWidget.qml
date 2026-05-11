@@ -41,6 +41,13 @@ Item {
     }
   }
 
+  function scheduleReconnect() {
+    whisrsState = "idle";
+    microphoneLevel = 0.0;
+    levelSocket.connected = false;
+    reconnectTimer.restart();
+  }
+
   Socket {
     id: levelSocket
 
@@ -53,7 +60,7 @@ Item {
       if (!connected)
         reconnectTimer.restart();
     }
-    onError: _error => reconnectTimer.restart()
+    onError: _error => root.scheduleReconnect()
   }
 
   Timer {
@@ -63,7 +70,7 @@ Item {
     repeat: false
     running: false
     onTriggered: {
-      if (!levelSocket.connected && root.socketPath.length > 0)
+      if (root.socketPath.length > 0)
         levelSocket.connected = true;
     }
   }
