@@ -55,6 +55,7 @@ in
 mkIf (size.min && behavesAs.edge) {
   home.packages = [
     whisrs
+    pkgs.fuzzel
     pkgs.wl-clipboard
     pkgs.wtype
   ];
@@ -153,6 +154,12 @@ mkIf (size.min && behavesAs.edge) {
       action = a.spawn "${whisrs}/bin/whisrs" "toggle";
       repeat = false;
       hotkey-overlay.title = "Voice Typing";
+    };
+
+    binds."Mod+Alt+V" = {
+      action = a.spawn "${whisrs}/bin/whisrs-recall";
+      repeat = false;
+      hotkey-overlay.title = "Voice Typing Recall";
     };
   };
 }

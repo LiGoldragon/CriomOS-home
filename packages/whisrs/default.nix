@@ -30,23 +30,6 @@ craneLib.buildPackage (
   // {
     inherit cargoArtifacts;
 
-    patches = [
-      ./privacy.patch
-      ./clipboard-mode.patch
-      ./transcript-recovery.patch
-      ./tray-icon-theme.patch
-      ./status-bar-level-stream.patch
-      # `whisrs spool {list,retry,drop}` subcommands + migration of the
-      # legacy `~/.cache/whisrs/recovery/` cache-class storage to the
-      # state-class `$XDG_STATE_HOME/whisrs/spool/`. The systemd unit
-      # `whisrs-spool-retry.service` (wired in
-      # `modules/home/profiles/min/dictation.nix`) calls `whisrs spool
-      # retry --all --auto` from `network-online.target` so a failed
-      # transcription is retried when connectivity returns.
-      # See ~/primary/reports/system-specialist/2-voice-typing-recovery-design.md
-      ./spool-recovery.patch
-    ];
-
     nativeBuildInputs = commonArguments.nativeBuildInputs ++ [
       pkgs.makeWrapper
     ];
@@ -84,16 +67,23 @@ craneLib.buildPackage (
             pkgs.libnotify
             pkgs.coreutils
             # ffmpeg is the daemon's encoder for OPUS-in-OGG spool
-            # files (per spool-recovery.patch's `encode_opus_ogg`).
-            # Headless build is enough — we never decode video.
+            # files. Headless build is enough — we never decode video.
             pkgs.ffmpeg-headless
+          ]
+        }
+
+      wrapProgram $out/bin/whisrs-recall \
+        --prefix PATH : ${
+          pkgs.lib.makeBinPath [
+            pkgs.fuzzel
+            pkgs.wl-clipboard
           ]
         }
     '';
 
     meta = {
       description = "Linux-first voice-to-text dictation tool";
-      homepage = "https://github.com/y0sif/whisrs";
+      homepage = "https://github.com/LiGoldragon/whisrs";
       license = pkgs.lib.licenses.mit;
       mainProgram = "whisrs";
       platforms = pkgs.lib.platforms.linux;

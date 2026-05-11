@@ -82,11 +82,11 @@
     substack-cli.url = "github:LiGoldragon/substack-cli";
     substack-cli.inputs.nixpkgs.follows = "nixpkgs";
 
-    # `whisrs` — Linux/Niri dictation tool. Consumed as source and packaged
-    # locally as a cloud-only build so the daily OpenAI path does not compile
-    # local whisper.cpp support.
+    # `whisrs` — Linux/Niri dictation tool. Consumed from the CriomOS fork,
+    # which carries our daily dictation safety, recovery, status-bar, and
+    # recall integration patches on the `criomos` branch.
     whisrs-src = {
-      url = "github:y0sif/whisrs/v0.1.11";
+      url = "github:LiGoldragon/whisrs?ref=criomos";
       flake = false;
     };
 
@@ -166,6 +166,16 @@
           && (!lib.hasPrefix "pkgs-" name || builtins.hasAttr name (packageCheckNames _system))
         ) checks
       ) (bp.checks or { });
+      projectChecks = builtins.mapAttrs (
+        _system: checks:
+        let
+          checkPkgs = import inputs.nixpkgs { system = _system; };
+        in
+        checks
+        // {
+          whisrs-recall = checkPkgs.callPackage ./checks/whisrs-recall { inherit inputs; };
+        }
+      ) derivationChecks;
 
       mkHomeConfiguration =
         userName: user:
@@ -190,7 +200,7 @@
     in
     bp
     // {
-      checks = derivationChecks;
+      checks = projectChecks;
 
       homeConfigurations = builtins.mapAttrs mkHomeConfiguration horizon.users;
 

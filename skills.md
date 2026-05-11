@@ -54,22 +54,31 @@ The daily STT path is Whisrs. The owning files are
 
 Important current shape:
 
-- Whisrs is built from `inputs.whisrs-src` with crane.
+- Whisrs is built from `inputs.whisrs-src` with crane. The input is
+  the `LiGoldragon/whisrs` `criomos` branch, which carries the
+  CriomOS dictation safety, recovery, status-bar, and transcript
+  recall changes.
+- `packages/whisrs/` owns packaging, wrappers, and status icons. Rust
+  code changes live in the Whisrs fork, not in a local patch stack.
 - Only the daemon wrapper reads `gopass openai/api-key` into
   `WHISRS_OPENAI_API_KEY`.
-- The Whisrs privacy patch clears vendor key environment variables after
-  backend construction so helper commands do not inherit them.
+- The Whisrs fork clears vendor key environment variables after backend
+  construction so helper commands do not inherit them.
 - `Mod+V` is clipboard-only dictation. This is the safe default because
   it does not inject transcript letters through the compositor seat.
 - `Mod+Shift+V` toggles direct dictation, copies the full transcript to
   the clipboard before keyboard insertion, and writes Whisrs history.
   Treat it as the dangerous path for targets where direct key injection
   is explicitly worth the risk.
+- `Mod+Alt+V` opens `whisrs-recall`, a Fuzzel-backed selector over
+  recent Whisrs history. The selected full transcript is copied to the
+  clipboard; it does not inject text into the focused window.
 - Transcript history is local application state at
   `~/.local/share/whisrs/history.jsonl`; the service wrapper creates it
   private.
-- Noctalia shows the Whisrs recording state through the system tray item;
-  the tray icon patches are in `packages/whisrs/`.
+- Noctalia shows the Whisrs recording state through the system tray item
+  and the `whisrs-level` plugin. Status icons live in
+  `packages/whisrs/`.
 
 Do not put API keys in Nix, system-wide environment, shell profiles, or
 bar/widget scripts. If a change needs a paid STT call, ask first unless
