@@ -59,10 +59,12 @@ Important current shape:
   `WHISRS_OPENAI_API_KEY`.
 - The Whisrs privacy patch clears vendor key environment variables after
   backend construction so helper commands do not inherit them.
-- `Mod+V` toggles direct dictation, copies the full transcript to the
-  clipboard before keyboard insertion, and writes Whisrs history.
-- `Mod+Shift+V` is clipboard-only dictation for targets that mishandle
-  direct key injection.
+- `Mod+V` is clipboard-only dictation. This is the safe default because
+  it does not inject transcript letters through the compositor seat.
+- `Mod+Shift+V` toggles direct dictation, copies the full transcript to
+  the clipboard before keyboard insertion, and writes Whisrs history.
+  Treat it as the dangerous path for targets where direct key injection
+  is explicitly worth the risk.
 - Transcript history is local application state at
   `~/.local/share/whisrs/history.jsonl`; the service wrapper creates it
   private.

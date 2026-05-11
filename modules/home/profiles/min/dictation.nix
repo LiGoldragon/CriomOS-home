@@ -143,15 +143,15 @@ mkIf (size.min && behavesAs.edge) {
     ];
 
     binds."Mod+V" = {
-      action = a.spawn "${whisrs}/bin/whisrs" "toggle";
-      repeat = false;
-      hotkey-overlay.title = "Voice Typing";
-    };
-
-    binds."Mod+Shift+V" = {
       action = a.spawn "${whisrs}/bin/whisrs" "toggle-copy";
       repeat = false;
       hotkey-overlay.title = "Voice Typing (Copy)";
+    };
+
+    binds."Mod+Shift+V" = {
+      action = a.spawn "${whisrs}/bin/whisrs" "toggle";
+      repeat = false;
+      hotkey-overlay.title = "Voice Typing";
     };
   };
 }
