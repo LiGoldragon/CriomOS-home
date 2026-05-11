@@ -1,7 +1,7 @@
 { user, ... }:
 let
   # Cluster-wide textSize ladder — single source of truth. Each
-  # consumer (ghostty, wezterm, emacs, codium, stylix) reads the
+  # consumer (ghostty, emacs, codium, stylix) reads the
   # exposed `textScale` module arg rather than redefining the
   # mapping locally.
   fontPt = {

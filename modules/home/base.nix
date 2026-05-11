@@ -150,7 +150,6 @@ in
         emacs.enable = false;
         ghostty.enable = false;
         vscode.enable = false;
-        wezterm.enable = false;
         wofi.enable = false;
         waybar.enable = false;
         fzf.enable = false;
@@ -185,7 +184,7 @@ in
         };
         # All four font-size categories track the user's textSize
         # ladder (via the `textScale.fontPt` arg). Stylix targets
-        # for ghostty/wezterm/vscode/emacs are off — those modules
+        # for ghostty/vscode/emacs are off — those modules
         # set fonts directly — but stylix-driven apps (waybar,
         # rofi/wofi, etc., when their targets are on) pick up the
         # right sizes from here.
