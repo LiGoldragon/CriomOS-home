@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   lib,
   user,
@@ -6,27 +7,13 @@
   ...
 }:
 let
-  darkScheme = ./ignis.yaml;
-  lightScheme = ./ignis-light.yaml;
-
   # `textScale.fontPt` comes from `modules/home/text-scale.nix`
   # (single source of truth for the textSize ladder).
   inherit (textScale) fontPt;
+  inherit (config.criomosHome) visualTheme;
 
-  parseScheme =
-    scheme:
-    (lib.importJSON (
-      pkgs.runCommand "base16-to-json"
-        {
-          nativeBuildInputs = [ pkgs.yq-go ];
-        }
-        ''
-          yq -o=json '.' ${scheme} > $out
-        ''
-    )).palette;
-
-  dark = parseScheme darkScheme;
-  light = parseScheme lightScheme;
+  dark = config.lib.stylix.colors.withHashtag;
+  light = (config.stylix.base16.mkSchemeAttrs visualTheme.lightBase16Scheme).withHashtag;
 
   /*
     Generate a base16 Emacs theme from a palette.
@@ -157,7 +144,7 @@ in
       enable = true;
       autoEnable = true;
       polarity = "dark";
-      base16Scheme = darkScheme;
+      base16Scheme = visualTheme.darkBase16Scheme;
       targets = {
         # Chroma owns terminal-adjacent state and native app themes.
         emacs.enable = false;

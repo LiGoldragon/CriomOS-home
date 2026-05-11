@@ -13,49 +13,35 @@ let
   inherit (horizon.node) behavesAs;
   inherit (user) size;
   inherit (textScale) fontPt;
+  inherit (config.criomosHome) visualTheme;
 
   chromaPackage = inputs.chroma.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
-  darkPalette = builtins.readFile ../../ignis.nota;
-  lightPalette = builtins.readFile ../../ignis-light.nota;
+  dark = config.lib.stylix.colors.withHashtag;
+  light = (config.stylix.base16.mkSchemeAttrs visualTheme.lightBase16Scheme).withHashtag;
 
-  readNotaPalette =
-    path:
-    let
-      lines = lib.splitString "\n" (builtins.readFile path);
-      slot =
-        name:
-        let
-          matches = builtins.filter (match: match != null) (
-            map (line: builtins.match ''[[:space:]]*\(${name} "([^"]+)"\).*'' line) lines
-          );
-        in
-        if matches == [ ] then
-          throw "missing ${name} in ${toString path}"
-        else
-          builtins.head (builtins.head matches);
-    in
-    {
-      base00 = slot "Base00";
-      base01 = slot "Base01";
-      base02 = slot "Base02";
-      base03 = slot "Base03";
-      base04 = slot "Base04";
-      base05 = slot "Base05";
-      base06 = slot "Base06";
-      base07 = slot "Base07";
-      base08 = slot "Base08";
-      base09 = slot "Base09";
-      base0A = slot "Base0A";
-      base0B = slot "Base0B";
-      base0C = slot "Base0C";
-      base0D = slot "Base0D";
-      base0E = slot "Base0E";
-      base0F = slot "Base0F";
-    };
+  mkChromaPalette = name: colors: ''
+    (${name}
+      (Base00 "${colors.base00}")
+      (Base01 "${colors.base01}")
+      (Base02 "${colors.base02}")
+      (Base03 "${colors.base03}")
+      (Base04 "${colors.base04}")
+      (Base05 "${colors.base05}")
+      (Base06 "${colors.base06}")
+      (Base07 "${colors.base07}")
+      (Base08 "${colors.base08}")
+      (Base09 "${colors.base09}")
+      (Base0A "${colors.base0A}")
+      (Base0B "${colors.base0B}")
+      (Base0C "${colors.base0C}")
+      (Base0D "${colors.base0D}")
+      (Base0E "${colors.base0E}")
+      (Base0F "${colors.base0F}"))
+  '';
 
-  dark = readNotaPalette ../../ignis.nota;
-  light = readNotaPalette ../../ignis-light.nota;
+  darkPalette = mkChromaPalette "Dark" dark;
+  lightPalette = mkChromaPalette "Light" light;
 
   mkGhosttyPaletteLines =
     {
