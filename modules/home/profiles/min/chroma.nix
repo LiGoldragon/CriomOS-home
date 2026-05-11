@@ -58,31 +58,41 @@ let
   light = readNotaPalette ../../ignis-light.nota;
 
   mkGhosttyPaletteLines =
-    c:
+    {
+      colors,
+      black ? colors.base00,
+    }:
     lib.concatStringsSep "\n" [
-      "palette = 0=${c.base00}"
-      "palette = 1=${c.base08}"
-      "palette = 2=${c.base0B}"
-      "palette = 3=${c.base0A}"
-      "palette = 4=${c.base0D}"
-      "palette = 5=${c.base0E}"
-      "palette = 6=${c.base0C}"
-      "palette = 7=${c.base05}"
-      "palette = 8=${c.base03}"
-      "palette = 9=${c.base08}"
-      "palette = 10=${c.base0B}"
-      "palette = 11=${c.base0A}"
-      "palette = 12=${c.base0D}"
-      "palette = 13=${c.base0E}"
-      "palette = 14=${c.base0C}"
-      "palette = 15=${c.base07}"
+      "palette = 0=${black}"
+      "palette = 1=${colors.base08}"
+      "palette = 2=${colors.base0B}"
+      "palette = 3=${colors.base0A}"
+      "palette = 4=${colors.base0D}"
+      "palette = 5=${colors.base0E}"
+      "palette = 6=${colors.base0C}"
+      "palette = 7=${colors.base05}"
+      "palette = 8=${colors.base03}"
+      "palette = 9=${colors.base08}"
+      "palette = 10=${colors.base0B}"
+      "palette = 11=${colors.base0A}"
+      "palette = 12=${colors.base0D}"
+      "palette = 13=${colors.base0E}"
+      "palette = 14=${colors.base0C}"
+      "palette = 15=${colors.base07}"
     ];
 
   mkGhosttyConfig =
     {
       name,
       colors,
+      light ? false,
     }:
+    let
+      ghosttyPaletteLines = mkGhosttyPaletteLines {
+        inherit colors;
+        black = if light then colors.base05 else colors.base00;
+      };
+    in
     pkgs.writeText "ghostty-${name}.conf" ''
       font-family = IosevkaTerm Nerd Font
       font-size = ${toString fontPt}
@@ -94,7 +104,7 @@ let
       cursor-color = ${colors.base05}
       selection-background = ${colors.base02}
       selection-foreground = ${colors.base05}
-      ${mkGhosttyPaletteLines colors}
+      ${ghosttyPaletteLines}
     '';
 
   ghosttyDarkConfig = mkGhosttyConfig {
@@ -104,6 +114,7 @@ let
   ghosttyLightConfig = mkGhosttyConfig {
     name = "light";
     colors = light;
+    light = true;
   };
 
   defaultConfig = ''
@@ -139,6 +150,13 @@ let
 
 in
 mkIf (size.min && behavesAs.edge) {
+  assertions = [
+    {
+      assertion = light.base05 != light.base00;
+      message = "Chroma Ghostty light theme requires readable ANSI black for Codex key hints.";
+    }
+  ];
+
   home.packages = [
     chromaPackage
     pkgs.dconf
@@ -167,12 +185,16 @@ mkIf (size.min && behavesAs.edge) {
       state_dir="''${XDG_STATE_HOME:-$HOME/.local/state}/chroma"
       mkdir -p "$config_dir" "$state_dir"
 
+      next_config="$(${pkgs.coreutils}/bin/mktemp)"
+      cat > "$next_config" << 'CHROMA_DEFAULT_CONFIG'
+    ${defaultConfig}CHROMA_DEFAULT_CONFIG
       if [ ! -f "$config_dir/config.nota" ] \
         || grep -Eq 'ApplyCommand|ApplyTargets|Legacy|\.ya?ml|GhosttyConfigSources' "$config_dir/config.nota" \
-        || ! grep -q 'GhosttyConfigTemplates' "$config_dir/config.nota"; then
-        cat > "$config_dir/config.nota" << 'CHROMA_DEFAULT_CONFIG'
-    ${defaultConfig}CHROMA_DEFAULT_CONFIG
+        || ! grep -q 'GhosttyConfigTemplates' "$config_dir/config.nota" \
+        || ! ${pkgs.diffutils}/bin/cmp -s "$next_config" "$config_dir/config.nota"; then
+        ${pkgs.coreutils}/bin/cp "$next_config" "$config_dir/config.nota"
       fi
+      ${pkgs.coreutils}/bin/rm -f "$next_config"
 
     if [ ! -f "$state_dir/current-mode" ]; then
       echo "dark" > "$state_dir/current-mode"
