@@ -30,6 +30,7 @@ lib.mkIf behavesAs.edge {
           { id = "Workspace"; }
         ];
         right = [
+          { id = "plugin:whisrs-level"; }
           {
             id = "Tray";
             colorizeIcons = false;
@@ -47,6 +48,27 @@ lib.mkIf behavesAs.edge {
         ];
       };
     };
+    plugins = {
+      version = 2;
+      sources = [
+        {
+          name = "Noctalia Plugins";
+          url = "https://github.com/noctalia-dev/noctalia-plugins";
+          enabled = false;
+        }
+      ];
+      states.whisrs-level = {
+        enabled = true;
+        sourceUrl = "https://github.com/noctalia-dev/noctalia-plugins";
+      };
+    };
+  };
+
+  xdg.configFile = {
+    "noctalia/plugins/whisrs-level/manifest.json".source =
+      ./noctalia-plugins/whisrs-level/manifest.json;
+    "noctalia/plugins/whisrs-level/BarWidget.qml".source =
+      ./noctalia-plugins/whisrs-level/BarWidget.qml;
   };
 
   services.mako = {

@@ -9,7 +9,7 @@ let
     src = craneLib.cleanCargoSource inputs.whisrs-src;
 
     strictDeps = true;
-    cargoExtraArgs = "--no-default-features --features tray";
+    cargoExtraArgs = "--no-default-features --features tray,overlay";
 
     nativeBuildInputs = with pkgs; [
       pkg-config
@@ -35,6 +35,7 @@ craneLib.buildPackage (
       ./clipboard-mode.patch
       ./transcript-recovery.patch
       ./tray-icon-theme.patch
+      ./status-bar-level-stream.patch
       # `whisrs spool {list,retry,drop}` subcommands + migration of the
       # legacy `~/.cache/whisrs/recovery/` cache-class storage to the
       # state-class `$XDG_STATE_HOME/whisrs/spool/`. The systemd unit
