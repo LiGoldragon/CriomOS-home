@@ -44,6 +44,11 @@ This repo does not own:
 - Horizon schema or method computation.
 - Emacs internals.
 
+Node names are not feature predicates in Home Manager either. Use them
+only as rendered identity/display data. If a module needs to know whether
+there is an AI provider, tailnet controller, or other cluster role, read
+the projected Horizon role data or extend horizon-rs.
+
 ---
 
 ## Dictation

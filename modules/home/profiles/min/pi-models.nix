@@ -24,6 +24,7 @@ let
   routerNode = lib.findFirst (node: node.typeIs.largeAiRouter or false) null clusterNodes;
   largeAiNode = lib.findFirst (node: node.behavesAs.largeAi or false) null clusterNodes;
   endpointNode = if routerNode != null then routerNode else largeAiNode;
+  providerName = "criomos-local";
 
   mkPiModel = model: {
     id = model.modelId;
@@ -35,7 +36,7 @@ let
   };
 
   piModelsConfig = {
-    providers.prometheus = {
+    providers.${providerName} = {
       api = "openai-completions";
       baseUrl = "http://${endpointNode.criomeDomainName}:${toString (inventory.serverPort or 11434)}/v1";
       # Pi requires an API key value for custom providers. The llama.cpp
@@ -55,8 +56,8 @@ let
   };
 
   piSettingsConfig = {
-    defaultProvider = "prometheus";
-    enabledModels = map (model: "prometheus/${model.modelId}") inventory.models;
+    defaultProvider = providerName;
+    enabledModels = map (model: "${providerName}/${model.modelId}") inventory.models;
     packages = [
       "packages/pi-linkup"
     ];

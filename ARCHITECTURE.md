@@ -28,6 +28,11 @@ Does not own:
 - System-level configuration — that's CriomOS.
 - Emacs internals — that's CriomOS-emacs.
 
+Cluster-specific choices enter through projected Horizon data. Home
+modules must not branch on concrete node names from a particular cluster;
+they consume semantic roles and capabilities and may render node names
+only as identities, URLs, labels, or diagnostics.
+
 ## Status
 
 CANON. Active.

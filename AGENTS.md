@@ -16,6 +16,11 @@ Home-manager modules for the CriomOS desktop profile. Owns:
 
 NixOS-level concerns (networking, services, users) live in `CriomOS`; horizon schema and method computation live in `horizon-rs`.
 
+Home modules follow the same network-neutral rule as CriomOS: node names
+may be displayed or used as generated identities, but must not decide
+which providers, features, services, or profile branches are enabled. Use
+projected Horizon roles/capabilities instead.
+
 First thing: run `bd list --status open`. Read `docs/ROADMAP.md`.
 
 ## Carve-outs
