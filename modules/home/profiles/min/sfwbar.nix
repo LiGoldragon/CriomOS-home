@@ -108,6 +108,14 @@ lib.mkIf behavesAs.edge {
         border-color = lib.mkForce "${colors.base08}cc";
         default-timeout = 30000;
       };
+
+      "app-name=Screenshot" = {
+        width = lib.mkForce 520;
+        height = lib.mkForce 220;
+        max-icon-size = lib.mkForce 160;
+        icon-border-radius = lib.mkForce 6;
+        default-timeout = lib.mkForce 4500;
+      };
     };
   };
 }

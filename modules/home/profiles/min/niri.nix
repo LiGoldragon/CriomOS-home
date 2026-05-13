@@ -18,7 +18,45 @@ let
   saveScreenshot = pkgs.writeShellScript "criomos-save-screenshot" ''
     set -eu
 
-    exec ${pkgs.grim}/bin/grim "$HOME/${screenshotDirectory}/$(${pkgs.coreutils}/bin/date +%Y%m%d-%H%M%S).png"
+    screenshot_name="$(${pkgs.coreutils}/bin/date +%Y%m%d-%H%M%S).png"
+    screenshot_path="$HOME/${screenshotDirectory}/$screenshot_name"
+
+    if ${pkgs.niri}/bin/niri msg action screenshot-screen --path "$screenshot_path"; then
+      wait_attempts=0
+      while [ "$wait_attempts" -lt 20 ] && [ ! -s "$screenshot_path" ]; do
+        wait_attempts=$((wait_attempts + 1))
+        ${pkgs.coreutils}/bin/sleep 0.05
+      done
+
+      if [ -s "$screenshot_path" ]; then
+        ${pkgs.libnotify}/bin/notify-send \
+          --app-name="Screenshot" \
+          --icon="$screenshot_path" \
+          --expire-time=4500 \
+          --transient \
+          "Screenshot saved" \
+          "${screenshotDirectory}/$screenshot_name"
+      else
+        ${pkgs.libnotify}/bin/notify-send \
+          --app-name="Screenshot" \
+          --urgency=critical \
+          --expire-time=8000 \
+          --transient \
+          "Screenshot failed" \
+          "No screenshot file was written."
+        exit 1
+      fi
+    else
+      status="$?"
+      ${pkgs.libnotify}/bin/notify-send \
+        --app-name="Screenshot" \
+        --urgency=critical \
+        --expire-time=8000 \
+        --transient \
+        "Screenshot failed" \
+        "Niri could not capture the screen."
+      exit "$status"
+    fi
   '';
 
   noctaliaIpc = pkgs.writeShellScript "criomos-noctalia-ipc" ''
