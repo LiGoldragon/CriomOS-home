@@ -96,6 +96,20 @@ the user explicitly authorized that call in the current task.
 
 ## Verification
 
+### FullOS propagation
+
+CriomOS-home is a flake input of CriomOS. A pushed CriomOS-home
+commit is not part of a FullOS deployment until CriomOS's
+`flake.lock` pins `inputs.criomos-home` to that commit. `nix
+--refresh` on the CriomOS flake refreshes CriomOS itself; it
+does not override nested input pins.
+
+When a CriomOS-home change is intended to ship through FullOS,
+push the CriomOS-home commit, run `nix flake update criomos-home`
+in CriomOS, commit and push CriomOS's `flake.lock`, then deploy
+FullOS through lojix. Treat the downstream lock bump as part of
+the home change, not as a separate optional cleanup.
+
 For local checks that do not call paid APIs:
 
 - `systemctl --user is-active whisrs.service`
