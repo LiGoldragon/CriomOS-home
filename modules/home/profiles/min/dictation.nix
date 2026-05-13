@@ -161,5 +161,11 @@ mkIf (size.min && behavesAs.edge) {
       repeat = false;
       hotkey-overlay.title = "Voice Typing Recall";
     };
+
+    binds."Mod+Ctrl+V" = {
+      action = a.spawn "${whisrs}/bin/whisrs" "cancel";
+      repeat = false;
+      hotkey-overlay.title = "Voice Typing Cancel";
+    };
   };
 }

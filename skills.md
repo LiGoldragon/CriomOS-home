@@ -78,6 +78,9 @@ Important current shape:
 - `Mod+Alt+V` opens `whisrs-recall`, a Fuzzel-backed selector over
   recent Whisrs history. The selected full transcript is copied to the
   clipboard; it does not inject text into the focused window.
+- `Mod+Ctrl+V` cancels the active recording. On the default batch
+  backend this stops local capture, discards the audio, avoids the
+  transcription request, and does not write Whisrs history.
 - Transcript history is local application state at
   `~/.local/share/whisrs/history.jsonl`; the service wrapper creates it
   private.
