@@ -28,15 +28,7 @@ let
         ${pkgs.coreutils}/bin/sleep 0.05
       done
 
-      if [ -s "$screenshot_path" ]; then
-        ${pkgs.libnotify}/bin/notify-send \
-          --app-name="Screenshot" \
-          --icon="$screenshot_path" \
-          --expire-time=4500 \
-          --transient \
-          "Screenshot saved" \
-          "${screenshotDirectory}/$screenshot_name"
-      else
+      if [ ! -s "$screenshot_path" ]; then
         ${pkgs.libnotify}/bin/notify-send \
           --app-name="Screenshot" \
           --urgency=critical \
