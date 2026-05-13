@@ -106,9 +106,11 @@ does not override nested input pins.
 
 When a CriomOS-home change is intended to ship through FullOS,
 push the CriomOS-home commit, run `nix flake update criomos-home`
-in CriomOS, commit and push CriomOS's `flake.lock`, then deploy
-FullOS through lojix. Treat the downstream lock bump as part of
-the home change, not as a separate optional cleanup.
+in CriomOS, and update any top-level CriomOS input that the home
+flake follows and needs at runtime. Commit and push CriomOS's
+`flake.lock`, then deploy FullOS through lojix. Treat the
+downstream lock bump as part of the home change, not as a
+separate optional cleanup.
 
 For local checks that do not call paid APIs:
 
