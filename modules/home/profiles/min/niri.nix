@@ -13,6 +13,13 @@ let
   inherit (horizon.node) behavesAs;
 
   a = config.lib.niri.actions;
+  screenshotDirectory = constants.fileSystem.home.screenshotDirectory;
+
+  saveScreenshot = pkgs.writeShellScript "criomos-save-screenshot" ''
+    set -eu
+
+    exec ${pkgs.grim}/bin/grim "$HOME/${screenshotDirectory}/$(${pkgs.coreutils}/bin/date +%Y%m%d-%H%M%S).png"
+  '';
 
   noctaliaIpc = pkgs.writeShellScript "criomos-noctalia-ipc" ''
     set -eu
@@ -343,9 +350,7 @@ in
         };
 
         # Screenshot
-        "Print".action =
-          a.spawn "sh" "-c"
-            "mkdir -p ~/${constants.fileSystem.screenshots} && grim ~/${constants.fileSystem.screenshots}/$(date +%Y%m%d-%H%M%S).png";
+        "Print".action = a.spawn "${saveScreenshot}";
         "Mod+P".action = a.spawn "sh" "-c" "grim - | wl-copy";
         "Mod+Print".action = a.spawn "sh" "-c" ''grim -g "$(slurp)" - | wl-copy'';
 

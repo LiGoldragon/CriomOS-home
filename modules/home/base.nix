@@ -3,6 +3,7 @@
   pkgs,
   lib,
   user,
+  constants,
   textScale,
   ...
 }:
@@ -119,6 +120,12 @@ let
     __chroma_init_theme
   '';
 
+  ensuredHomeDirectories = constants.fileSystem.home.ensuredDirectories;
+
+  ensuredHomeDirectoryCommands = lib.concatMapStringsSep "\n" (
+    directory: ''${pkgs.coreutils}/bin/install -d "$HOME/${directory}"''
+  ) ensuredHomeDirectories;
+
 in
 {
   config = {
@@ -134,6 +141,10 @@ in
         pkgs.adw-gtk3
       ];
       file.".config/emacs-ignis-themes".source = emacsThemeDir;
+
+      activation.ensureHomeDirectories = lib.hm.dag.entryAfter [
+        "writeBoundary"
+      ] ensuredHomeDirectoryCommands;
     };
 
     gtk.enable = false;
