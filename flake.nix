@@ -63,7 +63,7 @@
     # gate entirely.
     claude-code-vsix = {
       type = "file";
-      url = "https://open-vsx.org/api/anthropic/claude-code/linux-x64/2.1.126/file/anthropic.claude-code-2.1.126@linux-x64.vsix";
+      url = "https://open-vsx.org/api/Anthropic/claude-code/linux-x64/2.1.141/file/Anthropic.claude-code-2.1.141@linux-x64.vsix";
       flake = false;
     };
 
