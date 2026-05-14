@@ -168,8 +168,11 @@ let
 
   unixDeveloperPackages = unixUtilities ++ programmingTools;
 
-  deploymentPackages = [
+  deploymentPackages = with pkgs; [
     inputs.lojix-cli.packages.${pkgs.stdenv.hostPlatform.system}.default
+    age
+    sops
+    ssh-to-age
   ];
 
   # pi-mentci wrapper dropped 2026-04-25; pi itself returns 2026-04-29
