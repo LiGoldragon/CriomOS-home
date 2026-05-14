@@ -14,6 +14,7 @@ let
   inherit (user) size;
   inherit (textScale) fontPt;
   inherit (config.criomosHome) visualTheme;
+  inherit (visualTheme) darkThemeSwitchTiming lightThemeSwitchTiming;
 
   chromaPackage = inputs.chroma.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
@@ -118,8 +119,8 @@ let
           (Dark "${ghosttyDarkConfig}")
           (Light "${ghosttyLightConfig}"))
         (Schedule
-          (Waypoint (CivilDawn (SignedMinutes 0)) Light)
-          (Waypoint (CivilDusk (SignedMinutes 0)) Dark)
+          (Waypoint (Sunrise ${lightThemeSwitchTiming}) Light)
+          (Waypoint (Sunset ${darkThemeSwitchTiming}) Dark)
           (Default Dark)))
       (Warmth
         (Schedule
