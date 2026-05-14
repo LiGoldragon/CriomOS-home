@@ -1,0 +1,293 @@
+diff --git a/Modules/Dock/Dock.qml b/Modules/Dock/Dock.qml
+index 2b147f3..b0640de 100644
+--- a/Modules/Dock/Dock.qml
++++ b/Modules/Dock/Dock.qml
+@@ -53,20 +53,20 @@ Loader {
+       Connections {
+         target: Settings.data.dock
+         function onPinnedAppsChanged() {
+-          updateDockApps();
++          updateDockApps(true);
+         }
+         function onOnlySameOutputChanged() {
+-          updateDockApps();
++          updateDockApps(true);
+         }
+         function onGroupAppsChanged() {
+-          updateDockApps();
++          updateDockApps(true);
+         }
+       }
+ 
+       // Initial update when component is ready
+       Component.onCompleted: {
+         if (ToplevelManager) {
+-          updateDockApps();
++          updateDockApps(true);
+         }
+       }
+ 
+@@ -76,7 +76,7 @@ Loader {
+         function onValuesChanged() {
+           root.iconRevision++;
+           root._desktopEntryIdCache = {};
+-          updateDockApps();
++          updateDockApps(true);
+         }
+       }
+ 
+@@ -190,6 +190,7 @@ Loader {
+ 
+       // Combined model of running apps and pinned apps
+       property var dockApps: []
++      property string dockAppsSignature: ""
+       property var groupCycleIndices: ({})
+ 
+       // Track the session order of apps (transient reordering)
+@@ -479,8 +480,24 @@ Loader {
+         return grouped;
+       }
+ 
++      function getDockAppsSignature(apps) {
++        const allToplevels = ToplevelManager && ToplevelManager.toplevels ? (ToplevelManager.toplevels.values || []) : [];
++        return JSON.stringify(apps.map(app => {
++                                      const toplevels = app.toplevels || (app.toplevel ? [app.toplevel] : []);
++                                      return {
++                                        "type": app.type,
++                                        "appId": app.appId,
++                                        "isPinned": app.isPinned === true,
++                                        "toplevels": toplevels.map(toplevel => {
++                                                                    const screens = toplevel && toplevel.screens ? toplevel.screens.map(screen => screen.name || "").join(",") : "";
++                                                                    return allToplevels.indexOf(toplevel) + ":" + screens;
++                                                                  })
++                                      };
++                                    }));
++      }
++
+       // Function to update the combined dock apps model
+-      function updateDockApps() {
++      function updateDockApps(force) {
+         const runningApps = ToplevelManager ? (ToplevelManager.toplevels.values || []) : [];
+         const pinnedApps = Settings.data.dock.pinnedApps || [];
+         const combined = [];
+@@ -576,7 +593,14 @@ Loader {
+         }
+ 
+         const sortedApps = sortDockApps(combined);
+-        dockApps = buildGroupedDockApps(sortedApps);
++        const nextDockApps = buildGroupedDockApps(sortedApps);
++        const nextSignature = getDockAppsSignature(nextDockApps);
++        if (!force && nextSignature === dockAppsSignature) {
++          return;
++        }
++
++        dockAppsSignature = nextSignature;
++        dockApps = nextDockApps;
+         const cycleState = root.groupCycleIndices || {};
+         const nextCycleState = {};
+         dockApps.forEach(app => {
+diff --git a/Services/Compositor/CompositorService.qml b/Services/Compositor/CompositorService.qml
+index 5faf6ad..7ab3d5c 100644
+--- a/Services/Compositor/CompositorService.qml
++++ b/Services/Compositor/CompositorService.qml
+@@ -34,11 +34,13 @@ Singleton {
+   // Global workspaces flag (workspaces shared across all outputs)
+   // True for LabWC (stacking compositor), false for tiling WMs with per-output workspaces
+   property bool globalWorkspaces: false
++  property int windowTitleRevision: 0
+ 
+   // Generic events
+   signal workspaceChanged
+   signal activeWindowChanged
+   signal windowListChanged
++  signal windowTitleChanged(var windowId, string title)
+ 
+   // Backend service loader
+   property var backend: null
+@@ -230,6 +232,14 @@ Singleton {
+                                         syncWindows();
+                                       });
+ 
++    if (backend.windowTitleChanged) {
++      backend.windowTitleChanged.connect((windowId, title) => {
++                                           syncWindowTitle(windowId, title);
++                                           windowTitleRevision++;
++                                           windowTitleChanged(windowId, sanitizeTitle(title));
++                                         });
++    }
++
+     // Property bindings - use automatic property change signal
+     backend.focusedWindowIndexChanged.connect(() => {
+                                                 focusedWindowIndex = backend.focusedWindowIndex;
+@@ -270,6 +280,7 @@ Singleton {
+     for (var i = 0; i < ws.length; i++) {
+       windows.append(ws[i]);
+     }
++    windowTitleRevision++;
+     // Emit signal to notify listeners that window list has been updated
+     windowListChanged();
+   }
+@@ -284,11 +295,53 @@ Singleton {
+       if (windows.get(i).isFocused !== backendFocused) {
+         windows.setProperty(i, "isFocused", backendFocused);
+       }
++      const backendTitle = sanitizeTitle(backend.windows[i].title || "");
++      if (windows.get(i).title !== backendTitle) {
++        windows.setProperty(i, "title", backendTitle);
++        windowTitleRevision++;
++      }
+     }
+ 
+     focusedWindowIndex = newIndex;
+   }
+ 
++  function sanitizeTitle(title) {
++    if (title === undefined || title === null)
++      return "";
++    return String(title).replace(/(\r\n|\n|\r)/g, "");
++  }
++
++  function windowMatchesId(window, windowId) {
++    if (!window || windowId === undefined || windowId === null)
++      return false;
++    if (window.id !== undefined && window.id == windowId)
++      return true;
++    if (window.address !== undefined && window.address == windowId)
++      return true;
++    if (window.handle !== undefined && window.handle === windowId)
++      return true;
++    if (window.toplevel !== undefined && window.toplevel === windowId)
++      return true;
++    return false;
++  }
++
++  function syncWindowTitle(windowId, title) {
++    const cleanTitle = sanitizeTitle(title);
++    for (var i = 0; i < windows.count; i++) {
++      const window = windows.get(i);
++      if (windowMatchesId(window, windowId)) {
++        if (window.title !== cleanTitle) {
++          windows.setProperty(i, "title", cleanTitle);
++        }
++        return;
++      }
++    }
++
++    if ((windowId === undefined || windowId === null) && focusedWindowIndex >= 0 && focusedWindowIndex < windows.count && windows.get(focusedWindowIndex).title !== cleanTitle) {
++      windows.setProperty(focusedWindowIndex, "title", cleanTitle);
++    }
++  }
++
+   // Update display scales from backend
+   function updateDisplayScales() {
+     if (!backend || !backend.queryDisplayScales) {
+@@ -350,12 +403,9 @@ Singleton {
+ 
+   // Get focused window title
+   function getFocusedWindowTitle() {
++    windowTitleRevision;
+     if (focusedWindowIndex >= 0 && focusedWindowIndex < windows.count) {
+-      var title = windows.get(focusedWindowIndex).title;
+-      if (title !== undefined) {
+-        title = title.replace(/(\r\n|\n|\r)/g, "");
+-      }
+-      return title || "";
++      return sanitizeTitle(windows.get(focusedWindowIndex).title || "");
+     }
+     return "";
+   }
+diff --git a/Services/Compositor/NiriService.qml b/Services/Compositor/NiriService.qml
+index 4d125eb..8634f06 100644
+--- a/Services/Compositor/NiriService.qml
++++ b/Services/Compositor/NiriService.qml
+@@ -20,10 +20,14 @@ Item {
+   signal workspaceChanged
+   signal activeWindowChanged
+   signal windowListChanged
++  signal windowTitleChanged(var windowId, string title)
+   signal displayScalesChanged
+ 
+   property var outputCache: ({})
+   property var workspaceCache: ({})
++  property string windowStructureSignature: ""
++  property string windowFocusSignature: ""
++  property var windowTitleCache: ({})
+ 
+   function initialize() {
+     Niri.refreshOutputs();
+@@ -48,9 +52,17 @@ Item {
+       workspaceChanged();
+     }
+     function onWindowsUpdated() {
+-      safeUpdateWindows();
+-      windowListChanged();
+-      activeWindowChanged();
++      const changes = safeUpdateWindows();
++      if (changes.structureChanged) {
++        windowListChanged();
++      }
++      if (changes.focusChanged) {
++        activeWindowChanged();
++      }
++      for (var i = 0; i < changes.titleChanges.length; i++) {
++        const change = changes.titleChanges[i];
++        windowTitleChanged(change.id, change.title);
++      }
+     }
+     function onOutputsUpdated() {
+       safeUpdateOutputs();
+@@ -175,6 +187,11 @@ Item {
+   function safeUpdateWindows() {
+     const niriWindows = Niri.windows.values;
+     const windowsList = [];
++    const previousStructureSignature = windowStructureSignature;
++    const previousFocusSignature = windowFocusSignature;
++    const previousTitleCache = windowTitleCache || {};
++    const nextTitleCache = {};
++    const titleChanges = [];
+ 
+     for (var i = 0; i < niriWindows.length; i++) {
+       const win = niriWindows[i];
+@@ -192,8 +209,41 @@ Item {
+                        });
+     }
+ 
+-    windows = toSortedWindowList(windowsList);
++    const sortedWindows = toSortedWindowList(windowsList);
++    const structureSignature = JSON.stringify(sortedWindows.map(win => [
++                                                         win.id,
++                                                         win.appId,
++                                                         win.workspaceId,
++                                                         win.output,
++                                                         win.position.x,
++                                                         win.position.y
++                                                       ]));
++    const focusSignature = JSON.stringify(sortedWindows.map(win => [win.id, win.isFocused]));
++
++    for (var j = 0; j < sortedWindows.length; j++) {
++      const sortedWindow = sortedWindows[j];
++      const title = sortedWindow.title || "";
++      nextTitleCache[sortedWindow.id] = title;
++      if (previousTitleCache[sortedWindow.id] !== undefined && previousTitleCache[sortedWindow.id] !== title) {
++        titleChanges.push({
++                            "id": sortedWindow.id,
++                            "title": title
++                          });
++      }
++    }
++
++    windows = sortedWindows;
+     safeUpdateFocusedWindow();
++
++    windowStructureSignature = structureSignature;
++    windowFocusSignature = focusSignature;
++    windowTitleCache = nextTitleCache;
++
++    return {
++      "structureChanged": previousStructureSignature !== "" && previousStructureSignature !== structureSignature,
++      "focusChanged": previousFocusSignature !== "" && previousFocusSignature !== focusSignature,
++      "titleChanges": titleChanges
++    };
+   }
+ 
+   function safeUpdateFocusedWindow() {
