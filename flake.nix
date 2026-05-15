@@ -182,6 +182,7 @@
           whisrs-recall = checkPkgs.callPackage ./checks/whisrs-recall { inherit inputs; };
           whisrs-level-widget = checkPkgs.callPackage ./checks/whisrs-level-widget { };
           rust-toolchain = checkPkgs.callPackage ./checks/rust-toolchain { inherit inputs; };
+          leta = checkPkgs.callPackage ./checks/leta { inherit inputs; };
         }
       ) derivationChecks;
 

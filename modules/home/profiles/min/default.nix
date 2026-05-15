@@ -115,6 +115,8 @@ let
 
   wayland-warpd = pkgs.warpd.override { withX = false; };
 
+  leta = pkgs.callPackage ../../../../packages/leta { };
+
   unixUtilities =
     with pkgs;
     [
@@ -138,6 +140,12 @@ let
     stdenv.cc
     # Rust
     rustToolchain
+    # Agent language intelligence
+    leta
+    typescript-language-server
+    typescript
+    gopls
+    clang-tools
     # Nix
     nil
     nixfmt
