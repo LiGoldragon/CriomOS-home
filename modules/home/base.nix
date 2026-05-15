@@ -2,6 +2,8 @@
   config,
   pkgs,
   lib,
+  inputs,
+  hexis,
   user,
   constants,
   textScale,
@@ -145,6 +147,17 @@ in
       activation.ensureHomeDirectories = lib.hm.dag.entryAfter [
         "writeBoundary"
       ] ensuredHomeDirectoryCommands;
+
+      activation.mergeCargoConfig = inputs.hexis.lib.mkManagedConfig {
+        inherit lib pkgs hexis;
+        file = "$HOME/.cargo/config.toml";
+        declared = {
+          build.jobs = 2;
+        };
+        modes = {
+          "/build/jobs" = "always";
+        };
+      };
     };
 
     gtk.enable = false;
