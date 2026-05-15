@@ -9,7 +9,7 @@ Split out from legacy CriomOS so that:
 2. Home-only deploys can evaluate this flake directly while passing the
    same projected `horizon` and `system` inputs used by CriomOS.
 
-**Status:** scaffold. Tracks [docs/ROADMAP.md](docs/ROADMAP.md).
+**Status:** active. Tracks [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Consumption
 
@@ -40,8 +40,8 @@ Blueprint conventions:
 
 ## Sibling repos
 
-- [`LiGoldragon/CriomOS`](https://github.com/LiGoldragon/CriomOS) — the OS platform.
-- [`LiGoldragon/CriomOS-emacs`](https://github.com/LiGoldragon/CriomOS-emacs) *(planned)* —
+- `LiGoldragon/CriomOS` — the OS platform.
+- `LiGoldragon/CriomOS-emacs` *(planned)* —
   replaces legacy `pkdjz/mkEmacs`. Consumed here, not by CriomOS directly.
 
 ## Conventions

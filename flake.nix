@@ -9,6 +9,9 @@
 
     crane.url = "github:ipetkov/crane";
 
+    rust-overlay.url = "github:oxalica/rust-overlay";
+    rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
+
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -178,6 +181,7 @@
           };
           whisrs-recall = checkPkgs.callPackage ./checks/whisrs-recall { inherit inputs; };
           whisrs-level-widget = checkPkgs.callPackage ./checks/whisrs-level-widget { };
+          rust-toolchain = checkPkgs.callPackage ./checks/rust-toolchain { inherit inputs; };
         }
       ) derivationChecks;
 
@@ -231,6 +235,9 @@
           _module.args.inputs = lib.mkForce inputs;
           _module.args.criomos-lib = lib.mkForce inputs.criomos-lib.lib;
           _module.args.constants = lib.mkForce inputs.criomos-lib.lib.constants;
+          _module.args.rustToolchain =
+            lib.mkForce
+              inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.rust-toolchain;
           # Resolve the hexis binary once here so consumers don't repeat
           # `inputs.hexis.packages.${pkgs.stdenv.hostPlatform.system}.default`
           # at every call site.

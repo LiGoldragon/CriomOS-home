@@ -6,6 +6,7 @@
   horizon,
   config,
   inputs,
+  rustToolchain,
   # Todo(data)
   ...
 }:
@@ -136,7 +137,7 @@ let
     # C
     stdenv.cc
     # Rust
-    cargo
+    rustToolchain
     # Nix
     nil
     nixfmt

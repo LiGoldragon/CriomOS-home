@@ -4,25 +4,28 @@ Active work is tracked in beads — `bd list --status open`. The list
 below is a high-level porting order; per-task detail lives in the
 beads issue it points to.
 
-## Phase 0 — scaffold (done)
+## Phase 0 — repository split (done)
 
 - [x] `flake.nix` — blueprint + desktop inputs
 - [x] `devshell.nix`, `formatter.nix`
 - [x] `modules/home/default.nix` aggregate (placeholder; see `home-tcj`)
 - [x] `lib/default.nix` — placeholder
 - [x] `README.md`, `AGENTS.md`
-- [x] `modules/home/{base.nix, profiles/{min,med,max}/, emacs/, vscodium/, neovim/, nonNix/}` — verbatim copies from `criomos-archive`.
+- [x] `modules/home/{base.nix, profiles/{min,med,max}/, emacs/, vscodium/, neovim/, nonNix/}` — home-owned modules.
 
 ## Phase 1 — adapt to new horizon shape
 
-- [ ] `home-f68` — modules in `modules/home/` are verbatim copies and
-      still consume the legacy `horizon.node.methods.X` shape and
-      `users.<u>.preCriomes.<n>` keys. horizon-rs emits a flat shape
-      with `pubKeys`. Per-module rewrite needed; spec at
-      [/home/li/git/horizon-rs/docs/DESIGN.md](/home/li/git/horizon-rs/docs/DESIGN.md).
-- [ ] `home-tcj` — implement `modules/home/default.nix` aggregate so
-      profile / module selection is driven by `horizon.user.sizedAtLeast.*`
-      and `horizon.node.behavesAs.*` (flat — no `.methods.` nesting).
+- [x] Home modules consume the flat projected horizon shape.
+- [x] `modules/home/default.nix` aggregates profile and module
+      selection from projected user and node facts.
+
+## Phase 1.5 — architecture guardrails
+
+- [ ] Add focused checks for stateful home paths, generated workspaces,
+      and theme configuration so regressions are caught before profile
+      activation.
+- [ ] Keep cluster-specific values out of CriomOS-home; user, node, and
+      cluster truth enters only through the projected horizon.
 
 ## Phase 2 — editor subsystem
 
@@ -32,11 +35,11 @@ beads issue it points to.
 
 ## Phase 3 — CriomOS integration
 
-- [ ] CriomOS consumes `inputs.criomos-home.homeModules.default` in
-      `crioZones.<cluster>.<node>.home.<user>`. Tracked in CriomOS as
-      part of `CriomOS-cal` (crioZones implementation).
-- [ ] Standalone `home-manager switch --flake` path documented in
-      `README.md` once the aggregate works.
+- [x] CriomOS consumes `inputs.criomos-home.homeModules.default`
+      through the NixOS home-manager integration.
+- [ ] Keep direct home-only activation documented as a lojix-driven
+      operation; raw `home-manager switch --flake` remains an escape
+      hatch, not the primary path.
 
 ## Open questions
 

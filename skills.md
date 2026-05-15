@@ -37,17 +37,34 @@ This repo owns:
 - `packages/` user-scoped packages and patched upstream tools.
 - Niri keybindings and Noctalia user configuration.
 - User services such as `whisrs.service`.
+- The canonical user-profile Rust toolchain:
+  `packages/rust-toolchain/default.nix`.
 
 This repo does not own:
 
 - NixOS users, groups, udev, kernel modules, or `/dev/uinput`.
 - Horizon schema or method computation.
 - Emacs internals.
+- Per-repo Rust build toolchains. Rust application repos may pin their
+  own compiler for builds; the Home toolchain is for interactive agent
+  work such as `cargo fmt`, `cargo clippy`, and editor integration.
 
 Node names are not feature predicates in Home Manager either. Use them
 only as rendered identity/display data. If a module needs to know whether
 there is an AI provider, tailnet controller, or other cluster role, read
 the projected Horizon role data or extend horizon-rs.
+
+## Rust Toolchain
+
+Use `packages.rust-toolchain` as the canonical profile Rust toolchain.
+It comes from `inputs.rust-overlay` and is pinned by
+`CriomOS-home/flake.lock`; do not install bare `pkgs.cargo`,
+`pkgs.rustc`, or `pkgs.rustfmt` into profiles.
+
+The package uses the minimal Rust profile plus explicit components:
+`rust-src`, `rust-analyzer`, `rustfmt`, and `clippy`. That keeps profile
+weight low while ensuring agents can run `cargo fmt`, `cargo clippy`,
+and language-server tooling everywhere.
 
 ---
 
