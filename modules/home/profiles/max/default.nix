@@ -80,8 +80,6 @@ mkMerge [
         };
       };
     };
-
-    services.easyeffects.enable = true;
   })
 
   # Max-tier exceptions per Li 2026-04-25: obs-studio + gimp/krita/

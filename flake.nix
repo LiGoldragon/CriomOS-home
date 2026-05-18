@@ -183,6 +183,7 @@
           whisrs-level-widget = checkPkgs.callPackage ./checks/whisrs-level-widget { };
           rust-toolchain = checkPkgs.callPackage ./checks/rust-toolchain { inherit inputs; };
           leta = checkPkgs.callPackage ./checks/leta { inherit inputs; };
+          no-easyeffects = checkPkgs.callPackage ./checks/no-easyeffects { };
         }
       ) derivationChecks;
 
