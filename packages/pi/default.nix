@@ -1,7 +1,7 @@
 { pkgs, inputs, ... }:
 pkgs.buildNpmPackage (finalAttrs: {
   pname = "pi";
-  version = "0.72.1";
+  version = "0.75.3";
 
   src = inputs.pi-src;
 
@@ -13,22 +13,20 @@ pkgs.buildNpmPackage (finalAttrs: {
   # at runtime. Install the whole monorepo and stitch in the `pi`
   # binary ourselves in postInstall.
 
-  npmDepsHash = "sha256-KUC1xQK6oJXtg962YeLOnO76uTdR10/VNa9iiCdT3VM=";
+  npmDepsHash = "sha256-/mWjrZFzRmtkbWYMJOXKnLPxFITFndq5hgdY0DnPfAg=";
 
   makeCacheWritable = true;
 
-  # `packages/ai`'s `generate-models` step (run as part of its build
-  # script) hits openrouter / ai-gateway.vercel / models.dev to refresh
-  # the catalogue that's also committed at `src/models.generated.ts`.
-  # Network is forbidden in the build sandbox, so the refresh either
-  # fails or returns empty and clobbers the committed file, leaving
-  # `src/models.ts` (which imports it as `MODELS`) typed too narrowly
-  # for tsgo to compile. Stub the refresh; the committed catalogue is
-  # the source of truth at the pinned tag anyway.
+  # `packages/ai`'s model refresh steps hit OpenRouter / ai-gateway.vercel /
+  # models.dev to refresh catalogues that are also committed in the source.
+  # Network is forbidden in the build sandbox, so the committed catalogues are
+  # the source of truth at the pinned tag.
   postPatch = ''
     substituteInPlace packages/ai/package.json \
       --replace-fail '"generate-models": "npx tsx scripts/generate-models.ts"' \
-                     '"generate-models": "true"'
+                     '"generate-models": "true"' \
+      --replace-fail '"generate-image-models": "npx tsx scripts/generate-image-models.ts"' \
+                     '"generate-image-models": "true"'
   '';
 
   # pi-mono's root `build` script sequences workspaces in dependency
