@@ -15,9 +15,11 @@ let
   # dispatches on the file extension though — `.vsix` triggers unzip.
   # Wrap each VSIX-input in a tiny rename derivation so the hook
   # recognizes it.
-  vsixFromInput = name: input: pkgs.runCommand name { } ''
-    cp ${input} $out
-  '';
+  vsixFromInput =
+    name: input:
+    pkgs.runCommand name { } ''
+      cp ${input} $out
+    '';
 
   # `pkgs.open-vsx` comes from CriomOS-pkgs's overlay-applied
   # nix-vscode-extensions overlay — built in our pkgs context where
@@ -68,14 +70,16 @@ let
     mktplcRef = {
       name = "claude-code";
       publisher = "anthropic";
-      version = "2.1.141";
+      version = "2.1.145";
     };
-    vsix = vsixFromInput "claude-code-2.1.141.vsix" inputs.claude-code-vsix;
+    vsix = vsixFromInput "claude-code-2.1.145.vsix" inputs.claude-code-vsix;
     postInstall = ''
       bin_dir=$out/share/vscode/extensions/anthropic.claude-code/resources/native-binary
       if [ -d "$bin_dir" ]; then
         rm -f "$bin_dir/claude"
-        ln -s "${inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.claude-code}/bin/claude" "$bin_dir/claude"
+        ln -s "${
+          inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.claude-code
+        }/bin/claude" "$bin_dir/claude"
       fi
     '';
   };
@@ -166,33 +170,37 @@ lib.mkIf size.medium {
   };
 
   xdg.mimeApps.defaultApplications = lib.mkIf (user.preferredEditor == "Codium") (
-    builtins.listToAttrs (map (t: {
-      name = t;
-      value = "codium.desktop";
-    }) [
-      "text/plain"
-      "text/markdown"
-      "text/x-markdown"
-      "text/x-python"
-      "text/x-shellscript"
-      "text/x-c"
-      "text/x-c++"
-      "text/x-rust"
-      "text/x-go"
-      "text/x-java"
-      "text/x-toml"
-      "text/x-nix"
-      "text/x-lua"
-      "text/x-diff"
-      "text/x-log"
-      "text/csv"
-      "text/xml"
-      "application/json"
-      "application/x-yaml"
-      "application/xml"
-      "application/toml"
-      "application/x-shellscript"
-    ])
+    builtins.listToAttrs (
+      map
+        (t: {
+          name = t;
+          value = "codium.desktop";
+        })
+        [
+          "text/plain"
+          "text/markdown"
+          "text/x-markdown"
+          "text/x-python"
+          "text/x-shellscript"
+          "text/x-c"
+          "text/x-c++"
+          "text/x-rust"
+          "text/x-go"
+          "text/x-java"
+          "text/x-toml"
+          "text/x-nix"
+          "text/x-lua"
+          "text/x-diff"
+          "text/x-log"
+          "text/csv"
+          "text/xml"
+          "application/json"
+          "application/x-yaml"
+          "application/xml"
+          "application/toml"
+          "application/x-shellscript"
+        ]
+    )
   );
 
   # Replaces the broken `mkJsonMerge` shallow-merge helper. hexis does
