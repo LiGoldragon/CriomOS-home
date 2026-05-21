@@ -11,7 +11,7 @@ let
   inherit (user) size;
 
   system = pkgs.stdenv.hostPlatform.system;
-  commandLine = inputs.persona-spirit.packages.${system}.spirit;
+  upstreamCommandLine = inputs.persona-spirit.packages.${system}.spirit;
   daemon = inputs.persona-spirit.packages.${system}.persona-spirit-daemon;
 
   stateDirectory = "${config.home.homeDirectory}/.local/state/persona-spirit";
@@ -21,6 +21,11 @@ let
   configuration = ''("${ordinarySocketPath}" "${ownerSocketPath}" "${storePath}" 384 None)'';
   startDaemon = pkgs.writeShellScript "persona-spirit-daemon-start" ''
     exec ${daemon}/bin/persona-spirit-daemon '${configuration}'
+  '';
+  commandLine = pkgs.writeShellScriptBin "spirit" ''
+    export PERSONA_SPIRIT_SOCKET="''${PERSONA_SPIRIT_SOCKET:-${ordinarySocketPath}}"
+    export PERSONA_SPIRIT_OWNER_SOCKET="''${PERSONA_SPIRIT_OWNER_SOCKET:-${ownerSocketPath}}"
+    exec ${upstreamCommandLine}/bin/spirit "$@"
   '';
 in
 mkIf size.min {
