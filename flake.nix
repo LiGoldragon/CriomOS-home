@@ -130,6 +130,11 @@
     chroma.url = "github:LiGoldragon/chroma";
     chroma.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Persona-spirit — psyche record command line and user-session daemon.
+    # Consumed in modules/home/profiles/min/spirit.nix.
+    persona-spirit.url = "github:LiGoldragon/persona-spirit";
+    persona-spirit.inputs.nixpkgs.follows = "nixpkgs";
+
     # `pi` (badlogic/pi-mono coding-agent CLI) — TypeScript npm
     # monorepo with no upstream flake. Consumed as a non-flake source
     # input and built locally via `packages/pi/default.nix`

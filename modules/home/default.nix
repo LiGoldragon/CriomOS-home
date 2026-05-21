@@ -47,6 +47,7 @@
     # imports.
     ./profiles/min/niri.nix
     ./profiles/min/dictation.nix
+    ./profiles/min/spirit.nix
     # Chroma — visual-state daemon (theme + warmth + brightness).
     # Replaces darkman + nightshift + the brightness shell wrapper.
     # Per-user systemd unit + apply script + default config.nota.
