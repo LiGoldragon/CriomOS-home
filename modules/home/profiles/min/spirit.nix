@@ -18,8 +18,9 @@ let
   ordinarySocketPath = "${stateDirectory}/spirit.sock";
   ownerSocketPath = "${stateDirectory}/owner.sock";
   storePath = "${stateDirectory}/persona-spirit.redb";
-  configuration = pkgs.writeText "persona-spirit-daemon.nota" ''
-    ("${ordinarySocketPath}" "${ownerSocketPath}" "${storePath}" 384 None)
+  configuration = ''("${ordinarySocketPath}" "${ownerSocketPath}" "${storePath}" 384 None)'';
+  startDaemon = pkgs.writeShellScript "persona-spirit-daemon-start" ''
+    exec ${daemon}/bin/persona-spirit-daemon '${configuration}'
   '';
 in
 mkIf size.min {
@@ -41,7 +42,7 @@ mkIf size.min {
     };
 
     Service = {
-      ExecStart = "${daemon}/bin/persona-spirit-daemon ${configuration}";
+      ExecStart = "${startDaemon}";
       Restart = "on-failure";
       RestartSec = "2s";
     };
