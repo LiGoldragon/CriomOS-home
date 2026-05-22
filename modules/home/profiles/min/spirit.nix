@@ -33,6 +33,8 @@ let
   sanitizeVersion = builtins.replaceStrings [ "." ] [ "-" ];
 
   rootStateDirectory = "${config.home.homeDirectory}/.local/state/persona-spirit";
+  legacyOrdinarySocketPath = "${rootStateDirectory}/spirit.sock";
+  legacyOwnerSocketPath = "${rootStateDirectory}/owner.sock";
   legacyDatabasePath = "${rootStateDirectory}/persona-spirit.redb";
 
   deployedVersions = config.criomosHome.personaSpirit.deployedVersions;
@@ -58,15 +60,19 @@ let
         ordinary_socket_path=${lib.escapeShellArg ordinarySocketPath}
         owner_socket_path=${lib.escapeShellArg ownerSocketPath}
         database_path=${lib.escapeShellArg databasePath}
+        legacy_ordinary_socket_path=${lib.escapeShellArg legacyOrdinarySocketPath}
+        legacy_owner_socket_path=${lib.escapeShellArg legacyOwnerSocketPath}
         legacy_database_path=${lib.escapeShellArg legacyDatabasePath}
 
         ${pkgs.coreutils}/bin/mkdir -p "$state_directory"
         ${pkgs.coreutils}/bin/rm -f "$ordinary_socket_path" "$owner_socket_path"
 
-        if [ "$version" = "v0.1.0" ] \
-          && [ ! -e "$database_path" ] \
-          && [ -e "$legacy_database_path" ]; then
-          ${pkgs.coreutils}/bin/cp -p "$legacy_database_path" "$database_path"
+        if [ "$version" = "v0.1.0" ]; then
+          ${pkgs.coreutils}/bin/rm -f "$legacy_ordinary_socket_path" "$legacy_owner_socket_path"
+
+          if [ ! -e "$database_path" ] && [ -e "$legacy_database_path" ]; then
+            ${pkgs.coreutils}/bin/cp -p "$legacy_database_path" "$database_path"
+          fi
         fi
       '';
       startDaemon = pkgs.writeShellScript "persona-spirit-daemon-${safeVersion}-start" ''

@@ -88,6 +88,8 @@ else
       "${services."persona-spirit-daemon-v0.1.1".Service.ExecStart}"
     grep -q '/persona-spirit/persona-spirit.redb' \
       "${services."persona-spirit-daemon-v0.1.0".Service.ExecStartPre}"
+    grep -q '/persona-spirit/spirit.sock' \
+      "${services."persona-spirit-daemon-v0.1.0".Service.ExecStartPre}"
 
     PERSONA_SPIRIT_SOCKET=/stale/ordinary \
       PERSONA_SPIRIT_OWNER_SOCKET=/stale/owner \
