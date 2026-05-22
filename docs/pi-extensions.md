@@ -113,7 +113,20 @@ the same rule: the live Pi settings file names
 
 ## Current Example
 
-`pi-linkup` is the reference implementation:
+`pi-criomos` is the daily local package:
+
+- `packages/pi-criomos/default.nix` installs the CriomOS dark/light
+  themes and two local extensions.
+- `theme-switcher.ts` reads
+  `$XDG_STATE_HOME/chroma/current-mode` (defaulting through
+  `~/.local/state/chroma/current-mode`) and applies `criomos-dark` or
+  `criomos-light` through Pi's UI theme API at session start, before
+  provider calls, before tool calls, and on Chroma state-file changes.
+- `operator-safety.ts` adds first-pass confirmation gates for
+  destructive shell commands, protected path writes, dirty jj
+  repository writes, and the workspace subagent rule.
+
+`pi-linkup` is the reference external package:
 
 - `packages/pi-linkup/default.nix` fetches the `@aliou/pi-linkup`
   tarball and its runtime UI helper.
