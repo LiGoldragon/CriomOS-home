@@ -131,9 +131,12 @@
     chroma.inputs.nixpkgs.follows = "nixpkgs";
 
     # Persona-spirit — psyche record command line and user-session daemon.
-    # Consumed in modules/home/profiles/min/spirit.nix.
-    persona-spirit.url = "github:LiGoldragon/persona-spirit";
-    persona-spirit.inputs.nixpkgs.follows = "nixpkgs";
+    # Consumed in modules/home/profiles/min/spirit.nix. Kept versioned so
+    # schema-changing daemon/database cutovers can run side by side.
+    persona-spirit-v0-1-0.url = "github:LiGoldragon/persona-spirit?ref=v0.1.0";
+    persona-spirit-v0-1-0.inputs.nixpkgs.follows = "nixpkgs";
+    persona-spirit-v0-1-1.url = "github:LiGoldragon/persona-spirit?ref=v0.1.1";
+    persona-spirit-v0-1-1.inputs.nixpkgs.follows = "nixpkgs";
 
     # `pi` (badlogic/pi-mono coding-agent CLI) — TypeScript npm
     # monorepo with no upstream flake. Consumed as a non-flake source
@@ -189,6 +192,9 @@
           rust-toolchain = checkPkgs.callPackage ./checks/rust-toolchain { inherit inputs; };
           leta = checkPkgs.callPackage ./checks/leta { inherit inputs; };
           no-easyeffects = checkPkgs.callPackage ./checks/no-easyeffects { };
+          persona-spirit-versioned-deployment =
+            checkPkgs.callPackage ./checks/persona-spirit-versioned-deployment
+              { inherit inputs; };
         }
       ) derivationChecks;
 
