@@ -42,6 +42,9 @@ let
   startWhisrs = pkgs.writeShellScript "criomos-start-whisrs" ''
     set -eu
 
+    # Quickshell scans plugins only at startup. After a Whisrs plugin
+    # deploy, restart noctalia-shell if the widget renders but stops
+    # updating; home-manager switch alone can leave the old plugin loaded.
     ${pkgs.systemd}/bin/systemctl --user import-environment \
       DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_RUNTIME_DIR \
       HYPRLAND_INSTANCE_SIGNATURE NIRI_SOCKET SWAYSOCK XKB_DEFAULT_LAYOUT XKB_DEFAULT_VARIANT
