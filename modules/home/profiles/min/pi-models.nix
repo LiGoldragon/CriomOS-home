@@ -19,8 +19,8 @@ let
   inventory = fromJSON (readFile (inputs.criomos-lib + "/data/largeAI/llm.json"));
   pi = pkgs.callPackage ../../../../packages/pi { inherit inputs; };
   pi-criomos = pkgs.callPackage ../../../../packages/pi-criomos { };
-  pi-linkup = pkgs.callPackage ../../../../packages/pi-linkup { };
-  pi-subagents = pkgs.callPackage ../../../../packages/pi-subagents { };
+  pi-linkup = pkgs.callPackage ../../../../packages/pi-linkup { inherit inputs; };
+  pi-subagents = pkgs.callPackage ../../../../packages/pi-subagents { inherit inputs; };
 
   clusterNodes = [ horizon.node ] ++ lib.attrValues (horizon.exNodes or { });
   routerNode = lib.findFirst (node: node.typeIs.largeAiRouter or false) null clusterNodes;

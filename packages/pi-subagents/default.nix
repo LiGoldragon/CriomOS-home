@@ -1,10 +1,4 @@
-{ pkgs, ... }:
-let
-  pi-subagents = pkgs.fetchurl {
-    url = "https://registry.npmjs.org/pi-subagents/-/pi-subagents-0.25.0.tgz";
-    hash = "sha512-HZK1RvT8zfQSzHRExhrnSKdhHmQeCxnpwjkf5dHQbWGcz9kk5C9Cb1rjElEM6CkOGp3eApMm3/HVi2EVYQX7OA==";
-  };
-in
+{ inputs, pkgs, ... }:
 pkgs.stdenvNoCC.mkDerivation {
   pname = "pi-subagents";
   version = "0.25.0";
@@ -18,7 +12,7 @@ pkgs.stdenvNoCC.mkDerivation {
     packageRoot=$out/share/pi-packages/pi-subagents
     mkdir -p "$packageRoot"
 
-    tar -xzf ${pi-subagents} -C "$packageRoot" --strip-components=1
+    tar -xzf ${inputs.pi-subagents-src} -C "$packageRoot" --strip-components=1
 
     runHook postInstall
   '';

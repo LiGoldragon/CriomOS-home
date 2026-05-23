@@ -16,6 +16,9 @@ breaks reproducibility from the flake alone.
   prompt context.
 - Keep secrets out of Nix outputs and JSON config. Inject them at
   runtime from the environment or `gopass`.
+- External extension sources are flake inputs. Their content hashes
+  live in `flake.lock`, not as `fetchurl` hashes inside package Nix
+  code.
 
 ## Why The Stable Symlink Matters
 
@@ -34,20 +37,26 @@ the same rule: the live Pi settings file names
 
 ## Adding An Extension
 
-1. Create `packages/<extension>/default.nix`.
+1. Add the extension source as a flake input.
 
-   For a simple published npm package, fetch the package tarball and any
-   small runtime dependencies explicitly. Install the package root below
+   For a simple published npm package, use a non-flake `type = "file"`
+   input. Bump the version in the URL, then update the input lock.
+
+   ```nix
+   my-extension-src = {
+     type = "file";
+     url = "https://registry.npmjs.org/<scope>/<tarball>.tgz";
+     flake = false;
+   };
+   ```
+
+2. Create `packages/<extension>/default.nix`.
+
+   Install the package root below
    `$out/share/pi-packages/<extension>`.
 
    ```nix
-   { pkgs, ... }:
-   let
-     extension = pkgs.fetchurl {
-       url = "https://registry.npmjs.org/<scope>/<tarball>.tgz";
-       hash = "<fixed-output-hash>";
-     };
-   in
+   { inputs, pkgs, ... }:
    pkgs.stdenvNoCC.mkDerivation {
      pname = "<extension>";
      version = "<version>";
@@ -60,7 +69,7 @@ the same rule: the live Pi settings file names
 
        packageRoot=$out/share/pi-packages/<extension>
        mkdir -p "$packageRoot"
-       tar -xzf ${extension} -C "$packageRoot" --strip-components=1
+       tar -xzf ${inputs.my-extension-src} -C "$packageRoot" --strip-components=1
 
        runHook postInstall
      '';
@@ -72,11 +81,11 @@ the same rule: the live Pi settings file names
    fully pinned dependency plan. Do not let `npm install` run in the
    user's home directory.
 
-2. Wire the derivation into `modules/home/profiles/min/pi-models.nix`.
+3. Wire the derivation into `modules/home/profiles/min/pi-models.nix`.
 
    ```nix
    let
-     my-extension = pkgs.callPackage ../../../../packages/my-extension { };
+     my-extension = pkgs.callPackage ../../../../packages/my-extension { inherit inputs; };
    in
    {
      home.file.".pi/agent/packages/my-extension".source =
@@ -84,7 +93,7 @@ the same rule: the live Pi settings file names
    }
    ```
 
-3. Add the stable package source to `piSettingsConfig.packages`.
+4. Add the stable package source to `piSettingsConfig.packages`.
 
    ```nix
    piSettingsConfig = {
@@ -97,7 +106,7 @@ the same rule: the live Pi settings file names
    The `/packages` setting is managed with `hexis` mode `always`.
    Treat it as the declarative list of enabled Pi packages.
 
-4. Add runtime secret injection only if the extension needs it.
+5. Add runtime secret injection only if the extension needs it.
 
    Secret-bearing extensions should read environment variables at
    runtime. If the secret lives in `gopass`, inject it in the Pi wrapper
@@ -116,20 +125,21 @@ the same rule: the live Pi settings file names
 `pi-criomos` is the daily local package:
 
 - `packages/pi-criomos/default.nix` installs the CriomOS dark/light
-  themes and two local extensions.
+  themes and the local theme-switching extension.
 - `theme-switcher.ts` reads
   `$XDG_STATE_HOME/chroma/current-mode` (defaulting through
   `~/.local/state/chroma/current-mode`) and applies `criomos-dark` or
   `criomos-light` through Pi's UI theme API at session start, before
   provider calls, before tool calls, and on Chroma state-file changes.
-- `operator-safety.ts` adds first-pass confirmation gates for
-  destructive shell commands, protected path writes, dirty jj
-  repository writes, and the workspace subagent rule.
+- `operator-safety.ts` is not part of the default package. The basic
+  CriomOS Pi profile is YOLO-mode: theme support, web/search support,
+  and subagents support, without repeated mutation-confirmation gates.
 
 `pi-linkup` is the reference external package:
 
-- `packages/pi-linkup/default.nix` fetches the `@aliou/pi-linkup`
-  tarball and its runtime UI helper.
+- `flake.nix` declares `pi-linkup-src` and `pi-utils-ui-src`.
+- `packages/pi-linkup/default.nix` unpacks those lock-file-pinned
+  inputs.
 - `modules/home/profiles/min/pi-models.nix` exposes it at
   `$HOME/.pi/agent/packages/pi-linkup`.
 - Pi settings enable it as `packages/pi-linkup`.
@@ -142,7 +152,7 @@ the same rule: the live Pi settings file names
 Before committing, run:
 
 ```sh
-nix fmt -- packages/pi/default.nix packages/<extension>/default.nix modules/home/profiles/min/pi-models.nix
+nix fmt -- flake.nix packages/<extension>/default.nix modules/home/profiles/min/pi-models.nix
 nix eval --raw .#packages.x86_64-linux.<extension>.drvPath >/dev/null
 nix eval --json .#packages.x86_64-linux --apply 'builtins.attrNames'
 git diff --check

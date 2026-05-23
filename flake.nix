@@ -148,6 +148,24 @@
       flake = false;
     };
 
+    # Pi extension packages. Kept as flake inputs so source revisions and
+    # content hashes live in flake.lock, not in package Nix code.
+    pi-linkup-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/@aliou/pi-linkup/-/pi-linkup-0.10.3.tgz";
+      flake = false;
+    };
+    pi-utils-ui-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/@aliou/pi-utils-ui/-/pi-utils-ui-0.1.5.tgz";
+      flake = false;
+    };
+    pi-subagents-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/pi-subagents/-/pi-subagents-0.25.0.tgz";
+      flake = false;
+    };
+
     # Emacs — replaces legacy pkdjz/mkEmacs. Planned split.
     #   criomos-emacs.url = "github:LiGoldragon/CriomOS-emacs";
     #   criomos-emacs.inputs.nixpkgs.follows = "nixpkgs";

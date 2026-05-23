@@ -21,8 +21,7 @@ pkgs.stdenvNoCC.mkDerivation {
       "pi": {
         "themes": ["./themes"],
         "extensions": [
-          "./src/extensions/theme-switcher.ts",
-          "./src/extensions/operator-safety.ts"
+          "./src/extensions/theme-switcher.ts"
         ]
       }
     }
@@ -30,8 +29,6 @@ pkgs.stdenvNoCC.mkDerivation {
 
     install -m 0644 ${./src/extensions/theme-switcher.ts} \
       "$packageRoot/src/extensions/theme-switcher.ts"
-    install -m 0644 ${./src/extensions/operator-safety.ts} \
-      "$packageRoot/src/extensions/operator-safety.ts"
 
     cat > "$packageRoot/themes/criomos-dark.json" <<'JSON'
     {

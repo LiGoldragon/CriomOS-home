@@ -1105,6 +1105,18 @@
         "type": "github"
       }
     },
+    "pi-linkup-src": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-r8i04c6tS5HeRDz6ej2L5KM0lX9AHapQxKi/mgn0hZQ=",
+        "type": "file",
+        "url": "https://registry.npmjs.org/@aliou/pi-linkup/-/pi-linkup-0.10.3.tgz"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://registry.npmjs.org/@aliou/pi-linkup/-/pi-linkup-0.10.3.tgz"
+      }
+    },
     "pi-src": {
       "flake": false,
       "locked": {
@@ -1120,6 +1132,30 @@
         "ref": "v0.75.3",
         "repo": "pi-mono",
         "type": "github"
+      }
+    },
+    "pi-subagents-src": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-pr5NwHl37IvmC1Q94OtBjEwGkIddA2tRk3fegtOl8ts=",
+        "type": "file",
+        "url": "https://registry.npmjs.org/pi-subagents/-/pi-subagents-0.25.0.tgz"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://registry.npmjs.org/pi-subagents/-/pi-subagents-0.25.0.tgz"
+      }
+    },
+    "pi-utils-ui-src": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-dBYeEAiX/VweSfiXNGRsdKBTnb4vAfUG1GEPiB2EI7I=",
+        "type": "file",
+        "url": "https://registry.npmjs.org/@aliou/pi-utils-ui/-/pi-utils-ui-0.1.5.tgz"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://registry.npmjs.org/@aliou/pi-utils-ui/-/pi-utils-ui-0.1.5.tgz"
       }
     },
     "pkgs": {
@@ -1167,7 +1203,10 @@
         "orchestrator": "orchestrator",
         "persona-spirit-v0-1-0": "persona-spirit-v0-1-0",
         "persona-spirit-v0-1-1": "persona-spirit-v0-1-1",
+        "pi-linkup-src": "pi-linkup-src",
         "pi-src": "pi-src",
+        "pi-subagents-src": "pi-subagents-src",
+        "pi-utils-ui-src": "pi-utils-ui-src",
         "pkgs": "pkgs",
         "rust-overlay": "rust-overlay",
         "stylix": "stylix",

@@ -53,7 +53,6 @@ pkgs.runCommand "pi-criomos-extension-load"
 
     ${pi}/bin/pi \
       -e "${pi-criomos}/share/pi-packages/pi-criomos/src/extensions/theme-switcher.ts" \
-      -e "${pi-criomos}/share/pi-packages/pi-criomos/src/extensions/operator-safety.ts" \
       --list-models gpt > "$TMPDIR/models" 2>&1
 
     grep -E "local-test[[:space:]]+gpt-test" "$TMPDIR/models"
