@@ -21,13 +21,13 @@ const protectedPaths = [
 ];
 
 const destructiveCommandPatterns = [
-	/\brm\s+(?:-[A-Za-z]*[rR][A-Za-z]*[fF]|-[A-Za-z]*[fF][A-Za-z]*[rR]|--recursive|--force)/,
+	/\brm\s+(?:-[A-Za-z]*[rR][A-Za-z]*|--recursive|--force)/,
 	/\bjj\s+abandon\b/,
 	/\bjj\s+restore\b/,
-	/\bjj\s+git\s+push\b.*\B--force\b/,
+	/\bjj\s+git\s+push\b.*(?:^|\s)--force(?:\s|$)/,
 	/\bgit\s+reset\s+--hard\b/,
 	/\bgit\s+clean\s+-[^\n]*[fdx]/,
-	/\bgit\s+push\b.*\B--force\b/,
+	/\bgit\s+push\b.*(?:^|\s)--force(?:\s|$)/,
 	/\bsudo\b|\brun0\b/,
 	/\bswitch-to-configuration\s+switch\b/,
 ];

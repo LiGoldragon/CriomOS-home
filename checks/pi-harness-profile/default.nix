@@ -27,6 +27,14 @@ pkgs.runCommand "pi-harness-profile"
       "${pi-criomos}/share/pi-packages/pi-criomos/package.json"
     jq -e '.pi.extensions | index("./src/extensions/operator-safety.ts")' \
       "${pi-criomos}/share/pi-packages/pi-criomos/package.json"
+    grep -F 'path.join(stateDirectory, "chroma", "current-mode")' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/src/extensions/theme-switcher.ts"
+    grep -F 'context.ui.setTheme(nextTheme)' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/src/extensions/theme-switcher.ts"
+    grep -F 'Use subagents only when the psyche explicitly asks' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/src/extensions/operator-safety.ts"
+    grep -F '(?:^|\s)--force(?:\s|$)' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/src/extensions/operator-safety.ts"
     jq -e '.name == "criomos-dark" and (.colors | length == 51)' \
       "${pi-criomos}/share/pi-packages/pi-criomos/themes/criomos-dark.json"
     jq -e '.name == "criomos-light" and (.colors | length == 51)' \

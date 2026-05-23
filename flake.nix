@@ -192,6 +192,10 @@
           rust-toolchain = checkPkgs.callPackage ./checks/rust-toolchain { inherit inputs; };
           leta = checkPkgs.callPackage ./checks/leta { inherit inputs; };
           no-easyeffects = checkPkgs.callPackage ./checks/no-easyeffects { };
+          pi-harness-profile = checkPkgs.callPackage ./checks/pi-harness-profile { inherit inputs; };
+          pi-criomos-extension-load = checkPkgs.callPackage ./checks/pi-criomos-extension-load {
+            inherit inputs;
+          };
           persona-spirit-versioned-deployment =
             checkPkgs.callPackage ./checks/persona-spirit-versioned-deployment
               { inherit inputs; };
