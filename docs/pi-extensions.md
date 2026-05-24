@@ -77,9 +77,9 @@ the same rule: the live Pi settings file names
    ```
 
    If the extension has a larger npm dependency closure, prefer a normal
-   `buildNpmPackage` derivation with a committed lockfile or another
-   fully pinned dependency plan. Do not let `npm install` run in the
-   user's home directory.
+   `buildNpmPackage` derivation with a committed lockfile, a flat closure
+   of flake-input tarballs, or another fully pinned dependency plan. Do
+   not let `npm install` run in the user's home directory.
 
 3. Wire the derivation into `modules/home/profiles/min/pi-models.nix`.
 
@@ -135,7 +135,7 @@ the same rule: the live Pi settings file names
   CriomOS Pi profile is YOLO-mode: theme support, web/search support,
   and subagents support, without repeated mutation-confirmation gates.
 
-`pi-linkup` is the reference external package:
+`pi-linkup` is the small reference external package:
 
 - `flake.nix` declares `pi-linkup-src` and `pi-utils-ui-src`.
 - `packages/pi-linkup/default.nix` unpacks those lock-file-pinned
@@ -147,6 +147,19 @@ the same rule: the live Pi settings file names
   `gopass show -o linkup.so/api-key` when the variable is not already
   set.
 
+`pi-web-access` is the full Pi web/search package:
+
+- `flake.nix` declares `pi-web-access-src` plus a flat flake-input npm
+  dependency closure for its runtime imports.
+- `packages/pi-web-access/default.nix` unpacks the package and its
+  dependencies below the package-local `node_modules` directory.
+- `modules/home/profiles/min/pi-models.nix` exposes it at
+  `$HOME/.pi/agent/packages/pi-web-access` and enables it as
+  `packages/pi-web-access`.
+- The package provides Pi-native `web_search`, `code_search`,
+  `fetch_content`, and `get_search_content` tools, matching the tool
+  names expected by Pi subagent research workflows.
+
 ## Validation
 
 Before committing, run:
@@ -155,7 +168,7 @@ Before committing, run:
 nix fmt -- flake.nix packages/<extension>/default.nix modules/home/profiles/min/pi-models.nix
 nix eval --raw .#packages.x86_64-linux.<extension>.drvPath >/dev/null
 nix eval --json .#packages.x86_64-linux --apply 'builtins.attrNames'
-git diff --check
+jj diff --stat
 ```
 
 CriomOS process still applies: push before building, and build from

@@ -1120,16 +1120,16 @@
     "pi-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1779098314,
-        "narHash": "sha256-c/+cxkp/EZ2PLERxTENN5edXHEs7M2oqzNepjRA4TIE=",
-        "owner": "badlogic",
+        "lastModified": 1779530872,
+        "narHash": "sha256-RNQ4ospdohOA8hyegCMziJHHbmFGdk/QtkjzJmS/PZc=",
+        "owner": "earendil-works",
         "repo": "pi-mono",
-        "rev": "a7d8dd3d5db7d66aa5cc6886e32768b1196ce91f",
+        "rev": "89ba72c35dcbcdc0144f4e57a0b76568c50c2cbb",
         "type": "github"
       },
       "original": {
-        "owner": "badlogic",
-        "ref": "v0.75.3",
+        "owner": "earendil-works",
+        "ref": "v0.75.5",
         "repo": "pi-mono",
         "type": "github"
       }
@@ -1156,6 +1156,258 @@
       "original": {
         "type": "file",
         "url": "https://registry.npmjs.org/@aliou/pi-utils-ui/-/pi-utils-ui-0.1.5.tgz"
+      }
+    },
+    "pi-web-access-boolbase-src": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-siip6CIxFJI7Inp4flNb0nO8sxzLiwAV42ssT9RFDUI=",
+        "type": "file",
+        "url": "https://registry.npmjs.org/boolbase/-/boolbase-1.0.0.tgz"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://registry.npmjs.org/boolbase/-/boolbase-1.0.0.tgz"
+      }
+    },
+    "pi-web-access-css-select-src": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-ZtvtifQvVctbzZ4z2EOt7MYFxGnpOJ4CI5XyQIFaDXM=",
+        "type": "file",
+        "url": "https://registry.npmjs.org/css-select/-/css-select-5.2.2.tgz"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://registry.npmjs.org/css-select/-/css-select-5.2.2.tgz"
+      }
+    },
+    "pi-web-access-css-what-src": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-rmeaarah8W6w+49Whl1Iig0Y67cAIQOsXH7K02CRW+M=",
+        "type": "file",
+        "url": "https://registry.npmjs.org/css-what/-/css-what-6.2.2.tgz"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://registry.npmjs.org/css-what/-/css-what-6.2.2.tgz"
+      }
+    },
+    "pi-web-access-cssom-src": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-IM4luYZFf9T6YcjotkTO+WYX3c/yCuNLQoV7NzOhooM=",
+        "type": "file",
+        "url": "https://registry.npmjs.org/cssom/-/cssom-0.5.0.tgz"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://registry.npmjs.org/cssom/-/cssom-0.5.0.tgz"
+      }
+    },
+    "pi-web-access-dom-serializer-src": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-xo2BR2PEfhoZweWaWxbP2mkI4lNEZYgmVWHNwlGuM70=",
+        "type": "file",
+        "url": "https://registry.npmjs.org/dom-serializer/-/dom-serializer-2.0.0.tgz"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://registry.npmjs.org/dom-serializer/-/dom-serializer-2.0.0.tgz"
+      }
+    },
+    "pi-web-access-domelementtype-src": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-q0Vd7H3IGGn0BEJiGlTqxP9OH/CqCaA8wInb9i1dbIA=",
+        "type": "file",
+        "url": "https://registry.npmjs.org/domelementtype/-/domelementtype-2.3.0.tgz"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://registry.npmjs.org/domelementtype/-/domelementtype-2.3.0.tgz"
+      }
+    },
+    "pi-web-access-domhandler-src": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-aogsqUg+GSltaVdLEv/ZkbZYPsWbh/ThRic/Zb7OONA=",
+        "type": "file",
+        "url": "https://registry.npmjs.org/domhandler/-/domhandler-5.0.3.tgz"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://registry.npmjs.org/domhandler/-/domhandler-5.0.3.tgz"
+      }
+    },
+    "pi-web-access-domutils-src": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-zQ0yQiwPPVCYrO6fMPb2O8HQJD1kKWxCtJvvnDp8EZI=",
+        "type": "file",
+        "url": "https://registry.npmjs.org/domutils/-/domutils-3.2.2.tgz"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://registry.npmjs.org/domutils/-/domutils-3.2.2.tgz"
+      }
+    },
+    "pi-web-access-entities-src": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-VV0PebfI00oH1jEucakcPjPdL7sJ8KeXxvjMDXhmgBo=",
+        "type": "file",
+        "url": "https://registry.npmjs.org/entities/-/entities-4.5.0.tgz"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://registry.npmjs.org/entities/-/entities-4.5.0.tgz"
+      }
+    },
+    "pi-web-access-html-escaper-src": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-ejYg8a6IVbVUI4oAB2CRg/bzhzO/QyoSLBp7YPhdX9w=",
+        "type": "file",
+        "url": "https://registry.npmjs.org/html-escaper/-/html-escaper-3.0.3.tgz"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://registry.npmjs.org/html-escaper/-/html-escaper-3.0.3.tgz"
+      }
+    },
+    "pi-web-access-htmlparser2-src": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-VwLl3M00JNUYzgWsueqRfhM0fVKOOZsTfhZl71Om82Y=",
+        "type": "file",
+        "url": "https://registry.npmjs.org/htmlparser2/-/htmlparser2-9.1.0.tgz"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://registry.npmjs.org/htmlparser2/-/htmlparser2-9.1.0.tgz"
+      }
+    },
+    "pi-web-access-linkedom-src": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-4XCQxYT7s79NuQVEDAwl9fzFzIoVNjaGhC93Oj/Ybok=",
+        "type": "file",
+        "url": "https://registry.npmjs.org/linkedom/-/linkedom-0.16.11.tgz"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://registry.npmjs.org/linkedom/-/linkedom-0.16.11.tgz"
+      }
+    },
+    "pi-web-access-mixmark-io-domino-src": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-kBYHZPdbsESwPM1KsLiHvRfsDgVz7aL61SfmeX97yB8=",
+        "type": "file",
+        "url": "https://registry.npmjs.org/@mixmark-io/domino/-/domino-2.2.0.tgz"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://registry.npmjs.org/@mixmark-io/domino/-/domino-2.2.0.tgz"
+      }
+    },
+    "pi-web-access-mozilla-readability-src": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-ezWbQH3jikmPT16azozB+Lrs+hSjrOfQBm3A0tfcobg=",
+        "type": "file",
+        "url": "https://registry.npmjs.org/@mozilla/readability/-/readability-0.5.0.tgz"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://registry.npmjs.org/@mozilla/readability/-/readability-0.5.0.tgz"
+      }
+    },
+    "pi-web-access-nth-check-src": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-BKkID87W4NBC5c2iiMSG0y5lpHQtyPyLGT9J21ki4Sw=",
+        "type": "file",
+        "url": "https://registry.npmjs.org/nth-check/-/nth-check-2.1.1.tgz"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://registry.npmjs.org/nth-check/-/nth-check-2.1.1.tgz"
+      }
+    },
+    "pi-web-access-p-limit-src": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-QqXYXZPjrlej93q/Bl1N8VGlcWVE3xTHQdjUsaod+jg=",
+        "type": "file",
+        "url": "https://registry.npmjs.org/p-limit/-/p-limit-6.2.0.tgz"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://registry.npmjs.org/p-limit/-/p-limit-6.2.0.tgz"
+      }
+    },
+    "pi-web-access-src": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-7Sei3wKWheb05JCGpgt/Rh+pieLtMTp5gjnJW1I+o8I=",
+        "type": "file",
+        "url": "https://registry.npmjs.org/pi-web-access/-/pi-web-access-0.10.7.tgz"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://registry.npmjs.org/pi-web-access/-/pi-web-access-0.10.7.tgz"
+      }
+    },
+    "pi-web-access-turndown-src": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-oRpEqWW7B7aRvpZtOtbiKlEOWAhwGcblmQZBWbMiSJo=",
+        "type": "file",
+        "url": "https://registry.npmjs.org/turndown/-/turndown-7.2.4.tgz"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://registry.npmjs.org/turndown/-/turndown-7.2.4.tgz"
+      }
+    },
+    "pi-web-access-uhyphen-src": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-gfKW/dxuxAsLp54q2mK/1XeOpEqZWy5VkGILRCLU//Q=",
+        "type": "file",
+        "url": "https://registry.npmjs.org/uhyphen/-/uhyphen-0.2.0.tgz"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://registry.npmjs.org/uhyphen/-/uhyphen-0.2.0.tgz"
+      }
+    },
+    "pi-web-access-unpdf-src": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-ffDn0+2acre+m6069+ElxUnpBJZFcPa9cDyvEHa744E=",
+        "type": "file",
+        "url": "https://registry.npmjs.org/unpdf/-/unpdf-1.6.2.tgz"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://registry.npmjs.org/unpdf/-/unpdf-1.6.2.tgz"
+      }
+    },
+    "pi-web-access-yocto-queue-src": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-vQauklgTkjEDSzbgOCtZSYRLBiTysc+SnjIKbJJXr+4=",
+        "type": "file",
+        "url": "https://registry.npmjs.org/yocto-queue/-/yocto-queue-1.2.2.tgz"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://registry.npmjs.org/yocto-queue/-/yocto-queue-1.2.2.tgz"
       }
     },
     "pkgs": {
@@ -1207,6 +1459,27 @@
         "pi-src": "pi-src",
         "pi-subagents-src": "pi-subagents-src",
         "pi-utils-ui-src": "pi-utils-ui-src",
+        "pi-web-access-boolbase-src": "pi-web-access-boolbase-src",
+        "pi-web-access-css-select-src": "pi-web-access-css-select-src",
+        "pi-web-access-css-what-src": "pi-web-access-css-what-src",
+        "pi-web-access-cssom-src": "pi-web-access-cssom-src",
+        "pi-web-access-dom-serializer-src": "pi-web-access-dom-serializer-src",
+        "pi-web-access-domelementtype-src": "pi-web-access-domelementtype-src",
+        "pi-web-access-domhandler-src": "pi-web-access-domhandler-src",
+        "pi-web-access-domutils-src": "pi-web-access-domutils-src",
+        "pi-web-access-entities-src": "pi-web-access-entities-src",
+        "pi-web-access-html-escaper-src": "pi-web-access-html-escaper-src",
+        "pi-web-access-htmlparser2-src": "pi-web-access-htmlparser2-src",
+        "pi-web-access-linkedom-src": "pi-web-access-linkedom-src",
+        "pi-web-access-mixmark-io-domino-src": "pi-web-access-mixmark-io-domino-src",
+        "pi-web-access-mozilla-readability-src": "pi-web-access-mozilla-readability-src",
+        "pi-web-access-nth-check-src": "pi-web-access-nth-check-src",
+        "pi-web-access-p-limit-src": "pi-web-access-p-limit-src",
+        "pi-web-access-src": "pi-web-access-src",
+        "pi-web-access-turndown-src": "pi-web-access-turndown-src",
+        "pi-web-access-uhyphen-src": "pi-web-access-uhyphen-src",
+        "pi-web-access-unpdf-src": "pi-web-access-unpdf-src",
+        "pi-web-access-yocto-queue-src": "pi-web-access-yocto-queue-src",
         "pkgs": "pkgs",
         "rust-overlay": "rust-overlay",
         "stylix": "stylix",

@@ -138,13 +138,13 @@
     persona-spirit-v0-1-1.url = "github:LiGoldragon/persona-spirit?ref=v0.1.1";
     persona-spirit-v0-1-1.inputs.nixpkgs.follows = "nixpkgs";
 
-    # `pi` (badlogic/pi-mono coding-agent CLI) — TypeScript npm
+    # `pi` (earendil-works/pi-mono coding-agent CLI) — TypeScript npm
     # monorepo with no upstream flake. Consumed as a non-flake source
     # input and built locally via `packages/pi/default.nix`
     # (buildNpmPackage over the `packages/coding-agent` workspace).
     # Replaces the previous pi-mentci wrapper flake (dropped 2026-04-25).
     pi-src = {
-      url = "github:badlogic/pi-mono?ref=v0.75.3";
+      url = "github:earendil-works/pi-mono?ref=v0.75.5";
       flake = false;
     };
 
@@ -163,6 +163,111 @@
     pi-subagents-src = {
       type = "file";
       url = "https://registry.npmjs.org/pi-subagents/-/pi-subagents-0.25.0.tgz";
+      flake = false;
+    };
+    pi-web-access-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/pi-web-access/-/pi-web-access-0.10.7.tgz";
+      flake = false;
+    };
+    pi-web-access-mixmark-io-domino-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/@mixmark-io/domino/-/domino-2.2.0.tgz";
+      flake = false;
+    };
+    pi-web-access-mozilla-readability-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/@mozilla/readability/-/readability-0.5.0.tgz";
+      flake = false;
+    };
+    pi-web-access-boolbase-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/boolbase/-/boolbase-1.0.0.tgz";
+      flake = false;
+    };
+    pi-web-access-css-select-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/css-select/-/css-select-5.2.2.tgz";
+      flake = false;
+    };
+    pi-web-access-css-what-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/css-what/-/css-what-6.2.2.tgz";
+      flake = false;
+    };
+    pi-web-access-cssom-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/cssom/-/cssom-0.5.0.tgz";
+      flake = false;
+    };
+    pi-web-access-dom-serializer-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/dom-serializer/-/dom-serializer-2.0.0.tgz";
+      flake = false;
+    };
+    pi-web-access-domelementtype-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/domelementtype/-/domelementtype-2.3.0.tgz";
+      flake = false;
+    };
+    pi-web-access-domhandler-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/domhandler/-/domhandler-5.0.3.tgz";
+      flake = false;
+    };
+    pi-web-access-domutils-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/domutils/-/domutils-3.2.2.tgz";
+      flake = false;
+    };
+    pi-web-access-entities-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/entities/-/entities-4.5.0.tgz";
+      flake = false;
+    };
+    pi-web-access-html-escaper-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/html-escaper/-/html-escaper-3.0.3.tgz";
+      flake = false;
+    };
+    pi-web-access-htmlparser2-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/htmlparser2/-/htmlparser2-9.1.0.tgz";
+      flake = false;
+    };
+    pi-web-access-linkedom-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/linkedom/-/linkedom-0.16.11.tgz";
+      flake = false;
+    };
+    pi-web-access-nth-check-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/nth-check/-/nth-check-2.1.1.tgz";
+      flake = false;
+    };
+    pi-web-access-p-limit-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/p-limit/-/p-limit-6.2.0.tgz";
+      flake = false;
+    };
+    pi-web-access-turndown-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/turndown/-/turndown-7.2.4.tgz";
+      flake = false;
+    };
+    pi-web-access-uhyphen-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/uhyphen/-/uhyphen-0.2.0.tgz";
+      flake = false;
+    };
+    pi-web-access-unpdf-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/unpdf/-/unpdf-1.6.2.tgz";
+      flake = false;
+    };
+    pi-web-access-yocto-queue-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/yocto-queue/-/yocto-queue-1.2.2.tgz";
       flake = false;
     };
 

@@ -1,19 +1,19 @@
 { pkgs, inputs, ... }:
 pkgs.buildNpmPackage (finalAttrs: {
   pname = "pi";
-  version = "0.75.3";
+  version = "0.75.5";
 
   src = inputs.pi-src;
 
-  # No `npmWorkspace` — pi is `@mariozechner/pi-coding-agent` in the
+  # No `npmWorkspace` — pi is `@earendil-works/pi-coding-agent` in the
   # monorepo and its dist resolves sibling workspaces via symlinks
-  # under `node_modules/@mariozechner/pi-{ai,agent-core,tui,...}`. If
+  # under `node_modules/@earendil-works/pi-{ai,agent-core,tui,...}`. If
   # we point npmWorkspace at coding-agent only, the install hook
   # copies just that workspace, leaving every sibling-symlink dangling
   # at runtime. Install the whole monorepo and stitch in the `pi`
   # binary ourselves in postInstall.
 
-  npmDepsHash = "sha256-/mWjrZFzRmtkbWYMJOXKnLPxFITFndq5hgdY0DnPfAg=";
+  npmDepsHash = "sha256-L7fbfIfsxcQKInZqOB+pbcHoct8i4Bj/dWcDo205KfQ=";
 
   makeCacheWritable = true;
 
@@ -23,9 +23,9 @@ pkgs.buildNpmPackage (finalAttrs: {
   # the source of truth at the pinned tag.
   postPatch = ''
     substituteInPlace packages/ai/package.json \
-      --replace-fail '"generate-models": "npx tsx scripts/generate-models.ts"' \
+      --replace-fail '"generate-models": "node scripts/generate-models.ts"' \
                      '"generate-models": "true"' \
-      --replace-fail '"generate-image-models": "npx tsx scripts/generate-image-models.ts"' \
+      --replace-fail '"generate-image-models": "node scripts/generate-image-models.ts"' \
                      '"generate-image-models": "true"'
   '';
 
@@ -82,8 +82,8 @@ pkgs.buildNpmPackage (finalAttrs: {
   ];
 
   meta = {
-    description = "pi — coding agent CLI from badlogic/pi-mono";
-    homepage = "https://github.com/badlogic/pi-mono";
+    description = "pi — coding agent CLI from earendil-works/pi-mono";
+    homepage = "https://github.com/earendil-works/pi-mono";
     license = pkgs.lib.licenses.mit;
     mainProgram = "pi";
   };
