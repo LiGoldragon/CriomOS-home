@@ -22,8 +22,8 @@ let
         spirit-next = pkgs.writeShellScriptBin "spirit-next" ''
           printf 'version=%s\nordinary=%s\nowner=%s\n' \
             ${lib.escapeShellArg version} \
-            "$PERSONA_SPIRIT_SOCKET" \
-            "$PERSONA_SPIRIT_OWNER_SOCKET"
+            "$PERSONA_SPIRIT_NEXT_SOCKET" \
+            "$PERSONA_SPIRIT_NEXT_OWNER_SOCKET"
         '';
         persona-spirit-daemon = pkgs.writeShellScriptBin "persona-spirit-daemon" ''
           printf 'daemon=%s\nconfiguration=%s\n' ${lib.escapeShellArg version} "$1"

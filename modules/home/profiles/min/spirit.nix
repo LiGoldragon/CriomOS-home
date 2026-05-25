@@ -100,8 +100,18 @@ let
         exec ${daemon}/bin/persona-spirit-daemon '${configuration}'
       '';
       commandLineWrapper = pkgs.writeShellScriptBin "spirit-${version}" ''
-        export PERSONA_SPIRIT_SOCKET=${lib.escapeShellArg ordinarySocketPath}
-        export PERSONA_SPIRIT_OWNER_SOCKET=${lib.escapeShellArg ownerSocketPath}
+        ${
+          if version == "next" then
+            ''
+              export PERSONA_SPIRIT_NEXT_SOCKET=${lib.escapeShellArg ordinarySocketPath}
+              export PERSONA_SPIRIT_NEXT_OWNER_SOCKET=${lib.escapeShellArg ownerSocketPath}
+            ''
+          else
+            ''
+              export PERSONA_SPIRIT_SOCKET=${lib.escapeShellArg ordinarySocketPath}
+              export PERSONA_SPIRIT_OWNER_SOCKET=${lib.escapeShellArg ownerSocketPath}
+            ''
+        }
         exec ${commandLine}/bin/${commandLineBinary} "$@"
       '';
     in
