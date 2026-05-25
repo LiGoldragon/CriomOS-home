@@ -126,7 +126,12 @@ let
       stop_child() {
         kill "$child" 2>/dev/null || true
       }
-      trap stop_child EXIT INT TERM
+      exit_after_signal() {
+        stop_child
+        exit 143
+      }
+      trap stop_child EXIT
+      trap exit_after_signal INT TERM
 
       while kill -0 "$child" 2>/dev/null; do
         if ! property_is_true Connected || ! property_is_true ServicesResolved; then
