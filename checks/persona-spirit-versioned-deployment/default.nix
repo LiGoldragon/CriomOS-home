@@ -38,6 +38,7 @@ let
       "persona-spirit-v0-1-0" = makeFakeInput "v0.1.0";
       "persona-spirit-v0-1-1" = makeFakeInput "v0.1.1";
       "persona-spirit-v0-2-0" = makeFakeInput "v0.2.0";
+      "persona-spirit-v0-3-0" = makeFakeInput "v0.3.0";
       persona-spirit-next = makeFakeInput "next";
     };
     config = {
@@ -47,6 +48,7 @@ let
           "v0.1.0"
           "v0.1.1"
           "v0.2.0"
+          "v0.3.0"
           "next"
         ];
         currentDefault = "v0.1.0";
@@ -79,6 +81,10 @@ let
       message = "persona-spirit v0.2.0 daemon service must exist.";
     }
     {
+      condition = builtins.hasAttr "persona-spirit-daemon-v0.3.0" services;
+      message = "persona-spirit v0.3.0 daemon service must exist.";
+    }
+    {
       condition = builtins.hasAttr "persona-spirit-daemon-next" services;
       message = "persona-spirit next daemon service must exist.";
     }
@@ -99,6 +105,7 @@ else
     test -x "${profileWitness}/bin/spirit-v0.1.0"
     test -x "${profileWitness}/bin/spirit-v0.1.1"
     test -x "${profileWitness}/bin/spirit-v0.2.0"
+    test -x "${profileWitness}/bin/spirit-v0.3.0"
     test -x "${profileWitness}/bin/spirit-next"
     test -x "${profileWitness}/bin/spirit"
 
@@ -117,6 +124,11 @@ else
     grep -q '/persona-spirit/v0.2.0/upgrade.sock' \
       "${services."persona-spirit-daemon-v0.2.0".Service.ExecStart}"
     ! grep -q '"' "${services."persona-spirit-daemon-v0.2.0".Service.ExecStart}"
+    grep -q '/persona-spirit/v0.3.0/persona-spirit.redb' \
+      "${services."persona-spirit-daemon-v0.3.0".Service.ExecStart}"
+    grep -q '/persona-spirit/v0.3.0/upgrade.sock' \
+      "${services."persona-spirit-daemon-v0.3.0".Service.ExecStart}"
+    ! grep -q '"' "${services."persona-spirit-daemon-v0.3.0".Service.ExecStart}"
     grep -q '/persona-spirit/next/persona-spirit.redb' \
       "${services."persona-spirit-daemon-next".Service.ExecStart}"
     grep -q '/persona-spirit/next/upgrade.sock' \
@@ -149,6 +161,13 @@ else
     grep -q '^version=v0.2.0$' v0-2-0
     grep -q '^ordinary=/home/li/.local/state/persona-spirit/v0.2.0/spirit.sock$' v0-2-0
     grep -q '^owner=/home/li/.local/state/persona-spirit/v0.2.0/owner.sock$' v0-2-0
+
+    PERSONA_SPIRIT_SOCKET=/stale/ordinary \
+      PERSONA_SPIRIT_OWNER_SOCKET=/stale/owner \
+      "${profileWitness}/bin/spirit-v0.3.0" > v0-3-0
+    grep -q '^version=v0.3.0$' v0-3-0
+    grep -q '^ordinary=/home/li/.local/state/persona-spirit/v0.3.0/spirit.sock$' v0-3-0
+    grep -q '^owner=/home/li/.local/state/persona-spirit/v0.3.0/owner.sock$' v0-3-0
 
     PERSONA_SPIRIT_SOCKET=/stale/ordinary \
       PERSONA_SPIRIT_OWNER_SOCKET=/stale/owner \

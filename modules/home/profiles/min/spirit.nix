@@ -24,6 +24,7 @@ let
     "v0.1.0"
     "v0.1.1"
     "v0.2.0"
+    "v0.3.0"
     "next"
   ];
 
@@ -31,6 +32,7 @@ let
     "v0.1.0" = inputs."persona-spirit-v0-1-0";
     "v0.1.1" = inputs."persona-spirit-v0-1-1";
     "v0.2.0" = inputs."persona-spirit-v0-2-0";
+    "v0.3.0" = inputs."persona-spirit-v0-3-0";
     "next" = inputs.persona-spirit-next;
   };
 
@@ -172,7 +174,7 @@ in
 
     currentDefault = mkOption {
       type = enum availableVersions;
-      default = "v0.2.0";
+      default = "v0.3.0";
       description = "Persona-spirit version reached by the unsuffixed spirit command.";
     };
   };
