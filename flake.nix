@@ -137,6 +137,8 @@
     persona-spirit-v0-1-0.inputs.nixpkgs.follows = "nixpkgs";
     persona-spirit-v0-1-1.url = "github:LiGoldragon/persona-spirit?ref=v0.1.1";
     persona-spirit-v0-1-1.inputs.nixpkgs.follows = "nixpkgs";
+    persona-spirit-v0-2-0.url = "github:LiGoldragon/persona-spirit?ref=v0.2.0";
+    persona-spirit-v0-2-0.inputs.nixpkgs.follows = "nixpkgs";
 
     # `pi` (earendil-works/pi-mono coding-agent CLI) — TypeScript npm
     # monorepo with no upstream flake. Consumed as a non-flake source

@@ -23,11 +23,13 @@ let
   availableVersions = [
     "v0.1.0"
     "v0.1.1"
+    "v0.2.0"
   ];
 
   packageInputsByVersion = {
     "v0.1.0" = inputs."persona-spirit-v0-1-0";
     "v0.1.1" = inputs."persona-spirit-v0-1-1";
+    "v0.2.0" = inputs."persona-spirit-v0-2-0";
   };
 
   sanitizeVersion = builtins.replaceStrings [ "." ] [ "-" ];
@@ -55,8 +57,10 @@ let
       configuration =
         if version == "v0.1.0" then
           ''("${ordinarySocketPath}" "${ownerSocketPath}" "${upgradeSocketPath}" "${databasePath}" 384 None)''
+        else if version == "v0.1.1" then
+          ''("${ordinarySocketPath}" "${ownerSocketPath}" "${databasePath}" 384 None)''
         else
-          ''("${ordinarySocketPath}" "${ownerSocketPath}" "${databasePath}" 384 None)'';
+          ''("${ordinarySocketPath}" "${ownerSocketPath}" "${upgradeSocketPath}" "${databasePath}" 384 None None None None)'';
       initializeState = pkgs.writeShellScript "persona-spirit-${safeVersion}-state" ''
         set -eu
 
