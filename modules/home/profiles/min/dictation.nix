@@ -73,6 +73,10 @@ let
       test "$(device_property "$1" || true)" = "b true"
     }
 
+    bluez_call() {
+      ${pkgs.coreutils}/bin/timeout 8 ${pkgs.systemd}/bin/busctl call org.bluez "$device_path" org.bluez.Device1 "$@"
+    }
+
     active_profile() {
       ${pkgs.pulseaudio}/bin/pactl list cards \
         | ${pkgs.gawk}/bin/awk -v card="$card_name" '
@@ -96,11 +100,11 @@ let
 
     prepare_profile() {
       if ! property_is_true Connected; then
-        ${pkgs.systemd}/bin/busctl call org.bluez "$device_path" org.bluez.Device1 Connect || true
+        bluez_call Connect || true
       fi
       wait_for_property Connected
 
-      ${pkgs.systemd}/bin/busctl call org.bluez "$device_path" org.bluez.Device1 ConnectProfile s "$handsfree_uuid" || true
+      bluez_call ConnectProfile s "$handsfree_uuid" || true
       wait_for_property ServicesResolved
 
       ${pkgs.pulseaudio}/bin/pactl set-card-profile "$card_name" "$headset_profile"
