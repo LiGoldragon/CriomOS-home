@@ -19,6 +19,12 @@ let
             "$PERSONA_SPIRIT_SOCKET" \
             "$PERSONA_SPIRIT_OWNER_SOCKET"
         '';
+        spirit-next = pkgs.writeShellScriptBin "spirit-next" ''
+          printf 'version=%s\nordinary=%s\nowner=%s\n' \
+            ${lib.escapeShellArg version} \
+            "$PERSONA_SPIRIT_SOCKET" \
+            "$PERSONA_SPIRIT_OWNER_SOCKET"
+        '';
         persona-spirit-daemon = pkgs.writeShellScriptBin "persona-spirit-daemon" ''
           printf 'daemon=%s\nconfiguration=%s\n' ${lib.escapeShellArg version} "$1"
         '';
@@ -32,6 +38,7 @@ let
       "persona-spirit-v0-1-0" = makeFakeInput "v0.1.0";
       "persona-spirit-v0-1-1" = makeFakeInput "v0.1.1";
       "persona-spirit-v0-2-0" = makeFakeInput "v0.2.0";
+      persona-spirit-next = makeFakeInput "next";
     };
     config = {
       home.homeDirectory = "/home/li";
@@ -40,6 +47,7 @@ let
           "v0.1.0"
           "v0.1.1"
           "v0.2.0"
+          "next"
         ];
         currentDefault = "v0.1.0";
       };
@@ -71,6 +79,10 @@ let
       message = "persona-spirit v0.2.0 daemon service must exist.";
     }
     {
+      condition = builtins.hasAttr "persona-spirit-daemon-next" services;
+      message = "persona-spirit next daemon service must exist.";
+    }
+    {
       condition = !(builtins.hasAttr "persona-spirit-daemon" services);
       message = "the unversioned persona-spirit daemon service must be absent.";
     }
@@ -87,6 +99,7 @@ else
     test -x "${profileWitness}/bin/spirit-v0.1.0"
     test -x "${profileWitness}/bin/spirit-v0.1.1"
     test -x "${profileWitness}/bin/spirit-v0.2.0"
+    test -x "${profileWitness}/bin/spirit-next"
     test -x "${profileWitness}/bin/spirit"
 
     grep -q '/persona-spirit/v0.1.0/persona-spirit.redb' \
@@ -104,6 +117,11 @@ else
     grep -q '/persona-spirit/v0.2.0/upgrade.sock' \
       "${services."persona-spirit-daemon-v0.2.0".Service.ExecStart}"
     ! grep -q '"' "${services."persona-spirit-daemon-v0.2.0".Service.ExecStart}"
+    grep -q '/persona-spirit/next/persona-spirit.redb' \
+      "${services."persona-spirit-daemon-next".Service.ExecStart}"
+    grep -q '/persona-spirit/next/upgrade.sock' \
+      "${services."persona-spirit-daemon-next".Service.ExecStart}"
+    ! grep -q '"' "${services."persona-spirit-daemon-next".Service.ExecStart}"
     grep -q '/persona-spirit/persona-spirit.redb' \
       "${services."persona-spirit-daemon-v0.1.0".Service.ExecStartPre}"
     grep -q '/persona-spirit/spirit.sock' \
@@ -131,6 +149,13 @@ else
     grep -q '^version=v0.2.0$' v0-2-0
     grep -q '^ordinary=/home/li/.local/state/persona-spirit/v0.2.0/spirit.sock$' v0-2-0
     grep -q '^owner=/home/li/.local/state/persona-spirit/v0.2.0/owner.sock$' v0-2-0
+
+    PERSONA_SPIRIT_SOCKET=/stale/ordinary \
+      PERSONA_SPIRIT_OWNER_SOCKET=/stale/owner \
+      "${profileWitness}/bin/spirit-next" > next
+    grep -q '^version=next$' next
+    grep -q '^ordinary=/home/li/.local/state/persona-spirit/next/spirit.sock$' next
+    grep -q '^owner=/home/li/.local/state/persona-spirit/next/owner.sock$' next
 
     "${profileWitness}/bin/spirit" > current
     grep -q '^version=v0.1.0$' current

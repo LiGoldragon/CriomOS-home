@@ -24,12 +24,14 @@ let
     "v0.1.0"
     "v0.1.1"
     "v0.2.0"
+    "next"
   ];
 
   packageInputsByVersion = {
     "v0.1.0" = inputs."persona-spirit-v0-1-0";
     "v0.1.1" = inputs."persona-spirit-v0-1-1";
     "v0.2.0" = inputs."persona-spirit-v0-2-0";
+    "next" = inputs.persona-spirit-next;
   };
 
   sanitizeVersion = builtins.replaceStrings [ "." ] [ "-" ];
@@ -46,7 +48,16 @@ let
     version:
     let
       packageInput = packageInputsByVersion.${version};
-      commandLine = packageInput.packages.${system}.spirit;
+      commandLine =
+        if version == "next" then
+          packageInput.packages.${system}.spirit-next
+        else
+          packageInput.packages.${system}.spirit;
+      commandLineBinary =
+        if version == "next" then
+          "spirit-next"
+        else
+          "spirit";
       daemon = packageInput.packages.${system}.persona-spirit-daemon;
       safeVersion = sanitizeVersion version;
       stateDirectory = "${rootStateDirectory}/${version}";
@@ -91,7 +102,7 @@ let
       commandLineWrapper = pkgs.writeShellScriptBin "spirit-${version}" ''
         export PERSONA_SPIRIT_SOCKET=${lib.escapeShellArg ordinarySocketPath}
         export PERSONA_SPIRIT_OWNER_SOCKET=${lib.escapeShellArg ownerSocketPath}
-        exec ${commandLine}/bin/spirit "$@"
+        exec ${commandLine}/bin/${commandLineBinary} "$@"
       '';
     in
     {
