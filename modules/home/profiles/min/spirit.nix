@@ -56,11 +56,11 @@ let
       databasePath = "${stateDirectory}/persona-spirit.redb";
       configuration =
         if version == "v0.1.0" then
-          ''("${ordinarySocketPath}" "${ownerSocketPath}" "${upgradeSocketPath}" "${databasePath}" 384 None)''
+          ''([${ordinarySocketPath}] [${ownerSocketPath}] [${upgradeSocketPath}] [${databasePath}] 384 None)''
         else if version == "v0.1.1" then
-          ''("${ordinarySocketPath}" "${ownerSocketPath}" "${databasePath}" 384 None)''
+          ''([${ordinarySocketPath}] [${ownerSocketPath}] [${databasePath}] 384 None)''
         else
-          ''("${ordinarySocketPath}" "${ownerSocketPath}" "${upgradeSocketPath}" "${databasePath}" 384 None None None None)'';
+          ''([${ordinarySocketPath}] [${ownerSocketPath}] [${upgradeSocketPath}] [${databasePath}] 384 None None None None)'';
       initializeState = pkgs.writeShellScript "persona-spirit-${safeVersion}-state" ''
         set -eu
 
