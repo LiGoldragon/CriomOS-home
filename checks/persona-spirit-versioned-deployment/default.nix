@@ -84,11 +84,17 @@ else
 
     grep -q '/persona-spirit/v0.1.0/persona-spirit.redb' \
       "${services."persona-spirit-daemon-v0.1.0".Service.ExecStart}"
+    grep -q '/persona-spirit/v0.1.0/upgrade.sock' \
+      "${services."persona-spirit-daemon-v0.1.0".Service.ExecStart}"
     grep -q '/persona-spirit/v0.1.1/persona-spirit.redb' \
+      "${services."persona-spirit-daemon-v0.1.1".Service.ExecStart}"
+    ! grep -q '/persona-spirit/v0.1.1/upgrade.sock' \
       "${services."persona-spirit-daemon-v0.1.1".Service.ExecStart}"
     grep -q '/persona-spirit/persona-spirit.redb' \
       "${services."persona-spirit-daemon-v0.1.0".Service.ExecStartPre}"
     grep -q '/persona-spirit/spirit.sock' \
+      "${services."persona-spirit-daemon-v0.1.0".Service.ExecStartPre}"
+    grep -q '/persona-spirit/v0.1.0/upgrade.sock' \
       "${services."persona-spirit-daemon-v0.1.0".Service.ExecStartPre}"
 
     PERSONA_SPIRIT_SOCKET=/stale/ordinary \

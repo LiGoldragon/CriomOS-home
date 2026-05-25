@@ -1067,16 +1067,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1779353631,
-        "narHash": "sha256-RCKyYs/TZhdpgJgczAtFxuzdSt9rEEP/W/ReXp2mk9s=",
+        "lastModified": 1779693544,
+        "narHash": "sha256-Rm2p5HJf0PBCGuWESqwo6LPV6bakH0GXwFNWbx0wFqc=",
         "owner": "LiGoldragon",
         "repo": "persona-spirit",
-        "rev": "694452add7734d0b00954a0d7d4d46bb5d776065",
+        "rev": "e7a1b184f09c289eb774020e8bf4f1eaf0e2b54a",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
-        "ref": "v0.1.0",
+        "ref": "v0.1.0.1",
         "repo": "persona-spirit",
         "type": "github"
       }

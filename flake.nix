@@ -133,7 +133,7 @@
     # Persona-spirit — psyche record command line and user-session daemon.
     # Consumed in modules/home/profiles/min/spirit.nix. Kept versioned so
     # schema-changing daemon/database cutovers can run side by side.
-    persona-spirit-v0-1-0.url = "github:LiGoldragon/persona-spirit?ref=v0.1.0";
+    persona-spirit-v0-1-0.url = "github:LiGoldragon/persona-spirit?ref=v0.1.0.1";
     persona-spirit-v0-1-0.inputs.nixpkgs.follows = "nixpkgs";
     persona-spirit-v0-1-1.url = "github:LiGoldragon/persona-spirit?ref=v0.1.1";
     persona-spirit-v0-1-1.inputs.nixpkgs.follows = "nixpkgs";

@@ -50,8 +50,13 @@ let
       stateDirectory = "${rootStateDirectory}/${version}";
       ordinarySocketPath = "${stateDirectory}/spirit.sock";
       ownerSocketPath = "${stateDirectory}/owner.sock";
+      upgradeSocketPath = "${stateDirectory}/upgrade.sock";
       databasePath = "${stateDirectory}/persona-spirit.redb";
-      configuration = ''("${ordinarySocketPath}" "${ownerSocketPath}" "${databasePath}" 384 None)'';
+      configuration =
+        if version == "v0.1.0" then
+          ''("${ordinarySocketPath}" "${ownerSocketPath}" "${upgradeSocketPath}" "${databasePath}" 384 None)''
+        else
+          ''("${ordinarySocketPath}" "${ownerSocketPath}" "${databasePath}" 384 None)'';
       initializeState = pkgs.writeShellScript "persona-spirit-${safeVersion}-state" ''
         set -eu
 
@@ -59,13 +64,14 @@ let
         state_directory=${lib.escapeShellArg stateDirectory}
         ordinary_socket_path=${lib.escapeShellArg ordinarySocketPath}
         owner_socket_path=${lib.escapeShellArg ownerSocketPath}
+        upgrade_socket_path=${lib.escapeShellArg upgradeSocketPath}
         database_path=${lib.escapeShellArg databasePath}
         legacy_ordinary_socket_path=${lib.escapeShellArg legacyOrdinarySocketPath}
         legacy_owner_socket_path=${lib.escapeShellArg legacyOwnerSocketPath}
         legacy_database_path=${lib.escapeShellArg legacyDatabasePath}
 
         ${pkgs.coreutils}/bin/mkdir -p "$state_directory"
-        ${pkgs.coreutils}/bin/rm -f "$ordinary_socket_path" "$owner_socket_path"
+        ${pkgs.coreutils}/bin/rm -f "$ordinary_socket_path" "$owner_socket_path" "$upgrade_socket_path"
 
         if [ "$version" = "v0.1.0" ]; then
           ${pkgs.coreutils}/bin/rm -f "$legacy_ordinary_socket_path" "$legacy_owner_socket_path"
@@ -93,6 +99,7 @@ let
         ownerSocketPath
         startDaemon
         stateDirectory
+        upgradeSocketPath
         ;
       serviceName = "persona-spirit-daemon-${version}";
       wrapperName = "spirit-${version}";
