@@ -137,7 +137,11 @@ let
           return 1
         fi
         if ! test "$(active_profile)" = "$headset_profile"; then
-          echo "dji-keepalive: $card_name left $headset_profile" >&2
+          echo "dji-keepalive: $card_name left $headset_profile; reasserting profile" >&2
+          if prepare_profile; then
+            continue
+          fi
+          echo "dji-keepalive: profile reassertion failed" >&2
           stop_child
           wait "$child" 2>/dev/null || true
           trap - EXIT INT TERM
