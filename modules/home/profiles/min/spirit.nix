@@ -151,7 +151,7 @@ in
 
     currentDefault = mkOption {
       type = enum availableVersions;
-      default = "v0.1.0";
+      default = "v0.2.0";
       description = "Persona-spirit version reached by the unsuffixed spirit command.";
     };
   };
