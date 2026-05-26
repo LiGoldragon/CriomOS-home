@@ -414,6 +414,14 @@ mkIf size.min {
             "$left"
             "$right"
           ];
+          # Editor fallback ABORTS instead of blocking on an interactive
+          # editor. Every description-taking jj invocation must use
+          # -m '<msg>' inline. Per psyche 2026-05-26 (intent record 808)
+          # and skills/jj.md §"Descriptionless commits are forbidden".
+          # Subagents repeatedly tripped on emacsclient blocking; the
+          # /false/ shim exits non-zero so jj surfaces a clear failure
+          # instead of waiting indefinitely.
+          editor = "false";
         };
         user = {
           name = name;
