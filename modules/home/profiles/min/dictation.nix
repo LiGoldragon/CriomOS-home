@@ -39,7 +39,7 @@ let
     exec ${whisrs}/bin/whisrsd
   '';
 
-  startWhisrs = pkgs.writeShellScript "criomos-start-whisrs" ''
+  startDictationServices = pkgs.writeShellScript "criomos-start-dictation-services" ''
     set -eu
 
     # Quickshell scans plugins only at startup. After a Whisrs plugin
@@ -52,16 +52,19 @@ let
       DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_RUNTIME_DIR \
       HYPRLAND_INSTANCE_SIGNATURE NIRI_SOCKET SWAYSOCK XKB_DEFAULT_LAYOUT XKB_DEFAULT_VARIANT
 
-    exec ${pkgs.systemd}/bin/systemctl --user restart whisrs.service
+    ${pkgs.systemd}/bin/systemctl --user restart whisrs.service
+    exec ${pkgs.systemd}/bin/systemctl --user restart dji-keepalive.service
   '';
 
   djiKeepalive = pkgs.writeShellScript "criomos-dji-keepalive" ''
     set -eu
 
-    card_name="bluez_card.04_A8_5A_0B_EB_B0"
+    bluetooth_address="04:A8:5A:0B:EB:B0"
+    bluetooth_identifier="04_A8_5A_0B_EB_B0"
+    card_name="bluez_card.$bluetooth_identifier"
     device_path="/org/bluez/hci0/dev_04_A8_5A_0B_EB_B0"
-    public_source_name="bluez_input.04:A8:5A:0B:EB:B0"
-    capture_target_name="bluez_input.04_A8_5A_0B_EB_B0.headset-head-unit-msbc"
+    public_source_name="bluez_input.$bluetooth_address"
+    keepalive_sink_name="dji_mic_keepalive"
     headset_profile="headset-head-unit"
     handsfree_uuid="0000111e-0000-1000-8000-00805f9b34fb"
 
@@ -86,30 +89,70 @@ let
           '
     }
 
-    wait_for_property() {
-      property_name="$1"
+    pactl_name_exists() {
+      list_kind="$1"
+      expected_name="$2"
+      ${pkgs.pulseaudio}/bin/pactl list short "$list_kind" \
+        | ${pkgs.gawk}/bin/awk -v name="$expected_name" '$2 == name { found = 1 } END { exit found ? 0 : 1 }'
+    }
+
+    wait_for_bluez_connected() {
       for _ in $(${pkgs.coreutils}/bin/seq 1 12); do
-        if property_is_true "$property_name"; then
+        if property_is_true Connected; then
           return 0
         fi
         ${pkgs.coreutils}/bin/sleep 1
       done
-      echo "dji-keepalive: timed out waiting for BlueZ $property_name" >&2
+      echo "dji-keepalive: timed out waiting for BlueZ Connected" >&2
       return 1
+    }
+
+    wait_for_pactl_name() {
+      list_kind="$1"
+      expected_name="$2"
+      for _ in $(${pkgs.coreutils}/bin/seq 1 12); do
+        if pactl_name_exists "$list_kind" "$expected_name"; then
+          return 0
+        fi
+        ${pkgs.coreutils}/bin/sleep 1
+      done
+      echo "dji-keepalive: timed out waiting for $list_kind $expected_name" >&2
+      return 1
+    }
+
+    ensure_keepalive_sink() {
+      if pactl_name_exists sinks "$keepalive_sink_name"; then
+        module_identifier=""
+      else
+        module_identifier="$(
+          ${pkgs.pulseaudio}/bin/pactl load-module module-null-sink \
+            "sink_name=$keepalive_sink_name" \
+            "sink_properties=device.description=DJI-Mic-Keepalive"
+        )"
+      fi
+      export module_identifier
+      wait_for_pactl_name sinks "$keepalive_sink_name"
+    }
+
+    unload_keepalive_sink() {
+      if test -n "''${module_identifier:-}"; then
+        ${pkgs.pulseaudio}/bin/pactl unload-module "$module_identifier" >/dev/null 2>&1 || true
+      fi
     }
 
     prepare_profile() {
       if ! property_is_true Connected; then
         bluez_call Connect || true
       fi
-      wait_for_property Connected
+      wait_for_bluez_connected
+      wait_for_pactl_name cards "$card_name"
 
       bluez_call ConnectProfile s "$handsfree_uuid" || true
-      wait_for_property ServicesResolved
 
       ${pkgs.pulseaudio}/bin/pactl set-card-profile "$card_name" "$headset_profile"
       for _ in $(${pkgs.coreutils}/bin/seq 1 8); do
         if test "$(active_profile)" = "$headset_profile"; then
+          wait_for_pactl_name sources "$public_source_name"
           ${pkgs.pulseaudio}/bin/pactl set-default-source "$public_source_name" || true
           return 0
         fi
@@ -122,13 +165,17 @@ let
 
     run_keepalive() {
       prepare_profile
+      ensure_keepalive_sink
 
       ${pkgs.pipewire}/bin/pw-loopback \
-        --capture-props="node.target=\"$capture_target_name\"" \
-        --playback-props='node.name="null-sink-dji"' &
+        --capture "$public_source_name" \
+        --playback "$keepalive_sink_name" \
+        --capture-props='node.name="dji-mic-keepalive-capture" media.name="DJI Mic Keepalive Capture" application.name="DJI Mic Keepalive"' \
+        --playback-props='node.name="dji-mic-keepalive-playback" media.name="DJI Mic Keepalive Sink Feed" application.name="DJI Mic Keepalive"' &
       child="$!"
       stop_child() {
         kill "$child" 2>/dev/null || true
+        unload_keepalive_sink
       }
       exit_after_signal() {
         stop_child
@@ -138,7 +185,7 @@ let
       trap exit_after_signal INT TERM
 
       while kill -0 "$child" 2>/dev/null; do
-        if ! property_is_true Connected || ! property_is_true ServicesResolved; then
+        if ! property_is_true Connected; then
           echo "dji-keepalive: BlueZ device state dropped" >&2
           stop_child
           wait "$child" 2>/dev/null || true
@@ -147,10 +194,13 @@ let
         fi
         if ! test "$(active_profile)" = "$headset_profile"; then
           echo "dji-keepalive: $card_name left $headset_profile; reasserting profile" >&2
-          if prepare_profile; then
-            continue
-          fi
-          echo "dji-keepalive: profile reassertion failed" >&2
+          stop_child
+          wait "$child" 2>/dev/null || true
+          trap - EXIT INT TERM
+          return 1
+        fi
+        if ! pactl_name_exists sources "$public_source_name" || ! pactl_name_exists sinks "$keepalive_sink_name"; then
+          echo "dji-keepalive: PipeWire source or keepalive sink disappeared" >&2
           stop_child
           wait "$child" 2>/dev/null || true
           trap - EXIT INT TERM
@@ -163,6 +213,7 @@ let
       wait "$child"
       result="$?"
       set -e
+      unload_keepalive_sink
       trap - EXIT INT TERM
       return "$result"
     }
@@ -271,20 +322,28 @@ mkIf (size.min && behavesAs.edge) {
         "pipewire.service"
         "wireplumber.service"
       ];
+      PartOf = [ "graphical-session.target" ];
     };
 
     Install.WantedBy = [ "graphical-session.target" ];
 
     Service = {
       ExecStart = "${djiKeepalive}";
-      Restart = "on-failure";
+      Restart = "always";
       RestartSec = 2;
     };
   };
 
+  home.activation.restartDjiKeepalive = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+    if ${pkgs.systemd}/bin/systemctl --user --quiet is-active graphical-session.target; then
+      run ${pkgs.systemd}/bin/systemctl --user daemon-reload
+      run ${pkgs.systemd}/bin/systemctl --user restart dji-keepalive.service || true
+    fi
+  '';
+
   programs.niri.settings = {
     spawn-at-startup = [
-      { command = [ "${startWhisrs}" ]; }
+      { command = [ "${startDictationServices}" ]; }
     ];
 
     binds."Mod+V" = {
