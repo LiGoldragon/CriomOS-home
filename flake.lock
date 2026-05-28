@@ -1328,11 +1328,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779745429,
-        "narHash": "sha256-ShPOZTA+ioCW835rnQLjnmOMD9keSKlYSKrQ+tFMR4Q=",
+        "lastModified": 1779960190,
+        "narHash": "sha256-Y7fbt761VJqqVRKP/zSToC1WYy9Vkx5o+Bved30rgEs=",
         "owner": "LiGoldragon",
         "repo": "persona-spirit",
-        "rev": "b3b1ac0cef1625e9529a7b62e26cf562e6b13826",
+        "rev": "2d108fcbbbdfef63da5c96db28bde74e9c826a0c",
         "type": "github"
       },
       "original": {
