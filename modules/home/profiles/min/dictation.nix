@@ -134,6 +134,13 @@ let
       wait_for_pactl_name sinks "$keepalive_sink_name"
     }
 
+    reassert_profile() {
+      bluez_call ConnectProfile s "$handsfree_uuid" || true
+      ${pkgs.coreutils}/bin/sleep 1
+      ${pkgs.pulseaudio}/bin/pactl set-card-profile "$card_name" "$headset_profile" || true
+      ${pkgs.pulseaudio}/bin/pactl set-default-source "$public_source_name" || true
+    }
+
     unload_keepalive_sink() {
       if test -n "''${module_identifier:-}"; then
         ${pkgs.pulseaudio}/bin/pactl unload-module "$module_identifier" >/dev/null 2>&1 || true
@@ -147,15 +154,14 @@ let
       wait_for_bluez_connected
       wait_for_pactl_name cards "$card_name"
 
-      bluez_call ConnectProfile s "$handsfree_uuid" || true
-
-      ${pkgs.pulseaudio}/bin/pactl set-card-profile "$card_name" "$headset_profile"
-      for _ in $(${pkgs.coreutils}/bin/seq 1 8); do
+      reassert_profile
+      for _ in $(${pkgs.coreutils}/bin/seq 1 12); do
         if test "$(active_profile)" = "$headset_profile"; then
           wait_for_pactl_name sources "$public_source_name"
           ${pkgs.pulseaudio}/bin/pactl set-default-source "$public_source_name" || true
           return 0
         fi
+        reassert_profile
         ${pkgs.coreutils}/bin/sleep 1
       done
 
@@ -193,11 +199,8 @@ let
           return 1
         fi
         if ! test "$(active_profile)" = "$headset_profile"; then
-          echo "dji-keepalive: $card_name left $headset_profile; reasserting profile" >&2
-          stop_child
-          wait "$child" 2>/dev/null || true
-          trap - EXIT INT TERM
-          return 1
+          echo "dji-keepalive: $card_name left $headset_profile; reasserting profile without dropping keepalive" >&2
+          reassert_profile
         fi
         if ! pactl_name_exists sources "$public_source_name" || ! pactl_name_exists sinks "$keepalive_sink_name"; then
           echo "dji-keepalive: PipeWire source or keepalive sink disappeared" >&2
