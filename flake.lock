@@ -1083,11 +1083,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1777347800,
-        "narHash": "sha256-FO6FRay5PfvJX7Ux4qTCvPfvb/1w5DFbbvHe2bjwNXw=",
+        "lastModified": 1779941182,
+        "narHash": "sha256-kHRla+UhzEhTJ+asG2Z2aAgOEHRFrD0El/0MU5G5Fi0=",
         "owner": "nix-community",
         "repo": "nix-vscode-extensions",
-        "rev": "de5f0ef30d7c677a06b064d6b390fcddd2bcc503",
+        "rev": "643933e02c0d2c56e80e2a0c1abd705743de98cf",
         "type": "github"
       },
       "original": {
@@ -1658,11 +1658,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1777799841,
-        "narHash": "sha256-i3D1V/j3QNhwB+/+PNEyD5yH2xUnEEXT45H8VKttrtA=",
+        "lastModified": 1779970600,
+        "narHash": "sha256-wUiFMYedn+y+6cNFXERj6q9rWIhRe0WRkaD7X+d9CF4=",
         "owner": "LiGoldragon",
         "repo": "CriomOS-pkgs",
-        "rev": "281bc63c0b37b2ff56786ad070813dfeee68f155",
+        "rev": "2ffbf0d03aa9627c251ffe8955c66a732e2169a8",
         "type": "github"
       },
       "original": {
