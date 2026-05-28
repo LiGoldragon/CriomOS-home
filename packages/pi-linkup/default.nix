@@ -1,7 +1,7 @@
 { inputs, pkgs, ... }:
 pkgs.stdenvNoCC.mkDerivation {
   pname = "pi-linkup";
-  version = "0.10.3";
+  version = "0.11.0";
 
   dontUnpack = true;
   dontBuild = true;

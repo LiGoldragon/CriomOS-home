@@ -1,7 +1,7 @@
 { pkgs, inputs, ... }:
 pkgs.buildNpmPackage (finalAttrs: {
   pname = "pi";
-  version = "0.75.5";
+  version = "0.76.0";
 
   src = inputs.pi-src;
 
@@ -13,7 +13,7 @@ pkgs.buildNpmPackage (finalAttrs: {
   # at runtime. Install the whole monorepo and stitch in the `pi`
   # binary ourselves in postInstall.
 
-  npmDepsHash = "sha256-L7fbfIfsxcQKInZqOB+pbcHoct8i4Bj/dWcDo205KfQ=";
+  npmDepsHash = "sha256-plQH7vJZ7Cxz8Ln0mPFQrmReQYBmhxGmrUlNYm2mtVc=";
 
   makeCacheWritable = true;
 
@@ -29,7 +29,7 @@ pkgs.buildNpmPackage (finalAttrs: {
                      '"generate-image-models": "true"'
   '';
 
-  # pi-mono's root `build` script sequences workspaces in dependency
+  # pi's root `build` script sequences workspaces in dependency
   # order (tui → ai → agent → coding-agent → mom → web-ui → pods).
   # Building only the coding-agent workspace fails because the sibling
   # workspaces it imports from (`@mariozechner/pi-ai`, etc.) haven't
@@ -82,8 +82,8 @@ pkgs.buildNpmPackage (finalAttrs: {
   ];
 
   meta = {
-    description = "pi — coding agent CLI from earendil-works/pi-mono";
-    homepage = "https://github.com/earendil-works/pi-mono";
+    description = "pi — coding agent CLI from earendil-works/pi";
+    homepage = "https://github.com/earendil-works/pi";
     license = pkgs.lib.licenses.mit;
     mainProgram = "pi";
   };

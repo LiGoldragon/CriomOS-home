@@ -66,7 +66,7 @@
     # gate entirely.
     claude-code-vsix = {
       type = "file";
-      url = "https://open-vsx.org/api/Anthropic/claude-code/linux-x64/2.1.145/file/Anthropic.claude-code-2.1.145@linux-x64.vsix";
+      url = "https://open-vsx.org/api/Anthropic/claude-code/linux-x64/2.1.153/file/Anthropic.claude-code-2.1.153@linux-x64.vsix";
       flake = false;
     };
 
@@ -144,13 +144,13 @@
     persona-spirit-next.url = "github:LiGoldragon/persona-spirit?ref=main";
     persona-spirit-next.inputs.nixpkgs.follows = "nixpkgs";
 
-    # `pi` (earendil-works/pi-mono coding-agent CLI) — TypeScript npm
+    # `pi` (earendil-works/pi coding-agent CLI) — TypeScript npm
     # monorepo with no upstream flake. Consumed as a non-flake source
     # input and built locally via `packages/pi/default.nix`
     # (buildNpmPackage over the `packages/coding-agent` workspace).
     # Replaces the previous pi-mentci wrapper flake (dropped 2026-04-25).
     pi-src = {
-      url = "github:earendil-works/pi-mono?ref=v0.75.5";
+      url = "github:earendil-works/pi?ref=v0.76.0";
       flake = false;
     };
 
@@ -158,12 +158,12 @@
     # content hashes live in flake.lock, not in package Nix code.
     pi-linkup-src = {
       type = "file";
-      url = "https://registry.npmjs.org/@aliou/pi-linkup/-/pi-linkup-0.10.3.tgz";
+      url = "https://registry.npmjs.org/@aliou/pi-linkup/-/pi-linkup-0.11.0.tgz";
       flake = false;
     };
     pi-utils-ui-src = {
       type = "file";
-      url = "https://registry.npmjs.org/@aliou/pi-utils-ui/-/pi-utils-ui-0.1.5.tgz";
+      url = "https://registry.npmjs.org/@aliou/pi-utils-ui/-/pi-utils-ui-0.4.1.tgz";
       flake = false;
     };
     pi-subagents-src = {
