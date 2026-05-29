@@ -51,10 +51,12 @@ pkgs.runCommand "pi-harness-profile"
     ! grep -E '\bfetchurl\b|hash[[:space:]]*=' ${piSubagentsPackage}
     ! grep -E '\bfetchurl\b|hash[[:space:]]*=' ${piWebAccessPackage}
 
-    grep -F 'defaultProvider = "openai-codex";' ${piModelsModule}
-    grep -F 'defaultOpenAiCodexModel = "gpt-5.5";' ${piModelsModule}
-    grep -F 'defaultThinkingLevel = "xhigh";' ${piModelsModule}
+    grep -F 'defaultProvider = providerName;' ${piModelsModule}
+    grep -F 'defaultLocalModel = "gemma-4-26b-a4b";' ${piModelsModule}
+    grep -F 'defaultThinkingLevel = "off";' ${piModelsModule}
     grep -F '"openai-codex/gpt-5.4-mini"' ${piModelsModule}
+    grep -F 'localLlmApiKeyCommand = "!gopass show -o goldragon.criome/local-llm-api-token";' ${piModelsModule}
+    grep -F 'file = "$HOME/.pi/agent/auth.json";' ${piModelsModule}
     grep -F 'theme = "criomos-dark";' ${piModelsModule}
     grep -F 'doubleEscapeAction = "tree";' ${piModelsModule}
     grep -F 'enabled = true;' ${piModelsModule}

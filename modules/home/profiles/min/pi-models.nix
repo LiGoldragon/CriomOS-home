@@ -28,7 +28,13 @@ let
   largeAiNode = lib.findFirst (node: node.behavesAs.largeAi or false) null clusterNodes;
   endpointNode = if routerNode != null then routerNode else largeAiNode;
   providerName = "criomos-local";
+  defaultLocalModel = "gemma-4-26b-a4b";
   defaultOpenAiCodexModel = "gpt-5.5";
+  localLlmApiKeyCommand = "!gopass show -o goldragon.criome/local-llm-api-token";
+  legacyLocalProviderNames = [
+    "prometheus"
+    "criomos-largeai"
+  ];
   remoteOpenAiCodexModels = [
     "openai-codex/gpt-5.5"
     "openai-codex/gpt-5.4-mini"
@@ -47,9 +53,10 @@ let
     providers.${providerName} = {
       api = "openai-completions";
       baseUrl = "http://${endpointNode.criomeDomainName}:${toString (inventory.serverPort or 11434)}/v1";
-      # Pi requires an API key value for custom providers. The llama.cpp
-      # router does not require one unless /var/lib/llama/api-key is non-empty.
-      apiKey = "sk-no-key-required";
+      # Pi requires an apiKey field for custom providers. The actual
+      # Prometheus llama-router token is resolved at request time from
+      # the standard local gopass entry; the token bytes never enter Nix.
+      apiKey = localLlmApiKeyCommand;
       compat = {
         supportsStore = false;
         supportsDeveloperRole = false;
@@ -63,10 +70,22 @@ let
     };
   };
 
+  localProviderAuth = {
+    type = "api_key";
+    key = localLlmApiKeyCommand;
+  };
+
+  piAuthConfig = builtins.listToAttrs (
+    map (name: {
+      inherit name;
+      value = localProviderAuth;
+    }) ([ providerName ] ++ legacyLocalProviderNames)
+  );
+
   piSettingsConfig = {
-    defaultProvider = "openai-codex";
-    defaultModel = defaultOpenAiCodexModel;
-    defaultThinkingLevel = "xhigh";
+    defaultProvider = providerName;
+    defaultModel = defaultLocalModel;
+    defaultThinkingLevel = "off";
     enabledModels =
       remoteOpenAiCodexModels ++ map (model: "${providerName}/${model.modelId}") inventory.models;
     theme = "criomos-dark";
@@ -103,6 +122,18 @@ lib.mkIf (size.min && endpointNode != null) {
     inherit lib pkgs hexis;
     file = "$HOME/.pi/agent/models.json";
     declared = piModelsConfig;
+  };
+
+  home.activation.mergePiAuth = inputs.hexis.lib.mkManagedConfig {
+    inherit lib pkgs hexis;
+    file = "$HOME/.pi/agent/auth.json";
+    declared = piAuthConfig;
+    modes = builtins.listToAttrs (
+      map (name: {
+        name = "/${name}";
+        value = "always";
+      }) ([ providerName ] ++ legacyLocalProviderNames)
+    );
   };
 
   home.activation.mergePiSettings = inputs.hexis.lib.mkManagedConfig {
