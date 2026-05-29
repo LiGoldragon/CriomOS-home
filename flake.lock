@@ -409,11 +409,11 @@
     },
     "criomos-lib": {
       "locked": {
-        "lastModified": 1778685650,
-        "narHash": "sha256-GVHQFrGNwQcOEI3HycD2UPv5yp3TSpN7Ft1WqsRT0FI=",
+        "lastModified": 1779953640,
+        "narHash": "sha256-EtqeLEjkETwHyQCghDgXUE5VEuIO61U60wgerYFPCqw=",
         "owner": "LiGoldragon",
         "repo": "CriomOS-lib",
-        "rev": "ec851e52409cfbb63da96877e30650cc96a47b5e",
+        "rev": "de676a8e63480dfb17425930d67a4caacd756293",
         "type": "github"
       },
       "original": {
