@@ -150,7 +150,7 @@
     # (buildNpmPackage over the `packages/coding-agent` workspace).
     # Replaces the previous pi-mentci wrapper flake (dropped 2026-04-25).
     pi-src = {
-      url = "github:earendil-works/pi?ref=v0.76.0";
+      url = "github:earendil-works/pi?ref=v0.77.0";
       flake = false;
     };
 
