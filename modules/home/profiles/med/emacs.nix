@@ -126,11 +126,18 @@ let
   );
 
   initEl = ''
-    ;;; init.el — CriomOS-home Emacs (minimal port from criomos-archive).
+    ;;; init.el --- CriomOS-home Emacs (minimal port from criomos-archive).  -*- lexical-binding: t; -*-
     ;;; Lifted from criomos-archive/nix/{homeModule/emacs/init.el,
     ;;; pkdjz/mkEmacs/{packages,selector-common,vertico}.el} on 2026-05-06.
     ;;; aski / cozo / capnp tree-sitter, copilot/gptel/aidermacs, and
     ;;; niche packages were dropped per the 2026-05-06 minimal port.
+
+    ;; Make use-package's macros visible to the byte-compiler so the
+    ;; pre-compile step (see initElCompiled in emacs.nix) expands them
+    ;; correctly at Nix-build time, not at first-load. eval-and-compile
+    ;; is load-bearing — without it the byte-compiler cannot see the
+    ;; macro definitions.
+    (eval-and-compile (require 'use-package))
 
     ;;; --- Built-in UI tweaks ---
     (tool-bar-mode -1)
@@ -151,11 +158,28 @@ let
 
     ;;; --- Package configurations ---
 
+    ;; Default-defer audit (per 2026-06-01 startup work). Most use-package
+    ;; blocks below have correct :hook / :after / :commands / :custom /
+    ;; :mode triggers, so they defer cleanly. The few that MUST be eager
+    ;; carry :demand t below (modal keybindings live at first keypress,
+    ;; completion UI live for M-x, base16-theme load before the theme
+    ;; switch block, eglot's add-to-list runs before any LSP-using mode
+    ;; opens, etc.).
+    ;;
+    ;; eval-and-compile is load-bearing here: use-package macroexpansion
+    ;; checks this variable at byte-compile time. Setting it with a plain
+    ;; (setq ...) would mean the .elc was compiled with the variable
+    ;; still nil — every (use-package ...) form would have eager-load
+    ;; defaults baked in, and the .elc would load SLOWER than the .el
+    ;; (observed 3x slower in initial measurement).
+    (eval-and-compile (setq use-package-always-defer t))
+
     (use-package eat :defer t)
     (use-package apheleia)
-    (use-package envrc :config (envrc-global-mode))
+    (use-package envrc :demand t :config (envrc-global-mode))
 
     (use-package eglot
+     :demand t
      :custom (eglot-extend-to-xref t)
      :config
      (add-to-list 'eglot-server-programs '(nix-ts-mode . ("nil")))
@@ -165,14 +189,14 @@ let
     (use-package imenu-list)
 
     (use-package flycheck-eglot
+     :demand t
      :after (flycheck eglot)
      :config (global-flycheck-eglot-mode 1))
 
     (use-package highlight-indentation)
 
     (use-package nix-ts-mode
-     :config
-     (add-to-list 'auto-mode-alist '("\\.nix\\'" . nix-ts-mode)))
+     :mode "\\.nix\\'")
 
     (use-package nixfmt :hook (nix-ts-mode . nixfmt-on-save-mode))
     (use-package nix-update)
@@ -180,12 +204,12 @@ let
     (use-package json-mode)
 
     (use-package yaml-pro
-     :config
-     (add-to-list 'auto-mode-alist '("\\.yaml\\'" . yaml-pro-ts-mode)))
+     :mode ("\\.yaml\\'" . yaml-pro-ts-mode))
 
     (use-package haskell-mode)
 
     (use-package treesit
+     :demand t
      :custom (treesit-font-lock-level 4))
 
     (use-package rust-mode
@@ -198,7 +222,7 @@ let
     (use-package with-editor
      :hook (eshell-mode . with-editor-export-editor))
 
-    (use-package elisp-autofmt :before format-all)
+    (use-package elisp-autofmt :after format-all)
     (use-package ssh-deploy)
 
     (use-package org-roam
@@ -217,7 +241,7 @@ let
          :unnarrowed t))))
 
     (use-package password-store)
-    (use-package base16-theme)
+    (use-package base16-theme :demand t)
 
     ;; Load ignis theme from darkman state at startup.
     (let ((theme-dir (expand-file-name ".config/emacs-ignis-themes" "~")))
@@ -265,6 +289,7 @@ let
     (use-package dockerfile-mode :mode "Dockerfile")
 
     (use-package xah-fly-keys
+     :demand t
      :config
      (defun xfk-mentci-modify ()
        (xah-fly--define-keys
@@ -393,22 +418,25 @@ let
     (use-package multiple-cursors :custom (mc/always-run-for-all t))
 
     (use-package auth-source-pass
+     :demand t
      :config (auth-source-pass-enable)
      :custom (auth-sources '(password-store)))
 
     (use-package phi-search)
     (use-package poly-markdown)
-    (use-package which-key :config (which-key-mode))
+    (use-package which-key :demand t :config (which-key-mode))
     (use-package deadgrep)
     (use-package forge :after (magit))
     (use-package magit :config (put 'magit-clean 'disabled nil))
-    (use-package git-gutter :config (global-git-gutter-mode))
+    (use-package git-gutter :demand t :config (global-git-gutter-mode))
 
     (use-package projectile
+     :demand t
      :config (projectile-mode +1)
      :custom (projectile-project-search-path '("~/git/" "/git/")))
 
     (use-package eshell-prompt-extras
+     :demand t
      :config
      (with-eval-after-load "esh-opt"
        (autoload 'epe-theme-lambda "eshell-prompt-extras"))
@@ -431,6 +459,7 @@ let
     (use-package git-link :custom (git-link-use-commit t))
 
     (use-package flycheck
+     :demand t
      :custom
      (flycheck-idle-change-delay 7)
      (flycheck-idle-buffer-switch-delay 49)
@@ -535,9 +564,10 @@ let
 
     (use-package embark)
     (use-package embark-consult)
-    (use-package marginalia :config (marginalia-mode))
+    (use-package marginalia :demand t :config (marginalia-mode))
 
     (use-package orderless
+     :demand t
      :config
      (defun flex-if-twiddle (pattern _index _total)
        (when (string-suffix-p "~" pattern)
@@ -553,15 +583,54 @@ let
      (orderless-style-dispatchers '(flex-if-twiddle without-if-bang))
      (orderless-matching-styles '(orderless-regexp)))
 
-    (use-package prescient :config (prescient-persist-mode +1))
+    (use-package prescient :demand t :config (prescient-persist-mode +1))
 
     ;;; --- Vertico (lifted from vertico.el) ---
 
-    (use-package vertico :config (vertico-mode))
-    (use-package vertico-prescient :config (vertico-prescient-mode))
+    (use-package vertico :demand t :config (vertico-mode))
+    (use-package vertico-prescient :demand t :config (vertico-prescient-mode))
 
     ;;; init.el ends here.
   '';
+
+  # Pre-compile init.el at Nix build time. Without this, init.el is
+  # interpreted on every cold start: parse + macro-expand (use-package
+  # expansions are non-trivial) + interpretation. Per-package .eln
+  # caches are keyed on source-file content hash, so any rebuild that
+  # touches `initEl` invalidates JIT outputs and the next cold start
+  # pays the cost from scratch.
+  #
+  # This derivation ships `init.el` + `init.elc` as a single store path.
+  # Emacs's load resolver picks up the `.elc` automatically when both
+  # are present in the same directory. Parse + macro-expand cost is
+  # eliminated on every cold start, regardless of the user's
+  # `~/.emacs.d/eln-cache/` state.
+  #
+  # Native-compiled `.eln` for functions defined IN `init.el` still
+  # JITs lazily on first call — extracting those into the store cleanly
+  # is a follow-up. The `.eln` placement is sensitive to
+  # emacs-comp-version directories on `native-comp-eln-load-path` and
+  # to source-hash naming, neither of which compose cleanly with the
+  # current `home.file` source mechanism.
+  initElCompiled =
+    pkgs.runCommand "criomos-emacs-init-el"
+      {
+        nativeBuildInputs = [ emacsWithPackages ];
+      }
+      ''
+        mkdir -p $out
+        cp ${pkgs.writeText "init.el" initEl} $out/init.el
+
+        export HOME=$TMPDIR
+        cd $out
+
+        ${emacsWithPackages}/bin/emacs --batch \
+          --eval "(setq native-comp-async-report-warnings-errors 'silent)" \
+          --eval "(byte-compile-file \"init.el\")"
+
+        # Confirm both files landed; surface in build log.
+        ls -la $out
+      '';
 
   # Default-editor MIME types. The Emacs-shipped emacsclient.desktop
   # only declares a narrow C/C++/Pascal/TeX set; we register
@@ -630,7 +699,12 @@ mkIf size.medium {
       VISUAL = lib.mkForce "emacsclient -c";
     };
     file = {
-      ".emacs.d/init.el".text = initEl;
+      # init.el ships byte-compiled. The .elc sits next to init.el so
+      # emacs's load resolver picks it up automatically; the .el remains
+      # available for human inspection / debugging. See `initElCompiled`
+      # above for rationale and the residual native-comp gap.
+      ".emacs.d/init.el".source = "${initElCompiled}/init.el";
+      ".emacs.d/init.elc".source = "${initElCompiled}/init.elc";
 
       # User-local emacsclient.desktop with a full MIME list so the
       # xdg-open chooser offers it for markdown / python / rust / json /
