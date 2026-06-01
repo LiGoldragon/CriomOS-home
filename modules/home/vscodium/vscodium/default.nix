@@ -5,6 +5,7 @@
   inputs,
   hexis,
   textScale,
+  rustToolchain,
   ...
 }:
 let
@@ -114,8 +115,8 @@ let
 
     # Rust — rust-lang.rust-analyzer extension. The extension does not
     # bundle a server binary on Linux (would download on first run);
-    # pin to the Nix-provided one so install is hermetic.
-    "rust-analyzer.server.path" = "${pkgs.rust-analyzer}/bin/rust-analyzer";
+    # pin to the canonical profile toolchain so install is hermetic.
+    "rust-analyzer.server.path" = "${rustToolchain}/bin/rust-analyzer";
 
     # Terminal
     "terminal.integrated.defaultProfile.linux" = "zsh";
@@ -150,10 +151,8 @@ let
 in
 lib.mkIf size.medium {
 
-  # LSP server binaries Codium spawns. The settings keys above pin the
-  # extensions to these specific paths, but having them on PATH as well
-  # makes terminal use / cargo workflows symmetrical and keeps emacs +
-  # codium discovering the same binary set.
+  # LSP server binaries Codium spawns. Rust language tooling comes from
+  # the canonical profile Rust toolchain installed by the min profile.
   #
   # `nil` is already declared in `med/emacs.nix` `home.packages` and
   # de-duplication is fine: home-manager merges with `mkMerge` semantics
@@ -163,7 +162,6 @@ lib.mkIf size.medium {
   # the Emacs profile not enabled would otherwise miss `nil`).
   home.packages = with pkgs; [
     nil
-    rust-analyzer
   ];
 
   programs.vscode = {

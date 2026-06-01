@@ -851,7 +851,6 @@ mkIf size.medium {
     # CLI tools the in-buffer formatters and language modes invoke.
     packages = with pkgs; [
       nil
-      rust-analyzer
       shfmt
       zprint
       ripgrep
