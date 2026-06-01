@@ -139,6 +139,64 @@ let
     ;; macro definitions.
     (eval-and-compile (require 'use-package))
 
+    ;;; --- Declare-function stubs (silence byte-compiler) ---
+    ;;
+    ;; The byte-compiler statically analyses :config / :init forms
+    ;; before the use-package expansion has loaded the named package,
+    ;; and warns about helper functions called from those bodies that
+    ;; aren't resolvable at compile time. These declarations tell the
+    ;; byte-compiler "this symbol will be a function at runtime, trust
+    ;; me" without changing runtime behaviour.
+    ;;
+    ;; Three classes of stub appear below:
+    ;;
+    ;; (1) External package helpers called from :config blocks
+    ;;     (orderless, format-all, elisp-autofmt, flycheck) — the
+    ;;     package is loaded at runtime via use-package's expansion,
+    ;;     but the byte-compiler doesn't trace that.
+    ;;
+    ;; (2) Functions defined locally INSIDE other :config blocks
+    ;;     (start-xah-fly-keys, xfk-mentci-modify,
+    ;;     affe-orderless-regexp-compiler) — defun-in-config is a
+    ;;     valid pattern but the byte-compiler can't see across
+    ;;     forms. `nil` as the second argument means "no file" —
+    ;;     declared without claiming a source.
+    ;;
+    ;; (3) Mode-toggle / autoload functions called from :config that
+    ;;     are auto-resolved at runtime by use-package's
+    ;;     :defines/:functions inference but flagged statically by
+    ;;     some emacs versions. These slots are kept ready for the
+    ;;     actual warning set; the byte-compile currently shows zero
+    ;;     of these on emacs 30.2 in this configuration.
+    ;;
+    ;; The list reflects EXACTLY the warnings the byte-compile
+    ;; emitted before this block was added. If the warning set
+    ;; changes (use-package version bump, package rename), refresh
+    ;; this list from the build log.
+    (declare-function orderless-pattern-compiler "orderless")
+    (declare-function orderless--highlight "orderless")
+    (declare-function format-all--buffer-native "format-all")
+    (declare-function format-all--buffer-easy "format-all")
+    (declare-function format-all--pushhash "format-all")
+    (declare-function elisp-autofmt-buffer "elisp-autofmt")
+    (declare-function elisp-autofmt-region "elisp-autofmt")
+    (declare-function flycheck-define-command-checker "flycheck")
+    (declare-function envrc-global-mode "envrc")
+    (declare-function global-flycheck-eglot-mode "flycheck-eglot")
+    (declare-function org-roam-db-autosync-mode "org-roam")
+    (declare-function xah-fly--define-keys "xah-fly-keys")
+    (declare-function xah-fly-keys "xah-fly-keys")
+    (declare-function xah-fly-keys-set-layout "xah-fly-keys")
+    (declare-function global-git-gutter-mode "git-gutter")
+    (declare-function projectile-mode "projectile")
+    (declare-function marginalia-mode "marginalia")
+    (declare-function prescient-persist-mode "prescient")
+    (declare-function vertico-mode "vertico")
+    (declare-function vertico-prescient-mode "vertico-prescient")
+    (declare-function affe-orderless-regexp-compiler nil)
+    (declare-function start-xah-fly-keys nil)
+    (declare-function xfk-mentci-modify nil)
+
     ;;; --- Built-in UI tweaks ---
     (tool-bar-mode -1)
     (menu-bar-mode -1)
@@ -600,37 +658,84 @@ let
   # touches `initEl` invalidates JIT outputs and the next cold start
   # pays the cost from scratch.
   #
-  # This derivation ships `init.el` + `init.elc` as a single store path.
-  # Emacs's load resolver picks up the `.elc` automatically when both
-  # are present in the same directory. Parse + macro-expand cost is
-  # eliminated on every cold start, regardless of the user's
-  # `~/.emacs.d/eln-cache/` state.
+  # This derivation ships three artefacts as a single store path:
   #
-  # Native-compiled `.eln` for functions defined IN `init.el` still
-  # JITs lazily on first call — extracting those into the store cleanly
-  # is a follow-up. The `.eln` placement is sensitive to
-  # emacs-comp-version directories on `native-comp-eln-load-path` and
-  # to source-hash naming, neither of which compose cleanly with the
-  # current `home.file` source mechanism.
+  #   - `init.el`              — human-readable source
+  #   - `init.elc`             — byte-compiled (parse + macro-expand
+  #                              cost eliminated)
+  #   - `eln-cache/<v>/*.eln`  — natively-compiled (interpretation
+  #                              cost eliminated, native code in
+  #                              the store)
+  #
+  # Emacs's load resolver picks up `.elc` automatically when both `.el`
+  # and `.elc` are present in the same directory. For the `.eln` to be
+  # picked up too, `early-init.el` (generated below) prepends this
+  # store path's `eln-cache/` directory to `native-comp-eln-load-path`
+  # BEFORE init.el loads, so the runtime finds the prebuilt artefacts
+  # instead of JIT-compiling them on first call into the user's
+  # `~/.emacs.d/eln-cache/`.
+  #
+  # `native-compile` is invoked synchronously (NOT async) — the async
+  # form returns immediately and the artefact would not exist at the
+  # end of the build.
   initElCompiled =
     pkgs.runCommand "criomos-emacs-init-el"
       {
         nativeBuildInputs = [ emacsWithPackages ];
       }
       ''
-        mkdir -p $out
+        mkdir -p $out/eln-cache
         cp ${pkgs.writeText "init.el" initEl} $out/init.el
 
         export HOME=$TMPDIR
         cd $out
 
+        # Byte-compile.
         ${emacsWithPackages}/bin/emacs --batch \
           --eval "(setq native-comp-async-report-warnings-errors 'silent)" \
           --eval "(byte-compile-file \"init.el\")"
 
-        # Confirm both files landed; surface in build log.
+        # Native-compile, directing output under $out/eln-cache/. The
+        # `native-comp-eln-load-path` HEAD entry is where emacs writes
+        # newly-produced .eln files, so prepending $out/eln-cache/
+        # captures the artefact in the store. Synchronous form returns
+        # the produced .eln path (or nil if native-comp is unavailable).
+        ${emacsWithPackages}/bin/emacs --batch \
+          --eval "(setq native-comp-async-report-warnings-errors 'silent)" \
+          --eval "(setq native-comp-eln-load-path (cons \"$out/eln-cache/\" native-comp-eln-load-path))" \
+          --eval "(let ((produced (native-compile \"init.el\"))) (message \"native-compile produced: %s\" produced))"
+
+        # Surface in build log: prove .elc + .eln landed.
+        echo "produced files under \$out:"
         ls -la $out
+        echo "produced eln files:"
+        find $out -type f -name '*.eln' -printf '  %p\n'
       '';
+
+  # early-init.el runs BEFORE init.el. We use it to prepend the
+  # store-shipped eln-cache directory to `native-comp-eln-load-path`
+  # so that when init.el loads, emacs finds the prebuilt
+  # native-compiled artefacts (in the store, content-addressed,
+  # rebuild-stable) instead of JIT-compiling them into the user's
+  # `~/.emacs.d/eln-cache/` on first call.
+  #
+  # `native-comp-eln-load-path` is a per-version directory list: emacs
+  # searches `<entry>/<comp-native-version-dir>/<source-hash>.eln`.
+  # Since both the build-time emacs and the runtime emacs come from
+  # the same `emacsWithPackages` derivation, the comp-native-version
+  # directory matches automatically.
+  earlyInitEl = ''
+    ;;; early-init.el — generated by Nix.  -*- lexical-binding: t; -*-
+    ;;;
+    ;;; Prepend the store-shipped eln-cache directory to
+    ;;; native-comp-eln-load-path BEFORE init.el loads, so emacs picks
+    ;;; up the prebuilt native-compiled init artefacts instead of
+    ;;; JIT-compiling them on first call.
+    (when (boundp 'native-comp-eln-load-path)
+      (let ((prebuilt "${initElCompiled}/eln-cache/"))
+        (when (file-directory-p prebuilt)
+          (add-to-list 'native-comp-eln-load-path prebuilt))))
+  '';
 
   # Default-editor MIME types. The Emacs-shipped emacsclient.desktop
   # only declares a narrow C/C++/Pascal/TeX set; we register
@@ -699,12 +804,17 @@ mkIf size.medium {
       VISUAL = lib.mkForce "emacsclient -c";
     };
     file = {
-      # init.el ships byte-compiled. The .elc sits next to init.el so
-      # emacs's load resolver picks it up automatically; the .el remains
-      # available for human inspection / debugging. See `initElCompiled`
-      # above for rationale and the residual native-comp gap.
+      # init.el ships byte-compiled AND natively-compiled. The .elc
+      # sits next to init.el so emacs's load resolver picks it up
+      # automatically; the .el remains available for human inspection
+      # / debugging. The .eln lives under initElCompiled's
+      # `eln-cache/<comp-version>/<hash>.eln`; early-init.el
+      # below prepends that directory to native-comp-eln-load-path so
+      # the runtime finds it on first call instead of JIT-compiling.
+      # See `initElCompiled` above for rationale.
       ".emacs.d/init.el".source = "${initElCompiled}/init.el";
       ".emacs.d/init.elc".source = "${initElCompiled}/init.elc";
+      ".emacs.d/early-init.el".text = earlyInitEl;
 
       # User-local emacsclient.desktop with a full MIME list so the
       # xdg-open chooser offers it for markdown / python / rust / json /
