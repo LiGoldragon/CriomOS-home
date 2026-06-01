@@ -47,7 +47,11 @@ else
     ${pkgs.gnugrep}/bin/grep -q 'public_source_name="bluez_input.$bluetooth_address"' ${serviceScript}
     ${pkgs.gnugrep}/bin/grep -q -- '--capture "$public_source_name"' ${serviceScript}
     ${pkgs.gnugrep}/bin/grep -q 'module-null-sink' ${serviceScript}
-    ${pkgs.gnugrep}/bin/grep -q 'reasserting profile without dropping keepalive' ${serviceScript}
+    ${pkgs.gnugrep}/bin/grep -q 'reasserting PipeWire profile without reconnecting Bluetooth' ${serviceScript}
+    if ${pkgs.gnugrep}/bin/grep -q 'ConnectProfile' ${serviceScript}; then
+      echo 'dji-keepalive must not hammer BlueZ ConnectProfile while PipeWire can set the headset profile' >&2
+      exit 1
+    fi
     if ${pkgs.gnugrep}/bin/grep -F -q 'left $headset_profile; reasserting profile" >&2' ${serviceScript}; then
       echo 'dji-keepalive must repair Bluetooth headset profile in-place instead of dropping the hot loopback stream' >&2
       exit 1

@@ -66,7 +66,6 @@ let
     public_source_name="bluez_input.$bluetooth_address"
     keepalive_sink_name="dji_mic_keepalive"
     headset_profile="headset-head-unit"
-    handsfree_uuid="0000111e-0000-1000-8000-00805f9b34fb"
 
     device_property() {
       ${pkgs.systemd}/bin/busctl get-property org.bluez "$device_path" org.bluez.Device1 "$1" 2>/dev/null
@@ -134,11 +133,13 @@ let
       wait_for_pactl_name sinks "$keepalive_sink_name"
     }
 
-    reassert_profile() {
-      bluez_call ConnectProfile s "$handsfree_uuid" || true
-      ${pkgs.coreutils}/bin/sleep 1
-      ${pkgs.pulseaudio}/bin/pactl set-card-profile "$card_name" "$headset_profile" || true
-      ${pkgs.pulseaudio}/bin/pactl set-default-source "$public_source_name" || true
+    reassert_pipewire_profile() {
+      if pactl_name_exists cards "$card_name"; then
+        ${pkgs.pulseaudio}/bin/pactl set-card-profile "$card_name" "$headset_profile" || true
+      fi
+      if pactl_name_exists sources "$public_source_name"; then
+        ${pkgs.pulseaudio}/bin/pactl set-default-source "$public_source_name" || true
+      fi
     }
 
     unload_keepalive_sink() {
@@ -154,14 +155,14 @@ let
       wait_for_bluez_connected
       wait_for_pactl_name cards "$card_name"
 
-      reassert_profile
+      reassert_pipewire_profile
       for _ in $(${pkgs.coreutils}/bin/seq 1 12); do
         if test "$(active_profile)" = "$headset_profile"; then
           wait_for_pactl_name sources "$public_source_name"
           ${pkgs.pulseaudio}/bin/pactl set-default-source "$public_source_name" || true
           return 0
         fi
-        reassert_profile
+        reassert_pipewire_profile
         ${pkgs.coreutils}/bin/sleep 1
       done
 
@@ -179,6 +180,7 @@ let
         --capture-props='node.name="dji-mic-keepalive-capture" media.name="DJI Mic Keepalive Capture" application.name="DJI Mic Keepalive"' \
         --playback-props='node.name="dji-mic-keepalive-playback" media.name="DJI Mic Keepalive Sink Feed" application.name="DJI Mic Keepalive"' &
       child="$!"
+      retry_delay_seconds=3
       stop_child() {
         kill "$child" 2>/dev/null || true
         unload_keepalive_sink
@@ -199,8 +201,8 @@ let
           return 1
         fi
         if ! test "$(active_profile)" = "$headset_profile"; then
-          echo "dji-keepalive: $card_name left $headset_profile; reasserting profile without dropping keepalive" >&2
-          reassert_profile
+          echo "dji-keepalive: $card_name left $headset_profile; reasserting PipeWire profile without reconnecting Bluetooth" >&2
+          reassert_pipewire_profile
         fi
         if ! pactl_name_exists sources "$public_source_name" || ! pactl_name_exists sinks "$keepalive_sink_name"; then
           echo "dji-keepalive: PipeWire source or keepalive sink disappeared" >&2
@@ -221,9 +223,13 @@ let
       return "$result"
     }
 
+    retry_delay_seconds=3
     while true; do
       run_keepalive || true
-      ${pkgs.coreutils}/bin/sleep 3
+      ${pkgs.coreutils}/bin/sleep "$retry_delay_seconds"
+      if test "$retry_delay_seconds" -lt 30; then
+        retry_delay_seconds=$((retry_delay_seconds + 3))
+      fi
     done
   '';
 in
