@@ -1232,11 +1232,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1780137420,
-        "narHash": "sha256-ByMRrn647nwlO1+rDug/4zPHFmL/kyJO33O4sNRWOUw=",
+        "lastModified": 1780307548,
+        "narHash": "sha256-D8bG34lXpuNHIYTnmAa6V19Dy8VDm9rgc9u4Ugv+GWY=",
         "owner": "LiGoldragon",
         "repo": "persona-spirit",
-        "rev": "c5a3eb9ba32056e6dc2ed8807d914dc2229f3277",
+        "rev": "df09280a464f8a7be1c20ff433de4bfc4afc7f53",
         "type": "github"
       },
       "original": {
@@ -1328,17 +1328,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1780137420,
-        "narHash": "sha256-ByMRrn647nwlO1+rDug/4zPHFmL/kyJO33O4sNRWOUw=",
+        "lastModified": 1780307548,
+        "narHash": "sha256-D8bG34lXpuNHIYTnmAa6V19Dy8VDm9rgc9u4Ugv+GWY=",
         "owner": "LiGoldragon",
         "repo": "persona-spirit",
-        "rev": "c5a3eb9ba32056e6dc2ed8807d914dc2229f3277",
+        "rev": "df09280a464f8a7be1c20ff433de4bfc4afc7f53",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
-        "ref": "v0.3.0.1",
         "repo": "persona-spirit",
+        "rev": "df09280a464f8a7be1c20ff433de4bfc4afc7f53",
         "type": "github"
       }
     },
