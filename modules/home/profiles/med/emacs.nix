@@ -54,10 +54,14 @@ let
 
       # LSP / diagnostics
       eglot
+      consult-eglot
       flycheck
       flycheck-eglot
       flycheck-clj-kondo
       flycheck-guile
+
+      # Symbol navigation
+      imenu-list
 
       # Project navigation
       projectile
@@ -154,7 +158,11 @@ let
     (use-package eglot
      :custom (eglot-extend-to-xref t)
      :config
-     (add-to-list 'eglot-server-programs '(nix-ts-mode . ("nil"))))
+     (add-to-list 'eglot-server-programs '(nix-ts-mode . ("nil")))
+     (add-to-list 'eglot-server-programs '((rust-mode rust-ts-mode) . ("rust-analyzer"))))
+
+    (use-package consult-eglot :after (consult eglot))
+    (use-package imenu-list)
 
     (use-package flycheck-eglot
      :after (flycheck eglot)
@@ -181,7 +189,8 @@ let
      :custom (treesit-font-lock-level 4))
 
     (use-package rust-mode
-     :custom (rust-mode-treesitter-derive t) (rust-format-on-save t))
+     :custom (rust-mode-treesitter-derive t) (rust-format-on-save t)
+     :hook ((rust-mode rust-ts-mode) . eglot-ensure))
 
     (use-package magit-delta :hook (magit-mode . magit-delta-mode))
     (use-package difftastic)
@@ -658,6 +667,7 @@ mkIf size.medium {
     # CLI tools the in-buffer formatters and language modes invoke.
     packages = with pkgs; [
       nil
+      rust-analyzer
       shfmt
       zprint
       ripgrep
