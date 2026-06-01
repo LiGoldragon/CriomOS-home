@@ -56,6 +56,11 @@ let
     exec ${pkgs.systemd}/bin/systemctl --user restart dji-keepalive.service
   '';
 
+  # DJI keepalive keeps the microphone hot by holding an audio stream open.
+  # Bluetooth connection recovery is allowed only before PipeWire exposes the
+  # card. Once the card exists, repair profile churn through PipeWire profile
+  # reassertion; do not repeatedly call BlueZ profile-specific connect methods
+  # as a steady-state repair path.
   djiKeepalive = pkgs.writeShellScript "criomos-dji-keepalive" ''
     set -eu
 
