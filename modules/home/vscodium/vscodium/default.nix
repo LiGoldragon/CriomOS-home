@@ -107,8 +107,15 @@ let
     # commit+push from a mentci-rooted Codium window.
     "direnv.restart.automatic" = false;
 
-    # Nix
+    # Nix — jnoortheen.nix-ide extension. Pin to the Nix-provided `nil`
+    # binary so PATH drift never silently breaks the language server.
     "nix.enableLanguageServer" = true;
+    "nix.serverPath" = "${pkgs.nil}/bin/nil";
+
+    # Rust — rust-lang.rust-analyzer extension. The extension does not
+    # bundle a server binary on Linux (would download on first run);
+    # pin to the Nix-provided one so install is hermetic.
+    "rust-analyzer.server.path" = "${pkgs.rust-analyzer}/bin/rust-analyzer";
 
     # Terminal
     "terminal.integrated.defaultProfile.linux" = "zsh";
@@ -143,6 +150,22 @@ let
 in
 lib.mkIf size.medium {
 
+  # LSP server binaries Codium spawns. The settings keys above pin the
+  # extensions to these specific paths, but having them on PATH as well
+  # makes terminal use / cargo workflows symmetrical and keeps emacs +
+  # codium discovering the same binary set.
+  #
+  # `nil` is already declared in `med/emacs.nix` `home.packages` and
+  # de-duplication is fine: home-manager merges with `mkMerge` semantics
+  # so a duplicate package landing once via this module and once via
+  # emacs.nix yields a single store path. Repeating here so the codium
+  # module stands alone (a user with `preferredEditor = "Codium"` but
+  # the Emacs profile not enabled would otherwise miss `nil`).
+  home.packages = with pkgs; [
+    nil
+    rust-analyzer
+  ];
+
   programs.vscode = {
     enable = true;
     package = pkgs.vscodium;
@@ -155,6 +178,18 @@ lib.mkIf size.medium {
         ovsx.cdervis.vscode-pi
         pkgs.vscode-extensions.mkhl.direnv
         pkgs.vscode-extensions.jnoortheen.nix-ide
+        # Rust LSP — drives Outline / Breadcrumbs / Cmd+Shift+O /
+        # Cmd+T symbol navigation on .rs files. The server binary
+        # itself is pinned via `rust-analyzer.server.path` above and
+        # is also in `home.packages` below so it resolves on PATH.
+        pkgs.vscode-extensions.rust-lang.rust-analyzer
+        # Drift cleanup — three extensions had been installed manually
+        # through the marketplace UI; lifted here so Nix is the
+        # single source of truth (`extensions.autoUpdate = false`
+        # already prevents marketplace-side drift).
+        ovsx.zaaack.markdown-editor
+        ovsx.lyuwenhan.mermaid-snap
+        ovsx.onlyutkarsh.mermaid-diagram-lens
       ];
     };
   };
