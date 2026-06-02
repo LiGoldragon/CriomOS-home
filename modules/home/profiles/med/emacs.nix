@@ -761,6 +761,7 @@ let
     "text/x-tcl"
     "text/x-tex"
     "text/x-python"
+    "text/rust"
     "text/x-rust"
     "text/x-go"
     "text/x-shellscript"

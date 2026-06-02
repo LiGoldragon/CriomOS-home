@@ -215,6 +215,7 @@ lib.mkIf size.medium {
           "text/x-markdown"
           "text/x-python"
           "text/x-shellscript"
+          "text/rust"
           "text/x-c"
           "text/x-c++"
           "text/x-rust"

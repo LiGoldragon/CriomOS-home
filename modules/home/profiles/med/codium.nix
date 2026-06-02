@@ -28,7 +28,7 @@ mkIf size.medium {
     GenericName=Text Editor
     Icon=vscodium
     Keywords=vscode
-    MimeType=text/plain;text/markdown;text/x-c;text/x-c++;text/x-python;text/x-rust;text/x-go;text/x-shellscript;text/x-script.python;application/json;application/x-yaml;application/xml;application/x-shellscript;inode/directory;
+    MimeType=text/plain;text/markdown;text/x-c;text/x-c++;text/x-python;text/rust;text/x-rust;text/x-go;text/x-shellscript;text/x-script.python;application/json;application/x-yaml;application/xml;application/x-shellscript;inode/directory;
     Name=VSCodium
     StartupNotify=true
     StartupWMClass=vscodium
