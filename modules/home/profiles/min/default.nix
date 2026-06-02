@@ -48,6 +48,10 @@ let
     waylandSupport = true;
   };
 
+  desktopOpen = pkgs.writeShellScriptBin "xdg-open" ''
+    exec ${pkgs.handlr-regex}/bin/handlr open "$@"
+  '';
+
   fontPackages = with pkgs; [
     dejavu_fonts
     nerd-fonts.iosevka-term
@@ -68,6 +72,7 @@ let
   '';
 
   modernGraphicalPackages = with pkgs; [
+    (lib.hiPrio desktopOpen)
     handlr-regex
     mpv
     # ctags
@@ -524,11 +529,8 @@ mkIf size.min {
 
     file = {
       ".local/bin/xdg-open" = {
+        source = "${desktopOpen}/bin/xdg-open";
         executable = true;
-        text = ''
-          #!/bin/sh
-          exec ${pkgs.handlr-regex}/bin/handlr open "$@"
-        '';
       };
 
       ".config/IJHack/QtPass.conf".text = ''
