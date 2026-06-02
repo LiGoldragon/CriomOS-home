@@ -24,6 +24,10 @@ pkgs.buildNpmPackage {
     makeWrapper "${pkgs.nodejs}/bin/node" "$out/bin/playwright-cli" \
       --add-flags "$out/lib/playwright-cli/node_modules/@playwright/cli/playwright-cli.js"
 
+    makeWrapper "$out/bin/playwright-cli" "$out/bin/playwright-chrome" \
+      --run 'if [ -z "''${PLAYWRIGHT_MCP_EXECUTABLE_PATH:-}" ]; then if command -v google-chrome >/dev/null 2>&1; then export PLAYWRIGHT_MCP_EXECUTABLE_PATH="$(command -v google-chrome)"; elif command -v chromium >/dev/null 2>&1; then export PLAYWRIGHT_MCP_EXECUTABLE_PATH="$(command -v chromium)"; fi; fi' \
+      --run 'if [ -z "''${PLAYWRIGHT_MCP_EXTENSION_TOKEN:-}" ]; then token="$(${pkgs.gopass}/bin/gopass show -o chrome-browser/playwright-mcp-extension-token 2>/dev/null || true)"; if [ -n "$token" ]; then export PLAYWRIGHT_MCP_EXTENSION_TOKEN="$token"; fi; unset token; fi'
+
     runHook postInstall
   '';
 

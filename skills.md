@@ -70,9 +70,14 @@ and language-server tooling everywhere.
 
 The min profile installs `packages/playwright-cli` with browser downloads
 disabled. It is the deterministic shell surface for agent browser
-automation. Browser-use is a separate delegated browser-agent layer: it may
-attach to Chrome through CDP, but do not model it as a wrapper around the
-Playwright CLI.
+automation. The package also exposes `playwright-chrome`, which reads the
+Chrome browser-extension token from
+`gopass:chrome-browser/playwright-mcp-extension-token` and sets the Chrome
+executable path for NixOS.
+
+Browser-use is a separate delegated browser-agent layer: it may attach to
+Chrome through CDP, but do not model it as a wrapper around the Playwright
+CLI.
 
 ---
 
