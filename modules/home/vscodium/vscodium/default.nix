@@ -232,6 +232,7 @@ lib.mkIf size.medium {
         "application/xml"
         "application/toml"
         "application/x-shellscript"
+        "application/x-zerosize"
       ]
   );
 
