@@ -193,6 +193,7 @@ let
     pkgs.opencode
     pkgs.llama-cpp
     (pkgs.callPackage ../../../../packages/pi { inherit inputs; })
+    (pkgs.callPackage ../../../../packages/playwright-cli { })
   ];
 
   nixpkgsPackages =

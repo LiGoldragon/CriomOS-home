@@ -326,6 +326,7 @@
           pi-criomos-extension-load = checkPkgs.callPackage ./checks/pi-criomos-extension-load {
             inherit inputs;
           };
+          playwright-cli = checkPkgs.callPackage ./checks/playwright-cli { };
           persona-spirit-versioned-deployment =
             checkPkgs.callPackage ./checks/persona-spirit-versioned-deployment
               { inherit inputs; };

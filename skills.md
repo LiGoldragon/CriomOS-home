@@ -66,6 +66,14 @@ The package uses the minimal Rust profile plus explicit components:
 weight low while ensuring agents can run `cargo fmt`, `cargo clippy`,
 and language-server tooling everywhere.
 
+## Browser Automation
+
+The min profile installs `packages/playwright-cli` with browser downloads
+disabled. It is the deterministic shell surface for agent browser
+automation. Browser-use is a separate delegated browser-agent layer: it may
+attach to Chrome through CDP, but do not model it as a wrapper around the
+Playwright CLI.
+
 ---
 
 ## Dictation
