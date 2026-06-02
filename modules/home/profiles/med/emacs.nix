@@ -780,7 +780,11 @@ let
     "x-scheme-handler/org-protocol"
   ];
 
-  isPreferredEditor = user.preferredEditor == "Emacs";
+  # VSCodium owns desktop editor defaults whenever the medium profile
+  # enables it. Emacs still runs as an editor and daemon, but does not
+  # claim xdg-open / EDITOR defaults in that profile for now.
+  vscodiumEnabled = size.medium;
+  isPreferredEditor = user.preferredEditor == "Emacs" && !vscodiumEnabled;
 
 in
 mkIf size.medium {

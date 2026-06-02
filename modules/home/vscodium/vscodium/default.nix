@@ -192,49 +192,47 @@ lib.mkIf size.medium {
     };
   };
 
-  # EDITOR/VISUAL and xdg-mime defaults claimed only when the user's
-  # projected preferredEditor is Codium (set per-user in horizon via
-  # UserProposal.editor; smart-defaulted to Codium for non-code-devs
-  # and Emacs for code-devs when absent). The med/emacs.nix module
-  # makes the symmetric claim when preferredEditor is Emacs.
-  home.sessionVariables = lib.mkIf (user.preferredEditor == "Codium") {
+  # When VSCodium is present in the active profile, it is the desktop
+  # default editor for file-opening links. This deliberately overrides
+  # the projected preferredEditor smart default for now: Ghostty / xdg-open
+  # file links should land in Codium instead of a chooser or GNOME Text
+  # Editor.
+  home.sessionVariables = {
     EDITOR = lib.mkForce "codium --wait";
     VISUAL = lib.mkForce "codium --wait";
   };
 
-  xdg.mimeApps.defaultApplications = lib.mkIf (user.preferredEditor == "Codium") (
-    builtins.listToAttrs (
-      map
-        (t: {
-          name = t;
-          value = "codium.desktop";
-        })
-        [
-          "text/plain"
-          "text/markdown"
-          "text/x-markdown"
-          "text/x-python"
-          "text/x-shellscript"
-          "text/rust"
-          "text/x-c"
-          "text/x-c++"
-          "text/x-rust"
-          "text/x-go"
-          "text/x-java"
-          "text/x-toml"
-          "text/x-nix"
-          "text/x-lua"
-          "text/x-diff"
-          "text/x-log"
-          "text/csv"
-          "text/xml"
-          "application/json"
-          "application/x-yaml"
-          "application/xml"
-          "application/toml"
-          "application/x-shellscript"
-        ]
-    )
+  xdg.mimeApps.defaultApplications = builtins.listToAttrs (
+    map
+      (t: {
+        name = t;
+        value = lib.mkForce "codium.desktop";
+      })
+      [
+        "text/plain"
+        "text/markdown"
+        "text/x-markdown"
+        "text/x-python"
+        "text/x-shellscript"
+        "text/rust"
+        "text/x-c"
+        "text/x-c++"
+        "text/x-rust"
+        "text/x-go"
+        "text/x-java"
+        "text/x-toml"
+        "text/x-nix"
+        "text/x-lua"
+        "text/x-diff"
+        "text/x-log"
+        "text/csv"
+        "text/xml"
+        "application/json"
+        "application/x-yaml"
+        "application/xml"
+        "application/toml"
+        "application/x-shellscript"
+      ]
   );
 
   # Replaces the broken `mkJsonMerge` shallow-merge helper. hexis does
