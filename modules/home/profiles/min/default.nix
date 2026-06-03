@@ -151,6 +151,8 @@ let
     typescript
     gopls
     clang-tools
+    ast-grep
+    tree-sitter
     # Nix
     nil
     nixfmt
@@ -178,6 +180,7 @@ let
     just
     difftastic
     tokei # Lines of code
+    scc # Structured code counts
   ];
 
   unixDeveloperPackages = unixUtilities ++ programmingTools;

@@ -17,7 +17,11 @@ pkgs.runCommand "leta-profile-tools-check"
       pkgs.typescript
       pkgs.gopls
       pkgs.clang-tools
+      pkgs.ast-grep
+      pkgs.tree-sitter
       pkgs.nil
+      pkgs.tokei
+      pkgs.scc
     ];
   }
   ''
@@ -27,10 +31,18 @@ pkgs.runCommand "leta-profile-tools-check"
     command -v gopls
     command -v rust-analyzer
     command -v clangd
+    command -v ast-grep
+    command -v tree-sitter
     command -v nil
+    command -v tokei
+    command -v scc
 
     leta --help >/dev/null
     leta daemon --help >/dev/null
+    ast-grep --help >/dev/null
+    tree-sitter --version >/dev/null
+    tokei --version >/dev/null
+    scc --version >/dev/null
 
     touch "$out"
   ''
