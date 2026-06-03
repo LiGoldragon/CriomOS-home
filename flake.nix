@@ -114,8 +114,10 @@
 
     # AI coding agents (daily auto-updates) — Li uses claude-code +
     # codex 12h/day, regression dropped them in the 2026-04-25 trim.
+    # llm-agents keeps its own nixpkgs: its package set follows fast
+    # tool packaging and currently needs newer pnpm attributes than the
+    # profile-wide nixpkgs pin provides.
     llm-agents.url = "github:numtide/llm-agents.nix";
-    llm-agents.inputs.nixpkgs.follows = "nixpkgs";
     codex-cli.url = "github:sadjow/codex-cli-nix";
     codex-cli.inputs.nixpkgs.follows = "nixpkgs";
 
