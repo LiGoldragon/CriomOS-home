@@ -160,6 +160,19 @@ the same rule: the live Pi settings file names
   `fetch_content`, and `get_search_content` tools, matching the tool
   names expected by Pi subagent research workflows.
 
+`pi-continue` is the same-session continuation package:
+
+- `flake.nix` declares `pi-continue-src` as the pinned npm tarball
+  source.
+- `packages/pi-continue/default.nix` unpacks that source below
+  `$out/share/pi-packages/pi-continue`.
+- `modules/home/profiles/min/pi-models.nix` exposes it at
+  `$HOME/.pi/agent/packages/pi-continue` and enables it as
+  `packages/pi-continue`.
+- The package provides the `/continue` command and mid-run continuation
+  guard so long Pi tool loops can compact and resume from a structured
+  same-session handoff.
+
 ## Validation
 
 Before committing, run:

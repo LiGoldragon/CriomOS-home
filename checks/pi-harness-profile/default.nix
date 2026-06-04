@@ -4,9 +4,11 @@ let
   system = pkgs.stdenv.hostPlatform.system;
   pi-criomos = inputs.self.packages.${system}.pi-criomos;
   pi-subagents = inputs.self.packages.${system}.pi-subagents;
+  pi-continue = inputs.self.packages.${system}.pi-continue;
   pi-web-access = inputs.self.packages.${system}.pi-web-access;
   piLinkupPackage = ../../packages/pi-linkup/default.nix;
   piSubagentsPackage = ../../packages/pi-subagents/default.nix;
+  piContinuePackage = ../../packages/pi-continue/default.nix;
   piWebAccessPackage = ../../packages/pi-web-access/default.nix;
   piModelsModule = ../../modules/home/profiles/min/pi-models.nix;
 in
@@ -22,6 +24,8 @@ pkgs.runCommand "pi-harness-profile"
 
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/index.ts"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md"
+    test -f "${pi-continue}/share/pi-packages/pi-continue/extensions/continue/index.ts"
+    test -f "${pi-continue}/share/pi-packages/pi-continue/assets/user/continuation_base.md"
     test -f "${pi-web-access}/share/pi-packages/pi-web-access/index.ts"
     test -f "${pi-web-access}/share/pi-packages/pi-web-access/skills/librarian/SKILL.md"
     test -d "${pi-web-access}/share/pi-packages/pi-web-access/node_modules/linkedom"
@@ -45,10 +49,12 @@ pkgs.runCommand "pi-harness-profile"
     grep -F 'inputs.pi-linkup-src' ${piLinkupPackage}
     grep -F 'inputs.pi-utils-ui-src' ${piLinkupPackage}
     grep -F 'inputs.pi-subagents-src' ${piSubagentsPackage}
+    grep -F 'inputs.pi-continue-src' ${piContinuePackage}
     grep -F 'inputs.pi-web-access-src' ${piWebAccessPackage}
     grep -F 'inputs.pi-web-access-linkedom-src' ${piWebAccessPackage}
     ! grep -E '\bfetchurl\b|hash[[:space:]]*=' ${piLinkupPackage}
     ! grep -E '\bfetchurl\b|hash[[:space:]]*=' ${piSubagentsPackage}
+    ! grep -E '\bfetchurl\b|hash[[:space:]]*=' ${piContinuePackage}
     ! grep -E '\bfetchurl\b|hash[[:space:]]*=' ${piWebAccessPackage}
 
     grep -F 'defaultProvider = providerName;' ${piModelsModule}
@@ -66,6 +72,7 @@ pkgs.runCommand "pi-harness-profile"
     grep -F '"packages/pi-criomos"' ${piModelsModule}
     grep -F '"packages/pi-web-access"' ${piModelsModule}
     grep -F '"packages/pi-subagents"' ${piModelsModule}
+    grep -F '"packages/pi-continue"' ${piModelsModule}
 
     touch "$out"
   ''

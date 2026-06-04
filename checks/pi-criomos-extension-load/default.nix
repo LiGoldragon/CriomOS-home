@@ -4,6 +4,7 @@ let
   system = pkgs.stdenv.hostPlatform.system;
   pi = inputs.self.packages.${system}.pi;
   pi-criomos = inputs.self.packages.${system}.pi-criomos;
+  pi-continue = inputs.self.packages.${system}.pi-continue;
   pi-web-access = inputs.self.packages.${system}.pi-web-access;
 in
 pkgs.runCommand "pi-criomos-extension-load"
@@ -63,6 +64,16 @@ pkgs.runCommand "pi-criomos-extension-load"
       --list-models gpt > "$TMPDIR/web-models" 2>&1
 
     grep -E "local-test[[:space:]]+gpt-test" "$TMPDIR/web-models"
+
+    printf '{"type":"get_commands"}\n' | ${pi}/bin/pi \
+      --mode rpc \
+      --no-session \
+      --no-context-files \
+      --no-skills \
+      -e "${pi-continue}/share/pi-packages/pi-continue/extensions/continue/index.ts" \
+      > "$TMPDIR/continue-commands" 2>&1
+
+    grep -F '"name":"continue"' "$TMPDIR/continue-commands"
 
     touch "$out"
   ''

@@ -186,6 +186,11 @@
       url = "https://registry.npmjs.org/pi-subagents/-/pi-subagents-0.25.0.tgz";
       flake = false;
     };
+    pi-continue-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/pi-continue/-/pi-continue-0.8.2.tgz";
+      flake = false;
+    };
     pi-web-access-src = {
       type = "file";
       url = "https://registry.npmjs.org/pi-web-access/-/pi-web-access-0.10.7.tgz";

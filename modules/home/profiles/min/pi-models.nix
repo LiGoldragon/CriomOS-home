@@ -21,6 +21,7 @@ let
   pi-criomos = pkgs.callPackage ../../../../packages/pi-criomos { };
   pi-linkup = pkgs.callPackage ../../../../packages/pi-linkup { inherit inputs; };
   pi-subagents = pkgs.callPackage ../../../../packages/pi-subagents { inherit inputs; };
+  pi-continue = pkgs.callPackage ../../../../packages/pi-continue { inherit inputs; };
   pi-web-access = pkgs.callPackage ../../../../packages/pi-web-access { inherit inputs; };
 
   clusterNodes = [ horizon.node ] ++ lib.attrValues (horizon.exNodes or { });
@@ -102,6 +103,7 @@ let
       "packages/pi-linkup"
       "packages/pi-web-access"
       "packages/pi-subagents"
+      "packages/pi-continue"
     ];
   };
 in
@@ -114,6 +116,8 @@ lib.mkIf (size.min && endpointNode != null) {
 
   home.file.".pi/agent/packages/pi-subagents".source =
     "${pi-subagents}/share/pi-packages/pi-subagents";
+
+  home.file.".pi/agent/packages/pi-continue".source = "${pi-continue}/share/pi-packages/pi-continue";
 
   home.file.".pi/agent/packages/pi-web-access".source =
     "${pi-web-access}/share/pi-packages/pi-web-access";
