@@ -348,6 +348,7 @@
           };
           gws = checkPkgs.callPackage ./checks/gws { inherit inputs; };
           playwright-cli = checkPkgs.callPackage ./checks/playwright-cli { };
+          lojix-run = checkPkgs.callPackage ./checks/lojix-run { inherit inputs; };
           persona-spirit-versioned-deployment =
             checkPkgs.callPackage ./checks/persona-spirit-versioned-deployment
               { inherit inputs; };

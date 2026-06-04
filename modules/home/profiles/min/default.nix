@@ -187,6 +187,7 @@ let
 
   deploymentPackages = with pkgs; [
     inputs.lojix-cli.packages.${pkgs.stdenv.hostPlatform.system}.default
+    (pkgs.callPackage ../../../../packages/lojix-run { inherit inputs; })
     age
     sops
     ssh-to-age
