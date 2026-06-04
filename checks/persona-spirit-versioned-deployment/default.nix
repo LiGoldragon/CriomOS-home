@@ -53,7 +53,7 @@ let
           "v0.4.0"
           "next"
         ];
-        currentDefault = "v0.4.0";
+        currentDefault = "v0.3.0";
       };
     };
     user.size.min = true;
@@ -196,7 +196,7 @@ else
     grep -q '^owner=/home/li/.local/state/persona-spirit/next/owner.sock$' next
 
     "${profileWitness}/bin/spirit" > current
-    grep -q '^version=v0.4.0$' current
+    grep -q '^version=v0.3.0$' current
 
     touch "$out"
   ''
