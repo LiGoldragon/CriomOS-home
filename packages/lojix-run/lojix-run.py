@@ -399,9 +399,11 @@ class PostChecks:
         return "\n".join(
             [
                 'if pgrep -u "$user" -x niri >/dev/null 2>&1; then',
-                "  socket=$(find \"$run\" -maxdepth 2 -type s \\(",
-                "    -name 'niri*.sock' -o -name '*niri*sock' \\)",
-                "    2>/dev/null | head -1 || true)",
+                (
+                    "  socket=$(find \"$run\" -maxdepth 2 -type s "
+                    "\\( -name 'niri*.sock' -o -name '*niri*sock' \\) "
+                    "2>/dev/null | head -1 || true)"
+                ),
                 '  if [ -n "$socket" ]; then',
                 (
                     '    runuser -u "$user" -- env -i HOME=/home/$user '
