@@ -26,6 +26,7 @@ let
     "v0.2.0"
     "v0.3.0"
     "v0.4.0"
+    "v0.4.1"
     "next"
   ];
 
@@ -35,6 +36,7 @@ let
     "v0.2.0" = inputs."persona-spirit-v0-2-0";
     "v0.3.0" = inputs."persona-spirit-v0-3-0";
     "v0.4.0" = inputs."persona-spirit-v0-4-0";
+    "v0.4.1" = inputs."persona-spirit-v0-4-1";
     "next" = inputs.persona-spirit-next;
   };
 
@@ -65,6 +67,12 @@ let
       ownerSocketPath = "${stateDirectory}/owner.sock";
       upgradeSocketPath = "${stateDirectory}/upgrade.sock";
       databasePath = "${stateDirectory}/persona-spirit.redb";
+      previousPrivacyDatabasePath = "${rootStateDirectory}/v0.3.0/persona-spirit.redb";
+      privacyMigration =
+        if version == "v0.4.1" then
+          packageInput.packages.${system}.spirit-migrate-0-3-to-0-4
+        else
+          null;
       configuration =
         if version == "v0.1.0" then
           "([${ordinarySocketPath}] [${ownerSocketPath}] [${upgradeSocketPath}] [${databasePath}] 384 None)"
@@ -87,6 +95,14 @@ let
 
         ${pkgs.coreutils}/bin/mkdir -p "$state_directory"
         ${pkgs.coreutils}/bin/rm -f "$ordinary_socket_path" "$owner_socket_path" "$upgrade_socket_path"
+
+        ${lib.optionalString (version == "v0.4.1") ''
+          previous_privacy_database_path=${lib.escapeShellArg previousPrivacyDatabasePath}
+
+          if [ ! -e "$database_path" ] && [ -e "$previous_privacy_database_path" ]; then
+            ${privacyMigration}/bin/spirit-migrate-0-3-to-0-4 "([$previous_privacy_database_path] [$database_path])"
+          fi
+        ''}
 
         if [ "$version" = "v0.1.0" ]; then
           ${pkgs.coreutils}/bin/rm -f "$legacy_ordinary_socket_path" "$legacy_owner_socket_path"
@@ -172,7 +188,7 @@ in
 
     currentDefault = mkOption {
       type = enum availableVersions;
-      default = "v0.3.0";
+      default = "v0.4.1";
       description = "Persona-spirit version reached by the unsuffixed spirit command.";
     };
   };
