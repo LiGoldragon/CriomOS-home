@@ -79,6 +79,28 @@ Browser-use is a separate delegated browser-agent layer: it may attach to
 Chrome through CDP, but do not model it as a wrapper around the Playwright
 CLI.
 
+## Google Workspace CLI
+
+The min profile installs the no-MCP `gws` Google Workspace CLI through
+`packages/gws`. The wrapper reads OAuth client identity from `gopass`
+when the entries exist:
+
+- `google-workspace/gws/client-id`
+- `google-workspace/gws/client-secret`
+
+`gws` owns its OAuth refresh credentials and token cache through its
+native encrypted config under `${XDG_CONFIG_HOME:-$HOME/.config}/gws`.
+Do not move those token files into Nix, Home Manager text, reports, or
+public commits. If the credential storage shape changes, keep secret
+bytes in `gopass` or the tool's encrypted runtime store, never in the
+Nix store.
+
+The local Pi package `pi-criomos` carries a `gws` skill so agents load
+the no-MCP command rules before using Google account data. Google
+Workspace account contents are private personal-affairs material:
+assistant/counselor reports go to private report repositories, and
+public repo files carry only mechanism and non-sensitive status.
+
 ---
 
 ## Dictation

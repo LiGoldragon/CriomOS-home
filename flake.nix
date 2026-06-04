@@ -121,6 +121,11 @@
     codex-cli.url = "github:sadjow/codex-cli-nix";
     codex-cli.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Google Workspace CLI for no-MCP assistant access to Gmail, Drive,
+    # Calendar, Docs, Sheets, Slides, Tasks, and People/Contacts.
+    google-workspace-cli.url = "github:googleworkspace/cli";
+    google-workspace-cli.inputs.nixpkgs.follows = "nixpkgs";
+
     # CriomOS deploy CLI. This is the Nota-first deploy tool used for
     # system, OS-only, and direct home deployments.
     lojix-cli.url = "github:LiGoldragon/lojix-cli";
@@ -334,6 +339,7 @@
           pi-criomos-extension-load = checkPkgs.callPackage ./checks/pi-criomos-extension-load {
             inherit inputs;
           };
+          gws = checkPkgs.callPackage ./checks/gws { inherit inputs; };
           playwright-cli = checkPkgs.callPackage ./checks/playwright-cli { };
           persona-spirit-versioned-deployment =
             checkPkgs.callPackage ./checks/persona-spirit-versioned-deployment

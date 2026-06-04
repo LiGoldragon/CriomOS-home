@@ -200,6 +200,7 @@ let
     inputs.codex-cli.packages.${pkgs.stdenv.hostPlatform.system}.default
     pkgs.opencode
     pkgs.llama-cpp
+    (pkgs.callPackage ../../../../packages/gws { inherit inputs; })
     (pkgs.callPackage ../../../../packages/pi { inherit inputs; })
     (pkgs.callPackage ../../../../packages/playwright-cli { })
   ];

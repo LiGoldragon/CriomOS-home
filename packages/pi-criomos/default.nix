@@ -11,7 +11,7 @@ pkgs.stdenvNoCC.mkDerivation {
     runHook preInstall
 
     packageRoot=$out/share/pi-packages/pi-criomos
-    mkdir -p "$packageRoot/themes" "$packageRoot/src/extensions"
+    mkdir -p "$packageRoot/themes" "$packageRoot/src/extensions" "$packageRoot/skills/gws"
 
     cat > "$packageRoot/package.json" <<'JSON'
     {
@@ -22,6 +22,9 @@ pkgs.stdenvNoCC.mkDerivation {
         "themes": ["./themes"],
         "extensions": [
           "./src/extensions/theme-switcher.ts"
+        ],
+        "skills": [
+          "./skills"
         ]
       }
     }
@@ -29,6 +32,8 @@ pkgs.stdenvNoCC.mkDerivation {
 
     install -m 0644 ${./src/extensions/theme-switcher.ts} \
       "$packageRoot/src/extensions/theme-switcher.ts"
+    install -m 0644 ${./skills/gws/SKILL.md} \
+      "$packageRoot/skills/gws/SKILL.md"
 
     cat > "$packageRoot/themes/criomos-dark.json" <<'JSON'
     {
