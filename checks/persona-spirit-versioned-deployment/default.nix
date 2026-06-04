@@ -34,6 +34,9 @@ let
         spirit-migrate-0-4-to-0-5 = pkgs.writeShellScriptBin "spirit-migrate-0-4-to-0-5" ''
           printf '(MigrationCompleted 0)\n'
         '';
+        spirit-migrate-0-5-to-0-5-2 = pkgs.writeShellScriptBin "spirit-migrate-0-5-to-0-5-2" ''
+          printf '(MigrationCompleted 0)\n'
+        '';
       };
       name = "fake-persona-spirit-${safeVersion}";
     };
@@ -50,6 +53,7 @@ let
       "persona-spirit-v0-4-2" = makeFakeInput "v0.4.2";
       "persona-spirit-v0-5-0" = makeFakeInput "v0.5.0";
       "persona-spirit-v0-5-1" = makeFakeInput "v0.5.1";
+      "persona-spirit-v0-5-2" = makeFakeInput "v0.5.2";
       persona-spirit-next = makeFakeInput "next";
     };
     config = {
@@ -65,9 +69,10 @@ let
           "v0.4.2"
           "v0.5.0"
           "v0.5.1"
+          "v0.5.2"
           "next"
         ];
-        currentDefault = "v0.5.1";
+        currentDefault = "v0.5.2";
       };
     };
     user.size.min = true;
@@ -121,6 +126,10 @@ let
       message = "persona-spirit v0.5.1 daemon service must exist.";
     }
     {
+      condition = builtins.hasAttr "persona-spirit-daemon-v0.5.2" services;
+      message = "persona-spirit v0.5.2 daemon service must exist.";
+    }
+    {
       condition = builtins.hasAttr "persona-spirit-daemon-next" services;
       message = "persona-spirit next daemon service must exist.";
     }
@@ -147,6 +156,7 @@ else
     test -x "${profileWitness}/bin/spirit-v0.4.2"
     test -x "${profileWitness}/bin/spirit-v0.5.0"
     test -x "${profileWitness}/bin/spirit-v0.5.1"
+    test -x "${profileWitness}/bin/spirit-v0.5.2"
     test -x "${profileWitness}/bin/spirit-next"
     test -x "${profileWitness}/bin/spirit"
 
@@ -195,6 +205,11 @@ else
     grep -q '/persona-spirit/v0.5.1/upgrade.sock' \
       "${services."persona-spirit-daemon-v0.5.1".Service.ExecStart}"
     ! grep -q '"' "${services."persona-spirit-daemon-v0.5.1".Service.ExecStart}"
+    grep -q '/persona-spirit/v0.5.2/persona-spirit.redb' \
+      "${services."persona-spirit-daemon-v0.5.2".Service.ExecStart}"
+    grep -q '/persona-spirit/v0.5.2/upgrade.sock' \
+      "${services."persona-spirit-daemon-v0.5.2".Service.ExecStart}"
+    ! grep -q '"' "${services."persona-spirit-daemon-v0.5.2".Service.ExecStart}"
     grep -q '/persona-spirit/next/persona-spirit.redb' \
       "${services."persona-spirit-daemon-next".Service.ExecStart}"
     grep -q '/persona-spirit/next/upgrade.sock' \
@@ -226,6 +241,12 @@ else
       "${services."persona-spirit-daemon-v0.5.1".Service.ExecStartPre}"
     grep -q '/persona-spirit/v0.5.1/persona-spirit.redb' \
       "${services."persona-spirit-daemon-v0.5.1".Service.ExecStartPre}"
+    grep -q 'spirit-migrate-0-5-to-0-5-2' \
+      "${services."persona-spirit-daemon-v0.5.2".Service.ExecStartPre}"
+    grep -q '/persona-spirit/v0.5.1/persona-spirit.redb' \
+      "${services."persona-spirit-daemon-v0.5.2".Service.ExecStartPre}"
+    grep -q '/persona-spirit/v0.5.2/persona-spirit.redb' \
+      "${services."persona-spirit-daemon-v0.5.2".Service.ExecStartPre}"
 
     PERSONA_SPIRIT_SOCKET=/stale/ordinary \
       PERSONA_SPIRIT_OWNER_SOCKET=/stale/owner \
@@ -292,13 +313,20 @@ else
 
     PERSONA_SPIRIT_SOCKET=/stale/ordinary \
       PERSONA_SPIRIT_OWNER_SOCKET=/stale/owner \
+      "${profileWitness}/bin/spirit-v0.5.2" > v0-5-2
+    grep -q '^version=v0.5.2$' v0-5-2
+    grep -q '^ordinary=/home/li/.local/state/persona-spirit/v0.5.2/spirit.sock$' v0-5-2
+    grep -q '^owner=/home/li/.local/state/persona-spirit/v0.5.2/owner.sock$' v0-5-2
+
+    PERSONA_SPIRIT_SOCKET=/stale/ordinary \
+      PERSONA_SPIRIT_OWNER_SOCKET=/stale/owner \
       "${profileWitness}/bin/spirit-next" > next
     grep -q '^version=next$' next
     grep -q '^ordinary=/home/li/.local/state/persona-spirit/next/spirit.sock$' next
     grep -q '^owner=/home/li/.local/state/persona-spirit/next/owner.sock$' next
 
     "${profileWitness}/bin/spirit" > current
-    grep -q '^version=v0.5.1$' current
+    grep -q '^version=v0.5.2$' current
 
     touch "$out"
   ''

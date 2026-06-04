@@ -158,6 +158,8 @@
     persona-spirit-v0-5-0.inputs.nixpkgs.follows = "nixpkgs";
     persona-spirit-v0-5-1.url = "github:LiGoldragon/persona-spirit?rev=c50c4753699392f1eaeb0c0b999c49813f760143";
     persona-spirit-v0-5-1.inputs.nixpkgs.follows = "nixpkgs";
+    persona-spirit-v0-5-2.url = "github:LiGoldragon/persona-spirit?rev=5227741e6a220e82ea000db6eb1d3a1466571fcc";
+    persona-spirit-v0-5-2.inputs.nixpkgs.follows = "nixpkgs";
     persona-spirit-next.url = "github:LiGoldragon/persona-spirit?ref=main";
     persona-spirit-next.inputs.nixpkgs.follows = "nixpkgs";
 
