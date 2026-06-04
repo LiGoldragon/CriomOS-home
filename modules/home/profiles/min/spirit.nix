@@ -25,6 +25,7 @@ let
     "v0.1.1"
     "v0.2.0"
     "v0.3.0"
+    "v0.4.0"
     "next"
   ];
 
@@ -33,6 +34,7 @@ let
     "v0.1.1" = inputs."persona-spirit-v0-1-1";
     "v0.2.0" = inputs."persona-spirit-v0-2-0";
     "v0.3.0" = inputs."persona-spirit-v0-3-0";
+    "v0.4.0" = inputs."persona-spirit-v0-4-0";
     "next" = inputs.persona-spirit-next;
   };
 
@@ -55,11 +57,7 @@ let
           packageInput.packages.${system}.spirit-next
         else
           packageInput.packages.${system}.spirit;
-      commandLineBinary =
-        if version == "next" then
-          "spirit-next"
-        else
-          "spirit";
+      commandLineBinary = if version == "next" then "spirit-next" else "spirit";
       daemon = packageInput.packages.${system}.persona-spirit-daemon;
       safeVersion = sanitizeVersion version;
       stateDirectory = "${rootStateDirectory}/${version}";
@@ -69,11 +67,11 @@ let
       databasePath = "${stateDirectory}/persona-spirit.redb";
       configuration =
         if version == "v0.1.0" then
-          ''([${ordinarySocketPath}] [${ownerSocketPath}] [${upgradeSocketPath}] [${databasePath}] 384 None)''
+          "([${ordinarySocketPath}] [${ownerSocketPath}] [${upgradeSocketPath}] [${databasePath}] 384 None)"
         else if version == "v0.1.1" then
-          ''([${ordinarySocketPath}] [${ownerSocketPath}] [${databasePath}] 384 None)''
+          "([${ordinarySocketPath}] [${ownerSocketPath}] [${databasePath}] 384 None)"
         else
-          ''([${ordinarySocketPath}] [${ownerSocketPath}] [${upgradeSocketPath}] [${databasePath}] 384 None None None None)'';
+          "([${ordinarySocketPath}] [${ownerSocketPath}] [${upgradeSocketPath}] [${databasePath}] 384 None None None None)";
       initializeState = pkgs.writeShellScript "persona-spirit-${safeVersion}-state" ''
         set -eu
 
@@ -174,7 +172,7 @@ in
 
     currentDefault = mkOption {
       type = enum availableVersions;
-      default = "v0.3.0";
+      default = "v0.4.0";
       description = "Persona-spirit version reached by the unsuffixed spirit command.";
     };
   };
