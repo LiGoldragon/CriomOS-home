@@ -28,6 +28,7 @@ let
     "v0.4.0"
     "v0.4.1"
     "v0.4.2"
+    "v0.5.0"
     "next"
   ];
 
@@ -39,6 +40,7 @@ let
     "v0.4.0" = inputs."persona-spirit-v0-4-0";
     "v0.4.1" = inputs."persona-spirit-v0-4-1";
     "v0.4.2" = inputs."persona-spirit-v0-4-2";
+    "v0.5.0" = inputs."persona-spirit-v0-5-0";
     "next" = inputs.persona-spirit-next;
   };
 
@@ -71,9 +73,15 @@ let
       databasePath = "${stateDirectory}/persona-spirit.redb";
       previousPrivacyDatabasePath = "${rootStateDirectory}/v0.3.0/persona-spirit.redb";
       previousPatchDatabasePath = "${rootStateDirectory}/v0.4.1/persona-spirit.redb";
+      previousIdentifierDatabasePath = "${rootStateDirectory}/v0.4.2/persona-spirit.redb";
       privacyMigration =
         if version == "v0.4.1" then
           packageInput.packages.${system}.spirit-migrate-0-3-to-0-4
+        else
+          null;
+      identifierMigration =
+        if version == "v0.5.0" then
+          packageInput.packages.${system}.spirit-migrate-0-4-to-0-5
         else
           null;
       configuration =
@@ -112,6 +120,14 @@ let
 
           if [ ! -e "$database_path" ] && [ -e "$previous_patch_database_path" ]; then
             ${pkgs.coreutils}/bin/cp -p "$previous_patch_database_path" "$database_path"
+          fi
+        ''}
+
+        ${lib.optionalString (version == "v0.5.0") ''
+          previous_identifier_database_path=${lib.escapeShellArg previousIdentifierDatabasePath}
+
+          if [ ! -e "$database_path" ] && [ -e "$previous_identifier_database_path" ]; then
+            ${identifierMigration}/bin/spirit-migrate-0-4-to-0-5 "([$previous_identifier_database_path] [$database_path])"
           fi
         ''}
 
@@ -199,7 +215,7 @@ in
 
     currentDefault = mkOption {
       type = enum availableVersions;
-      default = "v0.4.2";
+      default = "v0.5.0";
       description = "Persona-spirit version reached by the unsuffixed spirit command.";
     };
   };
