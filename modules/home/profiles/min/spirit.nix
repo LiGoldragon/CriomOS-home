@@ -70,6 +70,7 @@ let
       upgradeSocketPath = "${stateDirectory}/upgrade.sock";
       databasePath = "${stateDirectory}/persona-spirit.redb";
       previousPrivacyDatabasePath = "${rootStateDirectory}/v0.3.0/persona-spirit.redb";
+      previousPatchDatabasePath = "${rootStateDirectory}/v0.4.1/persona-spirit.redb";
       privacyMigration =
         if version == "v0.4.1" then
           packageInput.packages.${system}.spirit-migrate-0-3-to-0-4
@@ -103,6 +104,14 @@ let
 
           if [ ! -e "$database_path" ] && [ -e "$previous_privacy_database_path" ]; then
             ${privacyMigration}/bin/spirit-migrate-0-3-to-0-4 "([$previous_privacy_database_path] [$database_path])"
+          fi
+        ''}
+
+        ${lib.optionalString (version == "v0.4.2") ''
+          previous_patch_database_path=${lib.escapeShellArg previousPatchDatabasePath}
+
+          if [ ! -e "$database_path" ] && [ -e "$previous_patch_database_path" ]; then
+            ${pkgs.coreutils}/bin/cp -p "$previous_patch_database_path" "$database_path"
           fi
         ''}
 
