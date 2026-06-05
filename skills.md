@@ -153,6 +153,17 @@ the user explicitly authorized that call in the current task.
 
 ---
 
+## Nix output redaction helpers
+
+The base Home profile installs `redact-nix-store-paths`, a pipe filter that
+replaces concrete `/nix/store/<hash>-...` paths with `/nix/store/<redacted>`.
+Interactive zsh shells also define `with-nix-store-redaction`, which runs a
+command with both stdout and stderr filtered through that command.
+
+Use these helpers for human-facing build/evaluation/deploy logs instead of
+rewriting ad-hoc `sed` redactors in every shell command. Keep store paths in
+shell variables when the path itself is load-bearing.
+
 ## Verification
 
 ### FullOS propagation

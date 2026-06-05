@@ -109,6 +109,10 @@ let
     cp ${ignisLightEmacsTheme} $out/ignis-light-theme.el
   '';
 
+  redactNixStorePaths = pkgs.writeShellScriptBin "redact-nix-store-paths" ''
+    exec ${pkgs.gnused}/bin/sed -E "s#/nix/store/[a-z0-9]{32}-[^[:space:]\"'<>)]*#/nix/store/<redacted>#g"
+  '';
+
   /*
     Shell hook: new shells source Chroma's fzf state. Terminal
     colours are owned by terminal-native config paths, not by
@@ -120,6 +124,10 @@ let
       [ -f "$state/fzf-theme.sh" ] && source "$state/fzf-theme.sh"
     }
     __chroma_init_theme
+
+    with-nix-store-redaction() {
+      "$@" > >(redact-nix-store-paths) 2> >(redact-nix-store-paths >&2)
+    }
   '';
 
   ensuredHomeDirectories = constants.fileSystem.home.ensuredDirectories;
@@ -141,6 +149,7 @@ in
         # modules/home/profiles/min/chroma.nix.
         pkgs.papirus-icon-theme
         pkgs.adw-gtk3
+        redactNixStorePaths
       ];
       file.".config/emacs-ignis-themes".source = emacsThemeDir;
 

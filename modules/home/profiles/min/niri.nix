@@ -9,6 +9,24 @@
 }:
 let
   terminal = "${pkgs.ghostty}/bin/ghostty";
+  rescueTerminalPackage = pkgs.writeShellScriptBin "criomos-rescue-terminal" ''
+    set -eu
+
+    unit="criomos-rescue-terminal-$(${pkgs.coreutils}/bin/date +%s%N)-$$"
+    exec ${pkgs.systemd}/bin/systemd-run --user --scope --collect --quiet \
+      --unit="$unit" \
+      --slice=session.slice \
+      --property=CPUWeight=1000 \
+      --property=IOWeight=1000 \
+      --property=MemoryAccounting=yes \
+      --property=MemoryLow=256M \
+      --property=MemoryHigh=2G \
+      ${terminal} \
+        --gtk-single-instance=false \
+        --class=criomos-rescue-terminal \
+        --title='CriomOS Rescue Terminal'
+  '';
+  rescueTerminal = "${rescueTerminalPackage}/bin/criomos-rescue-terminal";
   inherit (user) useFastRepeat;
   inherit (horizon.node) behavesAs;
 
@@ -138,35 +156,69 @@ in
     "NOCTALIA_PAM_SERVICE" = "noctalia";
   };
 
-  home.packages = with pkgs; [
+  home.packages = [
+    rescueTerminalPackage
+  ]
+  ++ (with pkgs; [
     grim
     slurp
     wl-clipboard
     gnome-control-center
-  ];
+  ]);
 
-  systemd.user.services = lib.mkIf behavesAs.edge {
-    criomos-lock-session = {
-      Unit = {
-        Description = "Lock the niri session";
-        After = [ "graphical-session.target" ];
+  systemd.user = lib.mkIf behavesAs.edge {
+    slices = {
+      session = {
+        Unit = {
+          Description = "User core session slice";
+          Documentation = [ "man:systemd.special(7)" ];
+        };
+        Slice = {
+          CPUWeight = 500;
+          IOAccounting = true;
+          IOWeight = 1000;
+          MemoryAccounting = true;
+          MemoryLow = "1G";
+        };
       };
-      Service = {
-        Type = "oneshot";
-        ExecStart = "${lockSession}";
+
+      background = {
+        Unit = {
+          Description = "User background tasks slice";
+          Documentation = [ "man:systemd.special(7)" ];
+        };
+        Slice = {
+          CPUWeight = 20;
+          IOAccounting = true;
+          IOWeight = 20;
+          MemoryAccounting = true;
+        };
       };
     };
 
-    criomos-lock-listener = {
-      Unit = {
-        Description = "Forward logind lock requests to Noctalia";
-        After = [ "default.target" ];
+    services = {
+      criomos-lock-session = {
+        Unit = {
+          Description = "Lock the niri session";
+          After = [ "graphical-session.target" ];
+        };
+        Service = {
+          Type = "oneshot";
+          ExecStart = "${lockSession}";
+        };
       };
-      Install.WantedBy = [ "default.target" ];
-      Service = {
-        ExecStart = "${lockListener}";
-        Restart = "on-failure";
-        RestartSec = 2;
+
+      criomos-lock-listener = {
+        Unit = {
+          Description = "Forward logind lock requests to Noctalia";
+          After = [ "default.target" ];
+        };
+        Install.WantedBy = [ "default.target" ];
+        Service = {
+          ExecStart = "${lockListener}";
+          Restart = "on-failure";
+          RestartSec = 2;
+        };
       };
     };
   };
@@ -251,6 +303,13 @@ in
         }
         {
           matches = [
+            { app-id = "^criomos-rescue-terminal$"; }
+            { title = "^CriomOS Rescue Terminal$"; }
+          ];
+          open-focused = true;
+        }
+        {
+          matches = [
             { app-id = "SolarFire|SolarFire\\.exe|solarfire"; }
             { title = "Solar Fire|SolarFire"; }
           ];
@@ -297,6 +356,7 @@ in
       binds = {
         # Launch
         "Mod+Shift+Return".action = a.spawn terminal "+new-window";
+        "Mod+Ctrl+Return".action = a.spawn rescueTerminal;
         "Mod+O" = {
           action = a.toggle-overview;
           repeat = false;
