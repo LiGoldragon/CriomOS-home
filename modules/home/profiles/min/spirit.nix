@@ -90,7 +90,7 @@ let
         if version == "v0.1.0" then
           "([${ordinarySocketPath}] [${ownerSocketPath}] [${upgradeSocketPath}] [${databasePath}] 384 None)"
         else if version == "v0.1.1" then
-          "([${ordinarySocketPath}] [${ownerSocketPath}] [${databasePath}] 384 None)"
+          "(\"${ordinarySocketPath}\" \"${ownerSocketPath}\" \"${databasePath}\" 384 None)"
         else
           "([${ordinarySocketPath}] [${ownerSocketPath}] [${upgradeSocketPath}] [${databasePath}] 384 None None None None)";
       initializeState = pkgs.writeShellScript "persona-spirit-${safeVersion}-state" ''
@@ -211,6 +211,8 @@ let
         Description = "Persona-spirit daemon ${version}";
         Conflicts = [ "persona-spirit-daemon.service" ];
         After = [ "persona-spirit-daemon.service" ];
+        StartLimitIntervalSec = 60;
+        StartLimitBurst = 5;
       };
 
       Service = {
