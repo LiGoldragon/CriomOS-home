@@ -153,6 +153,15 @@ the user explicitly authorized that call in the current task.
 
 ---
 
+## Desktop survivability safety
+
+Do not manage `session.slice` or other live graphical-session container slices
+through Home Manager activation. Niri and core session services run beneath
+`session.slice`; reconciling that unit during `HomeOnly Activate` can terminate
+the compositor and log the user out. Prefer protected transient scopes for
+specific recovery tools, and design broader resource policy through a path that
+cannot stop the active session.
+
 ## Nix output redaction helpers
 
 The base Home profile installs `redact-nix-store-paths`, a pipe filter that

@@ -11,6 +11,10 @@ and services remain in CriomOS.
   keybinding. The rescue terminal is separate from ordinary terminal
   windows so it can receive protected interactive-resource policy without
   also boosting heavy agent or build children.
+- Desktop resource protection must not make Home Manager own or reconcile
+  live graphical-session slices such as `session.slice`. Protect specific
+  recovery components and future workload scopes without risking logout of
+  the active compositor session.
 
 ## Shell safety
 

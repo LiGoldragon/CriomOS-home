@@ -166,59 +166,28 @@ in
     gnome-control-center
   ]);
 
-  systemd.user = lib.mkIf behavesAs.edge {
-    slices = {
-      session = {
-        Unit = {
-          Description = "User core session slice";
-          Documentation = [ "man:systemd.special(7)" ];
-        };
-        Slice = {
-          CPUWeight = 500;
-          IOAccounting = true;
-          IOWeight = 1000;
-          MemoryAccounting = true;
-          MemoryLow = "1G";
-        };
+  systemd.user.services = lib.mkIf behavesAs.edge {
+    criomos-lock-session = {
+      Unit = {
+        Description = "Lock the niri session";
+        After = [ "graphical-session.target" ];
       };
-
-      background = {
-        Unit = {
-          Description = "User background tasks slice";
-          Documentation = [ "man:systemd.special(7)" ];
-        };
-        Slice = {
-          CPUWeight = 20;
-          IOAccounting = true;
-          IOWeight = 20;
-          MemoryAccounting = true;
-        };
+      Service = {
+        Type = "oneshot";
+        ExecStart = "${lockSession}";
       };
     };
 
-    services = {
-      criomos-lock-session = {
-        Unit = {
-          Description = "Lock the niri session";
-          After = [ "graphical-session.target" ];
-        };
-        Service = {
-          Type = "oneshot";
-          ExecStart = "${lockSession}";
-        };
+    criomos-lock-listener = {
+      Unit = {
+        Description = "Forward logind lock requests to Noctalia";
+        After = [ "default.target" ];
       };
-
-      criomos-lock-listener = {
-        Unit = {
-          Description = "Forward logind lock requests to Noctalia";
-          After = [ "default.target" ];
-        };
-        Install.WantedBy = [ "default.target" ];
-        Service = {
-          ExecStart = "${lockListener}";
-          Restart = "on-failure";
-          RestartSec = 2;
-        };
+      Install.WantedBy = [ "default.target" ];
+      Service = {
+        ExecStart = "${lockListener}";
+        Restart = "on-failure";
+        RestartSec = 2;
       };
     };
   };
