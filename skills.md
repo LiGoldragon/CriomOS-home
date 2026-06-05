@@ -162,6 +162,13 @@ the compositor and log the user out. Prefer protected transient scopes for
 specific recovery tools, and design broader resource policy through a path that
 cannot stop the active session.
 
+The `ui-priority.nix` module follows that rule. It installs
+`criomos-ui-priority-apply`, `criomos-ui-priority-status`, and the oneshot
+`criomos-ui-priority.service`. The apply command uses
+`systemctl --user set-property --runtime` on specific UI services and transient
+app scopes; it must not write persistent drop-ins for `session.slice` or restart
+the compositor.
+
 ## Nix output redaction helpers
 
 The base Home profile installs `redact-nix-store-paths`, a pipe filter that

@@ -15,6 +15,10 @@ and services remain in CriomOS.
   live graphical-session slices such as `session.slice`. Protect specific
   recovery components and future workload scopes without risking logout of
   the active compositor session.
+- UI-priority policy is component-specific and runtime-applied: Niri, the
+  user D-Bus bus, desktop portals, PipeWire/WirePlumber, Noctalia/QuickShell,
+  Mako, and the dedicated rescue terminal receive protection through their
+  own units/scopes rather than through broad parent-slice ownership.
 
 ## Shell safety
 

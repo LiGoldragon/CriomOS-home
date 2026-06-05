@@ -46,6 +46,7 @@
     # the home-manager generation. Re-introducing them as explicit
     # imports.
     ./profiles/min/niri.nix
+    ./profiles/min/ui-priority.nix
     ./profiles/min/dictation.nix
     ./profiles/min/spirit.nix
     # Chroma — visual-state daemon (theme + warmth + brightness).
