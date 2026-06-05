@@ -43,43 +43,42 @@ let
     sbcl
   ];
 
-  codingPackages =
-    with pkgs;
-    [
-      qrencode
-      jmtpfs
-      # start('bash')
-      nix-prefetch-git
-      # start('pythonPackages')
-      ranger
-      # C/C++
-      binutils
-      openssh
-      nginx
-      sdcv # cli dictionary
-      jq
-      djvulibre
-      #== go
-      ghq
-      elvish
-      lf
-      tokenizedWrappedHub
-      tokenizedWrappedGhCli
-      hugo
-      #== rust
-      watchexec
-      zola
-      git-series
-      tree-sitter
-      # Manuals
-      unbound.man
-    ];
+  codingPackages = with pkgs; [
+    qrencode
+    jmtpfs
+    # start('bash')
+    nix-prefetch-git
+    # start('pythonPackages')
+    ranger
+    # C/C++
+    binutils
+    openssh
+    nginx
+    sdcv # cli dictionary
+    jq
+    djvulibre
+    #== go
+    ghq
+    elvish
+    lf
+    tokenizedWrappedHub
+    tokenizedWrappedGhCli
+    hugo
+    #== rust
+    watchexec
+    zola
+    git-series
+    tree-sitter
+    # Manuals
+    unbound.man
+  ];
 
   graphicalPackages = with pkgs; [
     ledger-live-desktop
     element-desktop
     telegram-desktop
     losslesscut-bin
+    cameractrls # Linux webcam controls, including Kiyo Pro focus/FOV/HDR controls.
   ];
 
 in
@@ -120,7 +119,8 @@ lib.mkIf size.medium {
         spotify-player
       ]
       ++ graphicalPackages
-      ++ codingPackages ++ lispDevPackages;
+      ++ codingPackages
+      ++ lispDevPackages;
 
     file = {
       # ".config/jesseduffield/lazygit/config.yml".text = { };
@@ -147,7 +147,7 @@ lib.mkIf size.medium {
         -f 'bestvideo[ext=webm]+bestaudio[ext=webm]/best[ext=webm]/best'
       '';
 
-      ".config/ranger/rc.conf".text = '''' + (optionalString useColemak readFile ./colemak.conf);
+      ".config/ranger/rc.conf".text = "" + (optionalString useColemak readFile ./colemak.conf);
       # end('pythonConfigs')
 
     };
