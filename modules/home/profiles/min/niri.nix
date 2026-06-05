@@ -15,7 +15,6 @@ let
     unit="criomos-rescue-terminal-$(${pkgs.coreutils}/bin/date +%s%N)-$$"
     exec ${pkgs.systemd}/bin/systemd-run --user --scope --collect --quiet \
       --unit="$unit" \
-      --slice=session.slice \
       --property=CPUWeight=1000 \
       --property=IOWeight=1000 \
       --property=MemoryAccounting=yes \
