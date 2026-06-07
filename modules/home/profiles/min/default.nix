@@ -54,8 +54,11 @@ let
 
   fontPackages = with pkgs; [
     dejavu_fonts
+    inter
+    montserrat
     nerd-fonts.iosevka-term
     nerd-fonts.iosevka
+    noto-fonts-color-emoji
   ];
 
   mkFcCache = pkgs.makeFontsCache { fontDirectories = fontPackages; };

@@ -111,6 +111,10 @@ lib.mkIf size.medium {
         imagemagick
         opus-tools
         mediainfo
+        mkvtoolnix
+        piper-tts
+        espeak-ng
+        python3Packages.scenedetect
         #== go
         gopass
         git-bug

@@ -32,3 +32,8 @@ and services remain in CriomOS.
   normal Zeus desktop environment can configure USB webcam focus and
   related camera controls without mutable, out-of-profile installs. The
   current package for this role is `cameractrls`.
+- Ordinary video production tools belong in the regular medium Home
+  profile: capture/edit/inspect/caption/TTS utilities and caption fonts
+  should be present without mutable installs. Heavy speech-to-text or
+  model-cache stacks stay out of the normal medium profile until their
+  AI-node or larger-profile shape is settled.
