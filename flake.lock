@@ -212,13 +212,13 @@
     "claude-code-vsix": {
       "flake": false,
       "locked": {
-        "narHash": "sha256-bWFfXgdedi8cUQSmi2vSBcXXObH576uRKMHaOHKoCUo=",
+        "narHash": "sha256-H2+EMuVMgzpUVvSN9b5pdE0B5sF87M3PyA0teR0zlm0=",
         "type": "file",
-        "url": "https://open-vsx.org/api/Anthropic/claude-code/linux-x64/2.1.161/file/Anthropic.claude-code-2.1.161@linux-x64.vsix"
+        "url": "https://open-vsx.org/api/Anthropic/claude-code/linux-x64/2.1.170/file/Anthropic.claude-code-2.1.170@linux-x64.vsix"
       },
       "original": {
         "type": "file",
-        "url": "https://open-vsx.org/api/Anthropic/claude-code/linux-x64/2.1.161/file/Anthropic.claude-code-2.1.161@linux-x64.vsix"
+        "url": "https://open-vsx.org/api/Anthropic/claude-code/linux-x64/2.1.170/file/Anthropic.claude-code-2.1.170@linux-x64.vsix"
       }
     },
     "codex-cli": {
@@ -229,11 +229,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1780345858,
-        "narHash": "sha256-t3dxFjzEFbuMd7o8LWtbnqfOkXDKjzvHXUiXQwvwXtk=",
+        "lastModified": 1781038009,
+        "narHash": "sha256-MxvxXJ+EJxB9On3VfwjHLfeZFSB8Xlqz1IRpl43F76Q=",
         "owner": "sadjow",
         "repo": "codex-cli-nix",
-        "rev": "ea8119de14a2263330da99363e6303db10a0f84b",
+        "rev": "75d6b831e036029e3d5f60b4f128dc0121730c37",
         "type": "github"
       },
       "original": {
@@ -1273,11 +1273,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1780517604,
-        "narHash": "sha256-Prm9CZLDzd2fmmToBLLb1Ejiwcmb7Dp9GAE3LwjFjdc=",
+        "lastModified": 1781042473,
+        "narHash": "sha256-iDX9a0zdhvEWyLQ2LigAF/D4Eu0DoXPQVR0NoATPfsQ=",
         "owner": "numtide",
         "repo": "llm-agents.nix",
-        "rev": "6b1143d5ec721f35d189b326115545a120cef508",
+        "rev": "c59b0106cb292099df6008f085bd3cd90562824e",
         "type": "github"
       },
       "original": {
@@ -1389,11 +1389,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1780336545,
-        "narHash": "sha256-vhVhuXzFrIOfcssC/9hDHx7MHzDKjF3keHuREOQqQiQ=",
+        "lastModified": 1780930886,
+        "narHash": "sha256-rppURzHviaQN131F+nLiLdGfcb0uCd9gGP0E5+iw9MI=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "4df1b885d76a54e1aa1a318f8d16fd6005b6401f",
+        "rev": "8c3cede7ddc26bd659d2d383b5610efbd2c7a16e",
         "type": "github"
       },
       "original": {
@@ -1795,16 +1795,16 @@
     "pi-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1780098457,
-        "narHash": "sha256-Cw+W5w6yuL+cH+JfgCbEwiyeXloMb7yFd46TXJPZGTg=",
+        "lastModified": 1781039692,
+        "narHash": "sha256-MvH8e21GVfzRQ9vsxFNC1GHJfB9GZpqY1Z2t8GCUaiQ=",
         "owner": "earendil-works",
         "repo": "pi",
-        "rev": "0897f175e4d46592c0f59b3a2d399f11b8d078af",
+        "rev": "28df940f0d07b65284849a483be7b06e2ca046ee",
         "type": "github"
       },
       "original": {
         "owner": "earendil-works",
-        "ref": "v0.78.0",
+        "ref": "v0.79.1",
         "repo": "pi",
         "type": "github"
       }
