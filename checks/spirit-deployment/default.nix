@@ -106,6 +106,8 @@ else
 
     test -s "$(printf '%s\n' "$exec_start" | ${pkgs.gnused}/bin/sed 's|.* ||')"
     grep -q 'spirit-migrate-production' "$exec_start_pre"
+    ! grep -q 'ProductionMigrationRequest' "$exec_start_pre"
+    grep -q '(\[\$legacy_database_path\] \[\$database_path\])' "$exec_start_pre"
     grep -q '/persona-spirit/v0.5.2/persona-spirit.redb' "$exec_start_pre"
     grep -q '/spirit/spirit.sema' "$exec_start_pre"
 

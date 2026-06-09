@@ -50,7 +50,7 @@ let
 
     if [ ! -e "$database_path" ] && [ -e "$legacy_database_path" ]; then
       ${spiritPackage}/bin/spirit-migrate-production \
-        "(ProductionMigrationRequest [$legacy_database_path] [$database_path])"
+        "([$legacy_database_path] [$database_path])"
     fi
   '';
 
