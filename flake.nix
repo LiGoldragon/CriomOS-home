@@ -126,31 +126,10 @@
     chroma.url = "github:LiGoldragon/chroma";
     chroma.inputs.nixpkgs.follows = "nixpkgs";
 
-    # Persona-spirit — psyche record command line and user-session daemon.
-    # Consumed in modules/home/profiles/min/spirit.nix. Kept versioned so
-    # schema-changing daemon/database cutovers can run side by side.
-    persona-spirit-v0-1-0.url = "github:LiGoldragon/persona-spirit?ref=v0.1.0.1";
-    persona-spirit-v0-1-0.inputs.nixpkgs.follows = "nixpkgs";
-    persona-spirit-v0-1-1.url = "github:LiGoldragon/persona-spirit?ref=v0.1.1";
-    persona-spirit-v0-1-1.inputs.nixpkgs.follows = "nixpkgs";
-    persona-spirit-v0-2-0.url = "github:LiGoldragon/persona-spirit?ref=v0.2.0";
-    persona-spirit-v0-2-0.inputs.nixpkgs.follows = "nixpkgs";
-    persona-spirit-v0-3-0.url = "github:LiGoldragon/persona-spirit?rev=df09280a464f8a7be1c20ff433de4bfc4afc7f53";
-    persona-spirit-v0-3-0.inputs.nixpkgs.follows = "nixpkgs";
-    persona-spirit-v0-4-0.url = "github:LiGoldragon/persona-spirit?rev=014abda3f02171fd6e7b24eaed3a17799a049836";
-    persona-spirit-v0-4-0.inputs.nixpkgs.follows = "nixpkgs";
-    persona-spirit-v0-4-1.url = "github:LiGoldragon/persona-spirit?rev=98daae7653486359e9c52397db512e462f4142fb";
-    persona-spirit-v0-4-1.inputs.nixpkgs.follows = "nixpkgs";
-    persona-spirit-v0-4-2.url = "github:LiGoldragon/persona-spirit?rev=9606db5d7c64c3f0c5d333a3ecc4bfa486ea0c50";
-    persona-spirit-v0-4-2.inputs.nixpkgs.follows = "nixpkgs";
-    persona-spirit-v0-5-0.url = "github:LiGoldragon/persona-spirit?rev=c9762df9455392badda3e7298392ef376cb61be4";
-    persona-spirit-v0-5-0.inputs.nixpkgs.follows = "nixpkgs";
-    persona-spirit-v0-5-1.url = "github:LiGoldragon/persona-spirit?rev=c50c4753699392f1eaeb0c0b999c49813f760143";
-    persona-spirit-v0-5-1.inputs.nixpkgs.follows = "nixpkgs";
-    persona-spirit-v0-5-2.url = "github:LiGoldragon/persona-spirit?rev=586f0aa61216236de490262b3d1f325f9185f4b9";
-    persona-spirit-v0-5-2.inputs.nixpkgs.follows = "nixpkgs";
-    persona-spirit-next.url = "github:LiGoldragon/persona-spirit?ref=main";
-    persona-spirit-next.inputs.nixpkgs.follows = "nixpkgs";
+    # Spirit — schema-derived psyche record command line and user-session daemon.
+    # Consumed in modules/home/profiles/min/spirit.nix.
+    spirit.url = "github:LiGoldragon/spirit";
+    spirit.inputs.nixpkgs.follows = "nixpkgs";
 
     # `pi` (earendil-works/pi coding-agent CLI) — TypeScript npm
     # monorepo with no upstream flake. Consumed as a non-flake source
@@ -342,9 +321,7 @@
           gws = checkPkgs.callPackage ./checks/gws { inherit inputs; };
           playwright-cli = checkPkgs.callPackage ./checks/playwright-cli { };
           lojix-run = checkPkgs.callPackage ./checks/lojix-run { inherit inputs; };
-          persona-spirit-versioned-deployment =
-            checkPkgs.callPackage ./checks/persona-spirit-versioned-deployment
-              { inherit inputs; };
+          spirit-deployment = checkPkgs.callPackage ./checks/spirit-deployment { inherit inputs; };
         }
       ) derivationChecks;
 

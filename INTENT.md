@@ -37,3 +37,9 @@ and services remain in CriomOS.
   should be present without mutable installs. Heavy speech-to-text or
   model-cache stacks stay out of the normal medium profile until their
   AI-node or larger-profile shape is settled.
+
+## Spirit deployment
+
+- CriomOS-home builds Spirit's binary daemon startup archive during Nix
+  build/evaluation so the user service starts from a ready rkyv
+  configuration archive. Service startup does not generate the archive.

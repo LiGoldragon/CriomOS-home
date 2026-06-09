@@ -8,254 +8,102 @@
 }:
 let
   inherit (lib)
-    genAttrs
-    listToAttrs
-    mapAttrsToList
     mkIf
     mkOption
-    nameValuePair
     ;
-  inherit (lib.types) enum listOf;
+  inherit (lib.types) bool;
   inherit (user) size;
 
   system = pkgs.stdenv.hostPlatform.system;
+  spiritPackage = inputs.spirit.packages.${system}.default;
 
-  availableVersions = [
-    "v0.1.0"
-    "v0.1.1"
-    "v0.2.0"
-    "v0.3.0"
-    "v0.4.0"
-    "v0.4.1"
-    "v0.4.2"
-    "v0.5.0"
-    "v0.5.1"
-    "v0.5.2"
-    "next"
-  ];
+  stateDirectory = "${config.home.homeDirectory}/.local/state/spirit";
+  socketPath = "${stateDirectory}/spirit.sock";
+  metaSocketPath = "${stateDirectory}/meta-spirit.sock";
+  databasePath = "${stateDirectory}/spirit.sema";
+  configurationPath = "spirit.config.rkyv";
 
-  packageInputsByVersion = {
-    "v0.1.0" = inputs."persona-spirit-v0-1-0";
-    "v0.1.1" = inputs."persona-spirit-v0-1-1";
-    "v0.2.0" = inputs."persona-spirit-v0-2-0";
-    "v0.3.0" = inputs."persona-spirit-v0-3-0";
-    "v0.4.0" = inputs."persona-spirit-v0-4-0";
-    "v0.4.1" = inputs."persona-spirit-v0-4-1";
-    "v0.4.2" = inputs."persona-spirit-v0-4-2";
-    "v0.5.0" = inputs."persona-spirit-v0-5-0";
-    "v0.5.1" = inputs."persona-spirit-v0-5-1";
-    "v0.5.2" = inputs."persona-spirit-v0-5-2";
-    "next" = inputs.persona-spirit-next;
-  };
+  legacyStateDirectory = "${config.home.homeDirectory}/.local/state/persona-spirit";
+  legacyCurrentDatabasePath = "${legacyStateDirectory}/v0.5.2/persona-spirit.redb";
 
-  sanitizeVersion = builtins.replaceStrings [ "." ] [ "-" ];
+  daemonConfiguration = pkgs.runCommand "spirit-daemon-configuration" { } ''
+    set -eu
 
-  rootStateDirectory = "${config.home.homeDirectory}/.local/state/persona-spirit";
-  legacyOrdinarySocketPath = "${rootStateDirectory}/spirit.sock";
-  legacyOwnerSocketPath = "${rootStateDirectory}/owner.sock";
-  legacyDatabasePath = "${rootStateDirectory}/persona-spirit.redb";
-
-  deployedVersions = config.criomosHome.personaSpirit.deployedVersions;
-  currentDefault = config.criomosHome.personaSpirit.currentDefault;
-
-  makeDeployment =
-    version:
-    let
-      packageInput = packageInputsByVersion.${version};
-      commandLine =
-        if version == "next" then
-          packageInput.packages.${system}.spirit-next
-        else
-          packageInput.packages.${system}.spirit;
-      commandLineBinary = if version == "next" then "spirit-next" else "spirit";
-      daemon = packageInput.packages.${system}.persona-spirit-daemon;
-      safeVersion = sanitizeVersion version;
-      stateDirectory = "${rootStateDirectory}/${version}";
-      ordinarySocketPath = "${stateDirectory}/spirit.sock";
-      ownerSocketPath = "${stateDirectory}/owner.sock";
-      upgradeSocketPath = "${stateDirectory}/upgrade.sock";
-      databasePath = "${stateDirectory}/persona-spirit.redb";
-      previousPrivacyDatabasePath = "${rootStateDirectory}/v0.3.0/persona-spirit.redb";
-      previousPatchDatabasePath = "${rootStateDirectory}/v0.4.1/persona-spirit.redb";
-      previousIdentifierDatabasePath = "${rootStateDirectory}/v0.4.2/persona-spirit.redb";
-      previousShortIdentifierDatabasePath = "${rootStateDirectory}/v0.5.0/persona-spirit.redb";
-      previousVisibleIdentifierDatabasePath = "${rootStateDirectory}/v0.5.1/persona-spirit.redb";
-      privacyMigration =
-        if version == "v0.4.1" then packageInput.packages.${system}.spirit-migrate-0-3-to-0-4 else null;
-      identifierMigration =
-        if version == "v0.5.0" then packageInput.packages.${system}.spirit-migrate-0-4-to-0-5 else null;
-      visibleIdentifierMigration =
-        if version == "v0.5.2" then packageInput.packages.${system}.spirit-migrate-0-5-to-0-5-2 else null;
-      configuration =
-        if version == "v0.1.0" then
-          "([${ordinarySocketPath}] [${ownerSocketPath}] [${upgradeSocketPath}] [${databasePath}] 384 None)"
-        else if version == "v0.1.1" then
-          "(\"${ordinarySocketPath}\" \"${ownerSocketPath}\" \"${databasePath}\" 384 None)"
-        else
-          "([${ordinarySocketPath}] [${ownerSocketPath}] [${upgradeSocketPath}] [${databasePath}] 384 None None None None)";
-      initializeState = pkgs.writeShellScript "persona-spirit-${safeVersion}-state" ''
-        set -eu
-
-        version=${lib.escapeShellArg version}
-        state_directory=${lib.escapeShellArg stateDirectory}
-        ordinary_socket_path=${lib.escapeShellArg ordinarySocketPath}
-        owner_socket_path=${lib.escapeShellArg ownerSocketPath}
-        upgrade_socket_path=${lib.escapeShellArg upgradeSocketPath}
-        database_path=${lib.escapeShellArg databasePath}
-        legacy_ordinary_socket_path=${lib.escapeShellArg legacyOrdinarySocketPath}
-        legacy_owner_socket_path=${lib.escapeShellArg legacyOwnerSocketPath}
-        legacy_database_path=${lib.escapeShellArg legacyDatabasePath}
-
-        ${pkgs.coreutils}/bin/mkdir -p "$state_directory"
-        ${pkgs.coreutils}/bin/rm -f "$ordinary_socket_path" "$owner_socket_path" "$upgrade_socket_path"
-
-        ${lib.optionalString (version == "v0.4.1") ''
-          previous_privacy_database_path=${lib.escapeShellArg previousPrivacyDatabasePath}
-
-          if [ ! -e "$database_path" ] && [ -e "$previous_privacy_database_path" ]; then
-            ${privacyMigration}/bin/spirit-migrate-0-3-to-0-4 "([$previous_privacy_database_path] [$database_path])"
-          fi
-        ''}
-
-        ${lib.optionalString (version == "v0.4.2") ''
-          previous_patch_database_path=${lib.escapeShellArg previousPatchDatabasePath}
-
-          if [ ! -e "$database_path" ] && [ -e "$previous_patch_database_path" ]; then
-            ${pkgs.coreutils}/bin/cp -p "$previous_patch_database_path" "$database_path"
-          fi
-        ''}
-
-        ${lib.optionalString (version == "v0.5.0") ''
-          previous_identifier_database_path=${lib.escapeShellArg previousIdentifierDatabasePath}
-
-          if [ ! -e "$database_path" ] && [ -e "$previous_identifier_database_path" ]; then
-            ${identifierMigration}/bin/spirit-migrate-0-4-to-0-5 "([$previous_identifier_database_path] [$database_path])"
-          fi
-        ''}
-
-        ${lib.optionalString (version == "v0.5.1") ''
-          previous_short_identifier_database_path=${lib.escapeShellArg previousShortIdentifierDatabasePath}
-
-          if [ ! -e "$database_path" ] && [ -e "$previous_short_identifier_database_path" ]; then
-            ${pkgs.coreutils}/bin/cp -p "$previous_short_identifier_database_path" "$database_path"
-          fi
-        ''}
-
-        ${lib.optionalString (version == "v0.5.2") ''
-          previous_visible_identifier_database_path=${lib.escapeShellArg previousVisibleIdentifierDatabasePath}
-
-          if [ ! -e "$database_path" ] && [ -e "$previous_visible_identifier_database_path" ]; then
-            ${visibleIdentifierMigration}/bin/spirit-migrate-0-5-to-0-5-2 "([$previous_visible_identifier_database_path] [$database_path])"
-          fi
-        ''}
-
-        if [ "$version" = "v0.1.0" ]; then
-          ${pkgs.coreutils}/bin/rm -f "$legacy_ordinary_socket_path" "$legacy_owner_socket_path"
-
-          if [ ! -e "$database_path" ] && [ -e "$legacy_database_path" ]; then
-            ${pkgs.coreutils}/bin/cp -p "$legacy_database_path" "$database_path"
-          fi
-        fi
-      '';
-      startDaemon = pkgs.writeShellScript "persona-spirit-daemon-${safeVersion}-start" ''
-        exec ${daemon}/bin/persona-spirit-daemon '${configuration}'
-      '';
-      commandLineWrapper = pkgs.writeShellScriptBin "spirit-${version}" ''
-        ${
-          if version == "next" then
-            ''
-              export PERSONA_SPIRIT_NEXT_SOCKET=${lib.escapeShellArg ordinarySocketPath}
-              export PERSONA_SPIRIT_NEXT_OWNER_SOCKET=${lib.escapeShellArg ownerSocketPath}
-            ''
-          else
-            ''
-              export PERSONA_SPIRIT_SOCKET=${lib.escapeShellArg ordinarySocketPath}
-              export PERSONA_SPIRIT_OWNER_SOCKET=${lib.escapeShellArg ownerSocketPath}
-            ''
-        }
-        exec ${commandLine}/bin/${commandLineBinary} "$@"
-      '';
-    in
-    {
-      inherit
-        commandLineWrapper
-        databasePath
-        initializeState
-        ordinarySocketPath
-        ownerSocketPath
-        startDaemon
-        stateDirectory
-        upgradeSocketPath
-        ;
-      serviceName = "persona-spirit-daemon-${version}";
-      wrapperName = "spirit-${version}";
-    };
-
-  deployments = genAttrs deployedVersions makeDeployment;
-
-  selectedDeployment =
-    if builtins.elem currentDefault deployedVersions then
-      deployments.${currentDefault}
-    else
-      throw "criomosHome.personaSpirit.currentDefault must be listed in deployedVersions";
-
-  defaultCommandLine = pkgs.runCommand "spirit-current-${sanitizeVersion currentDefault}" { } ''
-    mkdir -p "$out/bin"
-    ln -s "${selectedDeployment.commandLineWrapper}/bin/${selectedDeployment.wrapperName}" "$out/bin/spirit"
+    mkdir -p "$out"
+    ${spiritPackage}/bin/spirit-write-configuration \
+      "(ConfigurationWriteRequest [${socketPath}] (Some [${metaSocketPath}]) [${databasePath}] None [$out/${configurationPath}])" \
+      > "$out/configuration-written.nota"
+    test -s "$out/${configurationPath}"
   '';
 
-  makeService =
-    version: deployment:
-    nameValuePair deployment.serviceName {
+  initializeState = pkgs.writeShellScript "spirit-state" ''
+    set -eu
+
+    state_directory=${lib.escapeShellArg stateDirectory}
+    database_path=${lib.escapeShellArg databasePath}
+    legacy_database_path=${lib.escapeShellArg legacyCurrentDatabasePath}
+
+    ${pkgs.coreutils}/bin/mkdir -p "$state_directory"
+    ${pkgs.coreutils}/bin/rm -f \
+      ${lib.escapeShellArg socketPath} \
+      ${lib.escapeShellArg metaSocketPath}
+
+    if [ ! -e "$database_path" ] && [ -e "$legacy_database_path" ]; then
+      ${spiritPackage}/bin/spirit-migrate-production \
+        "(ProductionMigrationRequest [$legacy_database_path] [$database_path])"
+    fi
+  '';
+
+  commandLineWrapper = pkgs.writeShellScriptBin "spirit" ''
+    export SPIRIT_SOCKET=${lib.escapeShellArg socketPath}
+    exec ${spiritPackage}/bin/spirit "$@"
+  '';
+in
+{
+  options.criomosHome.spirit = {
+    enable = mkOption {
+      type = bool;
+      default = true;
+      description = "Deploy the schema-derived Spirit CLI and user-session daemon.";
+    };
+  };
+
+  config = mkIf (size.min && config.criomosHome.spirit.enable) {
+    home.packages = [ commandLineWrapper ];
+
+    home.activation.spiritState = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      $DRY_RUN_CMD ${initializeState}
+    '';
+
+    systemd.user.services.spirit-daemon = {
       Unit = {
-        Description = "Persona-spirit daemon ${version}";
-        Conflicts = [ "persona-spirit-daemon.service" ];
-        After = [ "persona-spirit-daemon.service" ];
+        Description = "Spirit schema-derived daemon";
+        Conflicts = [
+          "persona-spirit-daemon.service"
+          "persona-spirit-daemon-v0.1.0.service"
+          "persona-spirit-daemon-v0.1.1.service"
+          "persona-spirit-daemon-v0.2.0.service"
+          "persona-spirit-daemon-v0.3.0.service"
+          "persona-spirit-daemon-v0.4.0.service"
+          "persona-spirit-daemon-v0.4.1.service"
+          "persona-spirit-daemon-v0.4.2.service"
+          "persona-spirit-daemon-v0.5.0.service"
+          "persona-spirit-daemon-v0.5.1.service"
+          "persona-spirit-daemon-v0.5.2.service"
+          "persona-spirit-daemon-next.service"
+        ];
         StartLimitIntervalSec = 60;
         StartLimitBurst = 5;
       };
 
       Service = {
-        ExecStartPre = "${deployment.initializeState}";
-        ExecStart = "${deployment.startDaemon}";
+        ExecStartPre = "${initializeState}";
+        ExecStart = "${spiritPackage}/bin/spirit-daemon ${daemonConfiguration}/${configurationPath}";
         Restart = "on-failure";
         RestartSec = "2s";
       };
 
       Install.WantedBy = [ "default.target" ];
     };
-in
-{
-  options.criomosHome.personaSpirit = {
-    deployedVersions = mkOption {
-      type = listOf (enum availableVersions);
-      default = availableVersions;
-      description = "Persona-spirit versions deployed side by side in the user session.";
-    };
-
-    currentDefault = mkOption {
-      type = enum availableVersions;
-      default = "v0.5.2";
-      description = "Persona-spirit version reached by the unsuffixed spirit command.";
-    };
-  };
-
-  config = mkIf size.min {
-    assertions = [
-      {
-        assertion = builtins.elem currentDefault deployedVersions;
-        message = "criomosHome.personaSpirit.currentDefault must be one of deployedVersions.";
-      }
-      {
-        assertion = lib.unique deployedVersions == deployedVersions;
-        message = "criomosHome.personaSpirit.deployedVersions must not contain duplicates.";
-      }
-    ];
-
-    home.packages = (map (version: deployments.${version}.commandLineWrapper) deployedVersions) ++ [
-      defaultCommandLine
-    ];
-
-    systemd.user.services = listToAttrs (mapAttrsToList makeService deployments);
   };
 }
