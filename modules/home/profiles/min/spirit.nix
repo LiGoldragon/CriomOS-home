@@ -36,7 +36,26 @@ let
     test -s "$out/${configurationPath}"
   '';
 
-  initializeState = pkgs.writeShellScript "spirit-state" ''
+  migrateState = ''
+    if [ ! -e "$database_path" ] && [ -e "$legacy_database_path" ]; then
+      ${spiritPackage}/bin/spirit-migrate-production \
+        "([$legacy_database_path] [$database_path])"
+    fi
+  '';
+
+  activateState = pkgs.writeShellScript "spirit-activation-state" ''
+    set -eu
+
+    state_directory=${lib.escapeShellArg stateDirectory}
+    database_path=${lib.escapeShellArg databasePath}
+    legacy_database_path=${lib.escapeShellArg legacyCurrentDatabasePath}
+
+    ${pkgs.coreutils}/bin/mkdir -p "$state_directory"
+
+    ${migrateState}
+  '';
+
+  initializeState = pkgs.writeShellScript "spirit-startup-state" ''
     set -eu
 
     state_directory=${lib.escapeShellArg stateDirectory}
@@ -48,10 +67,7 @@ let
       ${lib.escapeShellArg socketPath} \
       ${lib.escapeShellArg metaSocketPath}
 
-    if [ ! -e "$database_path" ] && [ -e "$legacy_database_path" ]; then
-      ${spiritPackage}/bin/spirit-migrate-production \
-        "([$legacy_database_path] [$database_path])"
-    fi
+    ${migrateState}
   '';
 
   commandLineWrapper = pkgs.writeShellScriptBin "spirit" ''
@@ -72,7 +88,7 @@ in
     home.packages = [ commandLineWrapper ];
 
     home.activation.spiritState = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      $DRY_RUN_CMD ${initializeState}
+      $DRY_RUN_CMD ${activateState}
     '';
 
     systemd.user.services.spirit-daemon = {

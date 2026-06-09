@@ -95,9 +95,11 @@ else
 
     exec_start="${services.spirit-daemon.Service.ExecStart}"
     exec_start_pre="${services.spirit-daemon.Service.ExecStartPre}"
+    activation_script="${pkgs.writeText "activation" activation}"
 
     printf '%s\n' "$exec_start" > exec-start
     printf '%s\n' "$exec_start_pre" > exec-start-pre
+    cat "$activation_script" > activation
 
     grep -q '/bin/spirit-daemon ' exec-start
     grep -q '/spirit.config.rkyv$' exec-start
@@ -111,7 +113,12 @@ else
     grep -q '/persona-spirit/v0.5.2/persona-spirit.redb' "$exec_start_pre"
     grep -q '/spirit/spirit.sema' "$exec_start_pre"
 
-    grep -q 'spirit-state' ${pkgs.writeText "activation" activation}
+    grep -q 'spirit-activation-state' activation
+    ! grep -q 'spirit-startup-state' activation
+    activation_state="$(sed -n 's|.*\(/nix/store/[^ ]*-spirit-activation-state\).*|\1|p' activation)"
+    test -n "$activation_state"
+    grep -q 'spirit-migrate-production' "$activation_state"
+    ! grep -q 'rm -f' "$activation_state"
 
     touch "$out"
   ''
