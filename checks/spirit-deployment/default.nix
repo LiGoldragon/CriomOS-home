@@ -6,6 +6,30 @@ let
   lib = pkgs.lib;
   system = pkgs.stdenv.hostPlatform.system;
 
+  fakeAgent = {
+    packages.${system}.default = pkgs.runCommand "fake-agent" { } ''
+      mkdir -p "$out/bin"
+      cat > "$out/bin/agent" <<'EOF'
+      #!${pkgs.runtimeShell}
+      printf 'socket=%s\n' "$AGENT_SOCKET"
+      EOF
+      cat > "$out/bin/agent-daemon" <<'EOF'
+      #!${pkgs.runtimeShell}
+      printf 'configuration=%s\n' "$1"
+      EOF
+      cat > "$out/bin/agent-write-configuration" <<'EOF'
+      #!${pkgs.runtimeShell}
+      set -eu
+      request=$1
+      output_path=''${request##* }
+      output_path=''${output_path%)}
+      printf 'fake agent configuration archive\n' > "$output_path"
+      printf '(AgentConfigurationWritten %s)\n' "$output_path"
+      EOF
+      chmod +x "$out/bin/"*
+    '';
+  };
+
   fakeSpirit = {
     packages.${system}.default = pkgs.runCommand "fake-spirit" { } ''
       mkdir -p "$out/bin"
@@ -66,10 +90,21 @@ let
       hm.dag.entryAfter = _after: data: { inherit data; };
       hm.dag.entryBetween = _before: _after: data: { inherit data; };
     };
-    inputs.spirit = fakeSpirit;
+    inputs = {
+      agent = fakeAgent;
+      criomos-lib = ../../stubs/criomos-lib;
+      spirit = fakeSpirit;
+    };
     config = {
       home.homeDirectory = "/home/li";
       criomosHome.spirit.enable = true;
+    };
+    horizon = {
+      node = {
+        typeIs.largeAiRouter = false;
+        behavesAs.largeAi = true;
+        criomeDomainName = "prometheus.goldragon.criome";
+      };
     };
     user.size.min = true;
   };
@@ -86,6 +121,10 @@ let
   };
 
   assertions = [
+    {
+      condition = builtins.hasAttr "agent-daemon" services;
+      message = "the schema-derived agent daemon service must exist.";
+    }
     {
       condition = builtins.hasAttr "spirit-daemon" services;
       message = "the schema-derived spirit daemon service must exist.";
@@ -109,19 +148,38 @@ else
     set -eu
 
     test -x "${profileWitness}/bin/spirit"
+    test -x "${profileWitness}/bin/agent"
     ! test -e "${profileWitness}/bin/spirit-v0.5.2"
     ! test -e "${profileWitness}/bin/spirit-next"
 
     SPIRIT_SOCKET=/stale/socket "${profileWitness}/bin/spirit" > current
     grep -q '^socket=/home/li/.local/state/spirit/spirit.sock$' current
+    AGENT_SOCKET=/stale/socket "${profileWitness}/bin/agent" > current-agent
+    grep -q '^socket=/home/li/.local/state/agent/agent.sock$' current-agent
 
+    agent_exec_start="${services.agent-daemon.Service.ExecStart}"
+    agent_exec_start_pre="${services.agent-daemon.Service.ExecStartPre}"
     exec_start="${services.spirit-daemon.Service.ExecStart}"
     exec_start_pre="${services.spirit-daemon.Service.ExecStartPre}"
     activation_script="${pkgs.writeText "activation" activation}"
 
+    printf '%s\n' "$agent_exec_start" > agent-exec-start
+    printf '%s\n' "$agent_exec_start_pre" > agent-exec-start-pre
     printf '%s\n' "$exec_start" > exec-start
     printf '%s\n' "$exec_start_pre" > exec-start-pre
     cat "$activation_script" > activation
+
+    grep -q '/bin/agent-daemon-service$' agent-exec-start
+    ! grep -q 'agent-write-configuration' agent-exec-start
+    cat "$agent_exec_start" > agent-daemon-service
+    grep -q '/bin/agent-daemon ' agent-daemon-service
+    grep -q '/agent.config.rkyv$' agent-daemon-service
+    grep -q 'gopass show -o goldragon.criome/local-llm-api-token' agent-daemon-service
+    agent_configuration_archive="$(${pkgs.gnused}/bin/sed -n 's|.*agent-daemon \([^ ]*agent.config.rkyv\).*|\1|p' agent-daemon-service)"
+    test -n "$agent_configuration_archive"
+    test -s "$agent_configuration_archive"
+    grep -q 'mkdir -p' "$agent_exec_start_pre"
+    grep -q '/agent/agent.sock' "$agent_exec_start_pre"
 
     grep -q '/bin/spirit-daemon ' exec-start
     grep -q '/spirit.config.rkyv$' exec-start
@@ -142,6 +200,7 @@ else
     activation_state="$(sed -n 's|.*\(/nix/store/[^ ]*-spirit-activation-state\).*|\1|p' activation)"
     test -n "$activation_state"
     grep -q 'mkdir -p' "$activation_state"
+    grep -q '/agent' "$activation_state"
     ! grep -q 'spirit-migrate-production' "$activation_state"
     ! grep -q 'spirit-upgrade-store' "$activation_state"
     ! grep -q 'rm -f' "$activation_state"

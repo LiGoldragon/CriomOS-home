@@ -131,6 +131,12 @@
     spirit.url = "github:LiGoldragon/spirit";
     spirit.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Agent — local OpenAI-compatible provider daemon used by Spirit's guardian.
+    # Consumed in modules/home/profiles/min/spirit.nix.
+    agent.url = "github:LiGoldragon/agent";
+    agent.inputs.nixpkgs.follows = "nixpkgs";
+    agent.inputs.crane.follows = "crane";
+
     # `pi` (earendil-works/pi coding-agent CLI) — TypeScript npm
     # monorepo with no upstream flake. Consumed as a non-flake source
     # input and built locally via `packages/pi/default.nix`

@@ -1,0 +1,9 @@
+{
+  "serverPort": 11434,
+  "models": [
+    {
+      "modelId": "gemma-4-26b-a4b",
+      "descriptor": "Gemma 4 26B A4B"
+    }
+  ]
+}
