@@ -41,6 +41,21 @@ let
       printf 'fake migrated database\n' > "$target_path"
       printf '(Completed 1)\n'
       EOF
+      cat > "$out/bin/spirit-upgrade-store" <<'EOF'
+      #!${pkgs.runtimeShell}
+      set -eu
+      request=$1
+      case "$request" in
+        *'['* | *']'*) exit 64 ;;
+      esac
+      target_path=''${request#(}
+      target_path=''${target_path%)}
+      if [ -e "$target_path" ]; then
+        printf '(Current 1)\n'
+      else
+        printf '(Current 0)\n'
+      fi
+      EOF
       chmod +x "$out/bin/"*
     '';
   };
@@ -114,8 +129,10 @@ else
 
     test -s "$(printf '%s\n' "$exec_start" | ${pkgs.gnused}/bin/sed 's|.* ||')"
     grep -q 'spirit-migrate-production' "$exec_start_pre"
+    grep -q 'spirit-upgrade-store' "$exec_start_pre"
     ! grep -q 'ProductionMigrationRequest' "$exec_start_pre"
     grep -q '(\$legacy_database_path \$database_path)' "$exec_start_pre"
+    grep -q '(\$database_path)' "$exec_start_pre"
     grep -q '/persona-spirit/v0.5.2/persona-spirit.redb' "$exec_start_pre"
     grep -q '/spirit/spirit.sema' "$exec_start_pre"
 
@@ -124,6 +141,7 @@ else
     activation_state="$(sed -n 's|.*\(/nix/store/[^ ]*-spirit-activation-state\).*|\1|p' activation)"
     test -n "$activation_state"
     grep -q 'spirit-migrate-production' "$activation_state"
+    grep -q 'spirit-upgrade-store' "$activation_state"
     ! grep -q 'rm -f' "$activation_state"
 
     touch "$out"

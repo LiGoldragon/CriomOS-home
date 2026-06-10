@@ -41,6 +41,8 @@ let
       ${spiritPackage}/bin/spirit-migrate-production \
         "($legacy_database_path $database_path)"
     fi
+    ${spiritPackage}/bin/spirit-upgrade-store \
+      "($database_path)"
   '';
 
   activateState = pkgs.writeShellScript "spirit-activation-state" ''
