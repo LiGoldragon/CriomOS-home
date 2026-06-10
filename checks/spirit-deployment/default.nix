@@ -21,17 +21,23 @@ let
       #!${pkgs.runtimeShell}
       set -eu
       request=$1
-      output_path=''${request##* [}
-      output_path=''${output_path%])*}
+      case "$request" in
+        *'['* | *']'*) exit 64 ;;
+      esac
+      output_path=''${request##* }
+      output_path=''${output_path%)}
       printf 'fake configuration archive\n' > "$output_path"
-      printf '(ConfigurationWritten [%s])\n' "$output_path"
+      printf '(ConfigurationWritten %s)\n' "$output_path"
       EOF
       cat > "$out/bin/spirit-migrate-production" <<'EOF'
       #!${pkgs.runtimeShell}
       set -eu
       request=$1
-      target_path=''${request##*] [}
-      target_path=''${target_path%])*}
+      case "$request" in
+        *'['* | *']'*) exit 64 ;;
+      esac
+      target_path=''${request##* }
+      target_path=''${target_path%)}
       printf 'fake migrated database\n' > "$target_path"
       printf '(Completed 1)\n'
       EOF
@@ -109,7 +115,7 @@ else
     test -s "$(printf '%s\n' "$exec_start" | ${pkgs.gnused}/bin/sed 's|.* ||')"
     grep -q 'spirit-migrate-production' "$exec_start_pre"
     ! grep -q 'ProductionMigrationRequest' "$exec_start_pre"
-    grep -q '(\[\$legacy_database_path\] \[\$database_path\])' "$exec_start_pre"
+    grep -q '(\$legacy_database_path \$database_path)' "$exec_start_pre"
     grep -q '/persona-spirit/v0.5.2/persona-spirit.redb' "$exec_start_pre"
     grep -q '/spirit/spirit.sema' "$exec_start_pre"
 

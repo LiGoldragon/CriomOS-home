@@ -31,7 +31,7 @@ let
 
     mkdir -p "$out"
     ${spiritPackage}/bin/spirit-write-configuration \
-      "(ConfigurationWriteRequest [${socketPath}] (Some [${metaSocketPath}]) [${databasePath}] None [$out/${configurationPath}])" \
+      "(ConfigurationWriteRequest ${socketPath} (Some ${metaSocketPath}) ${databasePath} None $out/${configurationPath})" \
       > "$out/configuration-written.nota"
     test -s "$out/${configurationPath}"
   '';
@@ -39,7 +39,7 @@ let
   migrateState = ''
     if [ ! -e "$database_path" ] && [ -e "$legacy_database_path" ]; then
       ${spiritPackage}/bin/spirit-migrate-production \
-        "([$legacy_database_path] [$database_path])"
+        "($legacy_database_path $database_path)"
     fi
   '';
 
