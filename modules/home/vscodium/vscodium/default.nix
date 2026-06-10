@@ -5,7 +5,6 @@
   inputs,
   hexis,
   textScale,
-  rustToolchain,
   ...
 }:
 let
@@ -113,11 +112,6 @@ let
     "nix.enableLanguageServer" = true;
     "nix.serverPath" = "${pkgs.nil}/bin/nil";
 
-    # Rust — rust-lang.rust-analyzer extension. The extension does not
-    # bundle a server binary on Linux (would download on first run);
-    # pin to the canonical profile toolchain so install is hermetic.
-    "rust-analyzer.server.path" = "${rustToolchain}/bin/rust-analyzer";
-
     # Terminal
     "terminal.integrated.defaultProfile.linux" = "zsh";
 
@@ -176,11 +170,6 @@ lib.mkIf size.medium {
         ovsx.cdervis.vscode-pi
         pkgs.vscode-extensions.mkhl.direnv
         pkgs.vscode-extensions.jnoortheen.nix-ide
-        # Rust LSP — drives Outline / Breadcrumbs / Cmd+Shift+O /
-        # Cmd+T symbol navigation on .rs files. The server binary
-        # itself is pinned via `rust-analyzer.server.path` above and
-        # is also in `home.packages` below so it resolves on PATH.
-        pkgs.vscode-extensions.rust-lang.rust-analyzer
         # Drift cleanup — three extensions had been installed manually
         # through the marketplace UI; lifted here so Nix is the
         # single source of truth (`extensions.autoUpdate = false`
