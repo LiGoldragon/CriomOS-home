@@ -47,6 +47,7 @@ let
       request=$1
       case "$request" in
         *'['* | *']'*) exit 64 ;;
+        *'ConfigurationWriterGuardianAgent'*) exit 65 ;;
       esac
       output_path=''${request##* }
       output_path=''${output_path%)}

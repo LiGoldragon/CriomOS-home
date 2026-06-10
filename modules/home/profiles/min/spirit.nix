@@ -66,7 +66,7 @@ let
 
   guardianAgentConfiguration =
     if endpointNode != null then
-      "(Some (ConfigurationWriterGuardianAgent ${agentSocketPath} (Some ${providerName}) (Some ${defaultLocalModel}) 30000 256))"
+      "(Some (${agentSocketPath} (Some ${providerName}) (Some ${defaultLocalModel}) 30000 256))"
     else
       "None";
 
