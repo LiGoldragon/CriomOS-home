@@ -64,6 +64,7 @@ let
     inherit pkgs;
     lib = lib // {
       hm.dag.entryAfter = _after: data: { inherit data; };
+      hm.dag.entryBetween = _before: _after: data: { inherit data; };
     };
     inputs.spirit = fakeSpirit;
     config = {

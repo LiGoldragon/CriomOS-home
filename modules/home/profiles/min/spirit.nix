@@ -89,7 +89,7 @@ in
   config = mkIf (size.min && config.criomosHome.spirit.enable) {
     home.packages = [ commandLineWrapper ];
 
-    home.activation.spiritState = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    home.activation.spiritState = lib.hm.dag.entryBetween [ "reloadSystemd" ] [ "writeBoundary" ] ''
       $DRY_RUN_CMD ${activateState}
     '';
 
