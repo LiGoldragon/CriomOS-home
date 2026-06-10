@@ -141,8 +141,9 @@ else
     ! grep -q 'spirit-startup-state' activation
     activation_state="$(sed -n 's|.*\(/nix/store/[^ ]*-spirit-activation-state\).*|\1|p' activation)"
     test -n "$activation_state"
-    grep -q 'spirit-migrate-production' "$activation_state"
-    grep -q 'spirit-upgrade-store' "$activation_state"
+    grep -q 'mkdir -p' "$activation_state"
+    ! grep -q 'spirit-migrate-production' "$activation_state"
+    ! grep -q 'spirit-upgrade-store' "$activation_state"
     ! grep -q 'rm -f' "$activation_state"
 
     touch "$out"

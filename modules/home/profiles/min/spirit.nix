@@ -49,12 +49,8 @@ let
     set -eu
 
     state_directory=${lib.escapeShellArg stateDirectory}
-    database_path=${lib.escapeShellArg databasePath}
-    legacy_database_path=${lib.escapeShellArg legacyCurrentDatabasePath}
 
     ${pkgs.coreutils}/bin/mkdir -p "$state_directory"
-
-    ${migrateState}
   '';
 
   initializeState = pkgs.writeShellScript "spirit-startup-state" ''
@@ -89,7 +85,7 @@ in
   config = mkIf (size.min && config.criomosHome.spirit.enable) {
     home.packages = [ commandLineWrapper ];
 
-    home.activation.spiritState = lib.hm.dag.entryBetween [ "reloadSystemd" ] [ "writeBoundary" ] ''
+    home.activation.spiritState = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       $DRY_RUN_CMD ${activateState}
     '';
 
