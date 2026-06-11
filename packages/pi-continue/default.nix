@@ -14,6 +14,7 @@ pkgs.stdenvNoCC.mkDerivation {
     mkdir -p "$packageRoot"
 
     tar -xzf ${inputs.pi-continue-src} -C "$packageRoot" --strip-components=1
+    patch -d "$packageRoot" -p1 < ${./resume-dispatch-steer.patch}
 
     runHook postInstall
   '';

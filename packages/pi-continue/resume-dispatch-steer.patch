@@ -1,0 +1,32 @@
+--- a/extensions/continue/src/prompt-dispatch.ts
++++ b/extensions/continue/src/prompt-dispatch.ts
+@@ -1,9 +1,27 @@
+ import type { UserMessage } from "@earendil-works/pi-ai";
+ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+ 
+-/** Queue the continuation resume prompt safely if the parent agent is still settling. */
++/**
++ * Queue the continuation resume prompt at the next steering boundary.
++ *
++ * Pi's follow-up queue waits until the current agent run is fully idle. During
++ * automatic mid-run continuation the parent run has already been aborted after a
++ * completed tool-result batch, but it can still reach another pre-provider
++ * context check before Pi drains follow-up messages. That leaves the verified
++ * handoff in `resume.status = pending`, makes the next guard report "previous
++ * continuation is still resuming", and eventually fails the resume-start
++ * timeout. Steering delivery is the boundary this package actually needs: the
++ * resumed prompt should run before the next model request from the old turn.
++ *
++ * The bare send fallback covers idle-session API variants that reject delivery
++ * options when no agent is streaming.
++ */
+ export function sendContinuationPrompt(pi: ExtensionAPI, prompt: string): void {
+-	pi.sendUserMessage(prompt, { deliverAs: "followUp" });
++	try {
++		pi.sendUserMessage(prompt, { deliverAs: "steer" });
++	} catch {
++		pi.sendUserMessage(prompt);
++	}
+ }
+ 
+ function isUserMessage(message: unknown): message is UserMessage {
