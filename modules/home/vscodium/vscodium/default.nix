@@ -231,14 +231,21 @@ lib.mkIf size.medium {
   # All keys default to `ensure` mode here — declared overlays the
   # defaults, user overrides survive at sibling keys (the
   # `[python].wordWrap`-clobber case the old helper got wrong).
-  home.activation.removeMutableClaudeCodeExtension = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+  home.activation.replaceMutableClaudeCodeExtension = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
     extensions_dir="$HOME/.vscode-oss/extensions"
-    if [ -d "$extensions_dir" ]; then
+    managed_extension="$extensions_dir/anthropic.claude-code"
+    if [ -d "$extensions_dir" ] && [ -e "$managed_extension/package.json" ]; then
+      version="$(${pkgs.jq}/bin/jq -r '.version' "$managed_extension/package.json")"
+      compatibility_extension="$extensions_dir/anthropic.claude-code-$version-linux-x64"
       for extension_dir in "$extensions_dir"/anthropic.claude-code-*-linux-x64; do
-        if [ -d "$extension_dir" ] && [ ! -L "$extension_dir" ]; then
+        if [ -e "$extension_dir" ] && [ "$extension_dir" != "$compatibility_extension" ]; then
           run rm -rf "$extension_dir"
         fi
       done
+      if [ ! -L "$compatibility_extension" ]; then
+        run rm -rf "$compatibility_extension"
+        run ln -s "$managed_extension" "$compatibility_extension"
+      fi
     fi
   '';
 
