@@ -231,6 +231,17 @@ lib.mkIf size.medium {
   # All keys default to `ensure` mode here — declared overlays the
   # defaults, user overrides survive at sibling keys (the
   # `[python].wordWrap`-clobber case the old helper got wrong).
+  home.activation.removeMutableClaudeCodeExtension = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+    extensions_dir="$HOME/.vscode-oss/extensions"
+    if [ -d "$extensions_dir" ]; then
+      for extension_dir in "$extensions_dir"/anthropic.claude-code-*-linux-x64; do
+        if [ -d "$extension_dir" ] && [ ! -L "$extension_dir" ]; then
+          run rm -rf "$extension_dir"
+        fi
+      done
+    fi
+  '';
+
   home.activation.mergeVscodiumSettings = inputs.hexis.lib.mkManagedConfig {
     inherit lib pkgs hexis;
     file = "$HOME/.config/VSCodium/User/settings.json";
