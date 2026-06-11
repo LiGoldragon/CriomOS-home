@@ -8,11 +8,6 @@
   ...
 }:
 let
-  inherit (builtins)
-    fromJSON
-    readFile
-    toString
-    ;
   inherit (lib)
     mkIf
     mkOption
@@ -24,20 +19,10 @@ let
   agentPackage = inputs.agent.packages.${system}.default;
   spiritPackage = inputs.spirit.packages.${system}.default;
 
-  inventory = fromJSON (readFile (inputs.criomos-lib + "/data/largeAI/llm.json"));
-  clusterNodes = [ horizon.node ] ++ lib.attrValues (horizon.exNodes or { });
-  routerNode = lib.findFirst (node: node.typeIs.largeAiRouter or false) null clusterNodes;
-  largeAiNode = lib.findFirst (node: node.behavesAs.largeAi or false) null clusterNodes;
-  endpointNode = if routerNode != null then routerNode else largeAiNode;
-  providerName = "criomos-local";
-  defaultLocalModel = "gemma-4-26b-a4b";
-  localLlmApiKeyEnvironment = "LOCAL_LLM_API_KEY";
-  localLlmGopassPath = "goldragon.criome/local-llm-api-token";
-  localLlmEndpoint =
-    if endpointNode != null then
-      "http://${endpointNode.criomeDomainName}:${toString (inventory.serverPort or 11434)}/v1"
-    else
-      null;
+  providerName = "deepseek";
+  defaultModel = "deepseek-v4-flash";
+  providerEndpoint = "https://api.deepseek.com/v1";
+  providerGopassPath = "platform.deepseek.com/api-key";
 
   stateDirectory = "${config.home.homeDirectory}/.local/state/spirit";
   socketPath = "${stateDirectory}/spirit.sock";
@@ -59,16 +44,12 @@ let
 
     mkdir -p "$out"
     ${agentPackage}/bin/agent-write-configuration \
-      "(AgentConfigurationWriteRequest ${agentSocketPath} ${agentMetaSocketPath} 384 ${agentDatabasePath} [(ProviderSeed ${providerName} ${localLlmEndpoint} ${defaultLocalModel} ${localLlmApiKeyEnvironment})] $out/${agentConfigurationPath})" \
+      "(AgentConfigurationWriteRequest ${agentSocketPath} ${agentMetaSocketPath} 384 ${agentDatabasePath} [(ProviderSeed ${providerName} ${providerEndpoint} ${defaultModel} (Gopass ${providerGopassPath}))] $out/${agentConfigurationPath})" \
       > "$out/configuration-written.nota"
     test -s "$out/${agentConfigurationPath}"
   '';
 
-  guardianAgentConfiguration =
-    if endpointNode != null then
-      "(Some (${agentSocketPath} (Some ${providerName}) (Some ${defaultLocalModel}) 30000 256))"
-    else
-      "None";
+  guardianAgentConfiguration = "(Some (${agentSocketPath} (Some ${providerName}) (Some ${defaultModel}) 120000 None))";
 
   daemonConfiguration = pkgs.runCommand "spirit-daemon-configuration" { } ''
     set -eu
@@ -138,7 +119,6 @@ let
   agentServiceWrapper = pkgs.writeShellScriptBin "agent-daemon-service" ''
     set -eu
 
-    export ${localLlmApiKeyEnvironment}="$(${pkgs.gopass}/bin/gopass show -o ${lib.escapeShellArg localLlmGopassPath})"
     exec ${agentPackage}/bin/agent-daemon ${agentDaemonConfiguration}/${agentConfigurationPath}
   '';
 in
@@ -154,67 +134,66 @@ in
   config = mkIf (size.min && config.criomosHome.spirit.enable) {
     home.packages = [
       commandLineWrapper
-    ]
-    ++ lib.optionals (endpointNode != null) [ agentCommandLineWrapper ];
+      agentCommandLineWrapper
+    ];
 
     home.activation.spiritState = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       $DRY_RUN_CMD ${activateState}
     '';
 
-    systemd.user.services =
-      lib.optionalAttrs (endpointNode != null) {
-        agent-daemon = {
-          Unit = {
-            Description = "Agent schema-derived daemon";
-            StartLimitIntervalSec = 60;
-            StartLimitBurst = 5;
-          };
-
-          Service = {
-            ExecStartPre = "${initializeAgentState}";
-            ExecStart = "${agentServiceWrapper}/bin/agent-daemon-service";
-            Restart = "on-failure";
-            RestartSec = "2s";
-          };
-
-          Install.WantedBy = [ "default.target" ];
+    systemd.user.services = {
+      agent-daemon = {
+        Unit = {
+          Description = "Agent schema-derived daemon";
+          StartLimitIntervalSec = 60;
+          StartLimitBurst = 5;
         };
-      }
-      // {
-        spirit-daemon = {
-          Unit = {
-            Description = "Spirit schema-derived daemon";
-            Conflicts = [
-              "persona-spirit-daemon.service"
-              "persona-spirit-daemon-v0.1.0.service"
-              "persona-spirit-daemon-v0.1.1.service"
-              "persona-spirit-daemon-v0.2.0.service"
-              "persona-spirit-daemon-v0.3.0.service"
-              "persona-spirit-daemon-v0.4.0.service"
-              "persona-spirit-daemon-v0.4.1.service"
-              "persona-spirit-daemon-v0.4.2.service"
-              "persona-spirit-daemon-v0.5.0.service"
-              "persona-spirit-daemon-v0.5.1.service"
-              "persona-spirit-daemon-v0.5.2.service"
-              "persona-spirit-daemon-next.service"
-            ];
-            StartLimitIntervalSec = 60;
-            StartLimitBurst = 5;
-          }
-          // lib.optionalAttrs (endpointNode != null) {
-            After = [ "agent-daemon.service" ];
-            Wants = [ "agent-daemon.service" ];
-          };
 
-          Service = {
-            ExecStartPre = "${initializeState}";
-            ExecStart = "${spiritPackage}/bin/spirit-daemon ${daemonConfiguration}/${configurationPath}";
-            Restart = "on-failure";
-            RestartSec = "2s";
-          };
-
-          Install.WantedBy = [ "default.target" ];
+        Service = {
+          ExecStartPre = "${initializeAgentState}";
+          ExecStart = "${agentServiceWrapper}/bin/agent-daemon-service";
+          Restart = "on-failure";
+          RestartSec = "2s";
         };
+
+        Install.WantedBy = [ "default.target" ];
       };
+    }
+    // {
+      spirit-daemon = {
+        Unit = {
+          Description = "Spirit schema-derived daemon";
+          Conflicts = [
+            "persona-spirit-daemon.service"
+            "persona-spirit-daemon-v0.1.0.service"
+            "persona-spirit-daemon-v0.1.1.service"
+            "persona-spirit-daemon-v0.2.0.service"
+            "persona-spirit-daemon-v0.3.0.service"
+            "persona-spirit-daemon-v0.4.0.service"
+            "persona-spirit-daemon-v0.4.1.service"
+            "persona-spirit-daemon-v0.4.2.service"
+            "persona-spirit-daemon-v0.5.0.service"
+            "persona-spirit-daemon-v0.5.1.service"
+            "persona-spirit-daemon-v0.5.2.service"
+            "persona-spirit-daemon-next.service"
+          ];
+          StartLimitIntervalSec = 60;
+          StartLimitBurst = 5;
+        }
+        // {
+          After = [ "agent-daemon.service" ];
+          Wants = [ "agent-daemon.service" ];
+        };
+
+        Service = {
+          ExecStartPre = "${initializeState}";
+          ExecStart = "${spiritPackage}/bin/spirit-daemon ${daemonConfiguration}/${configurationPath}";
+          Restart = "on-failure";
+          RestartSec = "2s";
+        };
+
+        Install.WantedBy = [ "default.target" ];
+      };
+    };
   };
 }

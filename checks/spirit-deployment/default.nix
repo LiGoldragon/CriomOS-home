@@ -21,6 +21,11 @@ let
       #!${pkgs.runtimeShell}
       set -eu
       request=$1
+      case "$request" in
+        *'LOCAL_LLM_API_KEY'* | *'goldragon.criome/local-llm-api-token'*) exit 64 ;;
+        *'ProviderSeed deepseek https://api.deepseek.com/v1 deepseek-v4-flash (Gopass platform.deepseek.com/api-key)'*) ;;
+        *) exit 65 ;;
+      esac
       output_path=''${request##* }
       output_path=''${output_path%)}
       printf 'fake agent configuration archive\n' > "$output_path"
@@ -48,6 +53,8 @@ let
       case "$request" in
         *'['* | *']'*) exit 64 ;;
         *'ConfigurationWriterGuardianAgent'*) exit 65 ;;
+        *'Some ('*'deepseek'*'deepseek-v4-flash'*'120000 None'*')'*) ;;
+        *) exit 66 ;;
       esac
       output_path=''${request##* }
       output_path=''${output_path%)}
@@ -175,7 +182,8 @@ else
     cat "$agent_exec_start" > agent-daemon-service
     grep -q '/bin/agent-daemon ' agent-daemon-service
     grep -q '/agent.config.rkyv$' agent-daemon-service
-    grep -q 'gopass show -o goldragon.criome/local-llm-api-token' agent-daemon-service
+    ! grep -q 'gopass show' agent-daemon-service
+    ! grep -q 'LOCAL_LLM_API_KEY' agent-daemon-service
     agent_configuration_archive="$(${pkgs.gnused}/bin/sed -n 's|.*agent-daemon \([^ ]*agent.config.rkyv\).*|\1|p' agent-daemon-service)"
     test -n "$agent_configuration_archive"
     test -s "$agent_configuration_archive"
