@@ -44,7 +44,7 @@ let
 
     mkdir -p "$out"
     ${agentPackage}/bin/agent-write-configuration \
-      "(AgentConfigurationWriteRequest ${agentSocketPath} ${agentMetaSocketPath} 384 ${agentDatabasePath} [(ProviderSeed ${providerName} ${providerEndpoint} ${defaultModel} (Gopass ${providerGopassPath}))] $out/${agentConfigurationPath})" \
+      "(AgentConfigurationWriteRequest (${agentSocketPath} ${agentMetaSocketPath} 384 ${agentDatabasePath} [(ProviderSeed (${providerName} ${providerEndpoint} ${defaultModel} (Gopass ${providerGopassPath})))] $out/${agentConfigurationPath}))" \
       > "$out/configuration-written.nota"
     test -s "$out/${agentConfigurationPath}"
   '';
@@ -56,7 +56,7 @@ let
 
     mkdir -p "$out"
     ${spiritPackage}/bin/spirit-write-configuration \
-      "(ConfigurationWriteRequest ${socketPath} (Some ${metaSocketPath}) ${databasePath} None ${guardianAgentConfiguration} $out/${configurationPath})" \
+      "(ConfigurationWriteRequest (${socketPath} (Some ${metaSocketPath}) ${databasePath} None ${guardianAgentConfiguration} $out/${configurationPath}))" \
       > "$out/configuration-written.nota"
     test -s "$out/${configurationPath}"
   '';
