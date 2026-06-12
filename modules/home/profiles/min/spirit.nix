@@ -111,6 +111,11 @@ let
     exec ${spiritPackage}/bin/spirit "$@"
   '';
 
+  metaSpiritCommandLineWrapper = pkgs.writeShellScriptBin "meta-spirit" ''
+    export SPIRIT_META_SOCKET=${lib.escapeShellArg metaSocketPath}
+    exec ${spiritPackage}/bin/meta-spirit "$@"
+  '';
+
   agentCommandLineWrapper = pkgs.writeShellScriptBin "agent" ''
     export AGENT_SOCKET=${lib.escapeShellArg agentSocketPath}
     exec ${agentPackage}/bin/agent "$@"
@@ -134,6 +139,7 @@ in
   config = mkIf (size.min && config.criomosHome.spirit.enable) {
     home.packages = [
       commandLineWrapper
+      metaSpiritCommandLineWrapper
       agentCommandLineWrapper
     ];
 
