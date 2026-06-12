@@ -21,6 +21,10 @@ let
 
   providerName = "deepseek";
   defaultModel = "deepseek-v4-flash";
+  # The guardian is a deliberate judge: a well-trained DeepSeek Pro at high
+  # reasoning effort beats Flash on the discriminating admission cases
+  # (missing-testimony, certainty over-claim) per the flash-vs-pro eval.
+  guardianModel = "deepseek-v4-pro";
   providerEndpoint = "https://api.deepseek.com/v1";
   providerGopassPath = "platform.deepseek.com/api-key";
 
@@ -49,7 +53,7 @@ let
     test -s "$out/${agentConfigurationPath}"
   '';
 
-  guardianAgentConfiguration = "(Some (${agentSocketPath} (Some ${providerName}) (Some ${defaultModel}) 120000 None))";
+  guardianAgentConfiguration = "(Some (${agentSocketPath} (Some ${providerName}) (Some ${guardianModel}) 180000 None))";
 
   daemonConfiguration = pkgs.runCommand "spirit-daemon-configuration" { } ''
     set -eu
