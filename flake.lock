@@ -1736,11 +1736,11 @@
         "version-projection-source": "version-projection-source"
       },
       "locked": {
-        "lastModified": 1781273105,
-        "narHash": "sha256-3JahF7fPk027QfHIUEzLE8c2ySGD8o79FHSJuCKCUHs=",
+        "lastModified": 1781274552,
+        "narHash": "sha256-V/e95BCthpzxhuP8v5P/7+JAFjMXrvFaM8cqfF51mFc=",
         "owner": "LiGoldragon",
         "repo": "spirit",
-        "rev": "a2ba6ee6c1e3bf50fa3a1d979544929e1473191b",
+        "rev": "f140d94d0770f26616fd1e6ac061c99834fceae8",
         "type": "github"
       },
       "original": {
