@@ -150,7 +150,6 @@ lib.mkIf size.medium {
   programs.vscode = {
     enable = true;
     package = codiumPackage;
-    mutableExtensionsDir = false;
 
     profiles.default = {
       extensions = [
