@@ -22,6 +22,8 @@ let
 in
 pkgs.symlinkJoin {
   name = "vscodium-casual";
+  pname = pkgs.vscodium.pname;
+  version = pkgs.vscodium.version;
   paths = [ pkgs.vscodium ];
   nativeBuildInputs = [ pkgs.makeWrapper ];
 
@@ -33,4 +35,5 @@ pkgs.symlinkJoin {
   passthru = {
     inherit disabledLanguageFeatureExtensions;
   };
+  meta = pkgs.vscodium.meta;
 }
