@@ -113,6 +113,7 @@ let
     # Codium windows.
     "nix.enableLanguageServer" = false;
     "nix.serverPath" = null;
+    "rust-analyzer.server.path" = null;
 
     # Terminal
     "terminal.integrated.defaultProfile.linux" = "zsh";

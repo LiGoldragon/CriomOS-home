@@ -8,6 +8,10 @@ pkgs.runCommand "vscodium-casual-check" { } ''
 
   grep -F -- "--disable-extension rust-lang.rust-analyzer" "$wrapper"
   grep -F -- "--disable-extension vscode.typescript-language-features" "$wrapper"
+  grep -F -- "--disable-extension vscode.css-language-features" "$wrapper"
+  grep -F -- "--disable-extension vscode.html-language-features" "$wrapper"
+  grep -F -- "--disable-extension vscode.json-language-features" "$wrapper"
+  grep -F -- "--disable-extension vscode.php-language-features" "$wrapper"
 
   touch "$out"
 ''

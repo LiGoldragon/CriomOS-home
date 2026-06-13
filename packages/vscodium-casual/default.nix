@@ -11,6 +11,14 @@ let
     # Built into VSCodium. The Markdown preview remains available; this
     # is only the JavaScript/TypeScript language-service extension.
     "vscode.typescript-language-features"
+
+    # Other built-in language-feature extensions that can start helper
+    # servers. Markdown stays enabled because this profile keeps Codium
+    # specifically for markdown preview.
+    "vscode.css-language-features"
+    "vscode.html-language-features"
+    "vscode.json-language-features"
+    "vscode.php-language-features"
   ];
 
   disableLanguageFeatureFlags = lib.escapeShellArgs (
