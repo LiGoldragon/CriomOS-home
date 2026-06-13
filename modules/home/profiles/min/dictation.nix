@@ -52,190 +52,7 @@ let
       DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_RUNTIME_DIR \
       HYPRLAND_INSTANCE_SIGNATURE NIRI_SOCKET SWAYSOCK XKB_DEFAULT_LAYOUT XKB_DEFAULT_VARIANT
 
-    ${pkgs.systemd}/bin/systemctl --user restart whisrs.service
-    exec ${pkgs.systemd}/bin/systemctl --user restart dji-keepalive.service
-  '';
-
-  # DJI keepalive keeps the microphone hot by holding an audio stream open.
-  # Bluetooth connection recovery is allowed only before PipeWire exposes the
-  # card. Once the card exists, repair profile churn through PipeWire profile
-  # reassertion; do not repeatedly call BlueZ profile-specific connect methods
-  # as a steady-state repair path.
-  djiKeepalive = pkgs.writeShellScript "criomos-dji-keepalive" ''
-    set -eu
-
-    bluetooth_address="04:A8:5A:0B:EB:B0"
-    bluetooth_identifier="04_A8_5A_0B_EB_B0"
-    card_name="bluez_card.$bluetooth_identifier"
-    device_path="/org/bluez/hci0/dev_04_A8_5A_0B_EB_B0"
-    public_source_name="bluez_input.$bluetooth_address"
-    keepalive_sink_name="dji_mic_keepalive"
-    headset_profile="headset-head-unit"
-
-    device_property() {
-      ${pkgs.systemd}/bin/busctl get-property org.bluez "$device_path" org.bluez.Device1 "$1" 2>/dev/null
-    }
-
-    property_is_true() {
-      test "$(device_property "$1" || true)" = "b true"
-    }
-
-    bluez_call() {
-      ${pkgs.coreutils}/bin/timeout 8 ${pkgs.systemd}/bin/busctl call org.bluez "$device_path" org.bluez.Device1 "$@"
-    }
-
-    active_profile() {
-      ${pkgs.pulseaudio}/bin/pactl list cards \
-        | ${pkgs.gawk}/bin/awk -v card="$card_name" '
-            $1 == "Name:" && $2 == card { in_card = 1; next }
-            in_card && $1 == "Name:" { in_card = 0 }
-            in_card && $1 == "Active" && $2 == "Profile:" { print $3; exit }
-          '
-    }
-
-    pactl_name_exists() {
-      list_kind="$1"
-      expected_name="$2"
-      ${pkgs.pulseaudio}/bin/pactl list short "$list_kind" \
-        | ${pkgs.gawk}/bin/awk -v name="$expected_name" '$2 == name { found = 1 } END { exit found ? 0 : 1 }'
-    }
-
-    wait_for_bluez_connected() {
-      for _ in $(${pkgs.coreutils}/bin/seq 1 12); do
-        if property_is_true Connected; then
-          return 0
-        fi
-        ${pkgs.coreutils}/bin/sleep 1
-      done
-      echo "dji-keepalive: timed out waiting for BlueZ Connected" >&2
-      return 1
-    }
-
-    wait_for_pactl_name() {
-      list_kind="$1"
-      expected_name="$2"
-      for _ in $(${pkgs.coreutils}/bin/seq 1 12); do
-        if pactl_name_exists "$list_kind" "$expected_name"; then
-          return 0
-        fi
-        ${pkgs.coreutils}/bin/sleep 1
-      done
-      echo "dji-keepalive: timed out waiting for $list_kind $expected_name" >&2
-      return 1
-    }
-
-    ensure_keepalive_sink() {
-      if pactl_name_exists sinks "$keepalive_sink_name"; then
-        module_identifier=""
-      else
-        module_identifier="$(
-          ${pkgs.pulseaudio}/bin/pactl load-module module-null-sink \
-            "sink_name=$keepalive_sink_name" \
-            "sink_properties=device.description=DJI-Mic-Keepalive"
-        )"
-      fi
-      export module_identifier
-      wait_for_pactl_name sinks "$keepalive_sink_name"
-    }
-
-    reassert_pipewire_profile() {
-      if pactl_name_exists cards "$card_name"; then
-        ${pkgs.pulseaudio}/bin/pactl set-card-profile "$card_name" "$headset_profile" || true
-      fi
-      if pactl_name_exists sources "$public_source_name"; then
-        ${pkgs.pulseaudio}/bin/pactl set-default-source "$public_source_name" || true
-      fi
-    }
-
-    unload_keepalive_sink() {
-      if test -n "''${module_identifier:-}"; then
-        ${pkgs.pulseaudio}/bin/pactl unload-module "$module_identifier" >/dev/null 2>&1 || true
-      fi
-    }
-
-    prepare_profile() {
-      if ! property_is_true Connected; then
-        bluez_call Connect || true
-      fi
-      wait_for_bluez_connected
-      wait_for_pactl_name cards "$card_name"
-
-      reassert_pipewire_profile
-      for _ in $(${pkgs.coreutils}/bin/seq 1 12); do
-        if test "$(active_profile)" = "$headset_profile"; then
-          wait_for_pactl_name sources "$public_source_name"
-          ${pkgs.pulseaudio}/bin/pactl set-default-source "$public_source_name" || true
-          return 0
-        fi
-        reassert_pipewire_profile
-        ${pkgs.coreutils}/bin/sleep 1
-      done
-
-      echo "dji-keepalive: $card_name did not enter $headset_profile" >&2
-      return 1
-    }
-
-    run_keepalive() {
-      prepare_profile
-      ensure_keepalive_sink
-
-      ${pkgs.pipewire}/bin/pw-loopback \
-        --capture "$public_source_name" \
-        --playback "$keepalive_sink_name" \
-        --capture-props='node.name="dji-mic-keepalive-capture" media.name="DJI Mic Keepalive Capture" application.name="DJI Mic Keepalive"' \
-        --playback-props='node.name="dji-mic-keepalive-playback" media.name="DJI Mic Keepalive Sink Feed" application.name="DJI Mic Keepalive"' &
-      child="$!"
-      retry_delay_seconds=3
-      stop_child() {
-        kill "$child" 2>/dev/null || true
-        unload_keepalive_sink
-      }
-      exit_after_signal() {
-        stop_child
-        exit 143
-      }
-      trap stop_child EXIT
-      trap exit_after_signal INT TERM
-
-      while kill -0 "$child" 2>/dev/null; do
-        if ! property_is_true Connected; then
-          echo "dji-keepalive: BlueZ device state dropped" >&2
-          stop_child
-          wait "$child" 2>/dev/null || true
-          trap - EXIT INT TERM
-          return 1
-        fi
-        if ! test "$(active_profile)" = "$headset_profile"; then
-          echo "dji-keepalive: $card_name left $headset_profile; reasserting PipeWire profile without reconnecting Bluetooth" >&2
-          reassert_pipewire_profile
-        fi
-        if ! pactl_name_exists sources "$public_source_name" || ! pactl_name_exists sinks "$keepalive_sink_name"; then
-          echo "dji-keepalive: PipeWire source or keepalive sink disappeared" >&2
-          stop_child
-          wait "$child" 2>/dev/null || true
-          trap - EXIT INT TERM
-          return 1
-        fi
-        ${pkgs.coreutils}/bin/sleep 15
-      done
-
-      set +e
-      wait "$child"
-      result="$?"
-      set -e
-      unload_keepalive_sink
-      trap - EXIT INT TERM
-      return "$result"
-    }
-
-    retry_delay_seconds=3
-    while true; do
-      run_keepalive || true
-      ${pkgs.coreutils}/bin/sleep "$retry_delay_seconds"
-      if test "$retry_delay_seconds" -lt 30; then
-        retry_delay_seconds=$((retry_delay_seconds + 3))
-      fi
-    done
+    exec ${pkgs.systemd}/bin/systemctl --user restart whisrs.service
   '';
 in
 mkIf (size.min && behavesAs.edge) {
@@ -325,34 +142,93 @@ mkIf (size.min && behavesAs.edge) {
     Install.WantedBy = [ "network-online.target" ];
   };
 
-  systemd.user.services.dji-keepalive = {
-    Unit = {
-      Description = "DJI Mic 2 Bluetooth capture keepalive";
-      After = [
-        "pipewire.service"
-        "wireplumber.service"
-      ];
-      Wants = [
-        "pipewire.service"
-        "wireplumber.service"
-      ];
-      PartOf = [ "graphical-session.target" ];
-    };
+  # The DJI receiver is a capture device, not general Bluetooth headphones.
+  # Keep it in HFP/MSBC by making WirePlumber's own policy choose the headset
+  # profile. Keep the capture path warm with a declarative PipeWire loopback
+  # stream. Do not run an external polling keepalive that notices profile loss
+  # after the fact.
+  xdg.configFile."pipewire/pipewire.conf.d/60-dji-mic-hot-capture.conf".text = ''
+    context.objects = [
+      {
+        factory = adapter
+        args = {
+          factory.name = support.null-audio-sink
+          media.class = "Audio/Sink"
+          node.name = "dji_mic_hot_sink"
+          node.description = "DJI Mic Hot Sink"
+          object.linger = true
+          monitor.channel-volumes = true
+          audio.position = [ MONO ]
+        }
+      }
+    ]
 
-    Install.WantedBy = [ "graphical-session.target" ];
+    context.modules = [
+      {
+        name = libpipewire-module-loopback
+        args = {
+          node.description = "DJI Mic Hot Capture"
+          capture.props = {
+            node.name = "dji_mic_hot_capture"
+            target.object = "bluez_input.04:A8:5A:0B:EB:B0"
+            audio.position = [ MONO ]
+            stream.dont-remix = true
+            node.passive = false
+          }
+          playback.props = {
+            node.name = "dji_mic_hot_playback"
+            target.object = "dji_mic_hot_sink"
+            audio.position = [ MONO ]
+            stream.dont-remix = true
+            node.passive = false
+          }
+        }
+      }
+    ]
+  '';
 
-    Service = {
-      ExecStart = "${djiKeepalive}";
-      Restart = "always";
-      RestartSec = 2;
-    };
-  };
+  xdg.configFile."wireplumber/wireplumber.conf.d/60-dji-mic-policy.conf".text = ''
+    wireplumber.settings = {
+      bluetooth.autoswitch-to-headset-profile = false
+    }
 
-  home.activation.restartDjiKeepalive = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
-    if ${pkgs.systemd}/bin/systemctl --user --quiet is-active graphical-session.target; then
-      run ${pkgs.systemd}/bin/systemctl --user daemon-reload
-      run ${pkgs.systemd}/bin/systemctl --user restart dji-keepalive.service || true
-    fi
+    monitor.bluez.rules = [
+      {
+        matches = [
+          {
+            device.name = "bluez_card.04_A8_5A_0B_EB_B0"
+          }
+        ]
+        actions = {
+          update-props = {
+            device.profile = "headset-head-unit"
+            session.dont-restore-off-profile = true
+            bluez5.auto-connect = [ hfp_hf hsp_hs ]
+            bluez5.hw-volume = [ hfp_hf hsp_hs ]
+          }
+        }
+      }
+      {
+        matches = [
+          {
+            node.name = "bluez_input.04_A8_5A_0B_EB_B0.0"
+          }
+          {
+            node.name = "bluez_output.04_A8_5A_0B_EB_B0.1"
+          }
+          {
+            node.name = "bluez_input.04:A8:5A:0B:EB:B0"
+          }
+        ]
+        actions = {
+          update-props = {
+            node.pause-on-idle = false
+            session.suspend-timeout-seconds = 0
+            bluez5.media-source-role = "input"
+          }
+        }
+      }
+    ]
   '';
 
   programs.niri.settings = {

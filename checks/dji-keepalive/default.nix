@@ -20,21 +20,56 @@ let
 
   moduleContent = if moduleResult ? content then moduleResult.content else moduleResult;
 
-  service = moduleContent.systemd.user.services.dji-keepalive;
-  serviceScript = service.Service.ExecStart;
+  services = moduleContent.systemd.user.services or { };
+  pipewirePath = "pipewire/pipewire.conf.d/60-dji-mic-hot-capture.conf";
+  pipewirePolicy = moduleContent.xdg.configFile.${pipewirePath}.text;
+  wireplumberPath = "wireplumber/wireplumber.conf.d/60-dji-mic-policy.conf";
+  wireplumberPolicy = moduleContent.xdg.configFile.${wireplumberPath}.text;
 
   assertions = [
     {
-      condition = service.Service.Restart == "always";
-      message = "dji-keepalive must restart after unexpected exits";
+      condition = !(builtins.hasAttr "dji-keepalive" services);
+      message = "DJI mic profile stability must be owned by WirePlumber policy, not a polling keepalive service";
     }
     {
-      condition = builtins.elem "graphical-session.target" service.Unit.PartOf;
-      message = "dji-keepalive must stop with the graphical session";
+      condition = builtins.hasAttr pipewirePath moduleContent.xdg.configFile;
+      message = "DJI mic must install a PipeWire graph configuration fragment";
     }
     {
-      condition = builtins.elem "graphical-session.target" service.Install.WantedBy;
-      message = "dji-keepalive must start with the graphical session";
+      condition = builtins.hasAttr wireplumberPath moduleContent.xdg.configFile;
+      message = "DJI mic policy must install a WirePlumber configuration fragment";
+    }
+    {
+      condition = lib.hasInfix "libpipewire-module-loopback" pipewirePolicy;
+      message = "DJI mic hot path must be a declarative PipeWire loopback module";
+    }
+    {
+      condition = lib.hasInfix ''target.object = "bluez_input.04:A8:5A:0B:EB:B0"'' pipewirePolicy;
+      message = "DJI mic loopback must capture from the public DJI source";
+    }
+    {
+      condition = lib.hasInfix ''target.object = "dji_mic_hot_sink"'' pipewirePolicy;
+      message = "DJI mic loopback must feed the dedicated hot sink";
+    }
+    {
+      condition = lib.hasInfix "bluetooth.autoswitch-to-headset-profile = false" wireplumberPolicy;
+      message = "DJI mic policy must disable WirePlumber's restore-to-off Bluetooth autoswitch path";
+    }
+    {
+      condition = lib.hasInfix ''device.name = "bluez_card.04_A8_5A_0B_EB_B0"'' wireplumberPolicy;
+      message = "DJI mic policy must match the DJI BlueZ card";
+    }
+    {
+      condition = lib.hasInfix ''device.profile = "headset-head-unit"'' wireplumberPolicy;
+      message = "DJI mic policy must pin the card to the headset/MSBC profile";
+    }
+    {
+      condition = lib.hasInfix "node.pause-on-idle = false" wireplumberPolicy;
+      message = "DJI mic nodes must not pause on idle";
+    }
+    {
+      condition = lib.hasInfix "session.suspend-timeout-seconds = 0" wireplumberPolicy;
+      message = "DJI mic nodes must disable session idle suspension";
     }
   ];
 
@@ -43,22 +78,10 @@ in
 if failures != [ ] then
   throw (lib.concatMapStringsSep "\n" (assertion: assertion.message) failures)
 else
-  pkgs.runCommand "dji-keepalive-check" { } ''
-    ${pkgs.gnugrep}/bin/grep -q 'public_source_name="bluez_input.$bluetooth_address"' ${serviceScript}
-    ${pkgs.gnugrep}/bin/grep -q -- '--capture "$public_source_name"' ${serviceScript}
-    ${pkgs.gnugrep}/bin/grep -q 'module-null-sink' ${serviceScript}
-    ${pkgs.gnugrep}/bin/grep -q 'reasserting PipeWire profile without reconnecting Bluetooth' ${serviceScript}
-    if ${pkgs.gnugrep}/bin/grep -q 'ConnectProfile' ${serviceScript}; then
-      echo 'dji-keepalive must not hammer BlueZ ConnectProfile while PipeWire can set the headset profile' >&2
+  pkgs.runCommand "dji-wireplumber-policy-check" { } ''
+    if ${pkgs.gnugrep}/bin/grep -R -q 'dji-keepalive' ${../../modules/home/profiles/min/dictation.nix}; then
+      echo 'dictation module must not contain the removed polling dji-keepalive service' >&2
       exit 1
     fi
-    if ${pkgs.gnugrep}/bin/grep -F -q 'left $headset_profile; reasserting profile" >&2' ${serviceScript}; then
-      echo 'dji-keepalive must repair Bluetooth headset profile in-place instead of dropping the hot loopback stream' >&2
-      exit 1
-    fi
-    if ${pkgs.gnugrep}/bin/grep -q 'ServicesResolved' ${serviceScript}; then
-      echo 'dji-keepalive must not block on BlueZ ServicesResolved once PipeWire exposes the source' >&2
-      exit 1
-    fi
-    printf 'dji keepalive checked\n' > "$out"
+    printf 'dji wireplumber policy checked\n' > "$out"
   ''
