@@ -40,9 +40,6 @@ let
   agentDatabasePath = "${agentStateDirectory}/agent.sema";
   agentConfigurationPath = "agent.config.rkyv";
 
-  legacyStateDirectory = "${config.home.homeDirectory}/.local/state/persona-spirit";
-  legacyCurrentDatabasePath = "${legacyStateDirectory}/v0.5.2/persona-spirit.redb";
-
   agentDaemonConfiguration = pkgs.runCommand "agent-daemon-configuration" { } ''
     set -eu
 
@@ -66,11 +63,7 @@ let
   '';
 
   migrateState = ''
-    if [ ! -e "$database_path" ] && [ -e "$legacy_database_path" ]; then
-      ${spiritPackage}/bin/spirit-migrate-production \
-        "($legacy_database_path $database_path)"
-    fi
-    ${spiritPackage}/bin/spirit-upgrade-store \
+    ${spiritPackage}/bin/spirit-migrate-store \
       "($database_path)"
   '';
 
@@ -100,7 +93,6 @@ let
 
     state_directory=${lib.escapeShellArg stateDirectory}
     database_path=${lib.escapeShellArg databasePath}
-    legacy_database_path=${lib.escapeShellArg legacyCurrentDatabasePath}
 
     ${pkgs.coreutils}/bin/mkdir -p "$state_directory"
     ${pkgs.coreutils}/bin/rm -f \

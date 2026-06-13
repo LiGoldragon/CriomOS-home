@@ -53,7 +53,7 @@ let
       case "$request" in
         *'['* | *']'*) exit 64 ;;
         *'ConfigurationWriterGuardianAgent'*) exit 65 ;;
-        *'Some ('*'deepseek'*'deepseek-v4-flash'*'120000 None'*')'*) ;;
+        *'Some ('*'deepseek'*'deepseek-v4-pro'*'180000 None'*')'*) ;;
         *) exit 66 ;;
       esac
       output_path=''${request##* }
@@ -61,19 +61,7 @@ let
       printf 'fake configuration archive\n' > "$output_path"
       printf '(ConfigurationWritten %s)\n' "$output_path"
       EOF
-      cat > "$out/bin/spirit-migrate-production" <<'EOF'
-      #!${pkgs.runtimeShell}
-      set -eu
-      request=$1
-      case "$request" in
-        *'['* | *']'*) exit 64 ;;
-      esac
-      target_path=''${request##* }
-      target_path=''${target_path%)}
-      printf 'fake migrated database\n' > "$target_path"
-      printf '(Completed 1)\n'
-      EOF
-      cat > "$out/bin/spirit-upgrade-store" <<'EOF'
+      cat > "$out/bin/spirit-migrate-store" <<'EOF'
       #!${pkgs.runtimeShell}
       set -eu
       request=$1
@@ -196,12 +184,10 @@ else
     ! grep -q 'persona-spirit' exec-start
 
     test -s "$(printf '%s\n' "$exec_start" | ${pkgs.gnused}/bin/sed 's|.* ||')"
-    grep -q 'spirit-migrate-production' "$exec_start_pre"
-    grep -q 'spirit-upgrade-store' "$exec_start_pre"
-    ! grep -q 'ProductionMigrationRequest' "$exec_start_pre"
-    grep -q '(\$legacy_database_path \$database_path)' "$exec_start_pre"
+    grep -q 'spirit-migrate-store' "$exec_start_pre"
+    ! grep -q 'spirit-migrate-production' "$exec_start_pre"
+    ! grep -q 'spirit-upgrade-store' "$exec_start_pre"
     grep -q '(\$database_path)' "$exec_start_pre"
-    grep -q '/persona-spirit/v0.5.2/persona-spirit.redb' "$exec_start_pre"
     grep -q '/spirit/spirit.sema' "$exec_start_pre"
 
     grep -q 'spirit-activation-state' activation
@@ -210,6 +196,7 @@ else
     test -n "$activation_state"
     grep -q 'mkdir -p' "$activation_state"
     grep -q '/agent' "$activation_state"
+    ! grep -q 'spirit-migrate-store' "$activation_state"
     ! grep -q 'spirit-migrate-production' "$activation_state"
     ! grep -q 'spirit-upgrade-store' "$activation_state"
     ! grep -q 'rm -f' "$activation_state"
