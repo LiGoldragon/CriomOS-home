@@ -9,6 +9,7 @@
 }:
 let
   inherit (user) size;
+  codiumPackage = pkgs.callPackage ../../../../packages/vscodium-casual { };
 
   # Flake inputs of `type = "file"` always materialize as a store path
   # named `source` (no extension). nixpkgs' `unpack-vsix-setup-hook`
@@ -107,10 +108,11 @@ let
     # commit+push from a mentci-rooted Codium window.
     "direnv.restart.automatic" = false;
 
-    # Nix — jnoortheen.nix-ide extension. Pin to the Nix-provided `nil`
-    # binary so PATH drift never silently breaks the language server.
-    "nix.enableLanguageServer" = true;
-    "nix.serverPath" = "${pkgs.nil}/bin/nil";
+    # VSCodium is the casual glossing / markdown-preview editor. Keep
+    # syntax-oriented extensions, but do not start language servers from
+    # Codium windows.
+    "nix.enableLanguageServer" = false;
+    "nix.serverPath" = null;
 
     # Terminal
     "terminal.integrated.defaultProfile.linux" = "zsh";
@@ -145,22 +147,10 @@ let
 in
 lib.mkIf size.medium {
 
-  # LSP server binaries Codium spawns. Rust language tooling comes from
-  # the canonical profile Rust toolchain installed by the min profile.
-  #
-  # `nil` is already declared in `med/emacs.nix` `home.packages` and
-  # de-duplication is fine: home-manager merges with `mkMerge` semantics
-  # so a duplicate package landing once via this module and once via
-  # emacs.nix yields a single store path. Repeating here so the codium
-  # module stands alone (a user with `preferredEditor = "Codium"` but
-  # the Emacs profile not enabled would otherwise miss `nil`).
-  home.packages = with pkgs; [
-    nil
-  ];
-
   programs.vscode = {
     enable = true;
-    package = pkgs.vscodium;
+    package = codiumPackage;
+    mutableExtensionsDir = false;
 
     profiles.default = {
       extensions = [

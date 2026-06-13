@@ -7,6 +7,7 @@
 let
   inherit (lib) mkIf;
   inherit (user) size;
+  codiumPackage = pkgs.callPackage ../../../../packages/vscodium-casual { };
 
   codiumOpen = pkgs.writeShellScript "criomos-codium-open" ''
     set -euo pipefail
@@ -72,13 +73,13 @@ let
     done
 
     if [ "''${#targets[@]}" -eq 0 ]; then
-      exec ${pkgs.vscodium}/bin/codium
+      exec ${codiumPackage}/bin/codium
     fi
 
     if [ "$hasPosition" -eq 1 ]; then
-      exec ${pkgs.vscodium}/bin/codium --goto "''${targets[@]}"
+      exec ${codiumPackage}/bin/codium --goto "''${targets[@]}"
     else
-      exec ${pkgs.vscodium}/bin/codium "''${targets[@]}"
+      exec ${codiumPackage}/bin/codium "''${targets[@]}"
     fi
   '';
 in
