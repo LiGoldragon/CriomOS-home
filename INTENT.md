@@ -38,6 +38,12 @@ and services remain in CriomOS.
   model-cache stacks stay out of the normal medium profile until their
   AI-node or larger-profile shape is settled.
 
+## Dictation
+
+- Dictation device stability is push-oriented: Home should use declarative
+  PipeWire/WirePlumber policy and stable service bindings rather than polling
+  loops that repeatedly inspect or repair the audio graph after the fact.
+
 ## Spirit deployment
 
 - CriomOS-home builds Spirit's binary daemon startup archive during Nix

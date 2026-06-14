@@ -90,7 +90,11 @@ mkIf (size.min && behavesAs.edge) {
   systemd.user.services.whisrs = {
     Unit = {
       Description = "whisrs dictation daemon";
-      After = [ "graphical-session.target" ];
+      After = [
+        "graphical-session.target"
+        "pipewire.service"
+        "pipewire-pulse.service"
+      ];
       PartOf = [ "graphical-session.target" ];
     };
 
@@ -98,6 +102,9 @@ mkIf (size.min && behavesAs.edge) {
 
     Service = {
       ExecStart = "${whisrsServe}";
+      Environment = [
+        "PIPEWIRE_NODE=dji_mic_hot_sink.monitor"
+      ];
       Restart = "on-failure";
       RestartSec = 2;
       PassEnvironment = [
@@ -170,7 +177,7 @@ mkIf (size.min && behavesAs.edge) {
           node.description = "DJI Mic Hot Capture"
           capture.props = {
             node.name = "dji_mic_hot_capture"
-            target.object = "bluez_input.04:A8:5A:0B:EB:B0"
+            target.object = "bluez_input.04_A8_5A_0B_EB_B0.0"
             audio.position = [ MONO ]
             stream.dont-remix = true
             node.passive = false

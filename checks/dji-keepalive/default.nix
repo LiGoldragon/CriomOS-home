@@ -21,6 +21,7 @@ let
   moduleContent = if moduleResult ? content then moduleResult.content else moduleResult;
 
   services = moduleContent.systemd.user.services or { };
+  whisrsService = services.whisrs;
   pipewirePath = "pipewire/pipewire.conf.d/60-dji-mic-hot-capture.conf";
   pipewirePolicy = moduleContent.xdg.configFile.${pipewirePath}.text;
   wireplumberPath = "wireplumber/wireplumber.conf.d/60-dji-mic-policy.conf";
@@ -44,12 +45,20 @@ let
       message = "DJI mic hot path must be a declarative PipeWire loopback module";
     }
     {
-      condition = lib.hasInfix ''target.object = "bluez_input.04:A8:5A:0B:EB:B0"'' pipewirePolicy;
-      message = "DJI mic loopback must capture from the public DJI source";
+      condition = lib.hasInfix ''target.object = "bluez_input.04_A8_5A_0B_EB_B0.0"'' pipewirePolicy;
+      message = "DJI mic loopback must capture from the internal DJI HFP source";
     }
     {
       condition = lib.hasInfix ''target.object = "dji_mic_hot_sink"'' pipewirePolicy;
       message = "DJI mic loopback must feed the dedicated hot sink";
+    }
+    {
+      condition = lib.elem "PIPEWIRE_NODE=dji_mic_hot_sink.monitor" whisrsService.Service.Environment;
+      message = "Whisrs must capture from the DJI hot virtual source instead of the moving default source";
+    }
+    {
+      condition = lib.elem "pipewire.service" whisrsService.Unit.After;
+      message = "Whisrs must start after PipeWire so the DJI hot virtual source can exist";
     }
     {
       condition = lib.hasInfix "bluetooth.autoswitch-to-headset-profile = false" wireplumberPolicy;
