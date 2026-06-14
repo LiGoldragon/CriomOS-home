@@ -33,6 +33,21 @@ let
       ${pkgs.coreutils}/bin/install -m 600 /dev/null "$XDG_DATA_HOME/whisrs/history.jsonl"
     fi
 
+    DJI_HOT_SOURCE_SERIAL="$(${pkgs.pulseaudio}/bin/pactl list sources | ${pkgs.gawk}/bin/awk '
+      /^Source #/ { in_source = 0 }
+      /^[[:space:]]*Name: dji_mic_hot_sink.monitor$/ { in_source = 1 }
+      in_source && /^[[:space:]]*object.serial = / {
+        gsub(/"/, "", $3)
+        print $3
+        exit
+      }
+    ')"
+    if [ -z "$DJI_HOT_SOURCE_SERIAL" ]; then
+      echo "whisrs-daemon: PipeWire source dji_mic_hot_sink.monitor is not available" >&2
+      exit 1
+    fi
+
+    export PIPEWIRE_NODE="$DJI_HOT_SOURCE_SERIAL"
     export WHISRS_OPENAI_API_KEY
     export RUST_LOG="whisrs=info,warn"
 
@@ -102,9 +117,6 @@ mkIf (size.min && behavesAs.edge) {
 
     Service = {
       ExecStart = "${whisrsServe}";
-      Environment = [
-        "PIPEWIRE_NODE=dji_mic_hot_sink.monitor"
-      ];
       Restart = "on-failure";
       RestartSec = 2;
       PassEnvironment = [

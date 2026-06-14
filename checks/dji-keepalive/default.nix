@@ -22,6 +22,7 @@ let
 
   services = moduleContent.systemd.user.services or { };
   whisrsService = services.whisrs;
+  dictationModuleSource = builtins.readFile ../../modules/home/profiles/min/dictation.nix;
   pipewirePath = "pipewire/pipewire.conf.d/60-dji-mic-hot-capture.conf";
   pipewirePolicy = moduleContent.xdg.configFile.${pipewirePath}.text;
   wireplumberPath = "wireplumber/wireplumber.conf.d/60-dji-mic-policy.conf";
@@ -53,8 +54,16 @@ let
       message = "DJI mic loopback must feed the dedicated hot sink";
     }
     {
-      condition = lib.elem "PIPEWIRE_NODE=dji_mic_hot_sink.monitor" whisrsService.Service.Environment;
-      message = "Whisrs must capture from the DJI hot virtual source instead of the moving default source";
+      condition =
+        lib.hasInfix "Name: dji_mic_hot_sink.monitor" dictationModuleSource
+        && lib.hasInfix "object.serial" dictationModuleSource
+        && lib.hasInfix ''export PIPEWIRE_NODE="$DJI_HOT_SOURCE_SERIAL"'' dictationModuleSource;
+      message = "Whisrs must resolve the DJI hot virtual source to the PipeWire object serial used by ALSA capture";
+    }
+    {
+      condition =
+        !(lib.elem "PIPEWIRE_NODE=dji_mic_hot_sink.monitor" (whisrsService.Service.Environment or [ ]));
+      message = "Whisrs must not bind ALSA capture to the Pulse monitor name, which PipeWire ignores for this backend";
     }
     {
       condition = lib.elem "pipewire.service" whisrsService.Unit.After;
