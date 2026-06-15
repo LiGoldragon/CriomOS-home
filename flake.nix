@@ -128,7 +128,7 @@
 
     # Spirit — schema-derived psyche record command line and user-session daemon.
     # Consumed in modules/home/profiles/min/spirit.nix.
-    spirit.url = "github:LiGoldragon/spirit?ref=structural-forms-integration";
+    spirit.url = "github:LiGoldragon/spirit";
     spirit.inputs.nixpkgs.follows = "nixpkgs";
 
     # Agent — local OpenAI-compatible provider daemon used by Spirit's guardian.
