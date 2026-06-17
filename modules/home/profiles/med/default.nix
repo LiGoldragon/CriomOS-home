@@ -39,6 +39,12 @@ let
     ln -s ${tokenizedGhCli}/bin/gh $out/bin/
   '';
 
+  videoPython = pkgs.python3.withPackages (pythonPackages: [
+    pythonPackages.faster-whisper
+    pythonPackages.openai-whisper
+    pythonPackages.scenedetect
+  ]);
+
   lispDevPackages = with pkgs; [
     sbcl
   ];
@@ -114,9 +120,7 @@ lib.mkIf size.medium {
         mkvtoolnix
         piper-tts
         espeak-ng
-        python3Packages.scenedetect
-        python3Packages.faster-whisper
-        python3Packages.openai-whisper
+        videoPython
         nodejs
         pnpm
         #== go
