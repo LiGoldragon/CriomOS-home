@@ -311,6 +311,7 @@
         in
         checks
         // {
+          chroma-nota-config = checkPkgs.callPackage ./checks/chroma-nota-config { inherit inputs; };
           whisrs-dictation-bindings = checkPkgs.callPackage ./checks/whisrs-dictation-bindings {
             inherit inputs;
           };

@@ -23,22 +23,22 @@ let
 
   mkChromaPalette = name: colors: ''
     (${name}
-      (Base00 "${colors.base00}")
-      (Base01 "${colors.base01}")
-      (Base02 "${colors.base02}")
-      (Base03 "${colors.base03}")
-      (Base04 "${colors.base04}")
-      (Base05 "${colors.base05}")
-      (Base06 "${colors.base06}")
-      (Base07 "${colors.base07}")
-      (Base08 "${colors.base08}")
-      (Base09 "${colors.base09}")
-      (Base0A "${colors.base0A}")
-      (Base0B "${colors.base0B}")
-      (Base0C "${colors.base0C}")
-      (Base0D "${colors.base0D}")
-      (Base0E "${colors.base0E}")
-      (Base0F "${colors.base0F}"))
+      (Base00 ${colors.base00})
+      (Base01 ${colors.base01})
+      (Base02 ${colors.base02})
+      (Base03 ${colors.base03})
+      (Base04 ${colors.base04})
+      (Base05 ${colors.base05})
+      (Base06 ${colors.base06})
+      (Base07 ${colors.base07})
+      (Base08 ${colors.base08})
+      (Base09 ${colors.base09})
+      (Base0A ${colors.base0A})
+      (Base0B ${colors.base0B})
+      (Base0C ${colors.base0C})
+      (Base0D ${colors.base0D})
+      (Base0E ${colors.base0E})
+      (Base0F ${colors.base0F}))
   '';
 
   darkPalette = mkChromaPalette "Dark" dark;
@@ -112,12 +112,12 @@ let
     ${darkPalette}
     ${lightPalette})
         (Adapters
-          (Dconf "${pkgs.dconf}/bin/dconf")
-          (Emacsclient "${pkgs.emacs-pgtk}/bin/emacsclient"))
+          (Dconf ${pkgs.dconf}/bin/dconf)
+          (Emacsclient ${pkgs.emacs-pgtk}/bin/emacsclient))
         (FontPointSize ${toString fontPt})
         (GhosttyConfigTemplates
-          (Dark "${ghosttyDarkConfig}")
-          (Light "${ghosttyLightConfig}"))
+          (Dark ${ghosttyDarkConfig})
+          (Light ${ghosttyLightConfig}))
         (Schedule
           (Waypoint (Sunrise ${lightThemeSwitchTiming}) Light)
           (Waypoint (Sunset ${darkThemeSwitchTiming}) Dark)
