@@ -151,7 +151,7 @@ mkIf (size.min && behavesAs.edge) {
       {
         matches = [
           {
-            node.name = "bluez_input.04:A8:5A:0B:EB:B0"
+            node.name = "bluez_input.04_A8_5A_0B_EB_B0.0"
           }
         ]
         actions = {

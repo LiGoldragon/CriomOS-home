@@ -47,8 +47,8 @@ let
       message = "Dictation must not prefer DJI through a Whisrs-specific wrapper";
     }
     {
-      condition = lib.hasInfix "bluez_input.04:A8:5A:0B:EB:B0" dictationModuleSource;
-      message = "The DJI preference must target the raw DJI Bluetooth source";
+      condition = lib.hasInfix "bluez_input.04_A8_5A_0B_EB_B0.0" dictationModuleSource;
+      message = "The DJI preference must target the BlueZ monitor source";
     }
     {
       condition = lib.hasInfix "priority.session = 3000" dictationModuleSource;
