@@ -43,6 +43,11 @@ and services remain in CriomOS.
 - Dictation device stability is push-oriented: Home should use declarative
   PipeWire/WirePlumber policy and stable service bindings rather than polling
   loops that repeatedly inspect or repair the audio graph after the fact.
+- Dictation microphone support should stay small and subtractive: for the DJI
+  and Whisrs path, prefer reducing or deleting brittle PipeWire/WirePlumber
+  special handling over adding more keepalive code. The psyche said, *I don't
+  want this to blow up into a huge pile of code. So let's try to reduce the
+  amount of code instead of keeping on adding.*
 
 ## Spirit deployment
 
