@@ -33,21 +33,6 @@ let
       ${pkgs.coreutils}/bin/install -m 600 /dev/null "$XDG_DATA_HOME/whisrs/history.jsonl"
     fi
 
-    DJI_HOT_SOURCE_SERIAL="$(${pkgs.pulseaudio}/bin/pactl list sources | ${pkgs.gawk}/bin/awk '
-      /^Source #/ { in_source = 0 }
-      /^[[:space:]]*Name: dji_mic_hot_sink.monitor$/ { in_source = 1 }
-      in_source && /^[[:space:]]*object.serial = / {
-        gsub(/"/, "", $3)
-        print $3
-        exit
-      }
-    ')"
-    if [ -z "$DJI_HOT_SOURCE_SERIAL" ]; then
-      echo "whisrs-daemon: PipeWire source dji_mic_hot_sink.monitor is not available" >&2
-      exit 1
-    fi
-
-    export PIPEWIRE_NODE="$DJI_HOT_SOURCE_SERIAL"
     export WHISRS_OPENAI_API_KEY
     export RUST_LOG="whisrs=info,warn"
 
@@ -160,95 +145,6 @@ mkIf (size.min && behavesAs.edge) {
     };
     Install.WantedBy = [ "network-online.target" ];
   };
-
-  # The DJI receiver is a capture device, not general Bluetooth headphones.
-  # Keep it in HFP/MSBC by making WirePlumber's own policy choose the headset
-  # profile. Keep the capture path warm with a declarative PipeWire loopback
-  # stream. Do not run an external polling keepalive that notices profile loss
-  # after the fact.
-  xdg.configFile."pipewire/pipewire.conf.d/60-dji-mic-hot-capture.conf".text = ''
-    context.objects = [
-      {
-        factory = adapter
-        args = {
-          factory.name = support.null-audio-sink
-          media.class = "Audio/Sink"
-          node.name = "dji_mic_hot_sink"
-          node.description = "DJI Mic Hot Sink"
-          object.linger = true
-          monitor.channel-volumes = true
-          audio.position = [ MONO ]
-        }
-      }
-    ]
-
-    context.modules = [
-      {
-        name = libpipewire-module-loopback
-        args = {
-          node.description = "DJI Mic Hot Capture"
-          capture.props = {
-            node.name = "dji_mic_hot_capture"
-            target.object = "bluez_input.04_A8_5A_0B_EB_B0.0"
-            audio.position = [ MONO ]
-            stream.dont-remix = true
-            node.passive = false
-          }
-          playback.props = {
-            node.name = "dji_mic_hot_playback"
-            target.object = "dji_mic_hot_sink"
-            audio.position = [ MONO ]
-            stream.dont-remix = true
-            node.passive = false
-          }
-        }
-      }
-    ]
-  '';
-
-  xdg.configFile."wireplumber/wireplumber.conf.d/60-dji-mic-policy.conf".text = ''
-    wireplumber.settings = {
-      bluetooth.autoswitch-to-headset-profile = false
-    }
-
-    monitor.bluez.rules = [
-      {
-        matches = [
-          {
-            device.name = "bluez_card.04_A8_5A_0B_EB_B0"
-          }
-        ]
-        actions = {
-          update-props = {
-            device.profile = "headset-head-unit"
-            session.dont-restore-off-profile = true
-            bluez5.auto-connect = [ hfp_hf hsp_hs ]
-            bluez5.hw-volume = [ hfp_hf hsp_hs ]
-          }
-        }
-      }
-      {
-        matches = [
-          {
-            node.name = "bluez_input.04_A8_5A_0B_EB_B0.0"
-          }
-          {
-            node.name = "bluez_output.04_A8_5A_0B_EB_B0.1"
-          }
-          {
-            node.name = "bluez_input.04:A8:5A:0B:EB:B0"
-          }
-        ]
-        actions = {
-          update-props = {
-            node.pause-on-idle = false
-            session.suspend-timeout-seconds = 0
-            bluez5.media-source-role = "input"
-          }
-        }
-      }
-    ]
-  '';
 
   programs.niri.settings = {
     spawn-at-startup = [

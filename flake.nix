@@ -314,7 +314,7 @@
           whisrs-dictation-bindings = checkPkgs.callPackage ./checks/whisrs-dictation-bindings {
             inherit inputs;
           };
-          dji-keepalive = checkPkgs.callPackage ./checks/dji-keepalive { inherit inputs; };
+          whisrs-default-input = checkPkgs.callPackage ./checks/whisrs-default-input { inherit inputs; };
           whisrs-recall = checkPkgs.callPackage ./checks/whisrs-recall { inherit inputs; };
           whisrs-level-widget = checkPkgs.callPackage ./checks/whisrs-level-widget { };
           rust-toolchain = checkPkgs.callPackage ./checks/rust-toolchain { inherit inputs; };

@@ -115,6 +115,9 @@ lib.mkIf size.medium {
         piper-tts
         espeak-ng
         python3Packages.scenedetect
+        python3Packages.whisperx
+        nodejs
+        pnpm
         #== go
         gopass
         git-bug
