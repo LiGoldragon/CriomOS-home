@@ -115,7 +115,8 @@ lib.mkIf size.medium {
         piper-tts
         espeak-ng
         python3Packages.scenedetect
-        python3Packages.whisperx
+        python3Packages.faster-whisper
+        python3Packages.openai-whisper
         nodejs
         pnpm
         #== go
