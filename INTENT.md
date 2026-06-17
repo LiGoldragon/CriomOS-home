@@ -48,6 +48,9 @@ and services remain in CriomOS.
   special handling over adding more keepalive code. The psyche said, *I don't
   want this to blow up into a huge pile of code. So let's try to reduce the
   amount of code instead of keeping on adding.*
+- Speech-to-text should prefer the connected DJI Bluetooth microphone when its
+  raw PipeWire source is present, while retaining ordinary laptop-microphone
+  fallback and avoiding a hard virtual hot-loop dependency.
 
 ## Spirit deployment
 

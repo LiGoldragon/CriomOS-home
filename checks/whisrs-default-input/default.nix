@@ -39,6 +39,18 @@ let
       message = "Dictation must not install DJI-specific Bluetooth policy in the ordinary profile";
     }
     {
+      condition = lib.hasInfix "criomos-whisrs" dictationModuleSource;
+      message = "Dictation keybindings must route through the input-selection wrapper";
+    }
+    {
+      condition = lib.hasInfix "bluez_input.04:A8:5A:0B:EB:B0" dictationModuleSource;
+      message = "The lightweight DJI preference must target the raw DJI Bluetooth source";
+    }
+    {
+      condition = lib.hasInfix "set-default-source" dictationModuleSource;
+      message = "The lightweight DJI preference must use normal PipeWire/Pulse default-source selection";
+    }
+    {
       condition = lib.elem "pipewire.service" whisrsService.Unit.After;
       message = "Whisrs must still start after PipeWire";
     }

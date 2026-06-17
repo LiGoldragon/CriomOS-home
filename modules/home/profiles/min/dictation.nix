@@ -39,6 +39,20 @@ let
     exec ${whisrs}/bin/whisrsd
   '';
 
+  selectWhisrsInput = pkgs.writeShellScriptBin "criomos-whisrs" ''
+    set -eu
+
+    if [ "''${1:-}" = toggle ] || [ "''${1:-}" = toggle-copy ] || [ "''${1:-}" = command ]; then
+      dji_source='bluez_input.04:A8:5A:0B:EB:B0'
+      sources="$(${pkgs.pulseaudio}/bin/pactl list short sources | ${pkgs.coreutils}/bin/cut -f2)"
+      if printf '%s\n' "$sources" | ${pkgs.gnugrep}/bin/grep -Fxq "$dji_source"; then
+        ${pkgs.pulseaudio}/bin/pactl set-default-source "$dji_source" || true
+      fi
+    fi
+
+    exec ${whisrs}/bin/whisrs "$@"
+  '';
+
   startDictationServices = pkgs.writeShellScript "criomos-start-dictation-services" ''
     set -eu
 
@@ -58,6 +72,7 @@ in
 mkIf (size.min && behavesAs.edge) {
   home.packages = [
     whisrs
+    selectWhisrsInput
     pkgs.fuzzel
     pkgs.wl-clipboard
     pkgs.wtype
@@ -152,13 +167,13 @@ mkIf (size.min && behavesAs.edge) {
     ];
 
     binds."Mod+V" = {
-      action = a.spawn "${whisrs}/bin/whisrs" "toggle-copy";
+      action = a.spawn "${selectWhisrsInput}/bin/criomos-whisrs" "toggle-copy";
       repeat = false;
       hotkey-overlay.title = "Voice Typing (Copy)";
     };
 
     binds."Mod+Shift+V" = {
-      action = a.spawn "${whisrs}/bin/whisrs" "toggle";
+      action = a.spawn "${selectWhisrsInput}/bin/criomos-whisrs" "toggle";
       repeat = false;
       hotkey-overlay.title = "Voice Typing";
     };
@@ -170,7 +185,7 @@ mkIf (size.min && behavesAs.edge) {
     };
 
     binds."Mod+Ctrl+V" = {
-      action = a.spawn "${whisrs}/bin/whisrs" "cancel";
+      action = a.spawn "${selectWhisrsInput}/bin/criomos-whisrs" "cancel";
       repeat = false;
       hotkey-overlay.title = "Voice Typing Cancel";
     };
