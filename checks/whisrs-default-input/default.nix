@@ -31,7 +31,11 @@ let
     {
       condition =
         !(builtins.hasAttr "pipewire/pipewire.conf.d/60-dji-mic-hot-capture.conf" moduleContent.xdg.configFile);
-      message = "Dictation must not create an always-present DJI hot virtual source";
+      message = "Dictation must not recreate the old DJI hot source file";
+    }
+    {
+      condition = builtins.hasAttr "pipewire/pipewire.conf.d/60-dji-mic-keepalive.conf" moduleContent.xdg.configFile;
+      message = "Dictation must install the DJI keepalive sidecar";
     }
     {
       condition =
@@ -49,6 +53,18 @@ let
     {
       condition = lib.hasInfix "bluez_input.04_A8_5A_0B_EB_B0.0" dictationModuleSource;
       message = "The DJI preference must target the BlueZ monitor source";
+    }
+    {
+      condition = lib.hasInfix "target.object = \"bluez_input.04:A8:5A:0B:EB:B0\"" dictationModuleSource;
+      message = "The DJI keepalive must consume the real app-facing DJI source";
+    }
+    {
+      condition = lib.hasInfix "target.object = \"dji_mic_keepalive_sink\"" dictationModuleSource;
+      message = "The DJI keepalive must discard into its own sink";
+    }
+    {
+      condition = !(lib.hasInfix "dji_mic_hot_sink" dictationModuleSource);
+      message = "Dictation must not reintroduce the old hot sink name";
     }
     {
       condition = lib.hasInfix "priority.session = 3000" dictationModuleSource;

@@ -52,6 +52,9 @@ and services remain in CriomOS.
   system default-source policy when its raw PipeWire source is present, while
   retaining ordinary laptop-microphone fallback and avoiding a hard virtual
   hot-loop dependency or Whisrs-specific source wrapper.
+- The DJI keep-alive may exist as a sidecar consumer of the real DJI source:
+  it keeps that specific mic awake, but the system and Whisrs still select the
+  real microphone source rather than the keep-alive interface.
 
 ## Spirit deployment
 

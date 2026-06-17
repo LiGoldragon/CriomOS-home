@@ -146,6 +146,47 @@ mkIf (size.min && behavesAs.edge) {
     Install.WantedBy = [ "network-online.target" ];
   };
 
+  xdg.configFile."pipewire/pipewire.conf.d/60-dji-mic-keepalive.conf".text = ''
+    context.objects = [
+      {
+        factory = adapter
+        args = {
+          factory.name = support.null-audio-sink
+          media.class = "Audio/Sink"
+          node.name = "dji_mic_keepalive_sink"
+          node.description = "DJI Mic Keepalive Sink"
+          object.linger = true
+          monitor.channel-volumes = true
+          priority.session = 1
+          audio.position = [ MONO ]
+        }
+      }
+    ]
+
+    context.modules = [
+      {
+        name = libpipewire-module-loopback
+        args = {
+          node.description = "DJI Mic Keepalive"
+          capture.props = {
+            node.name = "dji_mic_keepalive_capture"
+            target.object = "bluez_input.04:A8:5A:0B:EB:B0"
+            audio.position = [ MONO ]
+            stream.dont-remix = true
+            node.passive = false
+          }
+          playback.props = {
+            node.name = "dji_mic_keepalive_playback"
+            target.object = "dji_mic_keepalive_sink"
+            audio.position = [ MONO ]
+            stream.dont-remix = true
+            node.passive = false
+          }
+        }
+      }
+    ]
+  '';
+
   xdg.configFile."wireplumber/wireplumber.conf.d/60-dji-source-priority.conf".text = ''
     monitor.bluez.rules = [
       {
