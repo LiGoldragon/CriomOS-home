@@ -27,7 +27,7 @@ let
   commandRunsWhisrsSubcommand =
     command: expectedArgument:
     builtins.length command == 2
-    && lib.hasSuffix "/bin/criomos-whisrs" (builtins.elemAt command 0)
+    && lib.hasSuffix "/bin/whisrs" (builtins.elemAt command 0)
     && builtins.elemAt command 1 == expectedArgument;
 
   checkBinding =
