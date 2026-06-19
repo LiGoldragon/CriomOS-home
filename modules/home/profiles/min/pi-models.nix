@@ -98,6 +98,7 @@ let
       keepRecentTokens = 20000;
     };
     retry.enabled = true;
+    transport = "websocket";
     packages = [
       "packages/pi-criomos"
       "packages/pi-linkup"
@@ -152,6 +153,7 @@ lib.mkIf (size.min && endpointNode != null) {
       "/theme" = "always";
       "/doubleEscapeAction" = "always";
       "/compaction" = "always";
+      "/transport" = "always";
       "/packages" = "always";
     };
   };

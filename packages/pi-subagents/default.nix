@@ -1,7 +1,7 @@
 { inputs, pkgs, ... }:
 pkgs.stdenvNoCC.mkDerivation {
   pname = "pi-subagents";
-  version = "0.25.0";
+  version = "0.29.0";
 
   dontUnpack = true;
   dontBuild = true;
