@@ -1,5 +1,4 @@
 {
-  lib,
   pkgs,
   inputs,
   ...
@@ -17,6 +16,7 @@
 # the environment and puts the `browser-use`/`bu` CLI on PATH (Spirit
 # bxe9: packaged and on PATH, any harness calls it like a shell command).
 let
+  inherit (pkgs) lib;
   python = pkgs.python313;
 
   workspace = inputs.uv2nix.lib.workspace.loadWorkspace { workspaceRoot = ./.; };
