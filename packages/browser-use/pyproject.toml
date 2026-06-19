@@ -1,0 +1,22 @@
+[project]
+# Thin workspace whose only purpose is to pin browser-use and its full
+# transitive dependency closure into a uv.lock, which uv2nix then turns
+# into a pure-Nix Python environment. browser-use is the popular
+# LLM-driven browser agent (github.com/browser-use/browser-use); it
+# drives a real Chrome over the Chrome DevTools Protocol and reads the
+# page visually with a vision model. Here that vision model is the
+# workspace-local Gemma 4 served on prometheus, never a cloud API
+# (Spirit u275/wvgh/8pgh) — wiring is in the browser-use.nix wrapper.
+name = "criomos-browser-use"
+version = "0.0.0"
+description = "CriomOS home-profile pin of browser-use for local-Gemma-driven browser agents"
+requires-python = ">=3.13,<4.0"
+dependencies = [
+  "browser-use==0.13.1",
+]
+
+[tool.uv]
+# This root is a dependency-pin only, not an installable package.
+package = false
+# Prefer wheels so uv2nix builds from prebuilt artifacts rather than
+# attempting source builds for the large LLM-SDK dependency tree.

@@ -275,6 +275,22 @@
       flake = false;
     };
 
+    # uv2nix toolchain — turns the uv.lock under packages/browser-use into
+    # a pure-Nix Python environment. browser-use's dependency closure is
+    # 264 packages (several missing from nixpkgs), so a lockfile-driven
+    # build is mandatory; this is the maintained pyproject-nix path.
+    # Fetched over git+https rather than the github: indirection so the
+    # GitHub API rate-limit doesn't gate `nix flake lock`.
+    pyproject-nix.url = "git+https://github.com/pyproject-nix/pyproject.nix";
+    pyproject-nix.inputs.nixpkgs.follows = "nixpkgs";
+    uv2nix.url = "git+https://github.com/pyproject-nix/uv2nix";
+    uv2nix.inputs.pyproject-nix.follows = "pyproject-nix";
+    uv2nix.inputs.nixpkgs.follows = "nixpkgs";
+    pyproject-build-systems.url = "git+https://github.com/pyproject-nix/build-system-pkgs";
+    pyproject-build-systems.inputs.pyproject-nix.follows = "pyproject-nix";
+    pyproject-build-systems.inputs.uv2nix.follows = "uv2nix";
+    pyproject-build-systems.inputs.nixpkgs.follows = "nixpkgs";
+
     # Emacs — replaces legacy pkdjz/mkEmacs. Planned split.
     #   criomos-emacs.url = "github:LiGoldragon/CriomOS-emacs";
     #   criomos-emacs.inputs.nixpkgs.follows = "nixpkgs";

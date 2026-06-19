@@ -1,0 +1,131 @@
+{
+  lib,
+  pkgs,
+  inputs,
+  horizon,
+  user,
+  ...
+}:
+# browser-use, wired to the workspace-local Gemma 4 vision model.
+#
+# browser-use is the popular LLM-driven browser agent. It drives a real
+# Chrome over the Chrome DevTools Protocol and reads each page visually
+# with a vision LLM, then decides the next action. On CriomOS that vision
+# LLM is the local Gemma 4 multimodal model served on the cluster's
+# large-AI node (prometheus), NOT a cloud API — so the account/billing
+# screenshots browser-use feeds its model stay on-prem (Spirit u275,
+# wvgh, 8pgh; privacy WHY in report 62).
+#
+# Endpoint + token resolution mirrors pi-models.nix exactly:
+#   - baseUrl from the projected Horizon large-AI(-router) node, port 11434, /v1
+#   - the OpenAI-compatible token is read at RUNTIME from gopass
+#     (goldragon.criome/local-llm-api-token); the bytes never enter Nix.
+#
+# Gating: the same Large tier as Chrome (max/default.nix `size.large`
+# block) — browser-use without Chrome is useless and its closure is large
+# (264-package Python env). Spirit bxe9: just packaged + on PATH; any
+# harness/agent calls `browser-use` like a shell command. The library
+# (`browser-use-python`) and a ready-made local-Gemma+CDP driver
+# (`browser-use-local`) are also exposed for scripted scout flows
+# (report 61's DigitalOcean token workflow, Spirit 7hmc/5g4d/7o4q).
+let
+  inherit (user) size;
+
+  browserUse = pkgs.callPackage ../../../../packages/browser-use { inherit inputs; };
+
+  # Same endpoint projection as pi-models.nix: prefer the large-AI router,
+  # fall back to a plain large-AI node. Port + /v1 from the model catalog.
+  inventory = builtins.fromJSON (builtins.readFile (inputs.criomos-lib + "/data/largeAI/llm.json"));
+  clusterNodes = [ horizon.node ] ++ lib.attrValues (horizon.exNodes or { });
+  routerNode = lib.findFirst (node: node.typeIs.largeAiRouter or false) null clusterNodes;
+  largeAiNode = lib.findFirst (node: node.behavesAs.largeAi or false) null clusterNodes;
+  endpointNode = if routerNode != null then routerNode else largeAiNode;
+  localBaseUrl =
+    if endpointNode != null then
+      "http://${endpointNode.criomeDomainName}:${toString (inventory.serverPort or 11434)}/v1"
+    else
+      null;
+
+  # gemma-4-26b-a4b is the multimodal (mmproj-F16) variant verified for
+  # image requests in system-operator report 173 — the right default for a
+  # vision-driven browser agent. Pinned by name so the agent always reads
+  # the page with the on-prem vision model.
+  localVisionModel = "gemma-4-26b-a4b";
+  localLlmGopassPath = "goldragon.criome/local-llm-api-token";
+
+  gopass = "${pkgs.gopass}/bin/gopass";
+
+  # Shared preamble: export OPENAI_BASE_URL/OPENAI_API_KEY/model so that
+  # any browser-use code path using ChatOpenAI defaults to the local Gemma
+  # endpoint. The token is sourced from gopass at exec time and never
+  # printed. Honour pre-set values so an explicit override still works.
+  gemmaEnvPreamble = ''
+    set -eu
+    : "''${OPENAI_BASE_URL:=${localBaseUrl}}"
+    : "''${BROWSER_USE_VISION_MODEL:=${localVisionModel}}"
+    if [ -z "''${OPENAI_API_KEY:-}" ]; then
+      OPENAI_API_KEY="$(${gopass} show -o ${localLlmGopassPath} 2>/dev/null || true)"
+      if [ -z "$OPENAI_API_KEY" ]; then
+        echo "browser-use: gopass ${localLlmGopassPath} returned an empty local-LLM token" >&2
+        exit 1
+      fi
+    fi
+    export OPENAI_BASE_URL OPENAI_API_KEY BROWSER_USE_VISION_MODEL
+  '';
+
+  # `browser-use-gemma` — the browser-use CLI with the local-Gemma env
+  # pre-loaded. Wraps every console-script arg through to the packaged CLI.
+  browserUseGemma = pkgs.writeShellApplication {
+    name = "browser-use-gemma";
+    runtimeInputs = [
+      pkgs.gopass
+      browserUse
+    ];
+    text = ''
+      ${gemmaEnvPreamble}
+      exec browser-use "$@"
+    '';
+  };
+
+  # `browser-use-local` — a library-mode driver: run ONE task against a
+  # Chrome already listening on a CDP url, with Gemma 4 as the vision LLM.
+  # This is the report-61 scout shape — connect over CDP to a supervised,
+  # human-visible Chrome (non-default --user-data-dir per the Chrome-136+
+  # rule), scan + act with the on-prem model. Usage:
+  #   browser-use-local <cdp-url> <task...>
+  # e.g. browser-use-local http://127.0.0.1:9222 "report the page title"
+  localDriver = pkgs.writeShellApplication {
+    name = "browser-use-local";
+    runtimeInputs = [
+      pkgs.gopass
+      browserUse
+    ];
+    text = ''
+      ${gemmaEnvPreamble}
+      if [ "$#" -lt 2 ]; then
+        echo "usage: browser-use-local <cdp-url> <task...>" >&2
+        echo "  drives the Chrome at <cdp-url> with the local Gemma 4 vision model" >&2
+        exit 2
+      fi
+      CDP_URL="$1"; shift
+      TASK="$*"
+      export BROWSER_USE_CDP_URL="$CDP_URL" BROWSER_USE_TASK="$TASK"
+      exec browser-use-python ${./browser-use-local-driver.py}
+    '';
+  };
+in
+lib.mkIf (size.large && endpointNode != null) {
+  home.packages = [
+    # The packaged browser-use CLI on PATH (Spirit bxe9). Exposes
+    # `browser-use`, `bu`, `browseruse`, `browser-use-tui`.
+    browserUse
+    # Library python for scripted drivers: `browser-use-python <script.py>`.
+    (pkgs.runCommand "browser-use-python" { } ''
+      mkdir -p "$out/bin"
+      ln -s ${browserUse}/bin/python "$out/bin/browser-use-python"
+    '')
+    # Local-Gemma-vision wrappers.
+    browserUseGemma
+    localDriver
+  ];
+}

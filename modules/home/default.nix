@@ -67,6 +67,9 @@
     # Archive carried it as an orphan file too; left alone for now.
     ./profiles/med/qutebrowser.nix
     ./profiles/max
+    # browser-use, wired to the local Gemma 4 vision model. Large-tier,
+    # alongside Chrome — a sibling module, not imported by ./profiles/max.
+    ./profiles/max/browser-use.nix
     ./neovim/neovim
     ./vscodium/vscodium
   ];
