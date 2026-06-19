@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   pkgs,
   inputs,
@@ -70,6 +71,68 @@ let
   localLlmGopassPath = "goldragon.criome/local-llm-api-token";
 
   gopass = "${pkgs.gopass}/bin/gopass";
+  chromePackage = config.programs.chromium.package;
+
+  # `browser-agent-chrome` — start or report a reusable, dedicated Chrome
+  # automation profile with native CDP. This is intentionally NOT the user's
+  # ordinary logged-in profile and does not depend on the experimental
+  # chrome-cdp-bridge. The port is deterministic per Unix uid so multiple
+  # users on the same node avoid the usual 9222 collision: uid 1000 gets 9223,
+  # uid 1001 gets 9224, and so on. Override with BROWSER_AGENT_CHROME_PORT.
+  agentChrome = pkgs.writeShellApplication {
+    name = "browser-agent-chrome";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.curl
+    ];
+    text = ''
+      set -eu
+
+      stateHome="''${XDG_STATE_HOME:-$HOME/.local/state}"
+      profile="''${BROWSER_AGENT_CHROME_PROFILE:-$stateHome/criomos-browser-agent/chrome-profile}"
+      if [ -n "''${BROWSER_AGENT_CHROME_PORT:-}" ]; then
+        port="$BROWSER_AGENT_CHROME_PORT"
+      else
+        userIdentifier="$(${pkgs.coreutils}/bin/id -u)"
+        port="$((9223 + (userIdentifier % 1000)))"
+      fi
+      cdpUrl="http://127.0.0.1:$port"
+
+      case "''${1:-}" in
+        --cdp-url)
+          printf '%s\n' "$cdpUrl"
+          exit 0
+          ;;
+        --status)
+          if curl -fsS "$cdpUrl/json/version" >/dev/null 2>&1; then
+            printf 'browser-agent-chrome: ready at %s using %s\n' "$cdpUrl" "$profile"
+            exit 0
+          fi
+          printf 'browser-agent-chrome: not running at %s; profile is %s\n' "$cdpUrl" "$profile" >&2
+          exit 1
+          ;;
+        --help|-h)
+          echo "usage: browser-agent-chrome [--cdp-url|--status]" >&2
+          echo "starts one reusable dedicated Chrome automation profile when not already running" >&2
+          exit 0
+          ;;
+      esac
+
+      mkdir -p "$profile"
+      if curl -fsS "$cdpUrl/json/version" >/dev/null 2>&1; then
+        printf 'browser-agent-chrome: already ready at %s using %s\n' "$cdpUrl" "$profile" >&2
+        exit 0
+      fi
+
+      exec ${chromePackage}/bin/google-chrome \
+        --user-data-dir="$profile" \
+        --remote-debugging-address=127.0.0.1 \
+        --remote-debugging-port="$port" \
+        --no-first-run \
+        --no-default-browser-check \
+        --class=BrowserAgentChrome
+    '';
+  };
 
   # Shared preamble: export OPENAI_BASE_URL/OPENAI_API_KEY/model so that
   # any browser-use code path using ChatOpenAI defaults to the local Gemma
@@ -127,6 +190,46 @@ let
       TASK="$*"
       export BROWSER_USE_CDP_URL="$CDP_URL" BROWSER_USE_TASK="$TASK"
       exec browser-use-python ${../../../../packages/browser-use/browser-use-local-driver.py}
+    '';
+  };
+
+  # `browser-use-agent-local` — convenience wrapper for the durable dedicated
+  # automation profile. If the profile is not already listening, it starts one
+  # browser-agent-chrome process, waits for CDP readiness, and then runs the
+  # Gemma-backed browser-use-local task against that existing profile.
+  agentLocalDriver = pkgs.writeShellApplication {
+    name = "browser-use-agent-local";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.curl
+      agentChrome
+      localDriver
+    ];
+    text = ''
+      set -eu
+      if [ "$#" -lt 1 ]; then
+        echo "usage: browser-use-agent-local <task...>" >&2
+        echo "  drives the reusable browser-agent-chrome profile with the local Gemma 4 vision model" >&2
+        exit 2
+      fi
+
+      cdpUrl="$(browser-agent-chrome --cdp-url)"
+      if ! curl -fsS "$cdpUrl/json/version" >/dev/null 2>&1; then
+        browser-agent-chrome >/tmp/browser-agent-chrome.log 2>&1 &
+        for _ in $(seq 1 60); do
+          if curl -fsS "$cdpUrl/json/version" >/dev/null 2>&1; then
+            break
+          fi
+          sleep 0.5
+        done
+      fi
+      if ! curl -fsS "$cdpUrl/json/version" >/dev/null 2>&1; then
+        echo "browser-use-agent-local: browser-agent-chrome did not become ready at $cdpUrl" >&2
+        echo "browser-use-agent-local: see /tmp/browser-agent-chrome.log" >&2
+        exit 1
+      fi
+
+      exec browser-use-local "$cdpUrl" "$@"
     '';
   };
 
@@ -206,9 +309,11 @@ lib.mkIf (size.large && endpointNode != null) {
     # `browser-use`, `bu`, `browseruse`, `browser-use-tui`, and the
     # collision-free library interpreter `browser-use-python`.
     browserUse
-    # Local-Gemma-vision wrappers.
+    # Dedicated automation profile + Local-Gemma-vision wrappers.
+    agentChrome
     browserUseGemma
     localDriver
+    agentLocalDriver
     # Real-profile attach: the chrome.debugger bridge relay/extension + the
     # `browser-use-attach` driver. Exposes `chrome-cdp-bridge-relay`,
     # `chrome-cdp-bridge-extension-path`, and `browser-use-attach` on PATH.
