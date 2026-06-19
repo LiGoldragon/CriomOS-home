@@ -110,7 +110,7 @@ let
       CDP_URL="$1"; shift
       TASK="$*"
       export BROWSER_USE_CDP_URL="$CDP_URL" BROWSER_USE_TASK="$TASK"
-      exec browser-use-python ${./browser-use-local-driver.py}
+      exec browser-use-python ${../../../../packages/browser-use/browser-use-local-driver.py}
     '';
   };
 in
