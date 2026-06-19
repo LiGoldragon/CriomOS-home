@@ -33,6 +33,22 @@ let
 
   browserUse = pkgs.callPackage ../../../../packages/browser-use { inherit inputs; };
 
+  # chrome-cdp-bridge — the in-browser chrome.debugger extension + CDP relay
+  # that lets browser-use drive the human's REAL, logged-in Chrome profile
+  # (Spirit 5g4d), bypassing the Chrome 136+ block on the external
+  # --remote-debugging-port for the default profile. The relay re-publishes a
+  # browser-level CDP endpoint (http://127.0.0.1:9333) that browser-use targets
+  # via --cdp-url; the unpacked extension is loaded ONCE via
+  # chrome://extensions -> Load unpacked (Chrome forbids programmatic load of an
+  # arbitrary extension — that one-time manual step is also the consent gate).
+  chromeCdpBridge = pkgs.callPackage ../../../../packages/chrome-cdp-bridge { };
+
+  # The relay (and the extension) share a token with the in-browser extension so
+  # only the consented extension can dial the loopback relay. Read from gopass at
+  # exec time, never in Nix/logs. Reuses the same path the playwright-cli
+  # extension wrapper already seeds.
+  bridgeTokenGopassPath = "chrome-browser/playwright-mcp-extension-token";
+
   # Same endpoint projection as pi-models.nix: prefer the large-AI router,
   # fall back to a plain large-AI node. Port + /v1 from the model catalog.
   inventory = builtins.fromJSON (builtins.readFile (inputs.criomos-lib + "/data/largeAI/llm.json"));
@@ -113,6 +129,76 @@ let
       exec browser-use-python ${../../../../packages/browser-use/browser-use-local-driver.py}
     '';
   };
+
+  # `browser-use-attach` — drive the human's REAL Chrome profile end to end.
+  #
+  # Flow (the supervised-scout discipline, Spirit 7hmc/5g4d):
+  #   1. The human has loaded the chrome-cdp-bridge extension ONCE (Load
+  #      unpacked; `browser-use-attach --extension-path` prints the dir) and
+  #      clicked its toolbar icon on the ONE tab they consent to expose.
+  #   2. This wrapper sources the bridge token from gopass, starts the loopback
+  #      relay (127.0.0.1:9333), waits for the extension to attach that tab,
+  #      then runs ONE browser-use task with the local Gemma 4 against the
+  #      relay's browser-level CDP url. The relay stops when the task ends.
+  #
+  # The agent never opens new tabs or touches other tabs; it drives only the
+  # consented tab. Usage:
+  #   browser-use-attach <task...>
+  #   browser-use-attach --extension-path     # print the unpacked-extension dir
+  attachDriver = pkgs.writeShellApplication {
+    name = "browser-use-attach";
+    runtimeInputs = [
+      pkgs.gopass
+      pkgs.curl
+      pkgs.coreutils
+      browserUse
+      chromeCdpBridge
+    ];
+    text = ''
+      if [ "''${1:-}" = "--extension-path" ]; then
+        chrome-cdp-bridge-extension-path
+        exit 0
+      fi
+      ${gemmaEnvPreamble}
+      if [ "$#" -lt 1 ]; then
+        echo "usage: browser-use-attach <task...>" >&2
+        echo "       browser-use-attach --extension-path   # print extension dir to Load unpacked" >&2
+        echo "" >&2
+        echo "Drives the tab you clicked the CriomOS CDP Bridge extension on," >&2
+        echo "in your REAL Chrome profile, with the local Gemma 4 vision model." >&2
+        exit 2
+      fi
+      TASK="$*"
+
+      # Bridge token (shared with the extension). Empty is allowed (loopback
+      # only), but seeding it in gopass + chrome.storage is recommended.
+      CHROME_CDP_BRIDGE_TOKEN="$(${pkgs.gopass}/bin/gopass show -o ${bridgeTokenGopassPath} 2>/dev/null || true)"
+      export CHROME_CDP_BRIDGE_TOKEN
+      PORT="''${CHROME_CDP_BRIDGE_PORT:-9333}"
+      export CHROME_CDP_BRIDGE_PORT="$PORT"
+
+      # Start the relay in the background; always stop it on exit.
+      chrome-cdp-bridge-relay &
+      RELAY_PID=$!
+      # shellcheck disable=SC2064
+      trap "kill $RELAY_PID 2>/dev/null || true" EXIT INT TERM
+
+      # Wait for the relay's CDP discovery endpoint.
+      for _ in $(seq 1 30); do
+        if curl -fsS "http://127.0.0.1:$PORT/json/version" >/dev/null 2>&1; then
+          break
+        fi
+        sleep 0.5
+      done
+
+      echo "browser-use-attach: relay is up on http://127.0.0.1:$PORT" >&2
+      echo "browser-use-attach: click the CriomOS CDP Bridge toolbar icon on the" >&2
+      echo "  tab you want to expose (badge shows ON), then this drives it." >&2
+
+      export BROWSER_USE_CDP_URL="http://127.0.0.1:$PORT" BROWSER_USE_TASK="$TASK"
+      exec browser-use-python ${../../../../packages/browser-use/browser-use-local-driver.py}
+    '';
+  };
 in
 lib.mkIf (size.large && endpointNode != null) {
   home.packages = [
@@ -123,5 +209,10 @@ lib.mkIf (size.large && endpointNode != null) {
     # Local-Gemma-vision wrappers.
     browserUseGemma
     localDriver
+    # Real-profile attach: the chrome.debugger bridge relay/extension + the
+    # `browser-use-attach` driver. Exposes `chrome-cdp-bridge-relay`,
+    # `chrome-cdp-bridge-extension-path`, and `browser-use-attach` on PATH.
+    chromeCdpBridge
+    attachDriver
   ];
 }

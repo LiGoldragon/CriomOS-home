@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "CriomOS CDP Bridge",
+  "version": "0.1.0",
+  "description": "Supervised-scout bridge: attaches chrome.debugger to the tab you click and relays its Chrome DevTools Protocol to a local CriomOS relay so a local-LLM browser agent can drive your real, logged-in Chrome profile. Click to attach, click again to detach.",
+  "permissions": ["debugger", "tabs", "storage"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "CriomOS CDP Bridge — click to attach/detach this tab"
+  }
+}
