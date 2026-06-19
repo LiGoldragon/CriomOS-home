@@ -117,13 +117,9 @@ in
 lib.mkIf (size.large && endpointNode != null) {
   home.packages = [
     # The packaged browser-use CLI on PATH (Spirit bxe9). Exposes
-    # `browser-use`, `bu`, `browseruse`, `browser-use-tui`.
+    # `browser-use`, `bu`, `browseruse`, `browser-use-tui`, and the
+    # collision-free library interpreter `browser-use-python`.
     browserUse
-    # Library python for scripted drivers: `browser-use-python <script.py>`.
-    (pkgs.runCommand "browser-use-python" { } ''
-      mkdir -p "$out/bin"
-      ln -s ${browserUse}/bin/python "$out/bin/browser-use-python"
-    '')
     # Local-Gemma-vision wrappers.
     browserUseGemma
     localDriver
