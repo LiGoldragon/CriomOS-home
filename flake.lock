@@ -474,8 +474,7 @@
     "fenix_4": {
       "inputs": {
         "nixpkgs": [
-          "lojix-cli",
-          "rust-build",
+          "lojix",
           "nixpkgs"
         ],
         "rust-analyzer-src": "rust-analyzer-src_4"
@@ -906,24 +905,26 @@
         "type": "github"
       }
     },
-    "lojix-cli": {
+    "lojix": {
       "inputs": {
+        "crane": "crane_4",
+        "fenix": "fenix_4",
+        "flake-utils": "flake-utils_6",
         "nixpkgs": [
           "nixpkgs"
-        ],
-        "rust-build": "rust-build_2"
+        ]
       },
       "locked": {
-        "lastModified": 1781904964,
-        "narHash": "sha256-YyRKAdjQbl6RCOdN358/Fh8xiEz+qOOm5t1Ree33CZo=",
+        "lastModified": 1781955746,
+        "narHash": "sha256-CnbpOdy3DJA0JcFOHlDjMYsjF+Gvwe5QWlgCTyCI8l0=",
         "owner": "LiGoldragon",
-        "repo": "lojix-cli",
-        "rev": "41c2ec8f058f813af3ba82015452c8ae9704b65a",
+        "repo": "lojix",
+        "rev": "aaea314ce9ff388408f9d60d887c120805b412e7",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
-        "repo": "lojix-cli",
+        "repo": "lojix",
         "type": "github"
       }
     },
@@ -1621,7 +1622,7 @@
         "home-manager": "home-manager",
         "horizon": "horizon",
         "llm-agents": "llm-agents",
-        "lojix-cli": "lojix-cli",
+        "lojix": "lojix",
         "niri-flake": "niri-flake",
         "nixpkgs": "nixpkgs_2",
         "noctalia": "noctalia",
@@ -1807,30 +1808,6 @@
       }
     },
     "rust-build_2": {
-      "inputs": {
-        "crane": "crane_4",
-        "fenix": "fenix_4",
-        "flake-utils": "flake-utils_6",
-        "nixpkgs": [
-          "lojix-cli",
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1781903243,
-        "narHash": "sha256-QTLu7a0z7fnVwt4SUyTgUKnYEcUiQCtTDRGaXv4p3H4=",
-        "owner": "LiGoldragon",
-        "repo": "rust-build",
-        "rev": "56d18735f2034d192f63d13d2701202fd2e18cf3",
-        "type": "github"
-      },
-      "original": {
-        "owner": "LiGoldragon",
-        "repo": "rust-build",
-        "type": "github"
-      }
-    },
-    "rust-build_3": {
       "inputs": {
         "crane": "crane_5",
         "fenix": "fenix_5",
@@ -2184,7 +2161,7 @@
         ],
         "nota-next-source": "nota-next-source",
         "router-source": "router-source",
-        "rust-build": "rust-build_3",
+        "rust-build": "rust-build_2",
         "schema-next-source": "schema-next-source",
         "schema-rust-next-source": "schema-rust-next-source",
         "sema-engine-layout3-source": "sema-engine-layout3-source",

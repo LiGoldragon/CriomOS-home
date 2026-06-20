@@ -212,11 +212,11 @@ as verified. Home activation should restart `whisrs.service`; do not
 signal niri.
 
 Use `lojix-run` when an agent needs an operator-facing deploy wrapper around
-`lojix-cli`. It still takes exactly one NOTA request or request-file path, but
+`lojix`. It still takes exactly one NOTA request or request-file path, but
 it captures stdout/stderr into a run directory, prints line counts and hashes,
 redacts store hashes from failure tails, rewrites known branch refs to exact
 local jj revisions when possible, and runs postchecks for system/home profile
-state. Use raw `lojix-cli` when the machine-readable store path on stdout is the
+state. Use raw `lojix` when the machine-readable store path on stdout is the
 intended interface; use `lojix-run` when the chat/report surface must stay free
 of raw store paths.
 

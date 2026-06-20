@@ -189,7 +189,7 @@ let
   unixDeveloperPackages = unixUtilities ++ programmingTools;
 
   deploymentPackages = with pkgs; [
-    inputs.lojix-cli.packages.${pkgs.stdenv.hostPlatform.system}.default
+    inputs.lojix.packages.${pkgs.stdenv.hostPlatform.system}.default
     (pkgs.callPackage ../../../../packages/lojix-run { inherit inputs; })
     age
     sops

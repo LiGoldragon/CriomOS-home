@@ -8,7 +8,7 @@ import shlex
 import subprocess
 import sys
 
-DEFAULT_LOJIX_CLI = "@lojix_cli@"
+DEFAULT_LOJIX = "@lojix@"
 DEFAULT_SSH = "@ssh@"
 DEFAULT_JJ = "@jj@"
 
@@ -175,7 +175,7 @@ class LojixRun:
     def __init__(self, request):
         self.request = request
         self.directory = RunDirectory(request)
-        self.lojix_cli = os.environ.get("LOJIX_RUN_LOJIX_CLI", DEFAULT_LOJIX_CLI)
+        self.lojix = os.environ.get("LOJIX_RUN_LOJIX", DEFAULT_LOJIX)
         self.ssh = os.environ.get("LOJIX_RUN_SSH", DEFAULT_SSH)
         self.outcome_store_path = None
         self.root_fallback_used = False
@@ -206,7 +206,7 @@ class LojixRun:
         with self.directory.stdout.open("w", encoding="utf-8") as stdout:
             with self.directory.stderr.open("w", encoding="utf-8") as stderr:
                 return subprocess.run(
-                    [self.lojix_cli, self.request.text],
+                    [self.lojix, self.request.text],
                     stdout=stdout,
                     stderr=stderr,
                     text=True,

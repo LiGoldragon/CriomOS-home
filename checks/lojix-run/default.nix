@@ -24,7 +24,7 @@ pkgs.runCommand "lojix-run-check"
     SH
     chmod +x "$work/bin/fake-lojix"
 
-    LOJIX_RUN_LOJIX_CLI="$work/bin/fake-lojix" \
+    LOJIX_RUN_LOJIX="$work/bin/fake-lojix" \
     LOJIX_RUN_DIRECTORY="$work/state" \
       lojix-run '(FullOs goldragon zeus [/tmp/datom.nota] [github:LiGoldragon/CriomOS/main] Eval None None)' \
         > "$work/success.out"
@@ -43,7 +43,7 @@ pkgs.runCommand "lojix-run-check"
     chmod +x "$work/bin/fake-lojix"
 
     set +e
-    LOJIX_RUN_LOJIX_CLI="$work/bin/fake-lojix" \
+    LOJIX_RUN_LOJIX="$work/bin/fake-lojix" \
     LOJIX_RUN_DIRECTORY="$work/state" \
       lojix-run '(FullOs goldragon zeus [/tmp/datom.nota] [github:LiGoldragon/CriomOS/main] Eval None None)' \
         > "$work/failure.out"
