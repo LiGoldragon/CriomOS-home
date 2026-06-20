@@ -17,6 +17,14 @@ Configuration comes entirely from the environment, set by the
   BROWSER_USE_VISION_MODEL  model id, e.g. gemma-4-26b-a4b
   BROWSER_USE_CDP_URL      e.g. http://127.0.0.1:9222
   BROWSER_USE_TASK         natural-language task for the agent
+  BROWSER_USE_LLM_TIMEOUT_SECONDS
+                            OpenAI-compatible and browser-use agent LLM
+                            request timeout; local Gemma vision prompts can
+                            legitimately exceed browser-use's cloud-oriented
+                            default.
+  BROWSER_USE_USE_VISION   true/false; set false for DOM-only operation on
+                            pages where browser-use clean screenshot capture
+                            is unstable.
 """
 
 import asyncio
@@ -32,6 +40,18 @@ async def drive() -> int:
     model = os.environ.get("BROWSER_USE_VISION_MODEL", "gemma-4-26b-a4b")
     cdp_url = os.environ.get("BROWSER_USE_CDP_URL")
     task = os.environ.get("BROWSER_USE_TASK")
+    timeout_seconds_text = os.environ.get("BROWSER_USE_LLM_TIMEOUT_SECONDS", "240")
+    use_vision_text = os.environ.get("BROWSER_USE_USE_VISION", "true").lower()
+    use_vision = use_vision_text not in {"0", "false", "no", "off"}
+
+    try:
+        timeout_seconds = float(timeout_seconds_text)
+    except ValueError:
+        print(
+            "browser-use-local: BROWSER_USE_LLM_TIMEOUT_SECONDS must be a number",
+            file=sys.stderr,
+        )
+        return 2
 
     if not cdp_url or not task:
         print(
@@ -48,13 +68,25 @@ async def drive() -> int:
 
     # Vision LLM is the on-prem Gemma 4, reached over the OpenAI-compatible
     # local endpoint. Never a cloud provider.
-    llm = ChatOpenAI(model=model, base_url=base_url, api_key=api_key)
+    llm = ChatOpenAI(
+        model=model,
+        base_url=base_url,
+        api_key=api_key,
+        timeout=timeout_seconds,
+    )
 
     # Attach to the already-running, human-visible Chrome over CDP. The
     # session is closed on exit; the human's browser process survives.
     session = BrowserSession(cdp_url=cdp_url)
 
-    agent = Agent(task=task, llm=llm, browser_session=session)
+    agent = Agent(
+        task=task,
+        llm=llm,
+        browser_session=session,
+        use_vision=use_vision,
+        llm_timeout=int(timeout_seconds),
+        step_timeout=max(180, int(timeout_seconds) + 60),
+    )
     try:
         history = await agent.run(max_steps=12)
     finally:
