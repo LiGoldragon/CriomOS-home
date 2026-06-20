@@ -1182,11 +1182,11 @@
     "nota-next-source": {
       "flake": false,
       "locked": {
-        "lastModified": 1781902634,
-        "narHash": "sha256-YsHBf6AHMgJsOMyOML63kBidowWkBC+Qyej6czrIgyQ=",
+        "lastModified": 1782026373,
+        "narHash": "sha256-4/SZ+/XwI54ZC+glWUr7R4HA5zP5obOmGPaoTXdyNDY=",
         "owner": "LiGoldragon",
         "repo": "nota-next",
-        "rev": "c43d04a159e90314a0094b61ace66053371cc247",
+        "rev": "f94b5462a4456b3651a93c40dc7c19a287426213",
         "type": "github"
       },
       "original": {
@@ -2184,11 +2184,11 @@
         "version-projection-source": "version-projection-source"
       },
       "locked": {
-        "lastModified": 1781968925,
-        "narHash": "sha256-pPEM6LNGfBPdygnsV1ps4QY4hWkW2pKXPGq7FTgipu4=",
+        "lastModified": 1782026723,
+        "narHash": "sha256-5rUwiSSP/sKkFr9FJkZwO6qEEWDANNpJORxBRE+X0cc=",
         "owner": "LiGoldragon",
         "repo": "spirit",
-        "rev": "7fc267cbca1dee6c4d4190a4a492bc1fdd9ab0de",
+        "rev": "711cf79ed31e149ba8dad099343401d4cea3a89c",
         "type": "github"
       },
       "original": {
