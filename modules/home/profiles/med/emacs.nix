@@ -780,11 +780,10 @@ let
     "x-scheme-handler/org-protocol"
   ];
 
-  # VSCodium owns desktop editor defaults whenever the medium profile
-  # enables it. Emacs still runs as an editor and daemon, but does not
-  # claim xdg-open / EDITOR defaults in that profile for now.
-  vscodiumEnabled = size.medium;
-  isPreferredEditor = user.preferredEditor == "Emacs" && !vscodiumEnabled;
+  # Horizon's projected preferred editor owns EDITOR/VISUAL and
+  # text/source MIME defaults. Emacs can be preferred even when VSCodium
+  # is installed as an auxiliary editor in the same medium profile.
+  isPreferredEditor = user.preferredEditor == "Emacs";
 
 in
 mkIf size.medium {
