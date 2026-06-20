@@ -24,13 +24,14 @@ pkgs.runCommand "lojix-run-check"
     SH
     chmod +x "$work/bin/fake-lojix"
 
-    LOJIX_RUN_LOJIX="$work/bin/fake-lojix" \
+    LOJIX_RUN_META_LOJIX="$work/bin/fake-lojix" \
     LOJIX_RUN_DIRECTORY="$work/state" \
       lojix-run '(FullOs goldragon zeus [/tmp/datom.nota] [github:LiGoldragon/CriomOS/main] Eval None None)' \
         > "$work/success.out"
 
     grep -F 'lojix_run=success' "$work/success.out"
-    grep -F 'request_kind=FullOs' "$work/success.out"
+    grep -F 'request_kind=Deploy' "$work/success.out"
+    grep -F 'translated_request_kind=FullOs' "$work/success.out"
     grep -F 'stdout_sha256=' "$work/success.out"
     grep -F 'stderr_sha256=' "$work/success.out"
     ! grep -E '/nix/store/[0-9a-z]+-' "$work/success.out"
@@ -43,7 +44,7 @@ pkgs.runCommand "lojix-run-check"
     chmod +x "$work/bin/fake-lojix"
 
     set +e
-    LOJIX_RUN_LOJIX="$work/bin/fake-lojix" \
+    LOJIX_RUN_META_LOJIX="$work/bin/fake-lojix" \
     LOJIX_RUN_DIRECTORY="$work/state" \
       lojix-run '(FullOs goldragon zeus [/tmp/datom.nota] [github:LiGoldragon/CriomOS/main] Eval None None)' \
         > "$work/failure.out"

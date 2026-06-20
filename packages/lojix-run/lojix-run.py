@@ -8,7 +8,7 @@ import shlex
 import subprocess
 import sys
 
-DEFAULT_LOJIX = "@lojix@"
+DEFAULT_META_LOJIX = "@metaLojix@"
 DEFAULT_SSH = "@ssh@"
 DEFAULT_JJ = "@jj@"
 
@@ -21,9 +21,11 @@ HOME_GENERATION_PATTERN = re.compile(
 class Request:
     def __init__(self, text):
         self.original_text = text
-        self.text = ExactReferenceRewriter(DEFAULT_JJ).rewrite(text)
-        self.tokens = NotaTokenizer(self.text).tokens()
-        self.head = self.tokens[0] if self.tokens else "Unknown"
+        self.rewritten_text = ExactReferenceRewriter(DEFAULT_JJ).rewrite(text)
+        self.tokens = NotaTokenizer(self.rewritten_text).tokens()
+        self.original_head = self.tokens[0] if self.tokens else "Unknown"
+        self.text = LegacyDeployTranslator(self.rewritten_text, self.tokens).text()
+        self.head = "Deploy" if self.original_head in {"FullOs", "OsOnly", "HomeOnly"} else self.original_head
 
     def field(self, index):
         try:
@@ -38,17 +40,17 @@ class Request:
         return self.field(1)
 
     def user(self):
-        if self.head == "HomeOnly":
+        if self.original_head == "HomeOnly":
             return self.field(2)
         return None
 
     def action(self):
-        if self.head in {"FullOs", "OsOnly"}:
+        if self.original_head in {"FullOs", "OsOnly"}:
             return self.field(4)
         return None
 
     def mode(self):
-        if self.head == "HomeOnly":
+        if self.original_head == "HomeOnly":
             return self.field(5)
         return None
 
@@ -79,6 +81,10 @@ class NotaTokenizer:
                 token, index = self.bracket_token(text, index)
                 tokens.append(token)
                 continue
+            if character == "(":
+                token, index = self.parenthesis_token(text, index)
+                tokens.append(token)
+                continue
             start = index
             while index < len(text) and not text[index].isspace():
                 index += 1
@@ -95,6 +101,96 @@ class NotaTokenizer:
         if end == -1:
             return text[start:], len(text)
         return text[start + 1:end], end + 1
+
+    def parenthesis_token(self, text, start):
+        depth = 0
+        index = start
+        while index < len(text):
+            character = text[index]
+            if character == "[":
+                _, index = self.bracket_token(text, index)
+                continue
+            if character == "(":
+                depth += 1
+            if character == ")":
+                depth -= 1
+                if depth == 0:
+                    return text[start : index + 1], index + 1
+            index += 1
+        return text[start:], len(text)
+
+
+class LegacyDeployTranslator:
+    def __init__(self, text, tokens):
+        self.original_text = text
+        self.tokens = tokens
+        self.head = tokens[0] if tokens else "Unknown"
+
+    def text(self):
+        if self.head == "HomeOnly":
+            return self.home_text()
+        if self.head in {"FullOs", "OsOnly"}:
+            return self.system_text()
+        return self.original_text
+
+    def field(self, index):
+        try:
+            return self.tokens[index + 1]
+        except IndexError:
+            return None
+
+    def home_text(self):
+        fields = [
+            self.atom(self.field(0)),
+            self.atom(self.field(1)),
+            self.atom(self.field(2)),
+            self.atom(self.field(3)),
+            self.atom(self.field(4)),
+            self.atom(self.field(5)),
+            self.builder(self.field(6)),
+            self.substituters(self.field(7)),
+        ]
+        return f"(Deploy (Home ({' '.join(fields)})))"
+
+    def system_text(self):
+        fields = [
+            self.atom(self.field(0)),
+            self.atom(self.field(1)),
+            self.head,
+            self.atom(self.field(2)),
+            self.atom(self.field(3)),
+            self.atom(self.field(4)),
+            self.builder(self.field(5)),
+            self.substituters(self.field(6)),
+            "None",
+        ]
+        return f"(Deploy (System ({' '.join(fields)})))"
+
+    def atom(self, value):
+        if value is None:
+            raise ValueError(f"{self.head} request is missing a required field")
+        if self.is_bare(value):
+            return value
+        return f"[{value}]"
+
+    def builder(self, value):
+        if value in {None, "None"}:
+            return "None"
+        if value.startswith("(Some ") and value.endswith(")"):
+            return value
+        return f"(Some {self.atom(value)})"
+
+    def substituters(self, value):
+        if value in {None, "", "None"}:
+            return "[]"
+        if value.startswith("[") and value.endswith("]"):
+            return value
+        raise ValueError("legacy substituter host labels cannot be translated to meta ExtraSubstituter records")
+
+    def is_bare(self, value):
+        if not value:
+            return False
+        return not any(character.isspace() or character in "()[]" for character in value)
 
 
 class ExactReferenceRewriter:
@@ -175,7 +271,7 @@ class LojixRun:
     def __init__(self, request):
         self.request = request
         self.directory = RunDirectory(request)
-        self.lojix = os.environ.get("LOJIX_RUN_LOJIX", DEFAULT_LOJIX)
+        self.meta_lojix = os.environ.get("LOJIX_RUN_META_LOJIX", DEFAULT_META_LOJIX)
         self.ssh = os.environ.get("LOJIX_RUN_SSH", DEFAULT_SSH)
         self.outcome_store_path = None
         self.root_fallback_used = False
@@ -206,7 +302,7 @@ class LojixRun:
         with self.directory.stdout.open("w", encoding="utf-8") as stdout:
             with self.directory.stderr.open("w", encoding="utf-8") as stderr:
                 return subprocess.run(
-                    [self.lojix, self.request.text],
+                    [self.meta_lojix, self.request.text],
                     stdout=stdout,
                     stderr=stderr,
                     text=True,
@@ -225,7 +321,7 @@ class LojixRun:
 
     def can_root_fallback(self):
         return (
-            self.request.head == "HomeOnly"
+            self.request.original_head == "HomeOnly"
             and self.request.mode() in {"Profile", "Activate"}
             and self.home_generation_from_stderr()
         )
@@ -319,8 +415,10 @@ class Summary:
             print(f"action={self.request.action()}")
         if self.request.mode():
             print(f"mode={self.request.mode()}")
-        if self.request.original_text != self.request.text:
+        if self.request.original_text != self.request.rewritten_text:
             print("exact_reference_rewrite=yes")
+        if self.request.original_head != self.request.head:
+            print(f"translated_request_kind={self.request.original_head}")
         print(f"run_directory={self.directory.path}")
         for name, path in [("stdout", self.directory.stdout), ("stderr", self.directory.stderr)]:
             print(f"{name}_lines={LineCount(path).count()}")
@@ -338,10 +436,10 @@ class PostChecks:
     def print(self):
         if not self.store_path or not self.request.target_domain():
             return
-        if self.request.head in {"FullOs", "OsOnly"}:
+        if self.request.original_head in {"FullOs", "OsOnly"}:
             if self.request.action() in {"Boot", "Switch", "Test", "BootOnce"}:
                 self.print_system_checks()
-        if self.request.head == "HomeOnly":
+        if self.request.original_head == "HomeOnly":
             if self.request.mode() in {"Profile", "Activate"}:
                 self.print_home_checks()
 

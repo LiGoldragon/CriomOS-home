@@ -16,7 +16,7 @@ pkgs.stdenvNoCC.mkDerivation {
     mkdir -p "$out/bin"
     substitute ${./lojix-run.py} "$out/bin/lojix-run" \
       --subst-var-by python ${pkgs.python3}/bin/python3 \
-      --subst-var-by lojix ${lojix}/bin/lojix \
+      --subst-var-by metaLojix ${lojix}/bin/meta-lojix \
       --subst-var-by ssh ${pkgs.openssh}/bin/ssh \
       --subst-var-by jj ${pkgs.jujutsu}/bin/jj
     chmod +x "$out/bin/lojix-run"
