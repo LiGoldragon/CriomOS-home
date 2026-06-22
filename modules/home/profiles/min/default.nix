@@ -595,12 +595,29 @@ mkIf size.min {
   };
 
   xdg = {
+    portal = {
+      enable = true;
+      extraPortals = with pkgs; [
+        xdg-desktop-portal-gnome
+        xdg-desktop-portal-gtk
+      ];
+      config.common = {
+        default = [
+          "gnome"
+          "gtk"
+        ];
+        "org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
+      };
+    };
+
     configFile = {
       "fontconfig/conf.d/10-CriomOS-fonts-paths.conf".text = mkFontConf;
 
       "uwsm/env".text = ''
         export SSH_AUTH_SOCK="''${XDG_RUNTIME_DIR}/gnupg/S.gpg-agent.ssh"
+        export XDG_SESSION_DESKTOP=niri
         export NIXOS_OZONE_WL=1
+        export ELECTRON_OZONE_PLATFORM_HINT=wayland
         export QT_QPA_PLATFORM=wayland
         export QT_WAYLAND_DISABLE_WINDOWDECORATION=1
         export GDK_BACKEND=wayland
