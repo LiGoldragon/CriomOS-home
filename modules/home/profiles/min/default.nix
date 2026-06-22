@@ -569,6 +569,19 @@ mkIf size.min {
 
   systemd = {
     user.services = {
+      xdg-desktop-portal-gnome = {
+        Unit = {
+          Description = "Portal service (GNOME implementation)";
+          PartOf = [ "graphical-session.target" ];
+          After = [ "graphical-session.target" ];
+        };
+        Service = {
+          ExecStart = "${pkgs.xdg-desktop-portal-gnome}/libexec/xdg-desktop-portal-gnome";
+          Restart = "on-failure";
+        };
+        Install.WantedBy = [ "graphical-session.target" ];
+      };
+
       wl-gammarelay-rs = {
         Unit = {
           Description = "DBus interface for display temperature, brightness and gamma control";
