@@ -252,13 +252,13 @@
     "claude-code-vsix": {
       "flake": false,
       "locked": {
-        "narHash": "sha256-utIFz6WmpylGRWt8HzlsJbMKLN1Z9lUAJfiKFza3oH0=",
+        "narHash": "sha256-krsR2ANzS3wwkZJEbdLHWMJJu7VKyPeDZJvL4aO4JQs=",
         "type": "file",
-        "url": "https://open-vsx.org/api/Anthropic/claude-code/linux-x64/2.1.183/file/Anthropic.claude-code-2.1.183@linux-x64.vsix"
+        "url": "https://open-vsx.org/api/Anthropic/claude-code/linux-x64/2.1.185/file/Anthropic.claude-code-2.1.185@linux-x64.vsix"
       },
       "original": {
         "type": "file",
-        "url": "https://open-vsx.org/api/Anthropic/claude-code/linux-x64/2.1.183/file/Anthropic.claude-code-2.1.183@linux-x64.vsix"
+        "url": "https://open-vsx.org/api/Anthropic/claude-code/linux-x64/2.1.185/file/Anthropic.claude-code-2.1.185@linux-x64.vsix"
       }
     },
     "codex-cli": {
@@ -892,11 +892,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1781896790,
-        "narHash": "sha256-Rx2QqCACY5IFK0mbm3YYSoEyJoYAvEUzLhH34k9TLx0=",
+        "lastModified": 1782109184,
+        "narHash": "sha256-AR6RSK2b8SLGWSDqlni+OnAp8z5NqZo5Lih3+4J4Jdo=",
         "owner": "numtide",
         "repo": "llm-agents.nix",
-        "rev": "1dd0ddc8db17a0a82f95112eb9ff856d4118641a",
+        "rev": "1a30e47b2e639c3286f6379d2811711ce4906950",
         "type": "github"
       },
       "original": {
@@ -1247,16 +1247,16 @@
     "pi-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1781855623,
-        "narHash": "sha256-eH1+vHrKBu1GcUXnTdvRtNuLuf0EdReAnFit8UqiXB4=",
+        "lastModified": 1782119683,
+        "narHash": "sha256-UMRkOzJpA1XcEHzRwHxgBg6idEmpVJzBKlrXZaVf4MQ=",
         "owner": "earendil-works",
         "repo": "pi",
-        "rev": "8eb9704b3e75391dcc4f584b7fc1a03c9e04e383",
+        "rev": "8e1900666f3cb83c281297d8f787fae6ee2bd0e6",
         "type": "github"
       },
       "original": {
         "owner": "earendil-works",
-        "ref": "v0.79.8",
+        "ref": "v0.79.10",
         "repo": "pi",
         "type": "github"
       }
@@ -1264,13 +1264,13 @@
     "pi-subagents-src": {
       "flake": false,
       "locked": {
-        "narHash": "sha256-Poy5y1tLUrngW9ChC6zKyXpd2xDVIHxbfI+w9OhkToA=",
+        "narHash": "sha256-d/3mUmt67w2Mo+ArdlTUPIkZP0EvKXJJdwoTUbcKYnU=",
         "type": "file",
-        "url": "https://registry.npmjs.org/pi-subagents/-/pi-subagents-0.29.0.tgz"
+        "url": "https://registry.npmjs.org/pi-subagents/-/pi-subagents-0.30.0.tgz"
       },
       "original": {
         "type": "file",
-        "url": "https://registry.npmjs.org/pi-subagents/-/pi-subagents-0.29.0.tgz"
+        "url": "https://registry.npmjs.org/pi-subagents/-/pi-subagents-0.30.0.tgz"
       }
     },
     "pi-utils-ui-src": {
