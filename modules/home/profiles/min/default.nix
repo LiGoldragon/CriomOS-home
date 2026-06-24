@@ -202,9 +202,11 @@ let
     pkgs.gemini-cli
     inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.claude-code
     inputs.codex-cli.packages.${pkgs.stdenv.hostPlatform.system}.default
+    inputs.mentci-egui.packages.${pkgs.stdenv.hostPlatform.system}.default
     pkgs.opencode
     pkgs.llama-cpp
     (pkgs.callPackage ../../../../packages/gws { inherit inputs; })
+    (pkgs.callPackage ../../../../packages/mentci { inherit inputs; })
     (pkgs.callPackage ../../../../packages/pi { inherit inputs; })
     (pkgs.callPackage ../../../../packages/playwright-cli { })
   ];

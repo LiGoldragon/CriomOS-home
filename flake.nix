@@ -137,6 +137,16 @@
     agent.inputs.nixpkgs.follows = "nixpkgs";
     agent.inputs.crane.follows = "crane";
 
+    # Mentci — psyche-facing approval daemon and egui client surface.
+    # The daemon repo is packaged locally because it does not expose a flake;
+    # mentci-egui exposes the GUI and its remote-control helper binaries.
+    mentci-src = {
+      url = "github:LiGoldragon/mentci";
+      flake = false;
+    };
+    mentci-egui.url = "github:LiGoldragon/mentci-egui";
+    mentci-egui.inputs.nixpkgs.follows = "nixpkgs";
+
     # `pi` (earendil-works/pi coding-agent CLI) — TypeScript npm
     # monorepo with no upstream flake. Consumed as a non-flake source
     # input and built locally via `packages/pi/default.nix`
