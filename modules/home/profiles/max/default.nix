@@ -31,6 +31,11 @@ let
     pavucontrol # TODO: pwvucontrol doesnt display virtual sources
   ];
 
+  mentciPackages = [
+    inputs.mentci-egui.packages.${pkgs.stdenv.hostPlatform.system}.default
+    (pkgs.callPackage ../../../../packages/mentci { inherit inputs; })
+  ];
+
   windowsEmulationsPackages = with pkgs; [
     bottles
   ];
@@ -85,7 +90,7 @@ mkMerge [
   # Max-tier exceptions per Li 2026-04-25: obs-studio + gimp/krita/
   # calibre/inkscape (when isMultimediaDev) live at size.max only.
   (mkIf size.max {
-    home.packages = optionals isMultimediaDev maxMultimediaPackages;
+    home.packages = mentciPackages ++ optionals isMultimediaDev maxMultimediaPackages;
 
     programs.obs-studio = {
       enable = true;
