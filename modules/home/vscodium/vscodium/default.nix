@@ -10,7 +10,6 @@
 let
   inherit (user) size;
   codiumPackage = pkgs.callPackage ../../../../packages/vscodium-casual { };
-  claudeShared = pkgs.callPackage ../../../../packages/claude-shared { inherit inputs; };
 
   # Flake inputs of `type = "file"` always materialize as a store path
   # named `source` (no extension). nixpkgs' `unpack-vsix-setup-hook`
@@ -79,7 +78,9 @@ let
       bin_dir=$out/share/vscode/extensions/anthropic.claude-code/resources/native-binary
       if [ -d "$bin_dir" ]; then
         rm -f "$bin_dir/claude"
-        ln -s "${claudeShared}/bin/claude" "$bin_dir/claude"
+        ln -s "${
+          inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.claude-code
+        }/bin/claude" "$bin_dir/claude"
       fi
     '';
   };
