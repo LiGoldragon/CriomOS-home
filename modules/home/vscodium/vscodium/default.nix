@@ -10,6 +10,7 @@
 let
   inherit (user) size;
   codiumPackage = pkgs.callPackage ../../../../packages/vscodium-casual { };
+  claudeShared = pkgs.callPackage ../../../../packages/claude-shared { inherit inputs; };
 
   # Flake inputs of `type = "file"` always materialize as a store path
   # named `source` (no extension). nixpkgs' `unpack-vsix-setup-hook`
@@ -64,9 +65,9 @@ let
   # which fails on NixOS with 'Could not start dynamically linked
   # executable ... NixOS cannot run dynamically linked executables
   # intended for generic linux environments out of the box'. Replace it
-  # with a symlink to the properly-nix-built binary from the
-  # llm-agents.nix flake input (which is the same upstream Anthropic
-  # CLI, just nix-packaged with the right interpreter + rpath).
+  # with the workspace-gated wrapper around the properly-nix-built binary from
+  # the llm-agents.nix flake input. The wrapper keeps Claude private memory
+  # opt-in instead of default for extension launches too.
   claude-code-codium = pkgs.vscode-utils.buildVscodeMarketplaceExtension {
     mktplcRef = {
       name = "claude-code";
@@ -78,9 +79,7 @@ let
       bin_dir=$out/share/vscode/extensions/anthropic.claude-code/resources/native-binary
       if [ -d "$bin_dir" ]; then
         rm -f "$bin_dir/claude"
-        ln -s "${
-          inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.claude-code
-        }/bin/claude" "$bin_dir/claude"
+        ln -s "${claudeShared}/bin/claude" "$bin_dir/claude"
       fi
     '';
   };

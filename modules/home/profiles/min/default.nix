@@ -198,9 +198,11 @@ let
 
   # pi-mentci wrapper dropped 2026-04-25; pi itself returns 2026-04-29
   # built directly from inputs.pi-src via packages/pi/default.nix.
+  claudeShared = pkgs.callPackage ../../../../packages/claude-shared { inherit inputs; };
+
   AIPackages = [
     pkgs.gemini-cli
-    inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.claude-code
+    (lib.hiPrio claudeShared)
     inputs.codex-cli.packages.${pkgs.stdenv.hostPlatform.system}.default
     inputs.mentci-egui.packages.${pkgs.stdenv.hostPlatform.system}.default
     pkgs.opencode
