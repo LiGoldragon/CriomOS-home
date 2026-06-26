@@ -1376,13 +1376,13 @@
     "pi-subagents-src": {
       "flake": false,
       "locked": {
-        "narHash": "sha256-d/3mUmt67w2Mo+ArdlTUPIkZP0EvKXJJdwoTUbcKYnU=",
+        "narHash": "sha256-EmDqAPVqJ6hxuA3Yj8SikM2kA/oI6D1QEe/gPvJbIVw=",
         "type": "file",
-        "url": "https://registry.npmjs.org/pi-subagents/-/pi-subagents-0.30.0.tgz"
+        "url": "https://registry.npmjs.org/pi-subagents/-/pi-subagents-0.31.0.tgz"
       },
       "original": {
         "type": "file",
-        "url": "https://registry.npmjs.org/pi-subagents/-/pi-subagents-0.30.0.tgz"
+        "url": "https://registry.npmjs.org/pi-subagents/-/pi-subagents-0.31.0.tgz"
       }
     },
     "pi-utils-ui-src": {
@@ -1556,13 +1556,13 @@
     "pi-web-access-mozilla-readability-src": {
       "flake": false,
       "locked": {
-        "narHash": "sha256-ezWbQH3jikmPT16azozB+Lrs+hSjrOfQBm3A0tfcobg=",
+        "narHash": "sha256-5CsTthd0++SCx/TO0g48mr/ONszpUBAHfn9Nw7Gv9rE=",
         "type": "file",
-        "url": "https://registry.npmjs.org/@mozilla/readability/-/readability-0.5.0.tgz"
+        "url": "https://registry.npmjs.org/@mozilla/readability/-/readability-0.6.0.tgz"
       },
       "original": {
         "type": "file",
-        "url": "https://registry.npmjs.org/@mozilla/readability/-/readability-0.5.0.tgz"
+        "url": "https://registry.npmjs.org/@mozilla/readability/-/readability-0.6.0.tgz"
       }
     },
     "pi-web-access-nth-check-src": {
@@ -1592,13 +1592,13 @@
     "pi-web-access-src": {
       "flake": false,
       "locked": {
-        "narHash": "sha256-7Sei3wKWheb05JCGpgt/Rh+pieLtMTp5gjnJW1I+o8I=",
+        "narHash": "sha256-bK2MSFxfir0NfrQYKnwsfh8LlMOkJicWWCpEW83ljdk=",
         "type": "file",
-        "url": "https://registry.npmjs.org/pi-web-access/-/pi-web-access-0.10.7.tgz"
+        "url": "https://registry.npmjs.org/pi-web-access/-/pi-web-access-0.13.0.tgz"
       },
       "original": {
         "type": "file",
-        "url": "https://registry.npmjs.org/pi-web-access/-/pi-web-access-0.10.7.tgz"
+        "url": "https://registry.npmjs.org/pi-web-access/-/pi-web-access-0.13.0.tgz"
       }
     },
     "pi-web-access-turndown-src": {

@@ -171,7 +171,7 @@
     };
     pi-subagents-src = {
       type = "file";
-      url = "https://registry.npmjs.org/pi-subagents/-/pi-subagents-0.30.0.tgz";
+      url = "https://registry.npmjs.org/pi-subagents/-/pi-subagents-0.31.0.tgz";
       flake = false;
     };
     pi-continue-src = {
@@ -181,7 +181,7 @@
     };
     pi-web-access-src = {
       type = "file";
-      url = "https://registry.npmjs.org/pi-web-access/-/pi-web-access-0.10.7.tgz";
+      url = "https://registry.npmjs.org/pi-web-access/-/pi-web-access-0.13.0.tgz";
       flake = false;
     };
     pi-web-access-mixmark-io-domino-src = {
@@ -191,7 +191,7 @@
     };
     pi-web-access-mozilla-readability-src = {
       type = "file";
-      url = "https://registry.npmjs.org/@mozilla/readability/-/readability-0.5.0.tgz";
+      url = "https://registry.npmjs.org/@mozilla/readability/-/readability-0.6.0.tgz";
       flake = false;
     };
     pi-web-access-boolbase-src = {

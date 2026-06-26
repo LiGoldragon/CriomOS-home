@@ -91,7 +91,7 @@ let
 in
 pkgs.stdenvNoCC.mkDerivation {
   pname = "pi-web-access";
-  version = "0.10.7";
+  version = "0.13.0";
 
   dontUnpack = true;
   dontBuild = true;
