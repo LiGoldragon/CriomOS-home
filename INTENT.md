@@ -37,6 +37,11 @@ and services remain in CriomOS.
   should be present without mutable installs. Heavy speech-to-text or
   model-cache stacks stay out of the normal medium profile until their
   AI-node or larger-profile shape is settled.
+- Persona Pi agent-chain automation in the user profile should run without
+  making the psyche press Enter in a UI for already-authorized work. The
+  psyche said, *I want the agent to be able to start it without my manual
+  approval - the whole point of automation is for me not to be in the loop
+  when things are getting automated.*
 
 ## Dictation
 

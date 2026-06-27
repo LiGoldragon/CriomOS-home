@@ -13,6 +13,7 @@ pkgs.stdenvNoCC.mkDerivation {
     mkdir -p "$packageRoot"
 
     tar -xzf ${inputs.pi-subagents-src} -C "$packageRoot" --strip-components=1
+    patch -d "$packageRoot" -p1 < ${./agent-chain-clarify-opt-in.patch}
 
     runHook postInstall
   '';
