@@ -132,8 +132,9 @@ the same rule: the live Pi settings file names
   `criomos-light` through Pi's UI theme API at session start, before
   provider calls, before tool calls, and on Chroma state-file changes.
 - `operator-safety.ts` is not part of the default package. The basic
-  CriomOS Pi profile is YOLO-mode: theme support, web/search support,
-  and subagents support, without repeated mutation-confirmation gates.
+  CriomOS Pi profile is YOLO-mode: theme support, Linkup web/search
+  support, subagents support, and continuation support, without repeated
+  mutation-confirmation gates.
 
 `pi-linkup` is the small reference external package:
 
@@ -147,18 +148,16 @@ the same rule: the live Pi settings file names
   `gopass show -o linkup.so/api-key` when the variable is not already
   set.
 
-`pi-web-access` is the full Pi web/search package:
+`pi-web-access` remains packaged for rollback and comparison, but it is
+not part of the loaded Pi profile:
 
 - `flake.nix` declares `pi-web-access-src` plus a flat flake-input npm
   dependency closure for its runtime imports.
 - `packages/pi-web-access/default.nix` unpacks the package and its
   dependencies below the package-local `node_modules` directory.
-- `modules/home/profiles/min/pi-models.nix` exposes it at
-  `$HOME/.pi/agent/packages/pi-web-access` and enables it as
-  `packages/pi-web-access`.
-- The package provides Pi-native `web_search`, `code_search`,
-  `fetch_content`, and `get_search_content` tools, matching the tool
-  names expected by Pi subagent research workflows.
+- `modules/home/profiles/min/pi-models.nix` does not expose it under
+  `$HOME/.pi/agent/packages` and does not include `packages/pi-web-access`
+  in the managed Pi settings package list.
 
 `pi-continue` is the same-session continuation package:
 
@@ -178,7 +177,7 @@ the same rule: the live Pi settings file names
 Before committing, run:
 
 ```sh
-nix fmt -- flake.nix packages/<extension>/default.nix modules/home/profiles/min/pi-models.nix
+nix fmt -- flake.nix packages/<extension>/default.nix modules/home/profiles/min/pi-models.nix checks/pi-harness-profile/default.nix
 nix eval --raw .#packages.x86_64-linux.<extension>.drvPath >/dev/null
 nix eval --json .#packages.x86_64-linux --apply 'builtins.attrNames'
 jj diff --stat

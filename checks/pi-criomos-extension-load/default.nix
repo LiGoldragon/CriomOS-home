@@ -5,7 +5,6 @@ let
   pi = inputs.self.packages.${system}.pi;
   pi-criomos = inputs.self.packages.${system}.pi-criomos;
   pi-continue = inputs.self.packages.${system}.pi-continue;
-  pi-web-access = inputs.self.packages.${system}.pi-web-access;
 in
 pkgs.runCommand "pi-criomos-extension-load"
   {
@@ -58,12 +57,6 @@ pkgs.runCommand "pi-criomos-extension-load"
       --list-models gpt > "$TMPDIR/models" 2>&1
 
     grep -E "local-test[[:space:]]+gpt-test" "$TMPDIR/models"
-
-    ${pi}/bin/pi \
-      -e "${pi-web-access}/share/pi-packages/pi-web-access/index.ts" \
-      --list-models gpt > "$TMPDIR/web-models" 2>&1
-
-    grep -E "local-test[[:space:]]+gpt-test" "$TMPDIR/web-models"
 
     printf '{"type":"get_commands"}\n' | ${pi}/bin/pi \
       --mode rpc \
