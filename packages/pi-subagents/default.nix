@@ -14,6 +14,7 @@ pkgs.stdenvNoCC.mkDerivation {
 
     tar -xzf ${inputs.pi-subagents-src} -C "$packageRoot" --strip-components=1
     patch -d "$packageRoot" -p1 < ${./agent-chain-clarify-opt-in.patch}
+    patch -d "$packageRoot" -p1 < ${./slim-parent-skill.patch}
 
     runHook postInstall
   '';

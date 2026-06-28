@@ -25,6 +25,9 @@ pkgs.runCommand "pi-harness-profile"
     test -d "${pi-linkup}/share/pi-packages/pi-linkup/node_modules/@aliou/pi-utils-ui"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/index.ts"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md"
+    test "$(wc -l < "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md")" -le 150
+    grep -F 'Clarify UI is explicit opt-in' "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md"
+    ! grep -F 'Chains default to clarify mode' "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md"
     test -f "${pi-continue}/share/pi-packages/pi-continue/extensions/continue/index.ts"
     test -f "${pi-continue}/share/pi-packages/pi-continue/assets/user/continuation_base.md"
 
