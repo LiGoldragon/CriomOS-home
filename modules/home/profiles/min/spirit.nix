@@ -52,20 +52,12 @@ let
 
   guardianAgentConfiguration = "(Some (${agentSocketPath} (Some ${providerName}) (Some ${guardianModel}) 180000 None))";
 
-  # ConfigurationWriteRequest gained a 5th positional field in spirit 0.18.0:
-  # authorization_mode (AuthorizationMode [Gating Observing]), sitting between
-  # trace_socket_path and guardian_agent_configuration. It gates only the
-  # criome/mirror-shipper path, which the deployed `--features agent-guardian`
-  # daemon build excludes, so the value is inert here. `Gating` matches spirit's
-  # own SpiritDaemonConfiguration::new default, preserving prior behavior.
-  authorizationMode = "Gating";
-
   daemonConfiguration = pkgs.runCommand "spirit-daemon-configuration" { } ''
     set -eu
 
     mkdir -p "$out"
     ${spiritPackage}/bin/spirit-write-configuration \
-      "(ConfigurationWriteRequest (${socketPath} (Some ${metaSocketPath}) ${databasePath} None ${authorizationMode} ${guardianAgentConfiguration} $out/${configurationPath}))" \
+      "(ConfigurationWriteRequest (${socketPath} (Some ${metaSocketPath}) ${databasePath} None ${guardianAgentConfiguration} $out/${configurationPath}))" \
       > "$out/configuration-written.nota"
     test -s "$out/${configurationPath}"
   '';
