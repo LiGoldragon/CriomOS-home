@@ -28,7 +28,6 @@ let
   largeAiNode = lib.findFirst (node: node.behavesAs.largeAi or false) null clusterNodes;
   endpointNode = if routerNode != null then routerNode else largeAiNode;
   providerName = "criomos-local";
-  defaultLocalModel = "gemma-4-26b-a4b";
   defaultOpenAiCodexModel = "gpt-5.5";
   localLlmApiKeyCommand = "!gopass show -o goldragon.criome/local-llm-api-token";
   legacyLocalProviderNames = [
@@ -83,9 +82,9 @@ let
   );
 
   piSettingsConfig = {
-    defaultProvider = providerName;
-    defaultModel = defaultLocalModel;
-    defaultThinkingLevel = "off";
+    defaultProvider = "openai-codex";
+    defaultModel = defaultOpenAiCodexModel;
+    defaultThinkingLevel = "high";
     enabledModels =
       remoteOpenAiCodexModels ++ map (model: "${providerName}/${model.modelId}") inventory.models;
     theme = "criomos-dark";
