@@ -53,6 +53,7 @@ pkgs.runCommand "pi-harness-profile"
 
     grep -F 'defaultProvider = "openai-codex";' ${piModelsModule}
     grep -F 'defaultOpenAiCodexModel = "gpt-5.5";' ${piModelsModule}
+    grep -F 'defaultModel = defaultOpenAiCodexModel;' ${piModelsModule}
     grep -F 'defaultThinkingLevel = "high";' ${piModelsModule}
     grep -F '"openai-codex/gpt-5.4-mini"' ${piModelsModule}
     grep -F 'localLlmApiKeyCommand = "!gopass show -o goldragon.criome/local-llm-api-token";' ${piModelsModule}
