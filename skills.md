@@ -212,13 +212,14 @@ as verified. Home activation should restart `whisrs.service`; do not
 signal niri.
 
 Use `lojix-run` when an agent needs an operator-facing deploy wrapper around
-`lojix`. It still takes exactly one NOTA request or request-file path, but
-it captures stdout/stderr into a run directory, prints line counts and hashes,
-redacts store hashes from failure tails, rewrites known branch refs to exact
-local jj revisions when possible, and runs postchecks for system/home profile
-state. Use raw `lojix` when the machine-readable store path on stdout is the
-intended interface; use `lojix-run` when the chat/report surface must stay free
-of raw store paths.
+the current `lojix` / `meta-lojix` stack. Do not use the archived
+`lojix-cli`. `lojix-run` still takes exactly one NOTA request or request-file
+path, but it captures stdout/stderr into a run directory, prints line counts
+and hashes, redacts store hashes from failure tails, rewrites known branch refs
+to exact local jj revisions when possible, and runs postchecks for system/home
+profile state. Use raw `lojix` when the machine-readable store path on stdout
+is the intended interface; use `lojix-run` when the chat/report surface must
+stay free of raw store paths.
 
 For Niri settings, repo changes and builds are not live runtime state. After
 pushing, run lojix `HomeOnly ... Activate`, then ask the running compositor to
