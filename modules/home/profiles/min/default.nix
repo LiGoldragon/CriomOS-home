@@ -621,7 +621,10 @@ mkIf size.min {
 
       ".config/broot/conf.toml".text = brootConfig;
 
-      ".codex/config.toml".source = tomlFormat.generate "codex-config.toml" codexConfig;
+      ".codex/config.toml" = {
+        source = tomlFormat.generate "codex-config.toml" codexConfig;
+        force = true;
+      };
     };
   };
 
