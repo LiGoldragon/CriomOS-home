@@ -6,6 +6,7 @@
   horizon,
   config,
   inputs,
+  hexis,
   rustToolchain,
   # Todo(data)
   ...
@@ -31,8 +32,6 @@ let
     ;
   inherit (user) githubId name;
   inherit (pkgs) writeText;
-
-  tomlFormat = pkgs.formats.toml { };
 
   codexSkillReadDeduplicationInstruction = "Skill-read de-duplication: A pasted <skill ...>...</skill> block is complete when it has matching opening and closing <skill> tags, a skill name, a location, and non-empty body text. Treat a complete pasted skill block as already loaded for this session. Read the same skill location again only when the block is structurally missing content, the user asks to verify source or freshness, or a higher-priority instruction explicitly requires verification.";
 
@@ -620,10 +619,14 @@ mkIf size.min {
       '';
 
       ".config/broot/conf.toml".text = brootConfig;
+    };
 
-      ".codex/config.toml" = {
-        source = tomlFormat.generate "codex-config.toml" codexConfig;
-        force = true;
+    activation.mergeCodexConfig = inputs.hexis.lib.mkManagedConfig {
+      inherit lib pkgs hexis;
+      file = "$HOME/.codex/config.toml";
+      declared = codexConfig;
+      modes = {
+        "/tui/theme" = "once";
       };
     };
   };
