@@ -32,6 +32,63 @@ let
   inherit (user) githubId name;
   inherit (pkgs) writeText;
 
+  tomlFormat = pkgs.formats.toml { };
+
+  codexSkillReadDeduplicationInstruction = "Skill-read de-duplication: A pasted <skill ...>...</skill> block is complete when it has matching opening and closing <skill> tags, a skill name, a location, and non-empty body text. Treat a complete pasted skill block as already loaded for this session. Read the same skill location again only when the block is structurally missing content, the user asks to verify source or freshness, or a higher-priority instruction explicitly requires verification.";
+
+  codexProjectTrust = trust_level: { inherit trust_level; };
+
+  codexConfig = {
+    developer_instructions = codexSkillReadDeduplicationInstruction;
+    model = "gpt-5.5";
+    model_reasoning_effort = "high";
+    personality = "pragmatic";
+    plan_mode_reasoning_effort = "xhigh";
+
+    projects = {
+      "/home/li/git/CriomOS" = codexProjectTrust "trusted";
+      "/home/li/git/TheBookOfSol" = codexProjectTrust "trusted";
+      "/home/li" = codexProjectTrust "untrusted";
+      "/home/li/git/Mentci-AI" = codexProjectTrust "trusted";
+      "/home/li/git/Mentci-AI--dev" = codexProjectTrust "trusted";
+      "/home/li/git/substack-mcp" = codexProjectTrust "trusted";
+      "/home/li/git/pi-mentci" = codexProjectTrust "trusted";
+      "/home/li/git/caraka-samhita" = codexProjectTrust "trusted";
+      "/home/li/Criopolis" = codexProjectTrust "trusted";
+      "/tmp" = codexProjectTrust "trusted";
+      "/git/github.com/LiGoldragon/test-city" = codexProjectTrust "trusted";
+      "/home/li/primary" = codexProjectTrust "trusted";
+      "/home/li/git/CriomOS-home" = codexProjectTrust "trusted";
+    };
+
+    notice = {
+      hide_rate_limit_model_nudge = true;
+      model_migrations = {
+        "gpt-5.1-codex-mini" = "gpt-5.3-codex";
+        "gpt-5.2-codex" = "gpt-5.4";
+        "gpt-5.3-codex" = "gpt-5.4";
+      };
+    };
+
+    tui = {
+      theme = "github";
+      status_line = [
+        "model-with-reasoning"
+        "current-dir"
+        "run-state"
+        "context-used"
+        "weekly-limit"
+      ];
+      status_line_use_colors = true;
+      model_availability_nux."gpt-5.5" = 4;
+    };
+
+    plugins = {
+      "gmail@openai-curated".enabled = true;
+      "github@openai-curated".enabled = true;
+    };
+  };
+
   homeDir = config.home.homeDirectory;
 
   fzfColemakBinds = import ./fzfColemak.nix;
@@ -563,6 +620,8 @@ mkIf size.min {
       '';
 
       ".config/broot/conf.toml".text = brootConfig;
+
+      ".codex/config.toml".source = tomlFormat.generate "codex-config.toml" codexConfig;
     };
   };
 
