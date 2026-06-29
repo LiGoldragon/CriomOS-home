@@ -1,0 +1,24 @@
+diff --git a/packages/coding-agent/src/core/skills.ts b/packages/coding-agent/src/core/skills.ts
+index 2d95ce1..c7f3c6a 100644
+--- a/packages/coding-agent/src/core/skills.ts
++++ b/packages/coding-agent/src/core/skills.ts
+@@ -330,6 +330,6 @@ export function formatSkillsForPrompt(skills: Skill[]): string {
+ 	const lines = [
+ 		"\n\nThe following skills provide specialized instructions for specific tasks.",
+-		"Use the read tool to load a skill's file when the task matches its description.",
++		"Use the read tool to load a skill's file when the task matches its description. Treat a complete pasted `<skill name=... location=...> ... </skill>` block with the full body as already loaded; read the file only if the block is incomplete, lacks name/location/body, or the user/task asks to verify source freshness.",
+ 		"When a skill file references a relative path, resolve it against the skill directory (parent of SKILL.md / dirname of the path) and use that absolute path in tool commands.",
+ 		"",
+ 		"<available_skills>",
+diff --git a/packages/coding-agent/test/skills.test.ts b/packages/coding-agent/test/skills.test.ts
+index 3af9e35..b622760 100644
+--- a/packages/coding-agent/test/skills.test.ts
++++ b/packages/coding-agent/test/skills.test.ts
+@@ -264,6 +264,7 @@ describe("skills", () => {
+ 
+ 			expect(introText).toContain("The following skills provide specialized instructions");
+ 			expect(introText).toContain("Use the read tool to load a skill's file");
++			expect(introText).toContain("Treat a complete pasted `<skill name=... location=...> ... </skill>` block with the full body as already loaded");
+ 		});
+ 
+ 		it("should escape XML special characters", () => {

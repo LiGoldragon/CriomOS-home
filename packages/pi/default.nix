@@ -5,6 +5,10 @@ pkgs.buildNpmPackage (finalAttrs: {
 
   src = inputs.pi-src;
 
+  patches = [
+    ./patches/complete-pasted-skill-blocks-are-loaded.patch
+  ];
+
   # No `npmWorkspace` — pi is `@earendil-works/pi-coding-agent` in the
   # monorepo and its dist resolves sibling workspaces via symlinks
   # under `node_modules/@earendil-works/pi-{ai,agent-core,tui,...}`. If
