@@ -33,7 +33,24 @@ let
   inherit (user) githubId name;
   inherit (pkgs) writeText;
 
+  defaultOrchestrationInstruction = ''
+    Default launch mode: parent orchestrator.
+
+    You are the parent orchestrator for this session. Interview the psyche, frame the task, dispatch appropriately scoped workers for inspection or implementation, and synthesize from worker outputs. Do not perform ordinary task work directly when worker delegation is available. Do not inspect files, links, command output, or repository state yourself for task substance; assign that work to a worker and use its durable output. Keep child/worker role packets authoritative for child sessions.
+
+    Non-orchestrator sessions are a launch-time choice. Use direct-claude, direct-codex, direct-pi, CRIOMOS_AGENT_MODE=direct, or an explicit role/system prompt launch to omit this default for workers, emergency direct maintenance, or sessions where delegation is unavailable.
+  '';
+
+  defaultOrchestrationInstructionFile = writeText "criomos-default-orchestration-instructions.md" defaultOrchestrationInstruction;
+
   codexSkillReadDeduplicationInstruction = "Skill-read de-duplication: A pasted <skill ...>...</skill> block is complete when it has matching opening and closing <skill> tags, a skill name, a location, and non-empty body text. Treat a complete pasted skill block as already loaded for this session. Read the same skill location again only when the block is structurally missing content, the user asks to verify source or freshness, or a higher-priority instruction explicitly requires verification.";
+
+  codexDefaultDeveloperInstructions =
+    codexSkillReadDeduplicationInstruction + "\n\n" + defaultOrchestrationInstruction;
+
+  codexDefaultDeveloperInstructionsTomlValue = writeText "codex-default-orchestration-developer-instructions.toml-value" (
+    toJSON codexDefaultDeveloperInstructions
+  );
 
   codexProjectTrust = trust_level: { inherit trust_level; };
 
@@ -254,16 +271,129 @@ let
 
   # pi-mentci wrapper dropped 2026-04-25; pi itself returns 2026-04-29
   # built directly from inputs.pi-src via packages/pi/default.nix.
+  claudeCodePackage = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.claude-code;
+  codexCliPackage = inputs.codex-cli.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  piPackage = pkgs.callPackage ../../../../packages/pi { inherit inputs; };
+
+  mkDirectAgentCommand =
+    commandName: package: executableName:
+    pkgs.writeShellApplication {
+      name = commandName;
+      text = ''
+        exec ${package}/bin/${executableName} "$@"
+      '';
+    };
+
+  directClaude = mkDirectAgentCommand "direct-claude" claudeCodePackage "claude";
+  directCodex = mkDirectAgentCommand "direct-codex" codexCliPackage "codex";
+  directPi = mkDirectAgentCommand "direct-pi" piPackage "pi";
+
+  claudeWithDefaultOrchestration = pkgs.writeShellApplication {
+    name = "claude";
+    text = ''
+      should_inject=1
+
+      case "''${CRIOMOS_AGENT_MODE:-}" in
+        direct|worker|non-orchestrator) should_inject=0 ;;
+      esac
+
+      if [ -n "''${PI_SUBAGENT_CHILD:-}" ] || [ -n "''${CLAUDE_CODE_SUBAGENT:-}" ]; then
+        should_inject=0
+      fi
+
+      previous_argument=""
+      for argument in "$@"; do
+        case "$previous_argument:$argument" in
+          --agent:*|--agents:*|--system-prompt:*|--append-system-prompt:*) should_inject=0 ;;
+        esac
+        case "$argument" in
+          --agent=*|--agents=*|--system-prompt=*|--append-system-prompt=*) should_inject=0 ;;
+        esac
+        previous_argument="$argument"
+      done
+
+      if [ "$should_inject" = 1 ]; then
+        exec ${claudeCodePackage}/bin/claude --append-system-prompt "$(cat ${defaultOrchestrationInstructionFile})" "$@"
+      fi
+
+      exec ${claudeCodePackage}/bin/claude "$@"
+    '';
+  };
+
+  codexWithDefaultOrchestration = pkgs.writeShellApplication {
+    name = "codex";
+    text = ''
+      should_inject=1
+
+      case "''${CRIOMOS_AGENT_MODE:-}" in
+        direct|worker|non-orchestrator) should_inject=0 ;;
+      esac
+
+      previous_argument=""
+      for argument in "$@"; do
+        case "$previous_argument:$argument" in
+          --profile:non-orchestrator|-p:non-orchestrator|--config:developer_instructions=*|-c:developer_instructions=*) should_inject=0 ;;
+        esac
+        case "$argument" in
+          --profile=non-orchestrator|-p=non-orchestrator|--config=developer_instructions=*|-c=developer_instructions=*) should_inject=0 ;;
+        esac
+        previous_argument="$argument"
+      done
+
+      if [ "$should_inject" = 1 ]; then
+        developer_instructions=$(cat ${codexDefaultDeveloperInstructionsTomlValue})
+        exec ${codexCliPackage}/bin/codex --config "developer_instructions=$developer_instructions" "$@"
+      fi
+
+      exec ${codexCliPackage}/bin/codex "$@"
+    '';
+  };
+
+  piWithDefaultOrchestration = pkgs.writeShellApplication {
+    name = "pi";
+    text = ''
+      should_inject=1
+
+      case "''${CRIOMOS_AGENT_MODE:-}" in
+        direct|worker|non-orchestrator) should_inject=0 ;;
+      esac
+
+      if [ -n "''${PI_SUBAGENT_CHILD:-}" ]; then
+        should_inject=0
+      fi
+
+      previous_argument=""
+      for argument in "$@"; do
+        case "$previous_argument:$argument" in
+          --system-prompt:*|--append-system-prompt:*) should_inject=0 ;;
+        esac
+        case "$argument" in
+          --system-prompt=*|--append-system-prompt=*) should_inject=0 ;;
+        esac
+        previous_argument="$argument"
+      done
+
+      if [ "$should_inject" = 1 ]; then
+        exec ${piPackage}/bin/pi --append-system-prompt "$(cat ${defaultOrchestrationInstructionFile})" "$@"
+      fi
+
+      exec ${piPackage}/bin/pi "$@"
+    '';
+  };
+
   AIPackages = [
     pkgs.gemini-cli
-    inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.claude-code
-    inputs.codex-cli.packages.${pkgs.stdenv.hostPlatform.system}.default
+    claudeWithDefaultOrchestration
+    codexWithDefaultOrchestration
+    piWithDefaultOrchestration
+    directClaude
+    directCodex
+    directPi
     inputs.mentci-egui.packages.${pkgs.stdenv.hostPlatform.system}.default
     pkgs.opencode
     pkgs.llama-cpp
     (pkgs.callPackage ../../../../packages/gws { inherit inputs; })
     (pkgs.callPackage ../../../../packages/mentci { inherit inputs; })
-    (pkgs.callPackage ../../../../packages/pi { inherit inputs; })
     (pkgs.callPackage ../../../../packages/playwright-cli { })
   ];
 
@@ -619,6 +749,10 @@ mkIf size.min {
       '';
 
       ".config/broot/conf.toml".text = brootConfig;
+
+      ".codex/non-orchestrator.config.toml".text = ''
+        developer_instructions = ${toJSON codexSkillReadDeduplicationInstruction}
+      '';
     };
 
     activation.mergeCodexConfig = inputs.hexis.lib.mkManagedConfig {
