@@ -139,6 +139,14 @@ Important current shape:
 - Noctalia shows the Whisrs recording state through the system tray item
   and the `whisrs-level` plugin. Status icons live in
   `packages/whisrs/`.
+- Listener is installed for a production trial beside Whisrs. `Mod+Alt+L`
+  runs the Nix-managed `listener-toggle-capture` wrapper; Whisrs keeps
+  `Mod+V`, `Mod+Shift+V`, `Mod+Alt+V`, and `Mod+Ctrl+V`.
+- `listener.service` starts `listener-daemon` with default-source capture
+  and clipboard delivery. Real STT is configured only by
+  `~/.config/listener/environment` setting `LISTENER_TRANSCRIPTION_PROGRAM`;
+  without that variable Listener returns its explicit not-configured
+  transcript.
 - DJI Mic keepalive keeps the microphone hot by holding a PipeWire stream
   open through a loopback sink. It may call BlueZ `Connect` before the device
   is connected, but after PipeWire exposes the Bluetooth card it must repair

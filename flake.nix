@@ -87,6 +87,12 @@
       flake = false;
     };
 
+    # Listener — fresh CriomOS speech-to-text runtime trial. Kept beside
+    # Whisrs so the daily dictation path remains available during trial use.
+    listener.url = "github:LiGoldragon/listener";
+    listener.inputs.nixpkgs.follows = "nixpkgs";
+    listener.inputs.crane.follows = "crane";
+
     # `annas` — Anna's Archive book/article search + download CLI. Upstream
     # (iosifache/annas-mcp) has no flake; consumed as non-flake source and
     # built inline via buildGoModule in modules/home/profiles/med/cli-tools.nix.
@@ -344,6 +350,9 @@
         // {
           chroma-nota-config = checkPkgs.callPackage ./checks/chroma-nota-config { inherit inputs; };
           whisrs-dictation-bindings = checkPkgs.callPackage ./checks/whisrs-dictation-bindings {
+            inherit inputs;
+          };
+          listener-dictation-bindings = checkPkgs.callPackage ./checks/listener-dictation-bindings {
             inherit inputs;
           };
           whisrs-default-input = checkPkgs.callPackage ./checks/whisrs-default-input { inherit inputs; };

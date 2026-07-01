@@ -28,33 +28,43 @@ let
 
   commandFor = key: binds.${key}.action.command or [ ];
 
+  commandRunsExecutable =
+    command: executableSuffix:
+    builtins.length command >= 1 && lib.hasSuffix executableSuffix (builtins.elemAt command 0);
+
   commandRunsWhisrsSubcommand =
     command: expectedArgument:
     builtins.length command == 2
-    && lib.hasSuffix "/bin/whisrs" (builtins.elemAt command 0)
+    && commandRunsExecutable command "/bin/whisrs"
     && builtins.elemAt command 1 == expectedArgument;
 
-  checkBinding =
+  commandRunsListenerToggle =
+    command:
+    builtins.length command == 2
+    && commandRunsExecutable command "listener-toggle-capture"
+    && builtins.elemAt command 1 == "toggle";
+
+  checkWhisrsBinding =
     key: expectedArgument:
     let
       command = commandFor key;
     in
     {
       condition = commandRunsWhisrsSubcommand command expectedArgument;
-      message = "${key} must run whisrs ${expectedArgument}";
+      message = "${key} must remain whisrs ${expectedArgument}";
     };
 
   assertions = [
-    (checkBinding "Mod+V" "toggle-copy")
-    (checkBinding "Mod+Shift+V" "toggle")
-    (checkBinding "Mod+Ctrl+V" "cancel")
+    (checkWhisrsBinding "Mod+V" "toggle-copy")
+    (checkWhisrsBinding "Mod+Shift+V" "toggle")
+    (checkWhisrsBinding "Mod+Ctrl+V" "cancel")
     {
-      condition =
-        let
-          command = commandFor "Mod+Alt+V";
-        in
-        builtins.length command == 1 && lib.hasSuffix "whisrs-recall" (builtins.elemAt command 0);
-      message = "Mod+Alt+V must run whisrs-recall";
+      condition = commandRunsExecutable (commandFor "Mod+Alt+V") "whisrs-recall";
+      message = "Mod+Alt+V must remain whisrs-recall";
+    }
+    {
+      condition = commandRunsListenerToggle (commandFor "Mod+Alt+L");
+      message = "Mod+Alt+L must run listener-toggle-capture";
     }
   ];
 
@@ -63,6 +73,6 @@ in
 if failures != [ ] then
   throw (lib.concatMapStringsSep "\n" (assertion: assertion.message) failures)
 else
-  pkgs.runCommand "whisrs-dictation-bindings" { } ''
-    printf 'whisrs dictation bindings checked\n' > "$out"
+  pkgs.runCommand "listener-dictation-bindings" { } ''
+    printf 'listener and whisrs dictation bindings checked\n' > "$out"
   ''
