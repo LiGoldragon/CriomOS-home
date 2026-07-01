@@ -74,6 +74,11 @@
     substack-cli.url = "github:LiGoldragon/substack-cli";
     substack-cli.inputs.nixpkgs.follows = "nixpkgs";
 
+    # `claude-answers` — recall your answers to Claude Code's questions from
+    # session transcripts. Its own flake, exposes packages.<system>.default.
+    claude-answers.url = "github:LiGoldragon/claude-answers";
+    claude-answers.inputs.nixpkgs.follows = "nixpkgs";
+
     # `whisrs` — Linux/Niri dictation tool. Consumed from the CriomOS fork,
     # which carries our daily dictation safety, recovery, status-bar, and
     # recall integration patches on the `criomos` branch.

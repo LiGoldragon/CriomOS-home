@@ -47,6 +47,7 @@ in
 lib.mkIf size.medium {
   home.packages = [
     inputs.substack-cli.packages.${system}.default
+    inputs.claude-answers.packages.${system}.default
     annas
 
     # bd work-tracking runtime: bd drives beads, dolt persists them,
