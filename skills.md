@@ -157,10 +157,10 @@ the user explicitly authorized that call in the current task.
 
 Do not manage `session.slice` or other live graphical-session container slices
 through Home Manager activation. Niri and core session services run beneath
-`session.slice`; reconciling that unit during `HomeOnly Activate` can terminate
-the compositor and log the user out. Prefer protected transient scopes for
-specific recovery tools, and design broader resource policy through a path that
-cannot stop the active session.
+`session.slice`; reconciling that unit during a live `UserEnvironment`
+activation can terminate the compositor and log the user out. Prefer protected
+transient scopes for specific recovery tools, and design broader resource policy
+through a path that cannot stop the active session.
 
 The `ui-priority.nix` module follows that rule. It installs
 `criomos-ui-priority-apply`, `criomos-ui-priority-status`, and the oneshot
@@ -182,19 +182,19 @@ shell variables when the path itself is load-bearing.
 
 ## Verification
 
-### FullOS propagation
+### CompleteHost propagation
 
 CriomOS-home is a flake input of CriomOS. A pushed CriomOS-home
-commit is not part of a FullOS deployment until CriomOS's
+commit is not part of a `CompleteHost` deployment until CriomOS's
 `flake.lock` pins `inputs.criomos-home` to that commit. `nix
 --refresh` on the CriomOS flake refreshes CriomOS itself; it
 does not override nested input pins.
 
-When a CriomOS-home change is intended to ship through FullOS,
+When a CriomOS-home change is intended to ship through `CompleteHost`,
 push the CriomOS-home commit, run `nix flake update criomos-home`
 in CriomOS, and update any top-level CriomOS input that the home
 flake follows and needs at runtime. Commit and push CriomOS's
-`flake.lock`, then deploy FullOS through lojix. Treat the
+`flake.lock`, then deploy `CompleteHost` through Lojix. Treat the
 downstream lock bump as part of the home change, not as a
 separate optional cleanup.
 
@@ -211,22 +211,24 @@ Build from pushed origin with `--refresh` before treating package changes
 as verified. Home activation should restart `whisrs.service`; do not
 signal niri.
 
-Use `lojix-run` when an agent needs an operator-facing deploy wrapper around
-the current `lojix` / `meta-lojix` stack. Do not use the archived
-`lojix-cli`. `lojix-run` still takes exactly one NOTA request or request-file
-path, but it captures stdout/stderr into a run directory, prints line counts
-and hashes, redacts store hashes from failure tails, rewrites known branch refs
-to exact local jj revisions when possible, and runs postchecks for system/home
-profile state. Use raw `lojix` when the machine-readable store path on stdout
-is the intended interface; use `lojix-run` when the chat/report surface must
-stay free of raw store paths.
+Submit deployment work directly through the typed Lojix interfaces. Use
+`meta-lojix` for privileged deploy admission and `lojix` for observations;
+there is no profile wrapper or compatibility translator. A user-environment
+activation is submitted as a `UserEnvironment` deploy through the selected
+CriomOS flake revision, with an explicit builder value (`None` or
+`(Some <builder-node>)`) and explicit substituter records when needed. The
+accepted admission shape is `DeployAccepted DeployHandle`; it proves only that
+the daemon accepted the request. Use `lojix` typed generation/status/event
+queries for terminal evidence and filter human-facing logs through
+`redact-nix-store-paths` or `with-nix-store-redaction`.
 
-For Niri settings, repo changes and builds are not live runtime state. After
-pushing, run lojix `HomeOnly ... Activate`, then ask the running compositor to
-load the activated config with `niri msg action load-config-file`. This IPC
-reload is not a process signal; SIGHUP remains forbidden. Only test window
-rules, keybindings, or other Niri runtime settings after both activation and
-reload have happened.
+For Niri settings, repo changes and builds are not live runtime state. After a
+`UserEnvironment` activation reaches the expected profile state, the operator
+may ask the running compositor to load the activated config with
+`niri msg action load-config-file`. This IPC reload is an explicit operator
+procedure, not a deploy-tool side effect, and it is not a process signal; SIGHUP
+remains forbidden. Only test window rules, keybindings, or other Niri runtime
+settings after both activation and reload have happened.
 
 ---
 

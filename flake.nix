@@ -359,7 +359,6 @@
           };
           gws = checkPkgs.callPackage ./checks/gws { inherit inputs; };
           playwright-cli = checkPkgs.callPackage ./checks/playwright-cli { };
-          lojix-run = checkPkgs.callPackage ./checks/lojix-run { inherit inputs; };
           spirit-deployment = checkPkgs.callPackage ./checks/spirit-deployment { inherit inputs; };
           vscodium-casual = checkPkgs.callPackage ./checks/vscodium-casual { };
         }

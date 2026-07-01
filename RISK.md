@@ -66,8 +66,9 @@ timeout. Gas City commit `0bc6e585` narrows the throttle to actual
 ## Cross-repo effects
 
 `CriomOS-home` feeds the operator home profile and is also consumed by
-CriomOS. This patch is intended for the authorized `lojix-run` / `meta-lojix`
-activation path so the `gc` on `PATH` comes from the fixed package.
+CriomOS. This patch is intended for the authorized direct `meta-lojix`
+admission path with `lojix` typed observation so the `gc` on `PATH` comes from
+the fixed package.
 
 ## Reviewer focus
 
