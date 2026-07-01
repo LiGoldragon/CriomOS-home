@@ -287,6 +287,19 @@ let
   directCodex = mkDirectAgentCommand "direct-codex" codexCliPackage "codex";
   directPi = mkDirectAgentCommand "direct-pi" piPackage "pi";
 
+  piTesting = pkgs.writeShellApplication {
+    name = "pi-testing";
+    text = ''
+      export PI_CODING_AGENT_DIR="''${PI_TESTING_AGENT_DIR:-$HOME/.pi-testing/agent}"
+      export PI_CODING_AGENT_SESSION_DIR="''${PI_TESTING_SESSION_DIR:-$PI_CODING_AGENT_DIR/sessions}"
+      export PI_PACKAGE_DIR="''${PI_PACKAGE_DIR:-$HOME/.local/share/criomos/pi/package}"
+
+      mkdir -p "$PI_CODING_AGENT_DIR" "$PI_CODING_AGENT_SESSION_DIR"
+
+      exec ${piPackage}/bin/pi "$@"
+    '';
+  };
+
   claudeWithDefaultOrchestration = pkgs.writeShellApplication {
     name = "claude";
     text = ''
@@ -388,6 +401,7 @@ let
     directClaude
     directCodex
     directPi
+    piTesting
     inputs.mentci-egui.packages.${pkgs.stdenv.hostPlatform.system}.default
     pkgs.opencode
     pkgs.llama-cpp

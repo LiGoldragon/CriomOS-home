@@ -1544,6 +1544,54 @@
         "url": "https://registry.npmjs.org/pi-subagents/-/pi-subagents-0.31.0.tgz"
       }
     },
+    "pi-subagents-tintinweb-croner-src": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-ALwrNx3dmFs1vGdzV/T1xwQG4uS24OUi9JKw1C9AlRg=",
+        "type": "file",
+        "url": "https://registry.npmjs.org/croner/-/croner-10.0.1.tgz"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://registry.npmjs.org/croner/-/croner-10.0.1.tgz"
+      }
+    },
+    "pi-subagents-tintinweb-nanoid-src": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-2rkaMwLJwBs5Ae/rF9niIE8GVsQMXRDWDP7NCYbawCU=",
+        "type": "file",
+        "url": "https://registry.npmjs.org/nanoid/-/nanoid-5.1.16.tgz"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://registry.npmjs.org/nanoid/-/nanoid-5.1.16.tgz"
+      }
+    },
+    "pi-subagents-tintinweb-src": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-e6Alht5zETUCpx7oNZ/VRcDTZ25OuPsIxBOr4SrAWio=",
+        "type": "file",
+        "url": "https://registry.npmjs.org/@tintinweb/pi-subagents/-/pi-subagents-0.13.0.tgz"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://registry.npmjs.org/@tintinweb/pi-subagents/-/pi-subagents-0.13.0.tgz"
+      }
+    },
+    "pi-subagents-tintinweb-typebox-src": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-C5ciWoqbrQO23eenDCqavyW1DowP6JToLLgOYlFqRso=",
+        "type": "file",
+        "url": "https://registry.npmjs.org/@sinclair/typebox/-/typebox-0.34.49.tgz"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://registry.npmjs.org/@sinclair/typebox/-/typebox-0.34.49.tgz"
+      }
+    },
     "pi-utils-ui-src": {
       "flake": false,
       "locked": {
@@ -1905,6 +1953,10 @@
         "pi-linkup-src": "pi-linkup-src",
         "pi-src": "pi-src",
         "pi-subagents-src": "pi-subagents-src",
+        "pi-subagents-tintinweb-croner-src": "pi-subagents-tintinweb-croner-src",
+        "pi-subagents-tintinweb-nanoid-src": "pi-subagents-tintinweb-nanoid-src",
+        "pi-subagents-tintinweb-src": "pi-subagents-tintinweb-src",
+        "pi-subagents-tintinweb-typebox-src": "pi-subagents-tintinweb-typebox-src",
         "pi-utils-ui-src": "pi-utils-ui-src",
         "pi-web-access-boolbase-src": "pi-web-access-boolbase-src",
         "pi-web-access-css-select-src": "pi-web-access-css-select-src",

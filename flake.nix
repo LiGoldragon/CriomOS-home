@@ -185,6 +185,26 @@
       url = "https://registry.npmjs.org/pi-subagents/-/pi-subagents-0.31.0.tgz";
       flake = false;
     };
+    pi-subagents-tintinweb-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/@tintinweb/pi-subagents/-/pi-subagents-0.13.0.tgz";
+      flake = false;
+    };
+    pi-subagents-tintinweb-typebox-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/@sinclair/typebox/-/typebox-0.34.49.tgz";
+      flake = false;
+    };
+    pi-subagents-tintinweb-croner-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/croner/-/croner-10.0.1.tgz";
+      flake = false;
+    };
+    pi-subagents-tintinweb-nanoid-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/nanoid/-/nanoid-5.1.16.tgz";
+      flake = false;
+    };
     pi-continue-src = {
       type = "file";
       url = "https://registry.npmjs.org/pi-continue/-/pi-continue-0.8.2.tgz";

@@ -21,6 +21,9 @@ let
   pi-criomos = pkgs.callPackage ../../../../packages/pi-criomos { };
   pi-linkup = pkgs.callPackage ../../../../packages/pi-linkup { inherit inputs; };
   pi-subagents = pkgs.callPackage ../../../../packages/pi-subagents { inherit inputs; };
+  pi-subagents-tintinweb = pkgs.callPackage ../../../../packages/pi-subagents-tintinweb {
+    inherit inputs;
+  };
   pi-continue = pkgs.callPackage ../../../../packages/pi-continue { inherit inputs; };
 
   clusterNodes = [ horizon.node ] ++ lib.attrValues (horizon.exNodes or { });
@@ -104,6 +107,15 @@ let
       "packages/pi-continue"
     ];
   };
+
+  piTestingSettingsConfig = piSettingsConfig // {
+    packages = [
+      "packages/pi-criomos"
+      "packages/pi-linkup"
+      "packages/pi-subagents-tintinweb"
+      "packages/pi-continue"
+    ];
+  };
 in
 lib.mkIf (size.min && endpointNode != null) {
   home.file.".local/share/criomos/pi/package".source = "${pi}/lib/pi-monorepo/packages/coding-agent";
@@ -116,6 +128,18 @@ lib.mkIf (size.min && endpointNode != null) {
     "${pi-subagents}/share/pi-packages/pi-subagents";
 
   home.file.".pi/agent/packages/pi-continue".source = "${pi-continue}/share/pi-packages/pi-continue";
+
+  home.file.".pi-testing/agent/packages/pi-criomos".source =
+    "${pi-criomos}/share/pi-packages/pi-criomos";
+
+  home.file.".pi-testing/agent/packages/pi-linkup".source =
+    "${pi-linkup}/share/pi-packages/pi-linkup";
+
+  home.file.".pi-testing/agent/packages/pi-subagents-tintinweb".source =
+    "${pi-subagents-tintinweb}/share/pi-packages/pi-subagents-tintinweb";
+
+  home.file.".pi-testing/agent/packages/pi-continue".source =
+    "${pi-continue}/share/pi-packages/pi-continue";
 
   home.activation.mergePiModels = inputs.hexis.lib.mkManagedConfig {
     inherit lib pkgs hexis;
@@ -139,6 +163,41 @@ lib.mkIf (size.min && endpointNode != null) {
     inherit lib pkgs hexis;
     file = "$HOME/.pi/agent/settings.json";
     declared = piSettingsConfig;
+    modes = {
+      "/defaultProvider" = "always";
+      "/defaultModel" = "always";
+      "/defaultThinkingLevel" = "always";
+      "/enabledModels" = "always";
+      "/theme" = "always";
+      "/doubleEscapeAction" = "always";
+      "/compaction" = "always";
+      "/transport" = "always";
+      "/packages" = "always";
+    };
+  };
+
+  home.activation.mergePiTestingModels = inputs.hexis.lib.mkManagedConfig {
+    inherit lib pkgs hexis;
+    file = "$HOME/.pi-testing/agent/models.json";
+    declared = piModelsConfig;
+  };
+
+  home.activation.mergePiTestingAuth = inputs.hexis.lib.mkManagedConfig {
+    inherit lib pkgs hexis;
+    file = "$HOME/.pi-testing/agent/auth.json";
+    declared = piAuthConfig;
+    modes = builtins.listToAttrs (
+      map (name: {
+        name = "/${name}";
+        value = "always";
+      }) ([ providerName ] ++ legacyLocalProviderNames)
+    );
+  };
+
+  home.activation.mergePiTestingSettings = inputs.hexis.lib.mkManagedConfig {
+    inherit lib pkgs hexis;
+    file = "$HOME/.pi-testing/agent/settings.json";
+    declared = piTestingSettingsConfig;
     modes = {
       "/defaultProvider" = "always";
       "/defaultModel" = "always";

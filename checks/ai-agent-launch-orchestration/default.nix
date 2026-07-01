@@ -20,6 +20,10 @@ pkgs.runCommand "ai-agent-launch-orchestration" { nativeBuildInputs = [ pkgs.gnu
   grep -F 'directClaude = mkDirectAgentCommand "direct-claude" claudeCodePackage "claude";' ${minProfileModule}
   grep -F 'directCodex = mkDirectAgentCommand "direct-codex" codexCliPackage "codex";' ${minProfileModule}
   grep -F 'directPi = mkDirectAgentCommand "direct-pi" piPackage "pi";' ${minProfileModule}
+  grep -F 'name = "pi-testing";' ${minProfileModule}
+  grep -F 'PI_TESTING_AGENT_DIR:-$HOME/.pi-testing/agent' ${minProfileModule}
+  grep -F 'PI_TESTING_SESSION_DIR:-$PI_CODING_AGENT_DIR/sessions' ${minProfileModule}
+  grep -F 'PI_PACKAGE_DIR:-$HOME/.local/share/criomos/pi/package' ${minProfileModule}
   grep -F 'CRIOMOS_AGENT_MODE' ${minProfileModule}
   grep -F 'non-orchestrator.config.toml' ${minProfileModule}
 
