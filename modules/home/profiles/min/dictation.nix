@@ -65,7 +65,7 @@ let
     exec ${listener}/bin/listener-daemon
   '';
 
-  listenerToggle = pkgs.writeShellScript "listener-toggle-capture" ''
+  listenerToggle = pkgs.writeShellScriptBin "listener-toggle-capture" ''
     set -eu
 
     status="$(${listener}/bin/listener status 2>/dev/null || true)"
@@ -318,7 +318,7 @@ mkIf (size.min && behavesAs.edge) {
     };
 
     binds."Mod+Alt+L" = {
-      action = a.spawn "${listenerToggle}" "toggle";
+      action = a.spawn "${listenerToggle}/bin/listener-toggle-capture" "toggle";
       repeat = false;
       hotkey-overlay.title = "Listener Capture";
     };

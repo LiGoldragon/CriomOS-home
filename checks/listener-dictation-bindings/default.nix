@@ -41,7 +41,7 @@ let
   commandRunsListenerToggle =
     command:
     builtins.length command == 2
-    && commandRunsExecutable command "listener-toggle-capture"
+    && commandRunsExecutable command "/bin/listener-toggle-capture"
     && builtins.elemAt command 1 == "toggle";
 
   checkWhisrsBinding =
