@@ -379,6 +379,7 @@
           whisrs-recall = checkPkgs.callPackage ./checks/whisrs-recall { inherit inputs; };
           whisrs-level-widget = checkPkgs.callPackage ./checks/whisrs-level-widget { };
           listener-level-widget = checkPkgs.callPackage ./checks/listener-level-widget { };
+          keyboard-layout-policy = checkPkgs.callPackage ./checks/keyboard-layout-policy { inherit inputs; };
           rust-toolchain = checkPkgs.callPackage ./checks/rust-toolchain { inherit inputs; };
           leta = checkPkgs.callPackage ./checks/leta { inherit inputs; };
           no-easyeffects = checkPkgs.callPackage ./checks/no-easyeffects { };
