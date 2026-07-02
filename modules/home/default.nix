@@ -49,6 +49,9 @@
     ./profiles/min/ui-priority.nix
     ./profiles/min/dictation.nix
     ./profiles/min/spirit.nix
+    # Orchestrate — supervises the multi-agent claim/coordination daemon
+    # (systemd --user unit + pinned flake input).
+    ./profiles/min/orchestrate.nix
     # Chroma — visual-state daemon (theme + warmth + brightness).
     # Replaces darkman + nightshift + the brightness shell wrapper.
     # Per-user systemd unit + apply script + default config.nota.

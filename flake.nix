@@ -148,6 +148,16 @@
     agent.inputs.nixpkgs.follows = "nixpkgs";
     agent.inputs.crane.follows = "crane";
 
+    # Orchestrate — multi-agent claim/coordination daemon that supervises the
+    # `primary` workspace's claim fabric. Consumed in
+    # modules/home/profiles/min/orchestrate.nix, which gives it a systemd
+    # --user supervisor. Pinned to the rev of the currently-running v0.4.1
+    # daemon so folding it under systemd is a supervisor-only change with no
+    # daemon behavior shift; bumping to orchestrate main is a separate
+    # follow-up.
+    orchestrate.url = "github:LiGoldragon/orchestrate?rev=8f9b41707ecbffe6206e3109adc495890c045121";
+    orchestrate.inputs.nixpkgs.follows = "nixpkgs";
+
     # Mentci — psyche-facing approval daemon and egui client surface.
     # The daemon repo is packaged locally because it does not expose a flake;
     # mentci-egui exposes the GUI and its remote-control helper binaries.
