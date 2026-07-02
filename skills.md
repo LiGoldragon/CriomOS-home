@@ -139,9 +139,11 @@ Important current shape:
 - Noctalia shows the Whisrs recording state through the system tray item
   and the `whisrs-level` plugin. Status icons live in
   `packages/whisrs/`.
-- Listener is installed for a production trial beside Whisrs. `Mod+Alt+M`
-  runs the Nix-managed `listener-toggle-capture` wrapper, and
-  `Mod+Ctrl+Alt+M` runs the Nix-managed `listener-cancel-capture` wrapper.
+- Listener is installed for a production trial beside Whisrs. `Mod+M`
+  runs the Nix-managed `listener-toggle-capture` wrapper, `Mod+Ctrl+M`
+  runs the Nix-managed `listener-cancel-capture` wrapper, and `Mod+Alt+M`
+  runs `listener-recall`, a Fuzzel-backed selector over Listener's own
+  transcript history that copies the chosen transcript to the clipboard.
   Whisrs keeps `Mod+V`, `Mod+Shift+V`, `Mod+Alt+V`, and `Mod+Ctrl+V`.
 - `listener.service` starts `listener-daemon` with default-source capture
   and clipboard delivery. Listener owns production OpenAI transcription

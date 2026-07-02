@@ -350,16 +350,22 @@ mkIf (size.min && behavesAs.edge) {
       hotkey-overlay.title = "Voice Typing Cancel";
     };
 
-    binds."Mod+Alt+M" = {
+    binds."Mod+M" = {
       action = a.spawn "${listenerToggle}/bin/listener-toggle-capture" "toggle";
       repeat = false;
       hotkey-overlay.title = "Listener Capture";
     };
 
-    binds."Mod+Ctrl+Alt+M" = {
+    binds."Mod+Ctrl+M" = {
       action = a.spawn "${listenerCancel}/bin/listener-cancel-capture" "cancel";
       repeat = false;
       hotkey-overlay.title = "Listener Cancel";
+    };
+
+    binds."Mod+Alt+M" = {
+      action = a.spawn "${listener}/bin/listener-recall";
+      repeat = false;
+      hotkey-overlay.title = "Listener Recall";
     };
   };
 }

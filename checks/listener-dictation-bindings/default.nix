@@ -53,6 +53,10 @@ let
     && commandRunsExecutable command "/bin/listener-cancel-capture"
     && builtins.elemAt command 1 == "cancel";
 
+  commandRunsListenerRecall =
+    command:
+    builtins.length command == 1 && commandRunsExecutable command "/bin/listener-recall";
+
   checkWhisrsBinding =
     key: expectedArgument:
     let
@@ -72,16 +76,28 @@ let
       message = "Mod+Alt+V must remain whisrs-recall";
     }
     {
-      condition = commandRunsListenerToggle (commandFor "Mod+Alt+M");
-      message = "Mod+Alt+M must run listener-toggle-capture";
+      condition = commandRunsListenerToggle (commandFor "Mod+M");
+      message = "Mod+M must run listener-toggle-capture";
     }
     {
-      condition = commandRunsListenerCancel (commandFor "Mod+Ctrl+Alt+M");
-      message = "Mod+Ctrl+Alt+M must run listener-cancel-capture";
+      condition = commandRunsListenerCancel (commandFor "Mod+Ctrl+M");
+      message = "Mod+Ctrl+M must run listener-cancel-capture";
+    }
+    {
+      condition = commandRunsListenerRecall (commandFor "Mod+Alt+M");
+      message = "Mod+Alt+M must run listener-recall";
     }
     {
       condition = !(builtins.hasAttr "Mod+Alt+L" binds);
       message = "Mod+Alt+L must not remain a Listener binding";
+    }
+    {
+      condition = !(builtins.hasAttr "Mod+Ctrl+Alt+M" binds);
+      message = "Mod+Ctrl+Alt+M must not remain a Listener binding (cancel moved to Mod+Ctrl+M)";
+    }
+    {
+      condition = !(builtins.hasAttr "Mod+Shift+M" binds);
+      message = "Mod+Shift+M must stay unbound";
     }
     {
       condition =
@@ -90,8 +106,8 @@ let
       message = "listener.service must keep the local environment override file";
     }
     {
-      condition = lib.versionAtLeast (listenerPackage.version or "0") "0.5.1";
-      message = "Listener package must be version 0.5.1 or newer";
+      condition = lib.versionAtLeast (listenerPackage.version or "0") "0.6.0";
+      message = "Listener package must be version 0.6.0 or newer (ships listener-recall)";
     }
     {
       condition = !(lib.hasInfix "LISTENER_TRANSCRIPTION_PROGRAM" listenerEnvironmentExample);
@@ -105,8 +121,8 @@ if failures != [ ] then
   throw (lib.concatMapStringsSep "\n" (assertion: assertion.message) failures)
 else
   let
-    listenerToggleExecutable = builtins.elemAt (commandFor "Mod+Alt+M") 0;
-    listenerCancelExecutable = builtins.elemAt (commandFor "Mod+Ctrl+Alt+M") 0;
+    listenerToggleExecutable = builtins.elemAt (commandFor "Mod+M") 0;
+    listenerCancelExecutable = builtins.elemAt (commandFor "Mod+Ctrl+M") 0;
   in
   pkgs.runCommand "listener-dictation-bindings" { } ''
     ${pkgs.bash}/bin/bash -n ${listenerService.ExecStart}
