@@ -200,6 +200,7 @@ in
         keyboard = {
           xkb = {
             layout = "us";
+            variant = "colemak";
             options = "ctrl:nocaps,altwin:swap_ralt_rwin";
           };
           repeat-delay = if useFastRepeat then 200 else 600;

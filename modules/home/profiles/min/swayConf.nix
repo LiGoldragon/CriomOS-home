@@ -42,6 +42,7 @@ arguments: with arguments; ''
     ''
       input "1:1:AT_Translated_Set_2_keyboard" {
         xkb_layout us
+        xkb_variant colemak
         xkb_options caps:ctrl_modifier,caps:escape,altwin:swap_alt_win
       }
     ''
