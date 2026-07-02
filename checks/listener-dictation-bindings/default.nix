@@ -47,6 +47,12 @@ let
     && commandRunsExecutable command "/bin/listener-toggle-capture"
     && builtins.elemAt command 1 == "toggle";
 
+  commandRunsListenerCancel =
+    command:
+    builtins.length command == 2
+    && commandRunsExecutable command "/bin/listener-cancel-capture"
+    && builtins.elemAt command 1 == "cancel";
+
   checkWhisrsBinding =
     key: expectedArgument:
     let
@@ -66,8 +72,16 @@ let
       message = "Mod+Alt+V must remain whisrs-recall";
     }
     {
-      condition = commandRunsListenerToggle (commandFor "Mod+Alt+L");
-      message = "Mod+Alt+L must run listener-toggle-capture";
+      condition = commandRunsListenerToggle (commandFor "Mod+Alt+M");
+      message = "Mod+Alt+M must run listener-toggle-capture";
+    }
+    {
+      condition = commandRunsListenerCancel (commandFor "Mod+Ctrl+Alt+M");
+      message = "Mod+Ctrl+Alt+M must run listener-cancel-capture";
+    }
+    {
+      condition = !(builtins.hasAttr "Mod+Alt+L" binds);
+      message = "Mod+Alt+L must not remain a Listener binding";
     }
     {
       condition =
@@ -76,8 +90,8 @@ let
       message = "listener.service must keep the local environment override file";
     }
     {
-      condition = lib.versionAtLeast (listenerPackage.version or "0") "0.4.0";
-      message = "Listener package must be version 0.4.0 or newer";
+      condition = lib.versionAtLeast (listenerPackage.version or "0") "0.5.1";
+      message = "Listener package must be version 0.5.1 or newer";
     }
     {
       condition = !(lib.hasInfix "LISTENER_TRANSCRIPTION_PROGRAM" listenerEnvironmentExample);
@@ -90,8 +104,15 @@ in
 if failures != [ ] then
   throw (lib.concatMapStringsSep "\n" (assertion: assertion.message) failures)
 else
+  let
+    listenerToggleExecutable = builtins.elemAt (commandFor "Mod+Alt+M") 0;
+    listenerCancelExecutable = builtins.elemAt (commandFor "Mod+Ctrl+Alt+M") 0;
+  in
   pkgs.runCommand "listener-dictation-bindings" { } ''
     ${pkgs.bash}/bin/bash -n ${listenerService.ExecStart}
+    ${pkgs.bash}/bin/bash -n ${listenerToggleExecutable}
+    ${pkgs.bash}/bin/bash -n ${listenerCancelExecutable}
+
     if grep -F 'LISTENER_TRANSCRIPTION_PROGRAM=' ${listenerService.ExecStart} >/dev/null; then
       echo 'listener service wrapper must not export LISTENER_TRANSCRIPTION_PROGRAM' >&2
       exit 1
@@ -106,5 +127,11 @@ else
     fi
     grep -F 'LISTENER_CAPTURE_PROGRAM=' ${listenerService.ExecStart} >/dev/null
     grep -F 'LISTENER_CLIPBOARD_PROGRAM=' ${listenerService.ExecStart} >/dev/null
+    grep -F '/bin/listener cancel "$session"' ${listenerCancelExecutable} >/dev/null
+    grep -F 'read_active_listener_session' ${listenerCancelExecutable} >/dev/null
+    if grep -E '/bin/listener (stop|transcribe)|listener-openai-transcribe|wl-copy|LISTENER_CLIPBOARD_PROGRAM' ${listenerCancelExecutable} >/dev/null; then
+      echo 'listener cancel wrapper must not stop/transcribe/copy' >&2
+      exit 1
+    fi
     printf 'listener and whisrs dictation bindings checked\n' > "$out"
   ''

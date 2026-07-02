@@ -66,8 +66,31 @@ let
     exec ${listener}/bin/listener-daemon
   '';
 
+  readActiveListenerSession = ''
+    read_active_listener_session() {
+      case "$1" in
+        "(StatusReported (Capturing ("*)
+          capture_prefix="(StatusReported (Capturing ("
+          session_and_artifact="''${1#"$capture_prefix"}"
+          session="''${session_and_artifact%% *}"
+          case "$session" in
+            "" | *[!0-9]*)
+              return 1
+              ;;
+          esac
+          printf '%s\n' "$session"
+          ;;
+        *)
+          return 1
+          ;;
+      esac
+    }
+  '';
+
   listenerToggle = pkgs.writeShellScriptBin "listener-toggle-capture" ''
     set -eu
+
+    ${readActiveListenerSession}
 
     status="$(${listener}/bin/listener status 2>/dev/null || true)"
     if [ -z "$status" ]; then
@@ -84,15 +107,10 @@ let
         exec ${listener}/bin/listener start
         ;;
       "(StatusReported (Capturing ("*)
-        capture_prefix="(StatusReported (Capturing ("
-        session_and_artifact="''${status#"$capture_prefix"}"
-        session="''${session_and_artifact%% *}"
-        case "$session" in
-          "" | *[!0-9]*)
-            echo "listener-toggle-capture: could not read active session from status: $status" >&2
-            exit 1
-            ;;
-        esac
+        session="$(read_active_listener_session "$status")" || {
+          echo "listener-toggle-capture: could not read active session from status: $status" >&2
+          exit 1
+        }
         exec ${listener}/bin/listener stop "$session"
         ;;
       *)
@@ -101,12 +119,27 @@ let
         ;;
     esac
   '';
+
+  listenerCancel = pkgs.writeShellScriptBin "listener-cancel-capture" ''
+    set -eu
+
+    ${readActiveListenerSession}
+
+    status="$(${listener}/bin/listener status 2>/dev/null || true)"
+    session="$(read_active_listener_session "$status")" || {
+      echo "listener-cancel-capture: no active Listener capture to cancel" >&2
+      exit 0
+    }
+
+    exec ${listener}/bin/listener cancel "$session"
+  '';
 in
 mkIf (size.min && behavesAs.edge) {
   home.packages = [
     whisrs
     listener
     listenerToggle
+    listenerCancel
     pkgs.fuzzel
     pkgs.wl-clipboard
     pkgs.wtype
@@ -317,10 +350,16 @@ mkIf (size.min && behavesAs.edge) {
       hotkey-overlay.title = "Voice Typing Cancel";
     };
 
-    binds."Mod+Alt+L" = {
+    binds."Mod+Alt+M" = {
       action = a.spawn "${listenerToggle}/bin/listener-toggle-capture" "toggle";
       repeat = false;
       hotkey-overlay.title = "Listener Capture";
+    };
+
+    binds."Mod+Ctrl+Alt+M" = {
+      action = a.spawn "${listenerCancel}/bin/listener-cancel-capture" "cancel";
+      repeat = false;
+      hotkey-overlay.title = "Listener Cancel";
     };
   };
 }

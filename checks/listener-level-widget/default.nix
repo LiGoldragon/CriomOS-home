@@ -20,12 +20,18 @@ pkgs.runCommand "listener-level-widget" { } ''
   ${pkgs.gnugrep}/bin/grep -F 'listenerState === "recording"' "$widget"
   ${pkgs.gnugrep}/bin/grep -F 'listenerState === "transcribing"' "$widget"
   ${pkgs.gnugrep}/bin/grep -F 'listenerState === "copied"' "$widget"
+  ${pkgs.gnugrep}/bin/grep -F 'listenerState === "cancelled"' "$widget"
   ${pkgs.gnugrep}/bin/grep -F 'listenerState === "error"' "$widget"
   ${pkgs.gnugrep}/bin/grep -F 'Number(event.level || 0.0)' "$widget"
+  ${pkgs.gnugrep}/bin/grep -F 'microphoneLevel * 2.75' "$widget"
+  ${pkgs.gnugrep}/bin/grep -F 'visibleMicrophoneLevel' "$widget"
+  ${pkgs.gnugrep}/bin/grep -F 'levelAgeMilliseconds > 450' "$widget"
   ${pkgs.gnugrep}/bin/grep -F '#ef4444' "$widget"
   ${pkgs.gnugrep}/bin/grep -F '#facc15' "$widget"
+  ${pkgs.gnugrep}/bin/grep -F '#38bdf8' "$widget"
   ${pkgs.gnugrep}/bin/grep -F 'notify-send' "$widget"
   ${pkgs.gnugrep}/bin/grep -F 'Transcription copied to clipboard' "$widget"
+  ${pkgs.gnugrep}/bin/grep -F 'Capture cancelled' "$widget"
   ${pkgs.gnugrep}/bin/grep -F 'Transcription failed' "$widget"
 
   if ${pkgs.gnugrep}/bin/grep -E 'transcript|text' "$widget" >/dev/null; then
