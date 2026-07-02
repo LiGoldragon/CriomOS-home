@@ -571,6 +571,21 @@ mkIf size.min {
       };
     };
 
+    # Fold in the previously hand-patched ~/.ssh/config entry for the
+    # prometheus remote builder so it is declarative, not a local-only edit.
+    # `prometheus` is a short alias for the reachable builder domain; the
+    # keepalive settings hold the long-lived nix build/copy connections open.
+    # (Host-specific for now; could be derived from the cluster's NixBuilder
+    # node once a generic resolver exists.)
+    ssh = {
+      enable = true;
+      matchBlocks."prometheus.goldragon.criome prometheus" = {
+        hostname = "prometheus.goldragon.criome";
+        serverAliveInterval = 20;
+        serverAliveCountMax = 3;
+      };
+    };
+
     direnv = {
       enable = true;
       nix-direnv.enable = true;
