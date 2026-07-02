@@ -66,7 +66,7 @@
     # gate entirely.
     claude-code-vsix = {
       type = "file";
-      url = "https://open-vsx.org/api/Anthropic/claude-code/linux-x64/2.1.185/file/Anthropic.claude-code-2.1.185@linux-x64.vsix";
+      url = "https://open-vsx.org/api/Anthropic/claude-code/linux-x64/2.1.198/file/Anthropic.claude-code-2.1.198@linux-x64.vsix";
       flake = false;
     };
 
@@ -164,7 +164,7 @@
     # (buildNpmPackage over the `packages/coding-agent` workspace).
     # Replaces the previous pi-mentci wrapper flake (dropped 2026-04-25).
     pi-src = {
-      url = "github:earendil-works/pi?ref=v0.80.2";
+      url = "github:earendil-works/pi?ref=v0.80.3";
       flake = false;
     };
 

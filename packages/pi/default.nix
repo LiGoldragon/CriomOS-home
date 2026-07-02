@@ -1,7 +1,7 @@
 { pkgs, inputs, ... }:
 pkgs.buildNpmPackage (finalAttrs: {
   pname = "pi";
-  version = "0.80.2";
+  version = "0.80.3";
 
   src = inputs.pi-src;
 
@@ -17,7 +17,7 @@ pkgs.buildNpmPackage (finalAttrs: {
   # at runtime. Install the whole monorepo and stitch in the `pi`
   # binary ourselves in postInstall.
 
-  npmDepsHash = "sha256-1EGs8lX8XoAnRtS+pw4lBRm24U/vtVB2loVRmZyd4Z8=";
+  npmDepsHash = "sha256-geh8LH88OZybFXkR/jDeTdew6TNMdFM6jhCSYKn//dU=";
 
   makeCacheWritable = true;
 
