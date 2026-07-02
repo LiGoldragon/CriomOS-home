@@ -20,8 +20,10 @@ let
   pi = pkgs.callPackage ../../../../packages/pi { inherit inputs; };
   pi-criomos = pkgs.callPackage ../../../../packages/pi-criomos { };
   pi-linkup = pkgs.callPackage ../../../../packages/pi-linkup { inherit inputs; };
-  pi-subagents = pkgs.callPackage ../../../../packages/pi-subagents { inherit inputs; };
   pi-subagents-tintinweb = pkgs.callPackage ../../../../packages/pi-subagents-tintinweb {
+    inherit inputs;
+  };
+  pi-ultra-subagents = pkgs.callPackage ../../../../packages/pi-ultra-subagents {
     inherit inputs;
   };
   pi-continue = pkgs.callPackage ../../../../packages/pi-continue { inherit inputs; };
@@ -40,6 +42,18 @@ let
   remoteOpenAiCodexModels = [
     "openai-codex/gpt-5.5"
     "openai-codex/gpt-5.4-mini"
+  ];
+  normalPiPackages = [
+    "packages/pi-criomos"
+    "packages/pi-linkup"
+    "packages/pi-subagents-tintinweb"
+    "packages/pi-continue"
+  ];
+  piTestingPackages = [
+    "packages/pi-criomos"
+    "packages/pi-linkup"
+    "packages/pi-ultra-subagents"
+    "packages/pi-continue"
   ];
 
   mkPiModel = model: {
@@ -100,21 +114,11 @@ let
     };
     retry.enabled = true;
     transport = "websocket";
-    packages = [
-      "packages/pi-criomos"
-      "packages/pi-linkup"
-      "packages/pi-subagents"
-      "packages/pi-continue"
-    ];
+    packages = normalPiPackages;
   };
 
   piTestingSettingsConfig = piSettingsConfig // {
-    packages = [
-      "packages/pi-criomos"
-      "packages/pi-linkup"
-      "packages/pi-subagents-tintinweb"
-      "packages/pi-continue"
-    ];
+    packages = piTestingPackages;
   };
 in
 lib.mkIf (size.min && endpointNode != null) {
@@ -124,8 +128,8 @@ lib.mkIf (size.min && endpointNode != null) {
 
   home.file.".pi/agent/packages/pi-linkup".source = "${pi-linkup}/share/pi-packages/pi-linkup";
 
-  home.file.".pi/agent/packages/pi-subagents".source =
-    "${pi-subagents}/share/pi-packages/pi-subagents";
+  home.file.".pi/agent/packages/pi-subagents-tintinweb".source =
+    "${pi-subagents-tintinweb}/share/pi-packages/pi-subagents-tintinweb";
 
   home.file.".pi/agent/packages/pi-continue".source = "${pi-continue}/share/pi-packages/pi-continue";
 
@@ -135,8 +139,8 @@ lib.mkIf (size.min && endpointNode != null) {
   home.file.".pi-testing/agent/packages/pi-linkup".source =
     "${pi-linkup}/share/pi-packages/pi-linkup";
 
-  home.file.".pi-testing/agent/packages/pi-subagents-tintinweb".source =
-    "${pi-subagents-tintinweb}/share/pi-packages/pi-subagents-tintinweb";
+  home.file.".pi-testing/agent/packages/pi-ultra-subagents".source =
+    "${pi-ultra-subagents}/share/pi-packages/pi-ultra-subagents";
 
   home.file.".pi-testing/agent/packages/pi-continue".source =
     "${pi-continue}/share/pi-packages/pi-continue";

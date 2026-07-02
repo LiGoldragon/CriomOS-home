@@ -205,6 +205,16 @@
       url = "https://registry.npmjs.org/nanoid/-/nanoid-5.1.16.tgz";
       flake = false;
     };
+    pi-ultra-subagents-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/pi-ultra-subagents/-/pi-ultra-subagents-0.1.0.tgz";
+      flake = false;
+    };
+    pi-ultra-subagents-typebox-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/typebox/-/typebox-1.1.38.tgz";
+      flake = false;
+    };
     pi-continue-src = {
       type = "file";
       url = "https://registry.npmjs.org/pi-continue/-/pi-continue-0.8.2.tgz";
