@@ -19,6 +19,8 @@ let
       });
 in
 lib.mkIf behavesAs.edge {
+  home.packages = [ pkgs.libnotify ];
+
   programs.noctalia-shell = {
     enable = true;
     package = noctaliaShell;
@@ -41,6 +43,7 @@ lib.mkIf behavesAs.edge {
           { id = "Workspace"; }
         ];
         right = [
+          { id = "plugin:listener-level"; }
           { id = "plugin:whisrs-level"; }
           {
             id = "Tray";
@@ -67,6 +70,10 @@ lib.mkIf behavesAs.edge {
     declared = {
       version = 2;
       states = {
+        listener-level = {
+          enabled = true;
+          sourceUrl = "https://github.com/noctalia-dev/noctalia-plugins";
+        };
         whisrs-level = {
           enabled = true;
           sourceUrl = "https://github.com/noctalia-dev/noctalia-plugins";
@@ -75,11 +82,16 @@ lib.mkIf behavesAs.edge {
     };
     modes = {
       "/version" = "always";
+      "/states/listener-level" = "always";
       "/states/whisrs-level" = "always";
     };
   };
 
   xdg.configFile = {
+    "noctalia/plugins/listener-level/manifest.json".source =
+      ./noctalia-plugins/listener-level/manifest.json;
+    "noctalia/plugins/listener-level/BarWidget.qml".source =
+      ./noctalia-plugins/listener-level/BarWidget.qml;
     "noctalia/plugins/whisrs-level/manifest.json".source =
       ./noctalia-plugins/whisrs-level/manifest.json;
     "noctalia/plugins/whisrs-level/BarWidget.qml".source =

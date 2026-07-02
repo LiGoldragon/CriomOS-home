@@ -143,11 +143,14 @@ Important current shape:
   runs the Nix-managed `listener-toggle-capture` wrapper; Whisrs keeps
   `Mod+V`, `Mod+Shift+V`, `Mod+Alt+V`, and `Mod+Ctrl+V`.
 - `listener.service` starts `listener-daemon` with default-source capture
-  and clipboard delivery. Its default `LISTENER_TRANSCRIPTION_PROGRAM` is
-  `listener-openai-transcribe`, which reads `gopass openai/api-key` at
-  runtime and calls the OpenAI REST transcription backend directly without
-  invoking Whisrs. `~/.config/listener/environment` remains the local override
-  surface for replacing Listener's transcription program.
+  and clipboard delivery. Listener owns production OpenAI transcription
+  internally and reads its provider credential from gopass at runtime.
+  `~/.config/listener/environment` remains the local override surface for
+  capture and clipboard commands.
+- Noctalia shows Listener recording/transcribing/copied/error state through
+  the `listener-level` plugin, which consumes
+  `$XDG_RUNTIME_DIR/listener/status.sock` JSON lines. It is side by side with
+  the existing `whisrs-level` plugin and must not carry transcript text.
 - DJI Mic keepalive keeps the microphone hot by holding a PipeWire stream
   open through a loopback sink. It may call BlueZ `Connect` before the device
   is connected, but after PipeWire exposes the Bluetooth card it must repair

@@ -17,66 +17,6 @@ let
   whisrs = pkgs.callPackage ../../../../packages/whisrs { inherit inputs; };
   listener = inputs.listener.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
-  listenerOpenAiTranscribe = pkgs.writeShellScriptBin "listener-openai-transcribe" ''
-        set -eu
-
-        if [ "$#" -ne 1 ]; then
-          echo "listener-openai-transcribe: expected one raw PCM input path" >&2
-          exit 64
-        fi
-
-        input_path="$1"
-        if [ ! -s "$input_path" ]; then
-          echo "listener-openai-transcribe: input path is missing or empty" >&2
-          exit 66
-        fi
-
-        openai_api_key="$(${pkgs.gopass}/bin/gopass show -o openai/api-key)"
-        if [ -z "$openai_api_key" ]; then
-          echo "listener-openai-transcribe: gopass openai/api-key returned an empty key" >&2
-          exit 1
-        fi
-
-        temporary_directory="$(mktemp -d)"
-        cleanup() {
-          rm -rf "$temporary_directory"
-        }
-        trap cleanup EXIT
-
-        upload_audio="$temporary_directory/listener-input.wav"
-        ${pkgs.ffmpeg-headless}/bin/ffmpeg \
-          -nostdin \
-          -hide_banner \
-          -loglevel error \
-          -f s16le \
-          -ar 16000 \
-          -ac 1 \
-          -i "$input_path" \
-          -c:a pcm_s16le \
-          "$upload_audio"
-
-        response="$(${pkgs.curl}/bin/curl --silent --show-error --fail-with-body --config - <<EOF
-    url = "https://api.openai.com/v1/audio/transcriptions"
-    header = "Authorization: Bearer $openai_api_key"
-    form = "file=@$upload_audio;type=audio/wav"
-    form = "model=gpt-4o-transcribe"
-    form = "language=en"
-    form = "prompt=Transcribe spoken English as dictated text. Preserve technical names such as Codex, Claude, CriomOS, Niri, Colemak, OpenAI, gopass, Whisrs, Hyprvoice, and Listener. Do not translate."
-    EOF
-    )"
-
-        transcript="$(${pkgs.jq}/bin/jq -r '.text // empty' <<EOF
-    $response
-    EOF
-    )"
-        if [ -z "$transcript" ]; then
-          echo "listener-openai-transcribe: OpenAI response did not contain transcript text" >&2
-          exit 1
-        fi
-
-        printf '%s\n' "$transcript"
-  '';
-
   whisrsServe = pkgs.writeShellScript "whisrs-daemon" ''
     set -eu
 
@@ -103,9 +43,10 @@ let
   startDictationServices = pkgs.writeShellScript "criomos-start-dictation-services" ''
     set -eu
 
-    # Quickshell scans plugins only at startup. After a Whisrs plugin
-    # deploy, restart noctalia-shell if the widget renders but stops
-    # updating; home-manager switch alone can leave the old plugin loaded.
+    # Quickshell scans plugins only at startup. After a dictation
+    # plugin deploy, restart noctalia-shell if a widget renders but
+    # stops updating; home-manager switch alone can leave old plugin
+    # code loaded.
     ${pkgs.systemd}/bin/systemctl --user import-environment \
       DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_RUNTIME_DIR \
       HYPRLAND_INSTANCE_SIGNATURE NIRI_SOCKET SWAYSOCK XKB_DEFAULT_LAYOUT XKB_DEFAULT_VARIANT
@@ -121,7 +62,6 @@ let
 
     export XDG_STATE_HOME="''${XDG_STATE_HOME:-$HOME/.local/state}"
     export LISTENER_CAPTURE_PROGRAM="''${LISTENER_CAPTURE_PROGRAM:-${pkgs.pulseaudio}/bin/parecord}"
-    export LISTENER_TRANSCRIPTION_PROGRAM="''${LISTENER_TRANSCRIPTION_PROGRAM:-${listenerOpenAiTranscribe}/bin/listener-openai-transcribe}"
     export LISTENER_CLIPBOARD_PROGRAM="''${LISTENER_CLIPBOARD_PROGRAM:-${pkgs.wl-clipboard}/bin/wl-copy}"
     exec ${listener}/bin/listener-daemon
   '';
@@ -166,7 +106,6 @@ mkIf (size.min && behavesAs.edge) {
   home.packages = [
     whisrs
     listener
-    listenerOpenAiTranscribe
     listenerToggle
     pkgs.fuzzel
     pkgs.wl-clipboard
@@ -198,10 +137,8 @@ mkIf (size.min && behavesAs.edge) {
   '';
 
   xdg.configFile."listener/environment.example".text = ''
-    # Optional local overrides for Listener. The deployed default transcriber
-    # is listener-openai-transcribe, which reads gopass openai/api-key at
-    # runtime and calls OpenAI REST directly without invoking Whisrs.
-    # LISTENER_TRANSCRIPTION_PROGRAM=${listenerOpenAiTranscribe}/bin/listener-openai-transcribe
+    # Optional local overrides for Listener. Production transcription is owned
+    # by listener-daemon and reads its OpenAI credential from gopass at runtime.
     # LISTENER_CAPTURE_PROGRAM=${pkgs.pulseaudio}/bin/parecord
     # LISTENER_CLIPBOARD_PROGRAM=${pkgs.wl-clipboard}/bin/wl-copy
   '';

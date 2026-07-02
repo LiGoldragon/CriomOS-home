@@ -26,6 +26,8 @@ let
 
   binds = moduleContent.programs.niri.settings.binds;
   listenerService = moduleContent.systemd.user.services.listener.Service;
+  listenerPackage = inputs.listener.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  listenerEnvironmentExample = moduleContent.xdg.configFile."listener/environment.example".text;
 
   commandFor = key: binds.${key}.action.command or [ ];
 
@@ -73,6 +75,14 @@ let
         && listenerService.EnvironmentFile == "-%h/.config/listener/environment";
       message = "listener.service must keep the local environment override file";
     }
+    {
+      condition = lib.versionAtLeast (listenerPackage.version or "0") "0.4.0";
+      message = "Listener package must be version 0.4.0 or newer";
+    }
+    {
+      condition = !(lib.hasInfix "LISTENER_TRANSCRIPTION_PROGRAM" listenerEnvironmentExample);
+      message = "listener environment example must not point production at an external transcriber";
+    }
   ];
 
   failures = builtins.filter (assertion: !assertion.condition) assertions;
@@ -82,14 +92,19 @@ if failures != [ ] then
 else
   pkgs.runCommand "listener-dictation-bindings" { } ''
     ${pkgs.bash}/bin/bash -n ${listenerService.ExecStart}
-    grep -F 'LISTENER_TRANSCRIPTION_PROGRAM=' ${listenerService.ExecStart} >/dev/null
-    grep -F 'listener-openai-transcribe' ${listenerService.ExecStart} >/dev/null
+    if grep -F 'LISTENER_TRANSCRIPTION_PROGRAM=' ${listenerService.ExecStart} >/dev/null; then
+      echo 'listener service wrapper must not export LISTENER_TRANSCRIPTION_PROGRAM' >&2
+      exit 1
+    fi
+    if grep -F 'listener-openai-transcribe' ${listenerService.ExecStart} >/dev/null; then
+      echo 'listener service wrapper must not reference listener-openai-transcribe' >&2
+      exit 1
+    fi
     if grep -F 'whisrs' ${listenerService.ExecStart} >/dev/null; then
       echo 'listener service wrapper must not invoke or reference whisrs' >&2
       exit 1
     fi
-    transcriber="$(${pkgs.gnused}/bin/sed -n 's|^.*LISTENER_TRANSCRIPTION_PROGRAM=".*:-\([^}]*listener-openai-transcribe\)}"$|\1|p' ${listenerService.ExecStart})"
-    test -x "$transcriber"
-    ${pkgs.bash}/bin/bash -n "$transcriber"
+    grep -F 'LISTENER_CAPTURE_PROGRAM=' ${listenerService.ExecStart} >/dev/null
+    grep -F 'LISTENER_CLIPBOARD_PROGRAM=' ${listenerService.ExecStart} >/dev/null
     printf 'listener and whisrs dictation bindings checked\n' > "$out"
   ''
