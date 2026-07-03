@@ -14,9 +14,10 @@ pkgs.runCommand "pi-criomos-package-load"
     set -eu
 
     export HOME="$TMPDIR/home"
+    export XDG_RUNTIME_DIR="$TMPDIR/runtime"
     export PI_PACKAGE_DIR="${pi}/lib/pi-monorepo/packages/coding-agent"
 
-    mkdir -p "$HOME/.pi/agent"
+    mkdir -p "$HOME/.pi/agent" "$XDG_RUNTIME_DIR"
 
     cat > "$HOME/.pi/agent/models.json" <<'JSON'
     {
@@ -46,16 +47,29 @@ pkgs.runCommand "pi-criomos-package-load"
       "defaultModel": "gpt-test",
       "enabledModels": ["local-test/gpt-test"],
       "theme": "criomos-dark",
-      "packages": []
+      "packages": ["${pi-criomos}/share/pi-packages/pi-criomos"]
     }
     JSON
 
+    test -f "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
     test ! -e "${pi-criomos}/share/pi-packages/pi-criomos/src/extensions/theme-switcher.ts"
+    ! grep -E 'current-mode|theme-switcher|setInterval|watchFile|fs\.watch' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
 
     ${pi}/bin/pi \
       --list-models gpt > "$TMPDIR/models" 2>&1
 
     grep -E "local-test[[:space:]]+gpt-test" "$TMPDIR/models"
+
+    printf '{"type":"get_commands"}\n' | ${pi}/bin/pi \
+      --mode rpc \
+      --no-context-files \
+      --no-skills \
+      -e "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts" \
+      > "$TMPDIR/live-theme-control-rpc" 2>&1
+
+    grep -F '"statusKey":"live-theme-control"' "$TMPDIR/live-theme-control-rpc"
+    grep -F '"success":true' "$TMPDIR/live-theme-control-rpc"
 
     printf '{"type":"get_commands"}\n' | ${pi}/bin/pi \
       --mode rpc \

@@ -50,10 +50,15 @@ pkgs.runCommand "pi-harness-profile"
 
     test -f "${pi-criomos}/share/pi-packages/pi-criomos/themes/criomos-dark.json"
     test -f "${pi-criomos}/share/pi-packages/pi-criomos/themes/criomos-light.json"
+    test -f "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
     test ! -e "${pi-criomos}/share/pi-packages/pi-criomos/src/extensions/theme-switcher.ts"
     test ! -e "${pi-criomos}/share/pi-packages/pi-criomos/src/extensions/operator-safety.ts"
-    jq -e '.pi.extensions == []' \
+    jq -e '.pi.extensions == ["./extensions/live-theme-control.ts"]' \
       "${pi-criomos}/share/pi-packages/pi-criomos/package.json"
+    grep -F 'ctx.ui.setTheme(selection.themeName)' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+    ! grep -E 'current-mode|theme-switcher|setInterval|watchFile|fs\.watch' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
     jq -e '.name == "criomos-dark" and (.colors | length == 51)' \
       "${pi-criomos}/share/pi-packages/pi-criomos/themes/criomos-dark.json"
     jq -e '.name == "criomos-light" and (.colors | length == 51)' \

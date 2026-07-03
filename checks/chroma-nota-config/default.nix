@@ -77,6 +77,18 @@ let
       condition = !(lib.hasInfix "(Light \"" activation);
       message = "Chroma Ghostty light template path must not be quoted";
     }
+    {
+      condition = lib.hasInfix "(Concerns Terminal Desktop Ghostty Emacs Pi)" activation;
+      message = "Chroma config must enable the Pi live theme concern";
+    }
+    {
+      condition = lib.hasInfix "(SocketPath (RuntimeRelative chroma/pi-live-theme.sock))" activation;
+      message = "Chroma Pi theme control must use the runtime socket path";
+    }
+    {
+      condition = !(lib.hasInfix "current-mode" activation);
+      message = "Chroma config must not restore the old current-mode sidecar";
+    }
   ];
   failures = builtins.filter (assertion: !assertion.condition) assertions;
 in
