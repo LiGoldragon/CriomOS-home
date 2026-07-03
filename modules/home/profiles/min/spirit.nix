@@ -28,6 +28,19 @@ let
   providerEndpoint = "https://api.deepseek.com/v1";
   providerGopassPath = "platform.deepseek.com/api-key";
 
+  # The guardian resolves its provider API key at runtime by shelling out to
+  # `gopass` (which itself calls `gpg`). systemd --user starts these daemons
+  # with only a minimal default PATH, so the user profile and system tool
+  # directories must be placed on PATH explicitly; otherwise the gopass spawn
+  # fails with ENOENT and every guardian-gated Spirit write is rejected as
+  # DaemonUnconfigured. No secret value is embedded here — only the search path
+  # the daemon uses to fetch the secret itself.
+  guardianServicePath = lib.concatStringsSep ":" [
+    "${config.home.homeDirectory}/.nix-profile/bin"
+    "/run/current-system/sw/bin"
+    "/run/wrappers/bin"
+  ];
+
   stateDirectory = "${config.home.homeDirectory}/.local/state/spirit";
   socketPath = "${stateDirectory}/spirit.sock";
   metaSocketPath = "${stateDirectory}/meta-spirit.sock";
@@ -162,6 +175,7 @@ in
         Service = {
           ExecStartPre = "${initializeAgentState}";
           ExecStart = "${agentServiceWrapper}/bin/agent-daemon-service";
+          Environment = [ "PATH=${guardianServicePath}" ];
           Restart = "on-failure";
           RestartSec = "2s";
         };
@@ -198,6 +212,7 @@ in
         Service = {
           ExecStartPre = "${initializeState}";
           ExecStart = "${spiritPackage}/bin/spirit-daemon ${daemonConfiguration}/${configurationPath}";
+          Environment = [ "PATH=${guardianServicePath}" ];
           Restart = "on-failure";
           RestartSec = "2s";
         };
