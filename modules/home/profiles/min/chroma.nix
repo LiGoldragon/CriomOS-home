@@ -169,8 +169,7 @@ mkIf (size.min && behavesAs.edge) {
 
   home.activation.chromaConfigSeed = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       config_dir="''${XDG_CONFIG_HOME:-$HOME/.config}/chroma"
-      state_dir="''${XDG_STATE_HOME:-$HOME/.local/state}/chroma"
-      mkdir -p "$config_dir" "$state_dir"
+      mkdir -p "$config_dir"
 
       next_config="$(${pkgs.coreutils}/bin/mktemp)"
       cat > "$next_config" << 'CHROMA_DEFAULT_CONFIG'
@@ -182,9 +181,5 @@ mkIf (size.min && behavesAs.edge) {
         ${pkgs.coreutils}/bin/cp "$next_config" "$config_dir/config.nota"
       fi
       ${pkgs.coreutils}/bin/rm -f "$next_config"
-
-    if [ ! -f "$state_dir/current-mode" ]; then
-      echo "dark" > "$state_dir/current-mode"
-    fi
   '';
 }

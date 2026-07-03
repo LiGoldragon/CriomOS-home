@@ -6,7 +6,7 @@ let
   pi-criomos = inputs.self.packages.${system}.pi-criomos;
   pi-continue = inputs.self.packages.${system}.pi-continue;
 in
-pkgs.runCommand "pi-criomos-extension-load"
+pkgs.runCommand "pi-criomos-package-load"
   {
     nativeBuildInputs = [ pkgs.gnugrep ];
   }
@@ -14,11 +14,9 @@ pkgs.runCommand "pi-criomos-extension-load"
     set -eu
 
     export HOME="$TMPDIR/home"
-    export XDG_STATE_HOME="$TMPDIR/state"
     export PI_PACKAGE_DIR="${pi}/lib/pi-monorepo/packages/coding-agent"
 
-    mkdir -p "$HOME/.pi/agent" "$XDG_STATE_HOME/chroma"
-    echo light > "$XDG_STATE_HOME/chroma/current-mode"
+    mkdir -p "$HOME/.pi/agent"
 
     cat > "$HOME/.pi/agent/models.json" <<'JSON'
     {
@@ -52,8 +50,9 @@ pkgs.runCommand "pi-criomos-extension-load"
     }
     JSON
 
+    test ! -e "${pi-criomos}/share/pi-packages/pi-criomos/src/extensions/theme-switcher.ts"
+
     ${pi}/bin/pi \
-      -e "${pi-criomos}/share/pi-packages/pi-criomos/src/extensions/theme-switcher.ts" \
       --list-models gpt > "$TMPDIR/models" 2>&1
 
     grep -E "local-test[[:space:]]+gpt-test" "$TMPDIR/models"

@@ -236,11 +236,11 @@
         "rust-build": "rust-build"
       },
       "locked": {
-        "lastModified": 1781904156,
-        "narHash": "sha256-kscd/jSHMW6sAi5wvD8lF8o6Yvyx/k9+FY69tDNOCm4=",
+        "lastModified": 1783083363,
+        "narHash": "sha256-f/itqxhXA69ZNDlq6lE+C686OPklcHaP5Q/V24opZfk=",
         "owner": "LiGoldragon",
         "repo": "chroma",
-        "rev": "a3ff23e3ef60486ea98990d17cb7ba7901e20569",
+        "rev": "b5313b6b915d1f8de527810c9afa9ae825d8d849",
         "type": "github"
       },
       "original": {
