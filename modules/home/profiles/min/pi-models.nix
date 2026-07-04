@@ -43,14 +43,18 @@ let
     "openai-codex/gpt-5.5"
     "openai-codex/gpt-5.4-mini"
   ];
+  piCriomosPackage = {
+    source = "packages/pi-criomos";
+    extensions = [ "extensions/live-theme-control.ts" ];
+  };
   normalPiPackages = [
-    "packages/pi-criomos"
+    piCriomosPackage
     "packages/pi-linkup"
     "packages/pi-subagents-tintinweb"
     "packages/pi-continue"
   ];
   piTestingPackages = [
-    "packages/pi-criomos"
+    piCriomosPackage
     "packages/pi-linkup"
     "packages/pi-ultra-subagents"
     "packages/pi-continue"

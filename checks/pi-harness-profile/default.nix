@@ -93,7 +93,8 @@ pkgs.runCommand "pi-harness-profile"
     grep -F 'reserveTokens = 32768;' ${piModelsModule}
     grep -F 'keepRecentTokens = 20000;' ${piModelsModule}
     grep -F '"/compaction" = "always";' ${piModelsModule}
-    grep -F '"packages/pi-criomos"' ${piModelsModule}
+    grep -F 'source = "packages/pi-criomos";' ${piModelsModule}
+    grep -F 'extensions = [ "extensions/live-theme-control.ts" ];' ${piModelsModule}
     grep -F '"packages/pi-linkup"' ${piModelsModule}
     ! grep -F '"packages/pi-web-access"' ${piModelsModule}
     grep -F '"packages/pi-subagents-tintinweb"' ${piModelsModule}
