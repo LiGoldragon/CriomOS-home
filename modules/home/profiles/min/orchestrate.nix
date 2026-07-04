@@ -15,18 +15,19 @@ let
   orchestratePackage = inputs.orchestrate.packages.${system}.default;
 
   # The orchestrate daemon supervises the multi-agent claim/coordination
-  # fabric for the `primary` workspace under this user's home. It was
-  # previously started by hand (`setsid nohup orchestrate-daemon <signal>`)
-  # with no supervisor, so a crash silently took the whole claim fabric down
-  # until a manual restart. This unit gives it `Restart=on-failure` and
-  # start-on-login instead.
-  #
-  # The signal file enumerates the daemon's sockets + redb database and is
-  # created out-of-band by the workspace; the daemon reads it on start and
-  # unlinks any stale sockets before rebinding. The path is workspace-specific
-  # for now (like the prometheus ssh matchBlock in profiles/min/default.nix) —
-  # it could be derived once a generic workspace resolver exists.
-  signalPath = "${config.home.homeDirectory}/primary/orchestrate/orchestrate-daemon.signal";
+  # fabric for the `primary` workspace under this user's home. Runtime state is
+  # intentionally outside the workspace: the sema store and binary daemon
+  # signal live under XDG state, while sockets live under the user runtime
+  # directory so stale process endpoints disappear with the login session.
+  stateDirectory = "${config.xdg.stateHome}/orchestrate";
+  signalPath = "${stateDirectory}/orchestrate-daemon.signal";
+  storePath = "${stateDirectory}/orchestrate.sema";
+  runtimeDirectory = "%t/orchestrate";
+  ordinarySocketPath = "${runtimeDirectory}/orchestrate.sock";
+  metaSocketPath = "${runtimeDirectory}/orchestrate-owner.sock";
+  upgradeSocketPath = "${runtimeDirectory}/orchestrate-upgrade.sock";
+  workspaceRoot = "${config.home.homeDirectory}/primary";
+  gitIndexRoot = "/git/github.com/LiGoldragon";
 in
 {
   options.criomosHome.orchestrate = {
@@ -48,6 +49,9 @@ in
       };
 
       Service = {
+        RuntimeDirectory = "orchestrate";
+        RuntimeDirectoryMode = "0700";
+        ExecStartPre = "${orchestratePackage}/bin/orchestrate-write-configuration ${signalPath} ${storePath} ${ordinarySocketPath} ${metaSocketPath} ${upgradeSocketPath} ${workspaceRoot} ${gitIndexRoot}";
         ExecStart = "${orchestratePackage}/bin/orchestrate-daemon ${signalPath}";
         Restart = "on-failure";
         RestartSec = "2s";
