@@ -59,6 +59,14 @@ pkgs.runCommand "pi-harness-profile"
       "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
     ! grep -E 'current-mode|theme-switcher|setInterval|watchFile|fs\.watch' \
       "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+    grep -F 'PI_LIVE_THEME_CONTROL_REGISTRY_DIRECTORY' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+    grep -F 'randomUUID' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+    grep -F 'registryEntryExtension = ".path"' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+    ! grep -F 'pi-live-theme.sock' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
     jq -e '.name == "criomos-dark" and (.colors | length == 51)' \
       "${pi-criomos}/share/pi-packages/pi-criomos/themes/criomos-dark.json"
     jq -e '.name == "criomos-light" and (.colors | length == 51)' \

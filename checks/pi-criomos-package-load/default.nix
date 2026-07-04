@@ -55,6 +55,14 @@ pkgs.runCommand "pi-criomos-package-load"
     test ! -e "${pi-criomos}/share/pi-packages/pi-criomos/src/extensions/theme-switcher.ts"
     ! grep -E 'current-mode|theme-switcher|setInterval|watchFile|fs\.watch' \
       "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+    grep -F 'PI_LIVE_THEME_CONTROL_REGISTRY_DIRECTORY' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+    grep -F 'randomUUID' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+    grep -F 'registryEntryExtension = ".path"' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+    ! grep -F 'pi-live-theme.sock' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
 
     ${pi}/bin/pi \
       --list-models gpt > "$TMPDIR/models" 2>&1

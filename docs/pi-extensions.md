@@ -126,9 +126,11 @@ the same rule: the live Pi settings file names
 
 - `packages/pi-criomos/default.nix` installs the CriomOS dark/light
   themes and a generic `live-theme-control` extension. The extension
-  starts its Unix-stream server during `session_start`, shuts it down
-  during `session_shutdown`, accepts `dark\n` and `light\n`, and maps
-  those modes to `criomos-dark` and `criomos-light` by default. It does
+  starts a per-session Unix-stream server during `session_start`,
+  registers that unique socket in the Chroma runtime registry directory,
+  shuts it down and removes its registry entry during `session_shutdown`,
+  accepts `dark\n` and `light\n`, and maps those modes to
+  `criomos-dark` and `criomos-light` by default. It does
   not poll, watch sidecar files, or read a Chroma `current-mode` file.
 - `operator-safety.ts` is not part of the default package. The basic
   CriomOS Pi profile is YOLO-mode: theme support, Linkup web/search

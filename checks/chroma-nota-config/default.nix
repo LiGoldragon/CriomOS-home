@@ -82,8 +82,8 @@ let
       message = "Chroma config must enable the Pi live theme concern";
     }
     {
-      condition = lib.hasInfix "(SocketPath (RuntimeRelative chroma/pi-live-theme.sock))" activation;
-      message = "Chroma Pi theme control must use the runtime socket path";
+      condition = lib.hasInfix "(RegistryDirectory (RuntimeRelative chroma/pi-live-theme.d))" activation;
+      message = "Chroma Pi theme control must use the runtime registry directory";
     }
     {
       condition = !(lib.hasInfix "current-mode" activation);

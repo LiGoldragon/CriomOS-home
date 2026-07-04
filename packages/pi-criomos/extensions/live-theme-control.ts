@@ -1,7 +1,11 @@
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
-import { mkdir, unlink } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
+import { mkdir, unlink, writeFile } from "node:fs/promises";
 import { createServer, type Server, type Socket } from "node:net";
-import { dirname, join } from "node:path";
+import { basename, join } from "node:path";
+
+const registryEntryExtension = ".path";
+const socketExtension = ".sock";
 
 type ThemeMode = "dark" | "light";
 
@@ -12,18 +16,18 @@ interface ThemeSelection {
 
 class LiveThemeControlConfiguration {
   readonly statusName: string;
-  readonly socketPath: string;
+  readonly registryDirectory: string;
   readonly darkThemeName: string;
   readonly lightThemeName: string;
 
   private constructor(input: {
     statusName: string;
-    socketPath: string;
+    registryDirectory: string;
     darkThemeName: string;
     lightThemeName: string;
   }) {
     this.statusName = input.statusName;
-    this.socketPath = input.socketPath;
+    this.registryDirectory = input.registryDirectory;
     this.darkThemeName = input.darkThemeName;
     this.lightThemeName = input.lightThemeName;
   }
@@ -31,9 +35,20 @@ class LiveThemeControlConfiguration {
   static fromEnvironment(): LiveThemeControlConfiguration {
     return new LiveThemeControlConfiguration({
       statusName: process.env.PI_LIVE_THEME_CONTROL_STATUS ?? "live-theme-control",
-      socketPath: process.env.PI_LIVE_THEME_CONTROL_SOCKET ?? LiveThemeControlConfiguration.defaultSocketPath(),
+      registryDirectory:
+        process.env.PI_LIVE_THEME_CONTROL_REGISTRY_DIRECTORY ??
+        LiveThemeControlConfiguration.defaultRegistryDirectory(),
       darkThemeName: process.env.PI_LIVE_THEME_CONTROL_DARK_THEME ?? "criomos-dark",
       lightThemeName: process.env.PI_LIVE_THEME_CONTROL_LIGHT_THEME ?? "criomos-light",
+    });
+  }
+
+  registration(): LiveThemeControlRegistration {
+    const stem = `pi-${process.pid}-${Date.now()}-${randomUUID()}`;
+    return new LiveThemeControlRegistration({
+      registryDirectory: this.registryDirectory,
+      socketPath: join(this.registryDirectory, `${stem}${socketExtension}`),
+      registryEntryPath: join(this.registryDirectory, `${stem}${registryEntryExtension}`),
     });
   }
 
@@ -48,35 +63,75 @@ class LiveThemeControlConfiguration {
     return undefined;
   }
 
-  private static defaultSocketPath(): string {
+  private static defaultRegistryDirectory(): string {
     const runtimeDirectory = process.env.XDG_RUNTIME_DIR;
     if (runtimeDirectory && runtimeDirectory.length > 0) {
-      return join(runtimeDirectory, "chroma", "pi-live-theme.sock");
+      return join(runtimeDirectory, "chroma", "pi-live-theme.d");
     }
-    return join(process.env.HOME ?? "/tmp", ".cache", "pi-live-theme.sock");
+    return join(process.env.HOME ?? "/tmp", ".cache", "pi-live-theme.d");
+  }
+}
+
+class LiveThemeControlRegistration {
+  readonly registryDirectory: string;
+  readonly socketPath: string;
+  readonly registryEntryPath: string;
+
+  constructor(input: { registryDirectory: string; socketPath: string; registryEntryPath: string }) {
+    this.registryDirectory = input.registryDirectory;
+    this.socketPath = input.socketPath;
+    this.registryEntryPath = input.registryEntryPath;
+  }
+
+  async prepareDirectory(): Promise<void> {
+    await mkdir(this.registryDirectory, { recursive: true });
+  }
+
+  async register(): Promise<void> {
+    await writeFile(this.registryEntryPath, `${this.socketPath}\n`, { mode: 0o600 });
+  }
+
+  async unregister(): Promise<void> {
+    await unlink(this.registryEntryPath).catch(() => undefined);
+  }
+
+  async removeSocket(): Promise<void> {
+    await unlink(this.socketPath).catch(() => undefined);
+  }
+
+  displayName(): string {
+    return basename(this.socketPath);
   }
 }
 
 class LiveThemeControlSession {
   private readonly configuration: LiveThemeControlConfiguration;
+  private readonly registration: LiveThemeControlRegistration;
   private readonly ctx: ExtensionContext;
   private readonly clients: Set<Socket> = new Set();
   private active = true;
+  private ownsRegistryEntry = false;
   private ownsSocket = false;
   private server: Server | undefined;
 
   constructor(configuration: LiveThemeControlConfiguration, ctx: ExtensionContext) {
     this.configuration = configuration;
+    this.registration = configuration.registration();
     this.ctx = ctx;
   }
 
   async start(): Promise<void> {
-    await mkdir(dirname(this.configuration.socketPath), { recursive: true });
+    await this.registration.prepareDirectory();
     const server = createServer((socket) => this.accept(socket));
     this.server = server;
     await this.listen(server);
+    await this.registration.register();
+    this.ownsRegistryEntry = true;
     if (this.active) {
-      this.ctx.ui.setStatus(this.configuration.statusName, "theme socket listening");
+      this.ctx.ui.setStatus(
+        this.configuration.statusName,
+        `theme socket registered: ${this.registration.displayName()}`,
+      );
     }
   }
 
@@ -94,9 +149,13 @@ class LiveThemeControlSession {
     if (server?.listening) {
       await new Promise<void>((resolve) => server.close(() => resolve()));
     }
+    if (this.ownsRegistryEntry) {
+      this.ownsRegistryEntry = false;
+      await this.registration.unregister();
+    }
     if (this.ownsSocket) {
       this.ownsSocket = false;
-      await unlink(this.configuration.socketPath).catch(() => undefined);
+      await this.registration.removeSocket();
     }
   }
 
@@ -113,7 +172,7 @@ class LiveThemeControlSession {
       };
       server.once("error", fail);
       server.once("listening", succeed);
-      server.listen(this.configuration.socketPath);
+      server.listen(this.registration.socketPath);
     });
   }
 
@@ -126,6 +185,10 @@ class LiveThemeControlSession {
     socket.setEncoding("utf8");
     let buffer = "";
     socket.on("data", (chunk) => {
+      if (!this.active) {
+        socket.destroy();
+        return;
+      }
       buffer += chunk;
       buffer = this.consumeLines(buffer);
     });
@@ -177,7 +240,9 @@ export default function (pi: ExtensionAPI) {
     try {
       await nextSession.start();
     } catch (error) {
-      session = undefined;
+      if (session === nextSession) {
+        session = undefined;
+      }
       await nextSession.shutdown().catch(() => undefined);
       ctx.ui.notify(`Live theme control socket unavailable: ${String(error)}`, "warning");
     }

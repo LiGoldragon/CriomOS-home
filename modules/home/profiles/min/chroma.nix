@@ -119,7 +119,7 @@ let
           (Dark ${ghosttyDarkConfig})
           (Light ${ghosttyLightConfig}))
         (PiThemeControl
-          (SocketPath (RuntimeRelative chroma/pi-live-theme.sock))
+          (RegistryDirectory (RuntimeRelative chroma/pi-live-theme.d))
           (ConnectTimeoutMillis 100)
           (WriteTimeoutMillis 100))
         (Schedule
