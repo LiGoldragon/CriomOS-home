@@ -39,6 +39,8 @@ in
   };
 
   config = mkIf (size.min && config.criomosHome.orchestrate.enable) {
+    home.packages = [ orchestratePackage ];
+
     systemd.user.services.orchestrate-daemon = {
       Unit = {
         Description = "Orchestrate multi-agent claim/coordination daemon";
