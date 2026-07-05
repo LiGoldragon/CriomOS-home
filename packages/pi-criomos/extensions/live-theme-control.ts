@@ -141,6 +141,11 @@ class LiveThemeControlSession {
 
   async start(): Promise<void> {
     await this.registration.prepareDirectory();
+    if (!this.isActive()) {
+      await this.retireStartedState();
+      return;
+    }
+
     const server = createServer();
     const connectionListener = (socket: Socket) =>
       this.containExternalCallback(socket, "accept", () => this.accept(socket));
@@ -148,24 +153,45 @@ class LiveThemeControlSession {
     this.server = server;
     this.serverConnectionListener = connectionListener;
     await this.listen(server);
+    if (!this.isActive()) {
+      await this.retireStartedState(server);
+      return;
+    }
+
     const runtimeErrorListener = (error: Error) => this.logContainedError("server error", error);
     server.on("error", runtimeErrorListener);
     this.serverRuntimeErrorListener = runtimeErrorListener;
     await this.registration.register();
     this.ownsRegistryEntry = true;
+    if (!this.isActive()) {
+      await this.retireStartedState(server);
+      return;
+    }
+
     this.setStatus(`theme socket registered: ${this.registration.displayName()}`);
   }
 
   async shutdown(): Promise<void> {
-    if (!this.active) {
-      return;
-    }
+    await this.retireStartedState();
+  }
+
+  notifySocketUnavailable(error: unknown): void {
+    this.notify(`Live theme control socket unavailable: ${String(error)}`, "warning");
+  }
+
+  private isActive(): boolean {
+    return this.active && this.isCurrentSession();
+  }
+
+  private async retireStartedState(startingServer?: Server): Promise<void> {
     this.active = false;
     for (const client of Array.from(this.clients.keys())) {
       this.destroyClient(client);
     }
-    const server = this.server;
-    this.server = undefined;
+    const server = startingServer ?? this.server;
+    if (this.server === server) {
+      this.server = undefined;
+    }
     if (server) {
       this.detachServerListeners(server);
       if (server.listening) {
@@ -180,14 +206,6 @@ class LiveThemeControlSession {
       this.ownsSocket = false;
       await this.registration.removeSocket();
     }
-  }
-
-  notifySocketUnavailable(error: unknown): void {
-    this.notify(`Live theme control socket unavailable: ${String(error)}`, "warning");
-  }
-
-  private isActive(): boolean {
-    return this.active && this.isCurrentSession();
   }
 
   private listen(server: Server): Promise<void> {
