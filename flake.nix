@@ -402,7 +402,9 @@
           leta = checkPkgs.callPackage ./checks/leta { inherit inputs; };
           no-easyeffects = checkPkgs.callPackage ./checks/no-easyeffects { };
           pi-harness-profile = checkPkgs.callPackage ./checks/pi-harness-profile { inherit inputs; };
-          ai-agent-launch-orchestration = checkPkgs.callPackage ./checks/ai-agent-launch-orchestration { };
+          ai-agent-launch-orchestration = checkPkgs.callPackage ./checks/ai-agent-launch-orchestration {
+            inherit inputs;
+          };
           pi-criomos-package-load = checkPkgs.callPackage ./checks/pi-criomos-package-load {
             inherit inputs;
           };

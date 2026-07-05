@@ -281,15 +281,11 @@ let
     '';
   };
 
-  claudeCommand = mkDirectAgentCommand "claude" claudeCodePackage "claude";
-  codexCommand = mkDirectAgentCommand "codex" codexCliPackage "codex";
-  piCommand = mkDirectAgentCommand "pi" piPackage "pi";
-
   AIPackages = [
     pkgs.gemini-cli
-    claudeCommand
-    codexCommand
-    piCommand
+    claudeCodePackage
+    codexCliPackage
+    piPackage
     directClaude
     directCodex
     directPi
