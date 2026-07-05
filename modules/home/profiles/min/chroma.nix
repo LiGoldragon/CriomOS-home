@@ -107,7 +107,7 @@ let
   defaultConfig = ''
     (Config
       (Theme
-        (Concerns Terminal Desktop Ghostty Emacs)
+        (Concerns Terminal Desktop Ghostty Emacs Pi)
         (Palettes
     ${darkPalette}
     ${lightPalette})
@@ -118,6 +118,10 @@ let
         (GhosttyConfigTemplates
           (Dark ${ghosttyDarkConfig})
           (Light ${ghosttyLightConfig}))
+        (PiThemeControl
+          (RegistryDirectory (RuntimeRelative chroma/pi-live-theme.d))
+          (ConnectTimeoutMillis 100)
+          (WriteTimeoutMillis 100))
         (Schedule
           (Waypoint (Sunrise ${lightThemeSwitchTiming}) Light)
           (Waypoint (Sunset ${darkThemeSwitchTiming}) Dark)
@@ -177,6 +181,7 @@ mkIf (size.min && behavesAs.edge) {
       if [ ! -f "$config_dir/config.nota" ] \
         || grep -Eq 'ApplyCommand|ApplyTargets|Legacy|\.ya?ml|GhosttyConfigSources' "$config_dir/config.nota" \
         || ! grep -q 'GhosttyConfigTemplates' "$config_dir/config.nota" \
+        || ! grep -q 'PiThemeControl' "$config_dir/config.nota" \
         || ! ${pkgs.diffutils}/bin/cmp -s "$next_config" "$config_dir/config.nota"; then
         ${pkgs.coreutils}/bin/cp "$next_config" "$config_dir/config.nota"
       fi

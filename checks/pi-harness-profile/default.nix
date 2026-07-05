@@ -50,10 +50,23 @@ pkgs.runCommand "pi-harness-profile"
 
     test -f "${pi-criomos}/share/pi-packages/pi-criomos/themes/criomos-dark.json"
     test -f "${pi-criomos}/share/pi-packages/pi-criomos/themes/criomos-light.json"
+    test -f "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
     test ! -e "${pi-criomos}/share/pi-packages/pi-criomos/src/extensions/theme-switcher.ts"
     test ! -e "${pi-criomos}/share/pi-packages/pi-criomos/src/extensions/operator-safety.ts"
-    jq -e '.pi.extensions == []' \
+    jq -e '.pi.extensions == ["./extensions/live-theme-control.ts"]' \
       "${pi-criomos}/share/pi-packages/pi-criomos/package.json"
+    grep -F 'ctx.ui.setTheme(selection.themeName)' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+    ! grep -E 'current-mode|theme-switcher|setInterval|watchFile|fs\.watch' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+    grep -F 'PI_LIVE_THEME_CONTROL_REGISTRY_DIRECTORY' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+    grep -F 'randomUUID' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+    grep -F 'registryEntryExtension = ".path"' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+    ! grep -F 'pi-live-theme.sock' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
     jq -e '.name == "criomos-dark" and (.colors | length == 51)' \
       "${pi-criomos}/share/pi-packages/pi-criomos/themes/criomos-dark.json"
     jq -e '.name == "criomos-light" and (.colors | length == 51)' \
@@ -88,7 +101,8 @@ pkgs.runCommand "pi-harness-profile"
     grep -F 'reserveTokens = 32768;' ${piModelsModule}
     grep -F 'keepRecentTokens = 20000;' ${piModelsModule}
     grep -F '"/compaction" = "always";' ${piModelsModule}
-    grep -F '"packages/pi-criomos"' ${piModelsModule}
+    grep -F 'source = "packages/pi-criomos";' ${piModelsModule}
+    grep -F 'extensions = [ "extensions/live-theme-control.ts" ];' ${piModelsModule}
     grep -F '"packages/pi-linkup"' ${piModelsModule}
     ! grep -F '"packages/pi-web-access"' ${piModelsModule}
     grep -F '"packages/pi-subagents-tintinweb"' ${piModelsModule}

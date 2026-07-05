@@ -2,7 +2,7 @@
 
 pkgs.stdenvNoCC.mkDerivation {
   pname = "pi-criomos";
-  version = "0.1.0";
+  version = "0.1.1";
 
   dontUnpack = true;
   dontBuild = true;
@@ -11,16 +11,16 @@ pkgs.stdenvNoCC.mkDerivation {
     runHook preInstall
 
     packageRoot=$out/share/pi-packages/pi-criomos
-    mkdir -p "$packageRoot/themes" "$packageRoot/skills/gws"
+    mkdir -p "$packageRoot/themes" "$packageRoot/extensions" "$packageRoot/skills/gws"
 
     cat > "$packageRoot/package.json" <<'JSON'
     {
       "name": "pi-criomos",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "keywords": ["pi-package"],
       "pi": {
         "themes": ["./themes"],
-        "extensions": [],
+        "extensions": ["./extensions/live-theme-control.ts"],
         "skills": [
           "./skills"
         ]
@@ -30,6 +30,8 @@ pkgs.stdenvNoCC.mkDerivation {
 
     install -m 0644 ${./skills/gws/SKILL.md} \
       "$packageRoot/skills/gws/SKILL.md"
+    install -m 0644 ${./extensions/live-theme-control.ts} \
+      "$packageRoot/extensions/live-theme-control.ts"
 
     cat > "$packageRoot/themes/criomos-dark.json" <<'JSON'
     {
@@ -183,7 +185,7 @@ pkgs.stdenvNoCC.mkDerivation {
   '';
 
   meta = {
-    description = "CriomOS Pi themes";
+    description = "CriomOS Pi themes and live theme-control extension";
     license = pkgs.lib.licenses.mit;
   };
 }
