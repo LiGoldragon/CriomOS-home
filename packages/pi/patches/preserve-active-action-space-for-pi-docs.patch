@@ -1,0 +1,42 @@
+--- a/packages/coding-agent/src/core/system-prompt.ts
++++ b/packages/coding-agent/src/core/system-prompt.ts
+@@ -138,13 +138,14 @@ Guidelines:
+ ${guidelines}
+ 
+-Pi documentation (read only when the user asks about pi itself, its SDK, extensions, themes, skills, or TUI):
++Pi documentation and examples:
+ - Main documentation: ${readmePath}
+ - Additional docs: ${docsPath}
+ - Examples: ${examplesPath} (extensions, custom tools, SDK)
+-- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory
+-- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), pi packages (docs/packages.md)
+-- When working on pi topics, read the docs and examples, and follow .md cross-references before implementing
+-- Always read pi .md files completely and follow links to related docs (e.g., tui.md for TUI API details)`;
++- These paths are a source map for sessions whose active role and action space permit direct Pi inspection. This source map does not grant tool permission and does not override project, role, skill, system, developer, or user instructions.
++- If an active role or skill restricts this session to an action space such as orchestration, review, or planning, stay inside that action space. For example, an orchestrator that needs Pi docs, examples, source, or runtime inspection must dispatch a worker/subagent with that inspection task instead of directly reading files, running commands, fetching pages, or using other inspection tools.
++- For ordinary implementation/support sessions that are permitted to inspect Pi directly, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory.
++- For ordinary direct Pi work, relevant starts include: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), pi packages (docs/packages.md).
++- For ordinary direct Pi work, read the docs and examples, read pi .md files completely, and follow .md cross-references before implementing.`;
+ 
+ 	if (appendSection) {
+ 		prompt += appendSection;
+--- a/packages/coding-agent/test/system-prompt.test.ts
++++ b/packages/coding-agent/test/system-prompt.test.ts
+@@ -49,10 +49,13 @@ describe("buildSystemPrompt", () => {
+-		test("instructs models to resolve pi docs and examples under absolute base paths", () => {
++		test("keeps pi documentation guidance subordinate to the active action space", () => {
+ 			const prompt = buildSystemPrompt({
+ 				contextFiles: [],
+ 				skills: [],
+ 				cwd: process.cwd(),
+ 			});
+ 
+-			expect(prompt).toContain(
+-				"- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory",
+-			);
++			expect(prompt).toContain("This source map does not grant tool permission");
++			expect(prompt).toContain("does not override project, role, skill, system, developer, or user instructions");
++			expect(prompt).toContain("an orchestrator that needs Pi docs, examples, source, or runtime inspection must dispatch a worker/subagent");
++			expect(prompt).toContain(
++				"For ordinary implementation/support sessions that are permitted to inspect Pi directly, resolve docs/... under Additional docs",
++			);

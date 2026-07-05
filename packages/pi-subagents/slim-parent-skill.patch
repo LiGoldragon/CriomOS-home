@@ -1,6 +1,6 @@
 --- a/skills/pi-subagents/SKILL.md
 +++ b/skills/pi-subagents/SKILL.md
-@@ -10,846 +10,118 @@
+@@ -10,846 +10,127 @@
  
  # Pi Subagents
  
@@ -73,6 +73,15 @@
 +
 +When no top-level context is supplied, each configured agent's default applies.
 +Override explicitly when the task requires a specific context boundary.
++
++## Child tool boundaries
++
++Subagents are independent Pi processes. A child's effective tools come from the
++selected child agent, runtime, packages, and prompt, not from the parent
++session's exact visible tool set. A child may therefore have fewer, different,
++or more tools than the parent. Put the allowed action space and forbidden direct
++tool classes in the child task itself; do not rely on the parent's missing tools
++to constrain the child.
 +
 +## Async, status, and control
 +

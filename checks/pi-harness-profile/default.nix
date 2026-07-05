@@ -31,6 +31,8 @@ pkgs.runCommand "pi-harness-profile"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md"
     test "$(wc -l < "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md")" -le 150
     grep -F 'Clarify UI is explicit opt-in' "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md"
+    grep -F 'Subagents are independent Pi processes.' "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md"
+    grep -F 'selected child agent, runtime, packages, and prompt, not from the parent' "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md"
     ! grep -F 'Chains default to clarify mode' "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md"
     test -f "${pi-subagents-tintinweb}/share/pi-packages/pi-subagents-tintinweb/src/index.ts"
     test -d "${pi-subagents-tintinweb}/share/pi-packages/pi-subagents-tintinweb/node_modules/@sinclair/typebox"

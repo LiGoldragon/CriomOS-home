@@ -52,5 +52,12 @@ pkgs.runCommand "ai-agent-launch-orchestration" { nativeBuildInputs = [ pkgs.gnu
   test "$(readlink -f ${agentProfilePath}/bin/codex)" = "$(readlink -f ${codexCliPackage}/bin/codex)"
   test "$(readlink -f ${agentProfilePath}/bin/pi)" = "$(readlink -f ${piPackage}/bin/pi)"
 
+  grep -F 'This source map does not grant tool permission' ${piPackage}/lib/pi-monorepo/packages/coding-agent/dist/core/system-prompt.js
+  grep -F 'does not override project, role, skill, system, developer, or user instructions' ${piPackage}/lib/pi-monorepo/packages/coding-agent/dist/core/system-prompt.js
+  grep -F 'must dispatch a worker/subagent' ${piPackage}/lib/pi-monorepo/packages/coding-agent/dist/core/system-prompt.js
+  grep -F 'For ordinary implementation/support sessions that are permitted to inspect Pi directly' ${piPackage}/lib/pi-monorepo/packages/coding-agent/dist/core/system-prompt.js
+  ! grep -F 'read only when the user asks about pi itself' ${piPackage}/lib/pi-monorepo/packages/coding-agent/dist/core/system-prompt.js
+  ! grep -F 'When working on pi topics, read the docs and examples' ${piPackage}/lib/pi-monorepo/packages/coding-agent/dist/core/system-prompt.js
+
   touch "$out"
 ''
