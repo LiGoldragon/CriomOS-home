@@ -9,6 +9,7 @@ let
     src = craneLib.cleanCargoSource inputs.mentci-src;
 
     strictDeps = true;
+    doCheck = false;
   };
 
   cargoArtifacts = craneLib.buildDepsOnly commonArguments;
