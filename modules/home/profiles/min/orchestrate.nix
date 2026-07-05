@@ -14,6 +14,18 @@ let
   system = pkgs.stdenv.hostPlatform.system;
   orchestratePackage = inputs.orchestrate.packages.${system}.default;
 
+  orchestrateProfilePackage = pkgs.runCommand "${orchestratePackage.name}-profile" { nativeBuildInputs = [ pkgs.makeWrapper ]; } ''
+    mkdir -p $out/bin
+    for binary in ${orchestratePackage}/bin/*; do
+      ln -s "$binary" "$out/bin/$(basename "$binary")"
+    done
+    rm $out/bin/orchestrate $out/bin/meta-orchestrate
+    makeWrapper ${orchestratePackage}/bin/orchestrate $out/bin/orchestrate \
+      --run 'export PERSONA_ORCHESTRATE_SOCKET="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/orchestrate/orchestrate.sock"'
+    makeWrapper ${orchestratePackage}/bin/meta-orchestrate $out/bin/meta-orchestrate \
+      --run 'export PERSONA_ORCHESTRATE_META_SOCKET="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/orchestrate/orchestrate-owner.sock"'
+  '';
+
   # The orchestrate daemon supervises the multi-agent claim/coordination
   # fabric for the `primary` workspace under this user's home. Runtime state is
   # intentionally outside the workspace: the sema store and binary daemon
@@ -39,7 +51,7 @@ in
   };
 
   config = mkIf (size.min && config.criomosHome.orchestrate.enable) {
-    home.packages = [ orchestratePackage ];
+    home.packages = [ orchestrateProfilePackage ];
 
     systemd.user.services.orchestrate-daemon = {
       Unit = {
