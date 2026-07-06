@@ -124,6 +124,9 @@ pkgs.runCommand "pi-harness-profile"
     grep -F '"/compaction" = "always";' ${piModelsModule}
     grep -F 'source = "packages/pi-criomos";' ${piModelsModule}
     grep -F 'extensions = [ "extensions/live-theme-control.ts" ];' ${piModelsModule}
+    grep -F 'home.activation.preparePiPackageSymlink = lib.hm.dag.entryBefore [ "checkLinkTargets" ]' ${piModelsModule}
+    grep -F '.name == "@earendil-works/pi-coding-agent"' ${piModelsModule}
+    grep -F 'criomos/pi-package-migrations' ${piModelsModule}
     grep -F 'home.file.".pi/agent/SYSTEM.md".source' ${piModelsModule}
     grep -F 'home.file.".pi-testing/agent/SYSTEM.md".source' ${piModelsModule}
     grep -F 'system/SYSTEM.md' ${piModelsModule}
