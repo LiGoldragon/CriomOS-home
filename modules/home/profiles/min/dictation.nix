@@ -17,6 +17,55 @@ let
   whisrs = pkgs.callPackage ../../../../packages/whisrs { inherit inputs; };
   listener = inputs.listener.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
+  listenerTranscriptionVocabularyTerms = [
+    "Mentci"
+    "Criome"
+    "SEMA"
+    "pi"
+    "P-I"
+    "CriomOS"
+    "NOTA"
+    "Niri"
+    "Noctalia"
+    "QuickShell"
+    "Whisrs"
+    "gopass"
+    "Colemak"
+    "PipeWire"
+    "WirePlumber"
+    "Kameo"
+    "Nexus"
+    "Spirit"
+    "Orchestrate"
+    "Lojix"
+    "rkyv"
+  ];
+
+  whisrsVocabularyTerms = [
+    "Codex"
+    "Claude"
+    "CriomOS"
+    "Niri"
+    "Colemak"
+    "OpenAI"
+    "gopass"
+    "whisrs"
+  ];
+
+  listenerTranscriptionVocabulary = pkgs.writeText "listener-transcription-vocabulary.txt" (
+    lib.concatStringsSep "\n" listenerTranscriptionVocabularyTerms + "\n"
+  );
+
+  listenerTranscriptionCustomization = pkgs.runCommand "listener-transcription-customization" { } ''
+    set -eu
+    mkdir -p "$out"
+    ${listener}/bin/listener-transcription-customization \
+      ${listenerTranscriptionVocabulary} \
+      "$out/transcription-customization.rkyv"
+    test -s "$out/transcription-customization.rkyv"
+    cp ${listenerTranscriptionVocabulary} "$out/terms.txt"
+  '';
+
   whisrsServe = pkgs.writeShellScript "whisrs-daemon" ''
     set -eu
 
@@ -63,6 +112,7 @@ let
     export XDG_STATE_HOME="''${XDG_STATE_HOME:-$HOME/.local/state}"
     export LISTENER_CAPTURE_PROGRAM="''${LISTENER_CAPTURE_PROGRAM:-${pkgs.pulseaudio}/bin/parecord}"
     export LISTENER_CLIPBOARD_PROGRAM="''${LISTENER_CLIPBOARD_PROGRAM:-${pkgs.wl-clipboard}/bin/wl-copy}"
+    export LISTENER_TRANSCRIPTION_CUSTOMIZATION_ARCHIVE="${listenerTranscriptionCustomization}/transcription-customization.rkyv"
     exec ${listener}/bin/listener-daemon
   '';
 
@@ -155,7 +205,7 @@ mkIf (size.min && behavesAs.edge) {
     tray = true
     overlay = false
     status_bar = true
-    vocabulary = ["Codex", "Claude", "CriomOS", "Niri", "Colemak", "OpenAI", "gopass", "whisrs", "Hyprvoice"]
+    vocabulary = ${builtins.toJSON whisrsVocabularyTerms}
     prompt = "Transcribe spoken English as dictated text. Preserve technical names from the vocabulary. Do not translate."
 
     [audio]

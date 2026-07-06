@@ -54,8 +54,7 @@ let
     && builtins.elemAt command 1 == "cancel";
 
   commandRunsListenerRecall =
-    command:
-    builtins.length command == 1 && commandRunsExecutable command "/bin/listener-recall";
+    command: builtins.length command == 1 && commandRunsExecutable command "/bin/listener-recall";
 
   checkWhisrsBinding =
     key: expectedArgument:
@@ -106,8 +105,8 @@ let
       message = "listener.service must keep the local environment override file";
     }
     {
-      condition = lib.versionAtLeast (listenerPackage.version or "0") "0.6.0";
-      message = "Listener package must be version 0.6.0 or newer (ships listener-recall)";
+      condition = lib.versionAtLeast (listenerPackage.version or "0") "0.7.0";
+      message = "Listener package must be version 0.7.0 or newer (ships transcription customization archives)";
     }
     {
       condition = !(lib.hasInfix "LISTENER_TRANSCRIPTION_PROGRAM" listenerEnvironmentExample);
@@ -143,6 +142,12 @@ else
     fi
     grep -F 'LISTENER_CAPTURE_PROGRAM=' ${listenerService.ExecStart} >/dev/null
     grep -F 'LISTENER_CLIPBOARD_PROGRAM=' ${listenerService.ExecStart} >/dev/null
+    grep -F 'LISTENER_TRANSCRIPTION_CUSTOMIZATION_ARCHIVE=' ${listenerService.ExecStart} >/dev/null
+    archive="$(${pkgs.gnused}/bin/sed -n 's/^export LISTENER_TRANSCRIPTION_CUSTOMIZATION_ARCHIVE="\(.*\/transcription-customization\.rkyv\)"$/\1/p' ${listenerService.ExecStart})"
+    if [ -z "$archive" ] || [ ! -s "$archive" ]; then
+      echo 'listener transcription customization archive must exist and be non-empty' >&2
+      exit 1
+    fi
     grep -F '/bin/listener cancel "$session"' ${listenerCancelExecutable} >/dev/null
     grep -F 'read_active_listener_session' ${listenerCancelExecutable} >/dev/null
     if grep -E '/bin/listener (stop|transcribe)|listener-openai-transcribe|wl-copy|LISTENER_CLIPBOARD_PROGRAM' ${listenerCancelExecutable} >/dev/null; then
