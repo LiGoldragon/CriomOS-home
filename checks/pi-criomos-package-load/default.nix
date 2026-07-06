@@ -5,6 +5,7 @@ let
   pi = inputs.self.packages.${system}.pi;
   pi-criomos = inputs.self.packages.${system}.pi-criomos;
   pi-continue = inputs.self.packages.${system}.pi-continue;
+  pi-session-namer = inputs.self.packages.${system}.pi-session-namer;
 in
 pkgs.runCommand "pi-criomos-package-load"
   {
@@ -47,9 +48,16 @@ pkgs.runCommand "pi-criomos-package-load"
       "defaultModel": "gpt-test",
       "enabledModels": ["local-test/gpt-test"],
       "theme": "criomos-dark",
-      "packages": ["${pi-criomos}/share/pi-packages/pi-criomos"]
+      "packages": [
+        "${pi-criomos}/share/pi-packages/pi-criomos",
+        "${pi-session-namer}/share/pi-packages/pi-session-namer"
+      ]
     }
     JSON
+
+    test -f "${pi-session-namer}/share/pi-packages/pi-session-namer/index.ts"
+    test -f "${pi-session-namer}/share/pi-packages/pi-session-namer/package.json"
+    grep -F 'setSessionName' "${pi-session-namer}/share/pi-packages/pi-session-namer/index.ts"
 
     test -f "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
     test ! -e "${pi-criomos}/share/pi-packages/pi-criomos/src/extensions/theme-switcher.ts"

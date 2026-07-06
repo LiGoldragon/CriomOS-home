@@ -228,6 +228,8 @@
       url = "https://registry.npmjs.org/pi-continue/-/pi-continue-0.8.2.tgz";
       flake = false;
     };
+    pi-session-namer.url = "github:LiGoldragon/pi-session-namer/96b83cd0fdf02584ad1c3a024e505a42b83ce659";
+    pi-session-namer.inputs.nixpkgs.follows = "nixpkgs";
     pi-web-access-src = {
       type = "file";
       url = "https://registry.npmjs.org/pi-web-access/-/pi-web-access-0.13.0.tgz";

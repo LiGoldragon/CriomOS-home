@@ -27,6 +27,7 @@ let
     inherit inputs;
   };
   pi-continue = pkgs.callPackage ../../../../packages/pi-continue { inherit inputs; };
+  pi-session-namer = pkgs.callPackage ../../../../packages/pi-session-namer { inherit inputs; };
 
   clusterNodes = [ horizon.node ] ++ lib.attrValues (horizon.exNodes or { });
   routerNode = lib.findFirst (node: node.typeIs.largeAiRouter or false) null clusterNodes;
@@ -52,12 +53,14 @@ let
     "packages/pi-linkup"
     "packages/pi-subagents-tintinweb"
     "packages/pi-continue"
+    "packages/pi-session-namer"
   ];
   piTestingPackages = [
     piCriomosPackage
     "packages/pi-linkup"
     "packages/pi-ultra-subagents"
     "packages/pi-continue"
+    "packages/pi-session-namer"
   ];
 
   mkPiModel = model: {
@@ -137,6 +140,9 @@ lib.mkIf (size.min && endpointNode != null) {
 
   home.file.".pi/agent/packages/pi-continue".source = "${pi-continue}/share/pi-packages/pi-continue";
 
+  home.file.".pi/agent/packages/pi-session-namer".source =
+    "${pi-session-namer}/share/pi-packages/pi-session-namer";
+
   home.file.".pi-testing/agent/packages/pi-criomos".source =
     "${pi-criomos}/share/pi-packages/pi-criomos";
 
@@ -148,6 +154,9 @@ lib.mkIf (size.min && endpointNode != null) {
 
   home.file.".pi-testing/agent/packages/pi-continue".source =
     "${pi-continue}/share/pi-packages/pi-continue";
+
+  home.file.".pi-testing/agent/packages/pi-session-namer".source =
+    "${pi-session-namer}/share/pi-packages/pi-session-namer";
 
   home.activation.mergePiModels = inputs.hexis.lib.mkManagedConfig {
     inherit lib pkgs hexis;

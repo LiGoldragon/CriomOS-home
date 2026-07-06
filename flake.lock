@@ -1612,6 +1612,27 @@
         "url": "https://registry.npmjs.org/@aliou/pi-linkup/-/pi-linkup-0.11.0.tgz"
       }
     },
+    "pi-session-namer": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1783327052,
+        "narHash": "sha256-EXt0bz0r4R5a3Lx9sZpG9POCu73skC4gT1+VLPM+fCc=",
+        "owner": "LiGoldragon",
+        "repo": "pi-session-namer",
+        "rev": "96b83cd0fdf02584ad1c3a024e505a42b83ce659",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LiGoldragon",
+        "repo": "pi-session-namer",
+        "rev": "96b83cd0fdf02584ad1c3a024e505a42b83ce659",
+        "type": "github"
+      }
+    },
     "pi-src": {
       "flake": false,
       "locked": {
@@ -2073,6 +2094,7 @@
         "orchestrate": "orchestrate",
         "pi-continue-src": "pi-continue-src",
         "pi-linkup-src": "pi-linkup-src",
+        "pi-session-namer": "pi-session-namer",
         "pi-src": "pi-src",
         "pi-subagents-src": "pi-subagents-src",
         "pi-subagents-tintinweb-croner-src": "pi-subagents-tintinweb-croner-src",
