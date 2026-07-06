@@ -284,7 +284,13 @@ class LiveThemeControlSession {
       this.notify(`Live theme control ignored unknown mode: ${line}`, "warning");
       return;
     }
-    const result = this.useActiveContext("set theme", (ctx) => ctx.ui.setTheme(selection.themeName));
+    const result = this.useActiveContext("set theme", (ctx) => {
+      const themeInstance = ctx.ui.getTheme(selection.themeName);
+      if (!themeInstance) {
+        return { success: false, error: `theme not found: ${selection.themeName}` };
+      }
+      return ctx.ui.setTheme(themeInstance);
+    });
     if (result.state !== "succeeded" || !this.isActive()) {
       return;
     }

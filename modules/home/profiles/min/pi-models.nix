@@ -111,7 +111,7 @@ let
     defaultThinkingLevel = "high";
     enabledModels =
       remoteOpenAiCodexModels ++ map (model: "${providerName}/${model.modelId}") inventory.models;
-    theme = "criomos-dark";
+    theme = "criomos-light/criomos-dark";
     doubleEscapeAction = "tree";
     hideThinkingBlock = false;
     compaction = {

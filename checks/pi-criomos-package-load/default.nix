@@ -49,7 +49,7 @@ pkgs.runCommand "pi-criomos-package-load"
       "defaultProvider": "local-test",
       "defaultModel": "gpt-test",
       "enabledModels": ["local-test/gpt-test"],
-      "theme": "criomos-dark",
+      "theme": "criomos-light/criomos-dark",
       "packages": [
         "${pi-criomos}/share/pi-packages/pi-criomos",
         "packages/pi-session-namer"
@@ -73,6 +73,12 @@ pkgs.runCommand "pi-criomos-package-load"
     grep -q -F 'useActiveContext' \
       "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
     grep -q -F 'containExternalCallback' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+    grep -q -F 'ctx.ui.getTheme(selection.themeName)' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+    grep -q -F 'ctx.ui.setTheme(themeInstance)' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+    ! grep -q -F 'ctx.ui.setTheme(selection.themeName)' \
       "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
     ! grep -q -F 'this.ctx.ui.' \
       "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"

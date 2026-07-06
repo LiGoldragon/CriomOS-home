@@ -57,7 +57,11 @@ pkgs.runCommand "pi-harness-profile"
     test ! -e "${pi-criomos}/share/pi-packages/pi-criomos/src/extensions/operator-safety.ts"
     jq -e '.pi.extensions == ["./extensions/live-theme-control.ts"]' \
       "${pi-criomos}/share/pi-packages/pi-criomos/package.json"
-    grep -F 'ctx.ui.setTheme(selection.themeName)' \
+    grep -F 'ctx.ui.getTheme(selection.themeName)' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+    grep -F 'ctx.ui.setTheme(themeInstance)' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+    ! grep -F 'ctx.ui.setTheme(selection.themeName)' \
       "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
     ! grep -E 'current-mode|theme-switcher|setTimeout|setInterval|watchFile|fs\.watch' \
       "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
@@ -105,7 +109,7 @@ pkgs.runCommand "pi-harness-profile"
     grep -F '"openai-codex/gpt-5.4-mini"' ${piModelsModule}
     grep -F 'localLlmApiKeyCommand = "!gopass show -o goldragon.criome/local-llm-api-token";' ${piModelsModule}
     grep -F 'file = "$HOME/.pi/agent/auth.json";' ${piModelsModule}
-    grep -F 'theme = "criomos-dark";' ${piModelsModule}
+    grep -F 'theme = "criomos-light/criomos-dark";' ${piModelsModule}
     grep -F 'doubleEscapeAction = "tree";' ${piModelsModule}
     grep -F 'enabled = true;' ${piModelsModule}
     grep -F 'reserveTokens = 32768;' ${piModelsModule}
