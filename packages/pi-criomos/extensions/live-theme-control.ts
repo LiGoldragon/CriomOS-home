@@ -168,7 +168,7 @@ class LiveThemeControlSession {
       return;
     }
 
-    this.setStatus(`theme socket registered: ${this.registration.displayName()}`);
+    this.setStatus(undefined);
   }
 
   async shutdown(): Promise<void> {
@@ -211,13 +211,21 @@ class LiveThemeControlSession {
   private listen(server: Server): Promise<void> {
     return new Promise((resolve, reject) => {
       const fail = (error: Error) => {
-        server.off("listening", succeed);
+        try {
+          server.off("listening", succeed);
+        } catch (cleanupError) {
+          this.logContainedError("listen failure cleanup", cleanupError);
+        }
         reject(error);
       };
       const succeed = () => {
-        server.off("error", fail);
-        this.ownsSocket = true;
-        resolve();
+        try {
+          server.off("error", fail);
+          this.ownsSocket = true;
+          resolve();
+        } catch (error) {
+          reject(error);
+        }
       };
       server.once("error", fail);
       server.once("listening", succeed);
@@ -242,8 +250,8 @@ class LiveThemeControlSession {
           buffer = this.consumeLines(buffer);
         });
       },
-      close: () => this.detachClient(socket),
-      error: () => this.detachClient(socket),
+      close: () => this.containExternalCallback(socket, "close", () => this.detachClient(socket)),
+      error: () => this.containExternalCallback(socket, "error", () => this.detachClient(socket)),
     };
     this.clients.set(socket, listeners);
     socket.setEncoding("utf8");
@@ -289,7 +297,7 @@ class LiveThemeControlSession {
     }
   }
 
-  private setStatus(status: string): void {
+  private setStatus(status: string | undefined): void {
     this.useActiveContext("set status", (ctx) => {
       ctx.ui.setStatus(this.configuration.statusName, status);
     });
@@ -317,9 +325,16 @@ class LiveThemeControlSession {
     try {
       operation();
     } catch (error) {
-      this.detachClient(socket);
-      this.destroySocket(socket);
+      this.destroyClientAfterContainedFailure(socket, operationName);
       this.logContainedError(`socket ${operationName}`, error);
+    }
+  }
+
+  private destroyClientAfterContainedFailure(socket: Socket, operationName: string): void {
+    try {
+      this.destroyClient(socket);
+    } catch (cleanupError) {
+      this.logContainedError(`socket ${operationName} cleanup`, cleanupError);
     }
   }
 
@@ -331,7 +346,13 @@ class LiveThemeControlSession {
   private destroySocket(socket: Socket): void {
     const ignoreDestroyError = () => undefined;
     socket.on("error", ignoreDestroyError);
-    socket.once("close", () => socket.off("error", ignoreDestroyError));
+    socket.once("close", () => {
+      try {
+        socket.off("error", ignoreDestroyError);
+      } catch (error) {
+        this.logContainedError("socket destroy cleanup", error);
+      }
+    });
     socket.destroy();
   }
 
