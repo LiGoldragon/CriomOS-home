@@ -130,39 +130,50 @@ let
 in
 lib.mkIf (size.min && endpointNode != null) {
   home.file.".local/share/criomos/pi/package".source = "${pi}/lib/pi-monorepo/packages/coding-agent";
+  home.file.".local/share/criomos/pi/package".force = true;
 
   home.file.".pi/agent/SYSTEM.md".source =
     "${pi-criomos}/share/pi-packages/pi-criomos/system/SYSTEM.md";
 
   home.file.".pi/agent/packages/pi-criomos".source = "${pi-criomos}/share/pi-packages/pi-criomos";
+  home.file.".pi/agent/packages/pi-criomos".force = true;
 
   home.file.".pi/agent/packages/pi-linkup".source = "${pi-linkup}/share/pi-packages/pi-linkup";
+  home.file.".pi/agent/packages/pi-linkup".force = true;
 
   home.file.".pi/agent/packages/pi-subagents-tintinweb".source =
     "${pi-subagents-tintinweb}/share/pi-packages/pi-subagents-tintinweb";
+  home.file.".pi/agent/packages/pi-subagents-tintinweb".force = true;
 
   home.file.".pi/agent/packages/pi-continue".source = "${pi-continue}/share/pi-packages/pi-continue";
+  home.file.".pi/agent/packages/pi-continue".force = true;
 
   home.file.".pi/agent/packages/pi-session-namer".source =
     "${pi-session-namer}/share/pi-packages/pi-session-namer";
+  home.file.".pi/agent/packages/pi-session-namer".force = true;
 
   home.file.".pi-testing/agent/SYSTEM.md".source =
     "${pi-criomos}/share/pi-packages/pi-criomos/system/SYSTEM.md";
 
   home.file.".pi-testing/agent/packages/pi-criomos".source =
     "${pi-criomos}/share/pi-packages/pi-criomos";
+  home.file.".pi-testing/agent/packages/pi-criomos".force = true;
 
   home.file.".pi-testing/agent/packages/pi-linkup".source =
     "${pi-linkup}/share/pi-packages/pi-linkup";
+  home.file.".pi-testing/agent/packages/pi-linkup".force = true;
 
   home.file.".pi-testing/agent/packages/pi-ultra-subagents".source =
     "${pi-ultra-subagents}/share/pi-packages/pi-ultra-subagents";
+  home.file.".pi-testing/agent/packages/pi-ultra-subagents".force = true;
 
   home.file.".pi-testing/agent/packages/pi-continue".source =
     "${pi-continue}/share/pi-packages/pi-continue";
+  home.file.".pi-testing/agent/packages/pi-continue".force = true;
 
   home.file.".pi-testing/agent/packages/pi-session-namer".source =
     "${pi-session-namer}/share/pi-packages/pi-session-namer";
+  home.file.".pi-testing/agent/packages/pi-session-namer".force = true;
 
   home.activation.mergePiModels = inputs.hexis.lib.mkManagedConfig {
     inherit lib pkgs hexis;
