@@ -131,6 +131,9 @@ in
 lib.mkIf (size.min && endpointNode != null) {
   home.file.".local/share/criomos/pi/package".source = "${pi}/lib/pi-monorepo/packages/coding-agent";
 
+  home.file.".pi/agent/SYSTEM.md".source =
+    "${pi-criomos}/share/pi-packages/pi-criomos/system/SYSTEM.md";
+
   home.file.".pi/agent/packages/pi-criomos".source = "${pi-criomos}/share/pi-packages/pi-criomos";
 
   home.file.".pi/agent/packages/pi-linkup".source = "${pi-linkup}/share/pi-packages/pi-linkup";
@@ -142,6 +145,9 @@ lib.mkIf (size.min && endpointNode != null) {
 
   home.file.".pi/agent/packages/pi-session-namer".source =
     "${pi-session-namer}/share/pi-packages/pi-session-namer";
+
+  home.file.".pi-testing/agent/SYSTEM.md".source =
+    "${pi-criomos}/share/pi-packages/pi-criomos/system/SYSTEM.md";
 
   home.file.".pi-testing/agent/packages/pi-criomos".source =
     "${pi-criomos}/share/pi-packages/pi-criomos";

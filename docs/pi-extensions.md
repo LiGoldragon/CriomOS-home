@@ -124,8 +124,19 @@ the same rule: the live Pi settings file names
 
 `pi-criomos` is the daily local package:
 
-- `packages/pi-criomos/default.nix` installs the CriomOS dark/light
-  themes and a generic `live-theme-control` extension. The extension
+- `packages/pi-criomos/default.nix` installs the CriomOS default Pi
+  `SYSTEM.md`, dark/light themes, local skills, and a generic
+  `live-theme-control` extension. The `SYSTEM.md` is deployed to
+  `$HOME/.pi/agent/SYSTEM.md` by Home Manager so it replaces Pi's
+  hard-coded default prompt without mutating `$HOME/.pi` by hand.
+  It keeps basic tool-use discipline and leaves concrete tool schemas
+  and permissions authoritative.
+- The `pi-internals` skill lives under
+  `packages/pi-criomos/skills/pi-internals/` with
+  `disable-model-invocation: true`; it is available by explicit skill
+  command or path for Pi packaging/internals work but is hidden from the
+  default prompt's available-skills list.
+- The `live-theme-control` extension
   starts a per-session Unix-stream server during `session_start`,
   registers that unique socket in the Chroma runtime registry directory,
   shuts it down and removes its registry entry during `session_shutdown`,

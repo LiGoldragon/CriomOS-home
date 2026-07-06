@@ -53,10 +53,21 @@ pkgs.runCommand "pi-harness-profile"
     test -f "${pi-criomos}/share/pi-packages/pi-criomos/themes/criomos-dark.json"
     test -f "${pi-criomos}/share/pi-packages/pi-criomos/themes/criomos-light.json"
     test -f "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+    test -f "${pi-criomos}/share/pi-packages/pi-criomos/system/SYSTEM.md"
+    test -f "${pi-criomos}/share/pi-packages/pi-criomos/skills/gws/SKILL.md"
+    test -f "${pi-criomos}/share/pi-packages/pi-criomos/skills/pi-internals/SKILL.md"
     test ! -e "${pi-criomos}/share/pi-packages/pi-criomos/src/extensions/theme-switcher.ts"
     test ! -e "${pi-criomos}/share/pi-packages/pi-criomos/src/extensions/operator-safety.ts"
-    jq -e '.pi.extensions == ["./extensions/live-theme-control.ts"]' \
+    jq -e '.version == "0.1.2" and .pi.extensions == ["./extensions/live-theme-control.ts"] and .pi.skills == ["./skills"]' \
       "${pi-criomos}/share/pi-packages/pi-criomos/package.json"
+    grep -F "You are Pi, a coding agent running inside the user's terminal." \
+      "${pi-criomos}/share/pi-packages/pi-criomos/system/SYSTEM.md"
+    grep -F 'The concrete tool schemas, availability, and permission rules are authoritative.' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/system/SYSTEM.md"
+    grep -F 'disable-model-invocation: true' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/skills/pi-internals/SKILL.md"
+    grep -F 'Never patch files in `/nix/store`' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/skills/pi-internals/SKILL.md"
     grep -F 'ctx.ui.getTheme(selection.themeName)' \
       "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
     grep -F 'ctx.ui.setTheme(themeInstance)' \
@@ -117,6 +128,9 @@ pkgs.runCommand "pi-harness-profile"
     grep -F '"/compaction" = "always";' ${piModelsModule}
     grep -F 'source = "packages/pi-criomos";' ${piModelsModule}
     grep -F 'extensions = [ "extensions/live-theme-control.ts" ];' ${piModelsModule}
+    grep -F 'home.file.".pi/agent/SYSTEM.md".source' ${piModelsModule}
+    grep -F 'home.file.".pi-testing/agent/SYSTEM.md".source' ${piModelsModule}
+    grep -F 'system/SYSTEM.md' ${piModelsModule}
     grep -F '"packages/pi-linkup"' ${piModelsModule}
     ! grep -F '"packages/pi-web-access"' ${piModelsModule}
     grep -F '"packages/pi-subagents-tintinweb"' ${piModelsModule}
