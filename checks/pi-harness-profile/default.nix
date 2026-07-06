@@ -59,13 +59,21 @@ pkgs.runCommand "pi-harness-profile"
       "${pi-criomos}/share/pi-packages/pi-criomos/package.json"
     grep -F 'ctx.ui.setTheme(selection.themeName)' \
       "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
-    ! grep -E 'current-mode|theme-switcher|setInterval|watchFile|fs\.watch' \
+    ! grep -E 'current-mode|theme-switcher|setTimeout|setInterval|watchFile|fs\.watch' \
       "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
     grep -F 'PI_LIVE_THEME_CONTROL_REGISTRY_DIRECTORY' \
       "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
     grep -F 'randomUUID' \
       "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
     grep -F 'registryEntryExtension = ".path"' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+    grep -F 'useActiveContext' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+    grep -F 'containExternalCallback' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+    ! grep -F 'this.ctx.ui.' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+    ! grep -F 'theme socket registered' \
       "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
     ! grep -F 'pi-live-theme.sock' \
       "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
