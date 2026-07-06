@@ -15,7 +15,6 @@ pkgs.stdenvNoCC.mkDerivation {
       "$packageRoot/themes" \
       "$packageRoot/extensions" \
       "$packageRoot/skills/gws" \
-      "$packageRoot/skills/pi-internals" \
       "$packageRoot/system"
 
     cat > "$packageRoot/package.json" <<'JSON'
@@ -35,8 +34,6 @@ pkgs.stdenvNoCC.mkDerivation {
 
     install -m 0644 ${./skills/gws/SKILL.md} \
       "$packageRoot/skills/gws/SKILL.md"
-    install -m 0644 ${./skills/pi-internals/SKILL.md} \
-      "$packageRoot/skills/pi-internals/SKILL.md"
     install -m 0644 ${./system/SYSTEM.md} \
       "$packageRoot/system/SYSTEM.md"
     install -m 0644 ${./extensions/live-theme-control.ts} \

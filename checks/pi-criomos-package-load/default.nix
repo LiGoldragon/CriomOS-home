@@ -64,11 +64,9 @@ pkgs.runCommand "pi-criomos-package-load"
 
     test -f "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
     test -f "${pi-criomos}/share/pi-packages/pi-criomos/system/SYSTEM.md"
-    test -f "${pi-criomos}/share/pi-packages/pi-criomos/skills/pi-internals/SKILL.md"
+    test ! -e "${pi-criomos}/share/pi-packages/pi-criomos/skills/pi-internals/SKILL.md"
     grep -q -F 'The concrete tool schemas, availability, and permission rules are authoritative.' \
       "${pi-criomos}/share/pi-packages/pi-criomos/system/SYSTEM.md"
-    grep -q -F 'disable-model-invocation: true' \
-      "${pi-criomos}/share/pi-packages/pi-criomos/skills/pi-internals/SKILL.md"
     test ! -e "${pi-criomos}/share/pi-packages/pi-criomos/src/extensions/theme-switcher.ts"
     ! grep -q -E 'current-mode|theme-switcher|setTimeout|setInterval|watchFile|fs\.watch' \
       "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"

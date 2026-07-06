@@ -55,7 +55,7 @@ pkgs.runCommand "pi-harness-profile"
     test -f "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
     test -f "${pi-criomos}/share/pi-packages/pi-criomos/system/SYSTEM.md"
     test -f "${pi-criomos}/share/pi-packages/pi-criomos/skills/gws/SKILL.md"
-    test -f "${pi-criomos}/share/pi-packages/pi-criomos/skills/pi-internals/SKILL.md"
+    test ! -e "${pi-criomos}/share/pi-packages/pi-criomos/skills/pi-internals/SKILL.md"
     test ! -e "${pi-criomos}/share/pi-packages/pi-criomos/src/extensions/theme-switcher.ts"
     test ! -e "${pi-criomos}/share/pi-packages/pi-criomos/src/extensions/operator-safety.ts"
     jq -e '.version == "0.1.2" and .pi.extensions == ["./extensions/live-theme-control.ts"] and .pi.skills == ["./skills"]' \
@@ -64,10 +64,6 @@ pkgs.runCommand "pi-harness-profile"
       "${pi-criomos}/share/pi-packages/pi-criomos/system/SYSTEM.md"
     grep -F 'The concrete tool schemas, availability, and permission rules are authoritative.' \
       "${pi-criomos}/share/pi-packages/pi-criomos/system/SYSTEM.md"
-    grep -F 'disable-model-invocation: true' \
-      "${pi-criomos}/share/pi-packages/pi-criomos/skills/pi-internals/SKILL.md"
-    grep -F 'Never patch files in `/nix/store`' \
-      "${pi-criomos}/share/pi-packages/pi-criomos/skills/pi-internals/SKILL.md"
     grep -F 'ctx.ui.getTheme(selection.themeName)' \
       "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
     grep -F 'ctx.ui.setTheme(themeInstance)' \
