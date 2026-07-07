@@ -1,7 +1,5 @@
 # Agent instructions — CriomOS-home
 
-You **MUST** read AGENTS.md at `github:ligoldragon/lore` — the workspace contract.
-
 You **MUST** read CriomOS's AGENTS.md (sibling repo) — CriomOS-cluster rules apply here.
 
 ## Repo role
