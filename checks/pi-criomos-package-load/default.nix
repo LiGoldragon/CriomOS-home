@@ -80,6 +80,22 @@ pkgs.runCommand "pi-criomos-package-load"
       "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
     grep -q -F 'containExternalCallback' \
       "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+    grep -q -F 'staleContextMessageFragment = "This extension ctx is stale after session replacement or reload"' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+    grep -q -F 'retireAfterStaleContext' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+    grep -q -F 'removeOwnedFilesSynchronously' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+    grep -q -F 'LiveThemeControlProcessCleanup.register' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+    grep -q -F 'containedError.isStaleSession()' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+    ! grep -q -F 'logContainedError' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+    ! grep -q -E 'notify\([^)]*(stale|ctx|contained)' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+    ! grep -q -E 'setStatus\([^)]*(stale|ctx|contained)' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
     grep -q -F 'ctx.ui.getTheme(selection.themeName)' \
       "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
     grep -q -F 'ctx.ui.setTheme(themeInstance)' \

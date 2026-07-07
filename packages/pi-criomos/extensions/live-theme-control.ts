@@ -1,11 +1,14 @@
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { randomUUID } from "node:crypto";
+import { unlinkSync } from "node:fs";
 import { mkdir, unlink, writeFile } from "node:fs/promises";
 import { createServer, type Server, type Socket } from "node:net";
 import { basename, join } from "node:path";
 
 const registryEntryExtension = ".path";
 const socketExtension = ".sock";
+const staleContextMessageFragment = "This extension ctx is stale after session replacement or reload";
+const processCleanupSignals = ["SIGTERM", "SIGHUP"] as const;
 
 type ThemeMode = "dark" | "light";
 
@@ -95,12 +98,115 @@ class LiveThemeControlRegistration {
     await unlink(this.registryEntryPath).catch(() => undefined);
   }
 
+  unregisterSynchronously(): void {
+    this.unlinkSynchronously(this.registryEntryPath);
+  }
+
   async removeSocket(): Promise<void> {
     await unlink(this.socketPath).catch(() => undefined);
   }
 
+  removeSocketSynchronously(): void {
+    this.unlinkSynchronously(this.socketPath);
+  }
+
   displayName(): string {
     return basename(this.socketPath);
+  }
+
+  private unlinkSynchronously(path: string): void {
+    try {
+      unlinkSync(path);
+    } catch {
+      // Process-exit cleanup is best-effort and must not throw while Pi is shutting down.
+    }
+  }
+}
+
+class LiveThemeControlContainedError {
+  private constructor(
+    private readonly classification: "stale-session" | "unexpected",
+    private readonly error: unknown,
+  ) {}
+
+  static from(error: unknown): LiveThemeControlContainedError {
+    const message = error instanceof Error ? error.message : String(error);
+    const classification = message.includes(staleContextMessageFragment) ? "stale-session" : "unexpected";
+    return new LiveThemeControlContainedError(classification, error);
+  }
+
+  isStaleSession(): boolean {
+    return this.classification === "stale-session";
+  }
+
+  writeDiagnostic(operationName: string): void {
+    if (this.isStaleSession()) {
+      return;
+    }
+    try {
+      console.error(`live-theme-control contained ${operationName} error: ${String(this.error)}`);
+    } catch {
+      // Intentionally empty: logging must not turn a contained socket callback failure into a process crash.
+    }
+  }
+}
+
+type LiveThemeControlProcessCleanupSignal = (typeof processCleanupSignals)[number];
+
+class LiveThemeControlProcessCleanup {
+  private static readonly callbacks: Set<() => void> = new Set();
+  private static exitHandler: (() => void) | undefined;
+  private static readonly signalHandlers: Map<LiveThemeControlProcessCleanupSignal, () => void> = new Map();
+
+  static register(callback: () => void): () => void {
+    LiveThemeControlProcessCleanup.install();
+    LiveThemeControlProcessCleanup.callbacks.add(callback);
+    return () => {
+      LiveThemeControlProcessCleanup.callbacks.delete(callback);
+      if (LiveThemeControlProcessCleanup.callbacks.size === 0) {
+        LiveThemeControlProcessCleanup.uninstall();
+      }
+    };
+  }
+
+  private static install(): void {
+    if (!LiveThemeControlProcessCleanup.exitHandler) {
+      LiveThemeControlProcessCleanup.exitHandler = () => LiveThemeControlProcessCleanup.runCallbacks();
+      process.once("exit", LiveThemeControlProcessCleanup.exitHandler);
+    }
+
+    for (const signal of processCleanupSignals) {
+      if (LiveThemeControlProcessCleanup.signalHandlers.has(signal)) {
+        continue;
+      }
+      if (process.listenerCount(signal) === 0) {
+        continue;
+      }
+      const handler = () => LiveThemeControlProcessCleanup.runCallbacks();
+      LiveThemeControlProcessCleanup.signalHandlers.set(signal, handler);
+      process.on(signal, handler);
+    }
+  }
+
+  private static uninstall(): void {
+    if (LiveThemeControlProcessCleanup.exitHandler) {
+      process.removeListener("exit", LiveThemeControlProcessCleanup.exitHandler);
+      LiveThemeControlProcessCleanup.exitHandler = undefined;
+    }
+    for (const [signal, handler] of LiveThemeControlProcessCleanup.signalHandlers) {
+      process.removeListener(signal, handler);
+    }
+    LiveThemeControlProcessCleanup.signalHandlers.clear();
+  }
+
+  private static runCallbacks(): void {
+    for (const callback of Array.from(LiveThemeControlProcessCleanup.callbacks)) {
+      try {
+        callback();
+      } catch {
+        // Process shutdown cleanup cannot report through Pi UI or risk aborting shutdown.
+      }
+    }
   }
 }
 
@@ -124,10 +230,12 @@ class LiveThemeControlSession {
   private readonly registration: LiveThemeControlRegistration;
   private readonly ctx: ExtensionContext;
   private readonly isCurrentSession: () => boolean;
+  private readonly unregisterProcessCleanup: () => void;
   private readonly clients: Map<Socket, LiveThemeControlClientListeners> = new Map();
   private active = true;
   private ownsRegistryEntry = false;
   private ownsSocket = false;
+  private staleContextRetirementStarted = false;
   private server: Server | undefined;
   private serverConnectionListener: ((socket: Socket) => void) | undefined;
   private serverRuntimeErrorListener: ((error: Error) => void) | undefined;
@@ -137,6 +245,7 @@ class LiveThemeControlSession {
     this.registration = configuration.registration();
     this.ctx = ctx;
     this.isCurrentSession = isCurrentSession;
+    this.unregisterProcessCleanup = LiveThemeControlProcessCleanup.register(() => this.removeOwnedFilesSynchronously());
   }
 
   async start(): Promise<void> {
@@ -158,7 +267,7 @@ class LiveThemeControlSession {
       return;
     }
 
-    const runtimeErrorListener = (error: Error) => this.logContainedError("server error", error);
+    const runtimeErrorListener = (error: Error) => this.handleContainedError("server error", error);
     server.on("error", runtimeErrorListener);
     this.serverRuntimeErrorListener = runtimeErrorListener;
     await this.registration.register();
@@ -206,6 +315,7 @@ class LiveThemeControlSession {
       this.ownsSocket = false;
       await this.registration.removeSocket();
     }
+    this.unregisterProcessCleanup();
   }
 
   private listen(server: Server): Promise<void> {
@@ -214,7 +324,7 @@ class LiveThemeControlSession {
         try {
           server.off("listening", succeed);
         } catch (cleanupError) {
-          this.logContainedError("listen failure cleanup", cleanupError);
+          this.handleContainedError("listen failure cleanup", cleanupError);
         }
         reject(error);
       };
@@ -322,8 +432,8 @@ class LiveThemeControlSession {
     try {
       return { state: "succeeded", value: operation(this.ctx) };
     } catch (error) {
-      this.logContainedError(`ui ${operationName}`, error);
-      return { state: "failed" };
+      const containedError = this.handleContainedError(`ui ${operationName}`, error);
+      return containedError.isStaleSession() ? { state: "inactive" } : { state: "failed" };
     }
   }
 
@@ -331,8 +441,13 @@ class LiveThemeControlSession {
     try {
       operation();
     } catch (error) {
+      const containedError = LiveThemeControlContainedError.from(error);
+      if (containedError.isStaleSession()) {
+        this.retireAfterStaleContext();
+        return;
+      }
       this.destroyClientAfterContainedFailure(socket, operationName);
-      this.logContainedError(`socket ${operationName}`, error);
+      containedError.writeDiagnostic(`socket ${operationName}`);
     }
   }
 
@@ -340,7 +455,7 @@ class LiveThemeControlSession {
     try {
       this.destroyClient(socket);
     } catch (cleanupError) {
-      this.logContainedError(`socket ${operationName} cleanup`, cleanupError);
+      this.handleContainedError(`socket ${operationName} cleanup`, cleanupError);
     }
   }
 
@@ -356,7 +471,7 @@ class LiveThemeControlSession {
       try {
         socket.off("error", ignoreDestroyError);
       } catch (error) {
-        this.logContainedError("socket destroy cleanup", error);
+        this.handleContainedError("socket destroy cleanup", error);
       }
     });
     socket.destroy();
@@ -384,11 +499,32 @@ class LiveThemeControlSession {
     }
   }
 
-  private logContainedError(operationName: string, error: unknown): void {
-    try {
-      console.error(`live-theme-control contained ${operationName} error: ${String(error)}`);
-    } catch {
-      // Intentionally empty: logging must not turn a contained socket callback failure into a process crash.
+  private handleContainedError(operationName: string, error: unknown): LiveThemeControlContainedError {
+    const containedError = LiveThemeControlContainedError.from(error);
+    if (containedError.isStaleSession()) {
+      this.retireAfterStaleContext();
+    } else {
+      containedError.writeDiagnostic(operationName);
+    }
+    return containedError;
+  }
+
+  private retireAfterStaleContext(): void {
+    if (this.staleContextRetirementStarted) {
+      return;
+    }
+    this.staleContextRetirementStarted = true;
+    void this.retireStartedState().catch((error) => {
+      LiveThemeControlContainedError.from(error).writeDiagnostic("stale session cleanup");
+    });
+  }
+
+  private removeOwnedFilesSynchronously(): void {
+    if (this.ownsRegistryEntry) {
+      this.registration.unregisterSynchronously();
+    }
+    if (this.ownsSocket) {
+      this.registration.removeSocketSynchronously();
     }
   }
 }
