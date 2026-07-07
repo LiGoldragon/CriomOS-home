@@ -413,6 +413,7 @@
           gws = checkPkgs.callPackage ./checks/gws { inherit inputs; };
           playwright-cli = checkPkgs.callPackage ./checks/playwright-cli { };
           spirit-deployment = checkPkgs.callPackage ./checks/spirit-deployment { inherit inputs; };
+          aggregator-deployment = checkPkgs.callPackage ./checks/aggregator-deployment { inherit inputs; };
           vscodium-casual = checkPkgs.callPackage ./checks/vscodium-casual { };
         }
       ) derivationChecks;

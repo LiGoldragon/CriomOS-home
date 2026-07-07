@@ -49,6 +49,9 @@
     ./profiles/min/ui-priority.nix
     ./profiles/min/dictation.nix
     ./profiles/min/spirit.nix
+    # Aggregator — supervises the local transcript/evidence recovery daemon
+    # and installs wrappers with the same user-scoped configuration path.
+    ./profiles/min/aggregator.nix
     # Orchestrate — supervises the multi-agent claim/coordination daemon
     # (systemd --user unit + pinned flake input).
     ./profiles/min/orchestrate.nix
