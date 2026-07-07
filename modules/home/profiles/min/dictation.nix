@@ -274,6 +274,7 @@ mkIf (size.min && behavesAs.edge) {
       ExecStart = "${listenerServe}";
       Restart = "on-failure";
       RestartSec = 2;
+      UMask = "0077";
       EnvironmentFile = "-%h/.config/listener/environment";
       PassEnvironment = [
         "DISPLAY"

@@ -121,8 +121,12 @@ let
       message = "listener.service must keep the local environment override file";
     }
     {
-      condition = lib.versionAtLeast (listenerPackage.version or "0") "0.7.0";
-      message = "Listener package must be version 0.7.0 or newer (ships transcription customization archives)";
+      condition = listenerService ? UMask && listenerService.UMask == "0077";
+      message = "listener.service must set UMask=0077 for private capture artifacts";
+    }
+    {
+      condition = lib.versionAtLeast (listenerPackage.version or "0") "0.7.1";
+      message = "Listener package must be version 0.7.1 or newer (ships private capture artifact hardening)";
     }
     {
       condition = !(lib.hasInfix "LISTENER_TRANSCRIPTION_PROGRAM" listenerEnvironmentExample);
