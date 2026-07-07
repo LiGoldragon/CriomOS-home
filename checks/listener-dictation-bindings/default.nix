@@ -25,6 +25,7 @@ let
   moduleContent = if moduleResult ? content then moduleResult.content else moduleResult;
 
   binds = moduleContent.programs.niri.settings.binds;
+  packageNames = map lib.getName moduleContent.home.packages;
   listenerService = moduleContent.systemd.user.services.listener.Service;
   listenerPackage = inputs.listener.packages.${pkgs.stdenv.hostPlatform.system}.default;
   listenerEnvironmentExample = moduleContent.xdg.configFile."listener/environment.example".text;
@@ -68,7 +69,10 @@ let
 
   assertions = [
     (checkWhisrsBinding "Mod+V" "toggle-copy")
-    (checkWhisrsBinding "Mod+Shift+V" "toggle")
+    {
+      condition = !(builtins.hasAttr "Mod+Shift+V" binds);
+      message = "Mod+Shift+V must stay unbound because direct insertion is unsafe";
+    }
     (checkWhisrsBinding "Mod+Ctrl+V" "cancel")
     {
       condition = commandRunsExecutable (commandFor "Mod+Alt+V") "whisrs-recall";
@@ -97,6 +101,18 @@ let
     {
       condition = !(builtins.hasAttr "Mod+Shift+M" binds);
       message = "Mod+Shift+M must stay unbound";
+    }
+    {
+      condition = !(builtins.elem "wtype" packageNames);
+      message = "dictation profile must not expose wtype";
+    }
+    {
+      condition = !(builtins.elem "hyprvoice" packageNames);
+      message = "dictation profile must not expose Hyprvoice";
+    }
+    {
+      condition = !(builtins.pathExists ../../packages/hyprvoice/default.nix);
+      message = "packages/hyprvoice must not exist";
     }
     {
       condition =

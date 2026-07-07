@@ -25,6 +25,7 @@ let
   moduleContent = if moduleResult ? content then moduleResult.content else moduleResult;
 
   binds = moduleContent.programs.niri.settings.binds;
+  packageNames = map lib.getName moduleContent.home.packages;
 
   commandFor = key: binds.${key}.action.command or [ ];
 
@@ -46,7 +47,10 @@ let
 
   assertions = [
     (checkBinding "Mod+V" "toggle-copy")
-    (checkBinding "Mod+Shift+V" "toggle")
+    {
+      condition = !(builtins.hasAttr "Mod+Shift+V" binds);
+      message = "Mod+Shift+V must stay unbound because direct insertion is unsafe";
+    }
     (checkBinding "Mod+Ctrl+V" "cancel")
     {
       condition =
@@ -55,6 +59,18 @@ let
         in
         builtins.length command == 1 && lib.hasSuffix "whisrs-recall" (builtins.elemAt command 0);
       message = "Mod+Alt+V must run whisrs-recall";
+    }
+    {
+      condition = !(builtins.elem "wtype" packageNames);
+      message = "dictation profile must not expose wtype";
+    }
+    {
+      condition = !(builtins.elem "hyprvoice" packageNames);
+      message = "dictation profile must not expose Hyprvoice";
+    }
+    {
+      condition = !(builtins.pathExists ../../packages/hyprvoice/default.nix);
+      message = "packages/hyprvoice must not exist";
     }
   ];
 

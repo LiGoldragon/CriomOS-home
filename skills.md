@@ -123,10 +123,9 @@ Important current shape:
   construction so helper commands do not inherit them.
 - `Mod+V` is clipboard-only dictation. This is the safe default because
   it does not inject transcript letters through the compositor seat.
-- `Mod+Shift+V` toggles direct dictation, copies the full transcript to
-  the clipboard before keyboard insertion, and writes Whisrs history.
-  Treat it as the dangerous path for targets where direct key injection
-  is explicitly worth the risk.
+- `Mod+Shift+V` is intentionally unbound. Direct dictation through
+  compositor keystroke insertion is outside the safe STT surface; use
+  clipboard delivery or recall instead.
 - `Mod+Alt+V` opens `whisrs-recall`, a Fuzzel-backed selector over
   recent Whisrs history. The selected full transcript is copied to the
   clipboard; it does not inject text into the focused window.
@@ -144,7 +143,8 @@ Important current shape:
   runs the Nix-managed `listener-cancel-capture` wrapper, and `Mod+Alt+M`
   runs `listener-recall`, a Fuzzel-backed selector over Listener's own
   transcript history that copies the chosen transcript to the clipboard.
-  Whisrs keeps `Mod+V`, `Mod+Shift+V`, `Mod+Alt+V`, and `Mod+Ctrl+V`.
+  Whisrs keeps `Mod+V`, `Mod+Alt+V`, and `Mod+Ctrl+V`; `Mod+Shift+V`
+  stays intentionally unbound.
 - `listener.service` starts `listener-daemon` with default-source capture
   and clipboard delivery. Listener owns production OpenAI transcription
   internally and reads its provider credential from gopass at runtime.

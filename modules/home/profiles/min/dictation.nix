@@ -192,7 +192,6 @@ mkIf (size.min && behavesAs.edge) {
     listenerCancel
     pkgs.fuzzel
     pkgs.wl-clipboard
-    pkgs.wtype
   ];
 
   xdg.configFile."whisrs/config.toml".text = ''
@@ -380,12 +379,6 @@ mkIf (size.min && behavesAs.edge) {
       action = a.spawn "${whisrs}/bin/whisrs" "toggle-copy";
       repeat = false;
       hotkey-overlay.title = "Voice Typing (Copy)";
-    };
-
-    binds."Mod+Shift+V" = {
-      action = a.spawn "${whisrs}/bin/whisrs" "toggle";
-      repeat = false;
-      hotkey-overlay.title = "Voice Typing";
     };
 
     binds."Mod+Alt+V" = {
