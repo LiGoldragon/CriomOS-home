@@ -148,6 +148,12 @@
     agent.inputs.nixpkgs.follows = "nixpkgs";
     agent.inputs.crane.follows = "crane";
 
+    # Aggregator — local transcript/evidence recovery daemon. Pinned to the
+    # audited source accepted for Home-profile deployment.
+    aggregator.url = "github:LiGoldragon/aggregator/30e085ff150af3f1f455cdc7f005ce8024792086";
+    aggregator.inputs.nixpkgs.follows = "nixpkgs";
+    aggregator.inputs.crane.follows = "crane";
+
     # Orchestrate — multi-agent claim/coordination daemon that supervises the
     # `primary` workspace's claim fabric. Consumed in
     # modules/home/profiles/min/orchestrate.nix, which gives it a systemd
