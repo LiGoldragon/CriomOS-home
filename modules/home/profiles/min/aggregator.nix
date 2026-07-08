@@ -8,7 +8,7 @@
 }:
 let
   inherit (lib) mkIf mkOption;
-  inherit (lib.types) bool;
+  inherit (lib.types) bool nonEmptyListOf str;
   inherit (user) size;
 
   system = pkgs.stdenv.hostPlatform.system;
@@ -18,8 +18,10 @@ let
   configurationPath = "${stateDirectory}/configuration.nota";
   storePath = "${stateDirectory}/aggregator.sema";
   runtimeDirectoryName = "aggregator";
-
-  primaryClaudeProjectRoot = "${config.home.homeDirectory}/.claude/projects/-home-li-primary";
+  aggregatorConfiguration = config.criomosHome.aggregator;
+  workspaceArguments = lib.concatMapStringsSep " \\\n      " (
+    path: "--workspace ${lib.escapeShellArg path}"
+  ) aggregatorConfiguration.workspacePaths;
 
   writeDefaultConfiguration = pkgs.writeShellScript "aggregator-default-configuration" ''
     set -eu
@@ -27,26 +29,27 @@ let
     state_directory=${lib.escapeShellArg stateDirectory}
     configuration_path=${lib.escapeShellArg configurationPath}
     store_path=${lib.escapeShellArg storePath}
-    primary_claude_project_root=${lib.escapeShellArg primaryClaudeProjectRoot}
+    home_directory=${lib.escapeShellArg config.home.homeDirectory}
     uid="$(${pkgs.coreutils}/bin/id -u)"
     runtime_directory="''${XDG_RUNTIME_DIR:-/run/user/$uid}/${runtimeDirectoryName}"
-    claude_subagent_output_root="/tmp/claude-$uid"
+    temporary_directory="''${TMPDIR:-/tmp}"
 
     ${pkgs.coreutils}/bin/mkdir -p \
       "$state_directory" \
-      "$runtime_directory" \
-      "$primary_claude_project_root" \
-      "$claude_subagent_output_root"
+      "$runtime_directory"
     ${pkgs.coreutils}/bin/chmod 0700 \
       "$state_directory" \
-      "$runtime_directory" \
-      "$primary_claude_project_root" \
-      "$claude_subagent_output_root"
+      "$runtime_directory"
 
     ${aggregatorPackage}/bin/aggregator-write-configuration \
-      --configuration "$configuration_path" <<EOF
-    ($runtime_directory/aggregator.sock 384 $runtime_directory/aggregator-meta.sock 384 $store_path [] [(Claude ($primary_claude_project_root)) (ClaudeSubagentOutput ($claude_subagent_output_root))] MetadataOnly (32 4096) ((DaemonLocalStorePath OpaqueStaleCapable FragileReferenceAscending) (64 4096 65536 1024) []))
-    EOF
+      --configuration "$configuration_path" \
+      --local-default \
+      --home-directory "$home_directory" \
+      --user-identifier "$uid" \
+      --temporary-directory "$temporary_directory" \
+      --runtime-directory "$runtime_directory" \
+      --store-path "$store_path" \
+      ${workspaceArguments}
     ${pkgs.coreutils}/bin/chmod 0600 "$configuration_path"
   '';
 
@@ -89,6 +92,12 @@ in
       type = bool;
       default = inputs ? aggregator;
       description = "Install aggregator and supervise its local recovery daemon in the user session when a fixed and audited aggregator source is pinned as a flake input.";
+    };
+
+    workspacePaths = mkOption {
+      type = nonEmptyListOf str;
+      default = [ "${config.home.homeDirectory}/primary" ];
+      description = "Absolute workspace roots whose Claude project transcript directories are derived by aggregator from the account home and workspace path.";
     };
   };
 
