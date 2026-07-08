@@ -2,7 +2,7 @@
   inputs,
   pkgs,
   source ? {
-    kind = "tarball";
+    kind = "directory";
     path = inputs.pi-subagents-tintinweb-src;
   },
   ...
@@ -56,7 +56,7 @@ pkgs.stdenvNoCC.mkDerivation {
   '';
 
   meta = {
-    description = "Tintinweb Pi subagents extension packaged for isolated profile testing";
+    description = "Tintinweb Pi subagents extension packaged for the CriomOS Pi profile";
     homepage = "https://github.com/tintinweb/pi-subagents";
     license = pkgs.lib.licenses.mit;
   };

@@ -6,13 +6,6 @@ let
   pi-linkup = inputs.self.packages.${system}.pi-linkup;
   pi-subagents = inputs.self.packages.${system}.pi-subagents;
   pi-subagents-tintinweb = inputs.self.packages.${system}.pi-subagents-tintinweb;
-  pi-subagents-tintinweb-testing = pkgs.callPackage ../../packages/pi-subagents-tintinweb {
-    inherit inputs;
-    source = {
-      kind = "directory";
-      path = inputs.pi-subagents-tintinweb-testing-src;
-    };
-  };
   pi-ultra-subagents = inputs.self.packages.${system}.pi-ultra-subagents;
   pi-continue = inputs.self.packages.${system}.pi-continue;
   piLinkupPackage = ../../packages/pi-linkup/default.nix;
@@ -21,6 +14,7 @@ let
   piUltraSubagentsPackage = ../../packages/pi-ultra-subagents/default.nix;
   piContinuePackage = ../../packages/pi-continue/default.nix;
   piModelsModule = ../../modules/home/profiles/min/pi-models.nix;
+  flakeFile = ../../flake.nix;
 in
 pkgs.runCommand "pi-harness-profile"
   {
@@ -42,17 +36,15 @@ pkgs.runCommand "pi-harness-profile"
     grep -F 'selected child agent, runtime, packages, and prompt, not from the parent' "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md"
     ! grep -F 'Chains default to clarify mode' "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md"
     test -f "${pi-subagents-tintinweb}/share/pi-packages/pi-subagents-tintinweb/src/index.ts"
+    grep -F 'renderSubagentResultSummary' \
+      "${pi-subagents-tintinweb}/share/pi-packages/pi-subagents-tintinweb/src/index.ts"
+    grep -F 'if (expanded) return new Text(text, 0, 0);' \
+      "${pi-subagents-tintinweb}/share/pi-packages/pi-subagents-tintinweb/src/index.ts"
     test -d "${pi-subagents-tintinweb}/share/pi-packages/pi-subagents-tintinweb/node_modules/@sinclair/typebox"
     test -d "${pi-subagents-tintinweb}/share/pi-packages/pi-subagents-tintinweb/node_modules/croner"
     test -d "${pi-subagents-tintinweb}/share/pi-packages/pi-subagents-tintinweb/node_modules/nanoid"
     jq -e '.name == "@tintinweb/pi-subagents" and .version == "0.13.0" and .pi.extensions == ["./src/index.ts"]' \
       "${pi-subagents-tintinweb}/share/pi-packages/pi-subagents-tintinweb/package.json"
-    test -f "${pi-subagents-tintinweb-testing}/share/pi-packages/pi-subagents-tintinweb/src/index.ts"
-    grep -F 'renderSubagentResultSummary' \
-      "${pi-subagents-tintinweb-testing}/share/pi-packages/pi-subagents-tintinweb/src/index.ts"
-    grep -F 'if (expanded) return new Text(text, 0, 0);' \
-      "${pi-subagents-tintinweb-testing}/share/pi-packages/pi-subagents-tintinweb/src/index.ts"
-    test -d "${pi-subagents-tintinweb-testing}/share/pi-packages/pi-subagents-tintinweb/node_modules/@sinclair/typebox"
     test -f "${pi-ultra-subagents}/share/pi-packages/pi-ultra-subagents/extensions/subagent/index.ts"
     test -f "${pi-ultra-subagents}/share/pi-packages/pi-ultra-subagents/extensions/subagent/agents.ts"
     test -d "${pi-ultra-subagents}/share/pi-packages/pi-ultra-subagents/node_modules/typebox"
@@ -168,9 +160,13 @@ pkgs.runCommand "pi-harness-profile"
     ! grep -F 'piTestingPackages = [' ${piModelsModule}
     grep -F 'packages = normalPiPackages;' ${piModelsModule}
     grep -F 'piTestingSettingsConfig = piSettingsConfig;' ${piModelsModule}
-    grep -F 'inputs.pi-subagents-tintinweb-testing-src' ${piModelsModule}
+    grep -F 'github:LiGoldragon/pi-subagents/9a90c54ec6193b824944d67236df7d9bd98095df' ${flakeFile}
+    ! grep -F 'pi-subagents-tintinweb-testing-src' ${flakeFile}
+    ! grep -F 'pi-subagents-tintinweb-testing-src' ${piModelsModule}
+    ! grep -F 'pi-subagents-tintinweb-testing' ${piModelsModule}
     grep -F 'home.file.".pi/agent/packages/pi-subagents-tintinweb".source' ${piModelsModule}
     grep -F 'home.file.".pi-testing/agent/packages/pi-subagents-tintinweb".source' ${piModelsModule}
+    test "$(grep -F '"''${pi-subagents-tintinweb}/share/pi-packages/pi-subagents-tintinweb";' ${piModelsModule} | wc -l)" -eq 2
     ! grep -F 'home.file.".pi-testing/agent/packages/pi-ultra-subagents".source' ${piModelsModule}
     ! grep -F 'home.file.".pi/agent/packages/pi-subagents".source' ${piModelsModule}
     grep -F '"packages/pi-continue"' ${piModelsModule}

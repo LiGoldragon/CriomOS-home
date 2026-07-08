@@ -23,13 +23,6 @@ let
   pi-subagents-tintinweb = pkgs.callPackage ../../../../packages/pi-subagents-tintinweb {
     inherit inputs;
   };
-  pi-subagents-tintinweb-testing = pkgs.callPackage ../../../../packages/pi-subagents-tintinweb {
-    inherit inputs;
-    source = {
-      kind = "directory";
-      path = inputs.pi-subagents-tintinweb-testing-src;
-    };
-  };
   pi-continue = pkgs.callPackage ../../../../packages/pi-continue { inherit inputs; };
   pi-session-namer = pkgs.callPackage ../../../../packages/pi-session-namer { inherit inputs; };
   piPackageHomePath = "$HOME/.local/share/criomos/pi/package";
@@ -183,7 +176,7 @@ lib.mkIf (size.min && endpointNode != null) {
   home.file.".pi-testing/agent/packages/pi-linkup".force = true;
 
   home.file.".pi-testing/agent/packages/pi-subagents-tintinweb".source =
-    "${pi-subagents-tintinweb-testing}/share/pi-packages/pi-subagents-tintinweb";
+    "${pi-subagents-tintinweb}/share/pi-packages/pi-subagents-tintinweb";
   home.file.".pi-testing/agent/packages/pi-subagents-tintinweb".force = true;
 
   home.file.".pi-testing/agent/packages/pi-continue".source =
