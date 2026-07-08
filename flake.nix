@@ -148,9 +148,9 @@
     # Orchestrate — multi-agent claim/coordination daemon that supervises the
     # `primary` workspace's claim fabric. Consumed in
     # modules/home/profiles/min/orchestrate.nix, which gives it a systemd
-    # --user supervisor. Pinned to the revision fixed for session-lane
-    # unregistered-claim partial-application reporting.
-    orchestrate.url = "github:LiGoldragon/orchestrate/17500c5fa44719d1d439cc435ea43ad134ae9c6a";
+    # --user supervisor. Pinned to the revision carrying claim-age projection
+    # and v5-to-v6 store migration for workflow model-resolution storage.
+    orchestrate.url = "github:LiGoldragon/orchestrate/e6b6b17d2ddfce88cda792dff03215c2936a3c70";
     orchestrate.inputs.nixpkgs.follows = "nixpkgs";
 
     # Mentci — psyche-facing approval daemon and egui client surface.
