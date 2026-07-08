@@ -36,12 +36,6 @@ let
     command: executableSuffix:
     builtins.length command >= 1 && lib.hasSuffix executableSuffix (builtins.elemAt command 0);
 
-  commandRunsWhisrsSubcommand =
-    command: expectedArgument:
-    builtins.length command == 2
-    && commandRunsExecutable command "/bin/whisrs"
-    && builtins.elemAt command 1 == expectedArgument;
-
   commandRunsListenerToggle =
     command:
     builtins.length command == 2
@@ -57,38 +51,34 @@ let
   commandRunsListenerRecall =
     command: builtins.length command == 1 && commandRunsExecutable command "/bin/listener-recall";
 
-  checkWhisrsBinding =
-    key: expectedArgument:
-    let
-      command = commandFor key;
-    in
-    {
-      condition = commandRunsWhisrsSubcommand command expectedArgument;
-      message = "${key} must remain whisrs ${expectedArgument}";
-    };
-
   assertions = [
-    (checkWhisrsBinding "Mod+V" "toggle-copy")
+    {
+      condition = commandRunsListenerToggle (commandFor "Mod+V");
+      message = "Mod+V must run listener-toggle-capture";
+    }
+    {
+      condition = commandRunsListenerCancel (commandFor "Mod+Ctrl+V");
+      message = "Mod+Ctrl+V must run listener-cancel-capture";
+    }
+    {
+      condition = commandRunsListenerRecall (commandFor "Mod+Alt+V");
+      message = "Mod+Alt+V must run listener-recall";
+    }
     {
       condition = !(builtins.hasAttr "Mod+Shift+V" binds);
       message = "Mod+Shift+V must stay unbound because direct insertion is unsafe";
     }
-    (checkWhisrsBinding "Mod+Ctrl+V" "cancel")
     {
-      condition = commandRunsExecutable (commandFor "Mod+Alt+V") "whisrs-recall";
-      message = "Mod+Alt+V must remain whisrs-recall";
+      condition = !(builtins.hasAttr "Mod+M" binds);
+      message = "Mod+M must not remain a Listener binding after Listener moves to Mod+V";
     }
     {
-      condition = commandRunsListenerToggle (commandFor "Mod+M");
-      message = "Mod+M must run listener-toggle-capture";
+      condition = !(builtins.hasAttr "Mod+Ctrl+M" binds);
+      message = "Mod+Ctrl+M must not remain a Listener binding after Listener moves to Mod+Ctrl+V";
     }
     {
-      condition = commandRunsListenerCancel (commandFor "Mod+Ctrl+M");
-      message = "Mod+Ctrl+M must run listener-cancel-capture";
-    }
-    {
-      condition = commandRunsListenerRecall (commandFor "Mod+Alt+M");
-      message = "Mod+Alt+M must run listener-recall";
+      condition = !(builtins.hasAttr "Mod+Alt+M" binds);
+      message = "Mod+Alt+M must not remain a Listener binding after Listener moves to Mod+Alt+V";
     }
     {
       condition = !(builtins.hasAttr "Mod+Alt+L" binds);
@@ -96,11 +86,15 @@ let
     }
     {
       condition = !(builtins.hasAttr "Mod+Ctrl+Alt+M" binds);
-      message = "Mod+Ctrl+Alt+M must not remain a Listener binding (cancel moved to Mod+Ctrl+M)";
+      message = "Mod+Ctrl+Alt+M must not remain a Listener binding";
     }
     {
       condition = !(builtins.hasAttr "Mod+Shift+M" binds);
       message = "Mod+Shift+M must stay unbound";
+    }
+    {
+      condition = !(builtins.elem "whisrs" packageNames);
+      message = "dictation profile must not install Whisrs";
     }
     {
       condition = !(builtins.elem "wtype" packageNames);
@@ -111,8 +105,24 @@ let
       message = "dictation profile must not expose Hyprvoice";
     }
     {
+      condition = !(builtins.pathExists ../../packages/whisrs/default.nix);
+      message = "packages/whisrs must not exist";
+    }
+    {
       condition = !(builtins.pathExists ../../packages/hyprvoice/default.nix);
       message = "packages/hyprvoice must not exist";
+    }
+    {
+      condition = !(builtins.hasAttr "whisrs" moduleContent.systemd.user.services);
+      message = "whisrs.service must not remain in the dictation profile";
+    }
+    {
+      condition = !(builtins.hasAttr "whisrs-spool-retry" moduleContent.systemd.user.services);
+      message = "whisrs-spool-retry.service must not remain in the dictation profile";
+    }
+    {
+      condition = !(builtins.hasAttr "whisrs/config.toml" moduleContent.xdg.configFile);
+      message = "Whisrs config must not remain managed by the dictation profile";
     }
     {
       condition =
@@ -140,8 +150,8 @@ if failures != [ ] then
   throw (lib.concatMapStringsSep "\n" (assertion: assertion.message) failures)
 else
   let
-    listenerToggleExecutable = builtins.elemAt (commandFor "Mod+M") 0;
-    listenerCancelExecutable = builtins.elemAt (commandFor "Mod+Ctrl+M") 0;
+    listenerToggleExecutable = builtins.elemAt (commandFor "Mod+V") 0;
+    listenerCancelExecutable = builtins.elemAt (commandFor "Mod+Ctrl+V") 0;
   in
   pkgs.runCommand "listener-dictation-bindings" { } ''
     ${pkgs.bash}/bin/bash -n ${listenerService.ExecStart}
@@ -174,5 +184,5 @@ else
       echo 'listener cancel wrapper must not stop/transcribe/copy' >&2
       exit 1
     fi
-    printf 'listener and whisrs dictation bindings checked\n' > "$out"
+    printf 'listener dictation bindings checked\n' > "$out"
   ''

@@ -13,7 +13,10 @@ pkgs.runCommand "listener-level-widget" { } ''
   ${pkgs.gnugrep}/bin/grep -F '/states/listener-level' "$sfwbar"
   ${pkgs.gnugrep}/bin/grep -F '"noctalia/plugins/listener-level/BarWidget.qml".source' "$sfwbar"
   ${pkgs.gnugrep}/bin/grep -F 'home.packages = [ pkgs.libnotify ];' "$sfwbar"
-  ${pkgs.gnugrep}/bin/grep -F 'plugin:whisrs-level' "$sfwbar"
+  if ${pkgs.gnugrep}/bin/grep -F 'plugin:whisrs-level' "$sfwbar" >/dev/null; then
+    echo 'Whisrs level widget must not remain in the bar' >&2
+    exit 1
+  fi
 
   ${pkgs.gnugrep}/bin/grep -F 'runtimeDirectory + "/listener/status.sock"' "$widget"
   ${pkgs.gnugrep}/bin/grep -F 'JSON.parse(String(message))' "$widget"

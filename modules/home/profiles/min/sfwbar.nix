@@ -44,13 +44,11 @@ lib.mkIf behavesAs.edge {
         ];
         right = [
           { id = "plugin:listener-level"; }
-          { id = "plugin:whisrs-level"; }
           {
             id = "Tray";
             colorizeIcons = false;
             drawerEnabled = true;
             hidePassive = false;
-            pinned = [ "whisrs*" ];
           }
           {
             id = "Battery";
@@ -74,16 +72,11 @@ lib.mkIf behavesAs.edge {
           enabled = true;
           sourceUrl = "https://github.com/noctalia-dev/noctalia-plugins";
         };
-        whisrs-level = {
-          enabled = true;
-          sourceUrl = "https://github.com/noctalia-dev/noctalia-plugins";
-        };
       };
     };
     modes = {
       "/version" = "always";
       "/states/listener-level" = "always";
-      "/states/whisrs-level" = "always";
     };
   };
 
@@ -92,10 +85,6 @@ lib.mkIf behavesAs.edge {
       ./noctalia-plugins/listener-level/manifest.json;
     "noctalia/plugins/listener-level/BarWidget.qml".source =
       ./noctalia-plugins/listener-level/BarWidget.qml;
-    "noctalia/plugins/whisrs-level/manifest.json".source =
-      ./noctalia-plugins/whisrs-level/manifest.json;
-    "noctalia/plugins/whisrs-level/BarWidget.qml".source =
-      ./noctalia-plugins/whisrs-level/BarWidget.qml;
   };
 
   services.mako = {

@@ -79,16 +79,7 @@
     claude-answers.url = "github:LiGoldragon/claude-answers";
     claude-answers.inputs.nixpkgs.follows = "nixpkgs";
 
-    # `whisrs` — Linux/Niri dictation tool. Consumed from the CriomOS fork,
-    # which carries our daily dictation safety, recovery, status-bar, and
-    # recall integration patches on the `criomos` branch.
-    whisrs-src = {
-      url = "github:LiGoldragon/whisrs?ref=criomos";
-      flake = false;
-    };
-
-    # Listener — fresh CriomOS speech-to-text runtime trial. Kept beside
-    # Whisrs so the daily dictation path remains available during trial use.
+    # Listener — CriomOS speech-to-text runtime for the daily dictation path.
     listener.url = "github:LiGoldragon/listener";
     listener.inputs.nixpkgs.follows = "nixpkgs";
     listener.inputs.crane.follows = "crane";
@@ -395,15 +386,9 @@
         checks
         // {
           chroma-nota-config = checkPkgs.callPackage ./checks/chroma-nota-config { inherit inputs; };
-          whisrs-dictation-bindings = checkPkgs.callPackage ./checks/whisrs-dictation-bindings {
-            inherit inputs;
-          };
           listener-dictation-bindings = checkPkgs.callPackage ./checks/listener-dictation-bindings {
             inherit inputs;
           };
-          whisrs-default-input = checkPkgs.callPackage ./checks/whisrs-default-input { inherit inputs; };
-          whisrs-recall = checkPkgs.callPackage ./checks/whisrs-recall { inherit inputs; };
-          whisrs-level-widget = checkPkgs.callPackage ./checks/whisrs-level-widget { };
           listener-level-widget = checkPkgs.callPackage ./checks/listener-level-widget { };
           keyboard-layout-policy = checkPkgs.callPackage ./checks/keyboard-layout-policy { inherit inputs; };
           rust-toolchain = checkPkgs.callPackage ./checks/rust-toolchain { inherit inputs; };

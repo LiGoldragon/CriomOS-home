@@ -110,13 +110,13 @@ Dictation device stability is push-oriented: Home uses declarative
 PipeWire/WirePlumber policy and stable service bindings rather than polling
 loops that repeatedly inspect or repair the audio graph after the fact.
 Dictation microphone support stays small and subtractive: for the DJI and
-Whisrs path, prefer reducing or deleting brittle PipeWire/WirePlumber special
+Listener path, prefer reducing or deleting brittle PipeWire/WirePlumber special
 handling over adding more keepalive code. Desktop audio prefers the connected
 DJI Bluetooth microphone through system default-source policy when its raw
 PipeWire source is present, while retaining ordinary laptop-microphone
-fallback and avoiding a hard virtual hot-loop dependency or Whisrs-specific
+fallback and avoiding a hard virtual hot-loop dependency or dictation-specific
 source wrapper. A DJI keep-alive may exist as a sidecar consumer of the real
-DJI source: it keeps that specific mic awake, but the system and Whisrs still
+DJI source: it keeps that specific mic awake, but the system and Listener still
 select the real microphone source rather than the keep-alive interface. The
 DJI keepalive keeps the microphone hot for speech-to-text so recording does
 not lose the first two or three seconds to Bluetooth wake/profile churn.

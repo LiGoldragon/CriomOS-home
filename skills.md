@@ -36,7 +36,7 @@ This repo owns:
 - `modules/home/` Home Manager modules and profile ladder.
 - `packages/` user-scoped packages and patched upstream tools.
 - Niri keybindings and Noctalia user configuration.
-- User services such as `whisrs.service`.
+- User services such as `listener.service`.
 - The canonical user-profile Rust toolchain:
   `packages/rust-toolchain/default.nix`.
 
@@ -105,55 +105,34 @@ public repo files carry only mechanism and non-sensitive status.
 
 ## Dictation
 
-The daily STT path is Whisrs. The owning files are
-`modules/home/profiles/min/dictation.nix`,
-`modules/home/profiles/min/sfwbar.nix`, and `packages/whisrs/`.
+The daily STT path is Listener. The owning files are
+`modules/home/profiles/min/dictation.nix` and
+`modules/home/profiles/min/sfwbar.nix`.
 
 Important current shape:
 
-- Whisrs is built from `inputs.whisrs-src` with crane. The input is
-  the `LiGoldragon/whisrs` `criomos` branch, which carries the
-  CriomOS dictation safety, recovery, status-bar, and transcript
-  recall changes.
-- `packages/whisrs/` owns packaging, wrappers, and status icons. Rust
-  code changes live in the Whisrs fork, not in a local patch stack.
-- Only the daemon wrapper reads `gopass openai/api-key` into
-  `WHISRS_OPENAI_API_KEY`.
-- The Whisrs fork clears vendor key environment variables after backend
-  construction so helper commands do not inherit them.
-- `Mod+V` is clipboard-only dictation. This is the safe default because
-  it does not inject transcript letters through the compositor seat.
-- `Mod+Shift+V` is intentionally unbound. Direct dictation through
-  compositor keystroke insertion is outside the safe STT surface; use
-  clipboard delivery or recall instead.
-- `Mod+Alt+V` opens `whisrs-recall`, a Fuzzel-backed selector over
-  recent Whisrs history. The selected full transcript is copied to the
-  clipboard; it does not inject text into the focused window.
-- `Mod+Ctrl+V` cancels the active recording. On the default batch
-  backend this stops local capture, discards the audio, avoids the
-  transcription request, and does not write Whisrs history.
-- Transcript history is local application state at
-  `~/.local/share/whisrs/history.jsonl`; the service wrapper creates it
-  private.
-- Noctalia shows the Whisrs recording state through the system tray item
-  and the `whisrs-level` plugin. Status icons live in
-  `packages/whisrs/`.
-- Listener is installed for a production trial beside Whisrs. `Mod+M`
-  runs the Nix-managed `listener-toggle-capture` wrapper, `Mod+Ctrl+M`
-  runs the Nix-managed `listener-cancel-capture` wrapper, and `Mod+Alt+M`
-  runs `listener-recall`, a Fuzzel-backed selector over Listener's own
-  transcript history that copies the chosen transcript to the clipboard.
-  Whisrs keeps `Mod+V`, `Mod+Alt+V`, and `Mod+Ctrl+V`; `Mod+Shift+V`
-  stays intentionally unbound.
-- `listener.service` starts `listener-daemon` with default-source capture
-  and clipboard delivery. Listener owns production OpenAI transcription
-  internally and reads its provider credential from gopass at runtime.
+- `Mod+V` runs the Nix-managed `listener-toggle-capture` wrapper for
+  clipboard-only dictation. This is the safe default because it does not inject
+  transcript letters through the compositor seat.
+- `Mod+Alt+V` runs `listener-recall`, a Fuzzel-backed selector over Listener's
+  transcript history. The selected full transcript is copied to the clipboard;
+  it does not inject text into the focused window.
+- `Mod+Ctrl+V` runs the Nix-managed `listener-cancel-capture` wrapper. Cancel
+  stops local capture, retains the capture artifact, avoids transcription and
+  delivery, and does not write Listener history.
+- `Mod+Shift+V` is intentionally unbound. Direct dictation through compositor
+  keystroke insertion is outside the safe STT surface; use clipboard delivery or
+  recall instead.
+- Whisrs is retired from the active home profile. Do not reintroduce its service,
+  package, status widget, config, or shortcuts as the default dictation path.
+- `listener.service` starts `listener-daemon` with default-source capture and
+  clipboard delivery. Listener owns production OpenAI transcription internally
+  and reads its provider credential from gopass at runtime.
   `~/.config/listener/environment` remains the local override surface for
   capture and clipboard commands.
-- Noctalia shows Listener recording/transcribing/copied/error state through
-  the `listener-level` plugin, which consumes
-  `$XDG_RUNTIME_DIR/listener/status.sock` JSON lines. It is side by side with
-  the existing `whisrs-level` plugin and must not carry transcript text.
+- Noctalia shows Listener recording/transcribing/copied/error state through the
+  `listener-level` plugin, which consumes `$XDG_RUNTIME_DIR/listener/status.sock`
+  JSON lines and must not carry transcript text.
 - DJI Mic keepalive keeps the microphone hot by holding a PipeWire stream
   open through a loopback sink. It may call BlueZ `Connect` before the device
   is connected, but after PipeWire exposes the Bluetooth card it must repair
@@ -215,15 +194,14 @@ separate optional cleanup.
 
 For local checks that do not call paid APIs:
 
-- `systemctl --user is-active whisrs.service`
-- `whisrs status`
-- `whisrs log -n 1`
-- D-Bus tray metadata via the StatusNotifierItem bus item
-- `whisrs toggle` followed by `whisrs cancel` only when checking
-  recording state without transcription
+- `systemctl --user is-active listener.service`
+- `listener status`
+- `listener-recall` only with stubbed selector/clipboard programs unless a live
+  manual recall is the explicit test
+- Noctalia Listener widget state through `$XDG_RUNTIME_DIR/listener/status.sock`
 
 Build from pushed origin with `--refresh` before treating package changes
-as verified. Home activation should restart `whisrs.service`; do not
+as verified. Home activation should restart `listener.service`; do not
 signal niri.
 
 Submit deployment work directly through the typed Lojix interfaces. Use

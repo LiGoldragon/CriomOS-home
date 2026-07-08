@@ -14,7 +14,6 @@ let
 
   a = config.lib.niri.actions;
 
-  whisrs = pkgs.callPackage ../../../../packages/whisrs { inherit inputs; };
   listener = inputs.listener.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
   listenerTranscriptionVocabularyTerms = [
@@ -41,17 +40,6 @@ let
     "rkyv"
   ];
 
-  whisrsVocabularyTerms = [
-    "Codex"
-    "Claude"
-    "CriomOS"
-    "Niri"
-    "Colemak"
-    "OpenAI"
-    "gopass"
-    "whisrs"
-  ];
-
   listenerTranscriptionVocabulary = pkgs.writeText "listener-transcription-vocabulary.txt" (
     lib.concatStringsSep "\n" listenerTranscriptionVocabularyTerms + "\n"
   );
@@ -64,29 +52,6 @@ let
       "$out/transcription-customization.rkyv"
     test -s "$out/transcription-customization.rkyv"
     cp ${listenerTranscriptionVocabulary} "$out/terms.txt"
-  '';
-
-  whisrsServe = pkgs.writeShellScript "whisrs-daemon" ''
-    set -eu
-
-    WHISRS_OPENAI_API_KEY="$(${pkgs.gopass}/bin/gopass show -o openai/api-key)"
-    if [ -z "$WHISRS_OPENAI_API_KEY" ]; then
-      echo "whisrs-daemon: gopass openai/api-key returned an empty key" >&2
-      exit 1
-    fi
-
-    export XDG_DATA_HOME="''${XDG_DATA_HOME:-$HOME/.local/share}"
-    ${pkgs.coreutils}/bin/install -d -m 700 "$XDG_DATA_HOME/whisrs"
-    if [ -e "$XDG_DATA_HOME/whisrs/history.jsonl" ]; then
-      ${pkgs.coreutils}/bin/chmod 600 "$XDG_DATA_HOME/whisrs/history.jsonl"
-    else
-      ${pkgs.coreutils}/bin/install -m 600 /dev/null "$XDG_DATA_HOME/whisrs/history.jsonl"
-    fi
-
-    export WHISRS_OPENAI_API_KEY
-    export RUST_LOG="whisrs=info,warn"
-
-    exec ${whisrs}/bin/whisrsd
   '';
 
   startDictationServices = pkgs.writeShellScript "criomos-start-dictation-services" ''
@@ -103,7 +68,7 @@ let
       DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_RUNTIME_DIR \
       HYPRLAND_INSTANCE_SIGNATURE NIRI_SOCKET SWAYSOCK XKB_DEFAULT_LAYOUT XKB_DEFAULT_VARIANT
 
-    exec ${pkgs.systemd}/bin/systemctl --user restart whisrs.service
+    exec ${pkgs.systemd}/bin/systemctl --user restart listener.service
   '';
 
   listenerServe = pkgs.writeShellScript "listener-daemon" ''
@@ -186,7 +151,6 @@ let
 in
 mkIf (size.min && behavesAs.edge) {
   home.packages = [
-    whisrs
     listener
     listenerToggle
     listenerCancel
@@ -194,68 +158,12 @@ mkIf (size.min && behavesAs.edge) {
     pkgs.wl-clipboard
   ];
 
-  xdg.configFile."whisrs/config.toml".text = ''
-    [general]
-    backend = "openai"
-    language = "en"
-    notify = true
-    remove_filler_words = false
-    audio_feedback = false
-    tray = true
-    overlay = false
-    status_bar = true
-    vocabulary = ${builtins.toJSON whisrsVocabularyTerms}
-    prompt = "Transcribe spoken English as dictated text. Preserve technical names from the vocabulary. Do not translate."
-
-    [audio]
-    device = "default"
-
-    [input]
-    key_delay_ms = 2
-
-    [openai]
-    api_key = ""
-    model = "gpt-4o-transcribe"
-  '';
-
   xdg.configFile."listener/environment.example".text = ''
     # Optional local overrides for Listener. Production transcription is owned
     # by listener-daemon and reads its OpenAI credential from gopass at runtime.
     # LISTENER_CAPTURE_PROGRAM=${pkgs.pulseaudio}/bin/parecord
     # LISTENER_CLIPBOARD_PROGRAM=${pkgs.wl-clipboard}/bin/wl-copy
   '';
-
-  systemd.user.services.whisrs = {
-    Unit = {
-      Description = "whisrs dictation daemon";
-      After = [
-        "graphical-session.target"
-        "pipewire.service"
-        "pipewire-pulse.service"
-      ];
-      PartOf = [ "graphical-session.target" ];
-    };
-
-    Install.WantedBy = [ "graphical-session.target" ];
-
-    Service = {
-      ExecStart = "${whisrsServe}";
-      Restart = "on-failure";
-      RestartSec = 2;
-      PassEnvironment = [
-        "DISPLAY"
-        "WAYLAND_DISPLAY"
-        "XDG_CURRENT_DESKTOP"
-        "XDG_SESSION_TYPE"
-        "XDG_RUNTIME_DIR"
-        "HYPRLAND_INSTANCE_SIGNATURE"
-        "NIRI_SOCKET"
-        "SWAYSOCK"
-        "XKB_DEFAULT_LAYOUT"
-        "XKB_DEFAULT_VARIANT"
-      ];
-    };
-  };
 
   systemd.user.services.listener = {
     Unit = {
@@ -284,33 +192,6 @@ mkIf (size.min && behavesAs.edge) {
         "XDG_RUNTIME_DIR"
       ];
     };
-  };
-
-  # When the network comes back after a transcription drop, retry every
-  # spooled recording through whisrs's current backend. `--auto`
-  # suppresses per-entry stdout chatter and only logs failures; the
-  # daemon writes successful transcripts to history.jsonl + clipboard.
-  # The unit is one-shot, depends on whisrs.service (so the daemon
-  # exists to receive the IPC), and binds to network-online so
-  # systemd fires it at the right moment.
-  systemd.user.services.whisrs-spool-retry = {
-    Unit = {
-      Description = "Retry whisrs spooled recordings when the network returns";
-      Requires = [ "whisrs.service" ];
-      After = [
-        "whisrs.service"
-        "network-online.target"
-      ];
-      Wants = [ "network-online.target" ];
-    };
-    Service = {
-      Type = "oneshot";
-      # Sleep 2s before retrying so the daemon is fully up after a
-      # cold boot ordering with network-online.target.
-      ExecStart = "${pkgs.bash}/bin/bash -c 'sleep 2; ${whisrs}/bin/whisrs spool retry --all --auto || true'";
-      RemainAfterExit = false;
-    };
-    Install.WantedBy = [ "network-online.target" ];
   };
 
   xdg.configFile."pipewire/pipewire.conf.d/60-dji-mic-keepalive.conf".text = ''
@@ -377,39 +258,21 @@ mkIf (size.min && behavesAs.edge) {
     ];
 
     binds."Mod+V" = {
-      action = a.spawn "${whisrs}/bin/whisrs" "toggle-copy";
-      repeat = false;
-      hotkey-overlay.title = "Voice Typing (Copy)";
-    };
-
-    binds."Mod+Alt+V" = {
-      action = a.spawn "${whisrs}/bin/whisrs-recall";
-      repeat = false;
-      hotkey-overlay.title = "Voice Typing Recall";
-    };
-
-    binds."Mod+Ctrl+V" = {
-      action = a.spawn "${whisrs}/bin/whisrs" "cancel";
-      repeat = false;
-      hotkey-overlay.title = "Voice Typing Cancel";
-    };
-
-    binds."Mod+M" = {
       action = a.spawn "${listenerToggle}/bin/listener-toggle-capture" "toggle";
       repeat = false;
       hotkey-overlay.title = "Listener Capture";
     };
 
-    binds."Mod+Ctrl+M" = {
-      action = a.spawn "${listenerCancel}/bin/listener-cancel-capture" "cancel";
-      repeat = false;
-      hotkey-overlay.title = "Listener Cancel";
-    };
-
-    binds."Mod+Alt+M" = {
+    binds."Mod+Alt+V" = {
       action = a.spawn "${listener}/bin/listener-recall";
       repeat = false;
       hotkey-overlay.title = "Listener Recall";
+    };
+
+    binds."Mod+Ctrl+V" = {
+      action = a.spawn "${listenerCancel}/bin/listener-cancel-capture" "cancel";
+      repeat = false;
+      hotkey-overlay.title = "Listener Cancel";
     };
   };
 }
