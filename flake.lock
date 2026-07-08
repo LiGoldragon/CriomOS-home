@@ -1765,6 +1765,23 @@
         "url": "https://registry.npmjs.org/@tintinweb/pi-subagents/-/pi-subagents-0.13.0.tgz"
       }
     },
+    "pi-subagents-tintinweb-testing-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1783514477,
+        "narHash": "sha256-A8HusQg6CUf4S9vmUtrMYTtwA7dwZPpAN+x2EHwQ+vw=",
+        "owner": "LiGoldragon",
+        "repo": "pi-subagents",
+        "rev": "9a90c54ec6193b824944d67236df7d9bd98095df",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LiGoldragon",
+        "repo": "pi-subagents",
+        "rev": "9a90c54ec6193b824944d67236df7d9bd98095df",
+        "type": "github"
+      }
+    },
     "pi-subagents-tintinweb-typebox-src": {
       "flake": false,
       "locked": {
@@ -2168,6 +2185,7 @@
         "pi-subagents-tintinweb-croner-src": "pi-subagents-tintinweb-croner-src",
         "pi-subagents-tintinweb-nanoid-src": "pi-subagents-tintinweb-nanoid-src",
         "pi-subagents-tintinweb-src": "pi-subagents-tintinweb-src",
+        "pi-subagents-tintinweb-testing-src": "pi-subagents-tintinweb-testing-src",
         "pi-subagents-tintinweb-typebox-src": "pi-subagents-tintinweb-typebox-src",
         "pi-ultra-subagents-src": "pi-ultra-subagents-src",
         "pi-ultra-subagents-typebox-src": "pi-ultra-subagents-typebox-src",

@@ -1,5 +1,25 @@
-{ inputs, pkgs, ... }:
-
+{
+  inputs,
+  pkgs,
+  source ? {
+    kind = "tarball";
+    path = inputs.pi-subagents-tintinweb-src;
+  },
+  ...
+}:
+let
+  sourceInstallCommand =
+    if source.kind == "tarball" then
+      ''
+        tar -xzf ${source.path} -C "$packageRoot" --strip-components=1
+      ''
+    else if source.kind == "directory" then
+      ''
+        cp -R ${source.path}/. "$packageRoot"/
+      ''
+    else
+      throw "Unsupported pi-subagents-tintinweb source kind: ${source.kind}";
+in
 pkgs.stdenvNoCC.mkDerivation {
   pname = "pi-subagents-tintinweb";
   version = "0.13.0";
@@ -20,7 +40,9 @@ pkgs.stdenvNoCC.mkDerivation {
       "$packageRoot/node_modules/croner" \
       "$packageRoot/node_modules/nanoid"
 
-    tar -xzf ${inputs.pi-subagents-tintinweb-src} -C "$packageRoot" --strip-components=1
+  ''
+  + sourceInstallCommand
+  + ''
     tar -xzf ${inputs.pi-subagents-tintinweb-typebox-src} -C "$packageRoot/.pi-deps/typebox" --strip-components=1
     tar -xzf ${inputs.pi-subagents-tintinweb-croner-src} -C "$packageRoot/.pi-deps/croner" --strip-components=1
     tar -xzf ${inputs.pi-subagents-tintinweb-nanoid-src} -C "$packageRoot/.pi-deps/nanoid" --strip-components=1

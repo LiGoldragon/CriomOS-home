@@ -23,8 +23,12 @@ let
   pi-subagents-tintinweb = pkgs.callPackage ../../../../packages/pi-subagents-tintinweb {
     inherit inputs;
   };
-  pi-ultra-subagents = pkgs.callPackage ../../../../packages/pi-ultra-subagents {
+  pi-subagents-tintinweb-testing = pkgs.callPackage ../../../../packages/pi-subagents-tintinweb {
     inherit inputs;
+    source = {
+      kind = "directory";
+      path = inputs.pi-subagents-tintinweb-testing-src;
+    };
   };
   pi-continue = pkgs.callPackage ../../../../packages/pi-continue { inherit inputs; };
   pi-session-namer = pkgs.callPackage ../../../../packages/pi-session-namer { inherit inputs; };
@@ -53,13 +57,6 @@ let
     piCriomosPackage
     "packages/pi-linkup"
     "packages/pi-subagents-tintinweb"
-    "packages/pi-continue"
-    "packages/pi-session-namer"
-  ];
-  piTestingPackages = [
-    piCriomosPackage
-    "packages/pi-linkup"
-    "packages/pi-ultra-subagents"
     "packages/pi-continue"
     "packages/pi-session-namer"
   ];
@@ -125,9 +122,7 @@ let
     packages = normalPiPackages;
   };
 
-  piTestingSettingsConfig = piSettingsConfig // {
-    packages = piTestingPackages;
-  };
+  piTestingSettingsConfig = piSettingsConfig;
 in
 lib.mkIf (size.min && endpointNode != null) {
   home.activation.preparePiPackageSymlink = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
@@ -187,9 +182,9 @@ lib.mkIf (size.min && endpointNode != null) {
     "${pi-linkup}/share/pi-packages/pi-linkup";
   home.file.".pi-testing/agent/packages/pi-linkup".force = true;
 
-  home.file.".pi-testing/agent/packages/pi-ultra-subagents".source =
-    "${pi-ultra-subagents}/share/pi-packages/pi-ultra-subagents";
-  home.file.".pi-testing/agent/packages/pi-ultra-subagents".force = true;
+  home.file.".pi-testing/agent/packages/pi-subagents-tintinweb".source =
+    "${pi-subagents-tintinweb-testing}/share/pi-packages/pi-subagents-tintinweb";
+  home.file.".pi-testing/agent/packages/pi-subagents-tintinweb".force = true;
 
   home.file.".pi-testing/agent/packages/pi-continue".source =
     "${pi-continue}/share/pi-packages/pi-continue";

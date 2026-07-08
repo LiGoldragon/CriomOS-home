@@ -195,6 +195,10 @@
       url = "https://registry.npmjs.org/@tintinweb/pi-subagents/-/pi-subagents-0.13.0.tgz";
       flake = false;
     };
+    pi-subagents-tintinweb-testing-src = {
+      url = "github:LiGoldragon/pi-subagents/9a90c54ec6193b824944d67236df7d9bd98095df";
+      flake = false;
+    };
     pi-subagents-tintinweb-typebox-src = {
       type = "file";
       url = "https://registry.npmjs.org/@sinclair/typebox/-/typebox-0.34.49.tgz";
