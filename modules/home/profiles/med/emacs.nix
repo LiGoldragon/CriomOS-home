@@ -270,9 +270,16 @@ let
      :demand t
      :custom (treesit-font-lock-level 4))
 
+    ;; rust-mode's tree-sitter-derived font-lock currently trips a
+    ;; Rust query/grammar mismatch in the pinned Emacs package, leaving
+    ;; Rust buffers mostly uncoloured. Use classic rust-mode font-lock
+    ;; until the bundled tree-sitter pair is compatible again.
     (use-package rust-mode
-     :custom (rust-mode-treesitter-derive t) (rust-format-on-save t)
-     :hook ((rust-mode rust-ts-mode) . eglot-ensure))
+     :mode "\\.rs\\'"
+     :custom
+     (rust-mode-treesitter-derive nil)
+     (rust-format-on-save t)
+     :hook (rust-mode . eglot-ensure))
 
     (use-package magit-delta :hook (magit-mode . magit-delta-mode))
     (use-package difftastic)
@@ -341,7 +348,7 @@ let
 
     (use-package company
      :hook
-     ((lisp-mode nix-ts-mode emacs-lisp-mode clojure-ts-mode rust-ts-mode)
+     ((lisp-mode nix-ts-mode emacs-lisp-mode clojure-ts-mode rust-mode rust-ts-mode)
       . company-mode))
 
     (use-package dockerfile-mode :mode "Dockerfile")
