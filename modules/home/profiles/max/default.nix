@@ -10,8 +10,9 @@ let
   inherit (lib) optionals mkIf mkMerge;
   inherit (user) isMultimediaDev size;
 
-  codingPackages = with pkgs; [
-    pandoc
+  codingPackages = [
+    pkgs.pandoc
+    inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.traycer
   ];
 
   # Per Li 2026-04-25: gimp, krita, calibre, inkscape stay Max-tier.
