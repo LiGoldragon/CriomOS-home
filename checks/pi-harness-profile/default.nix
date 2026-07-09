@@ -160,7 +160,7 @@ pkgs.runCommand "pi-harness-profile"
     ! grep -F 'piTestingPackages = [' ${piModelsModule}
     grep -F 'packages = normalPiPackages;' ${piModelsModule}
     grep -F 'piTestingSettingsConfig = piSettingsConfig;' ${piModelsModule}
-    grep -F 'github:LiGoldragon/pi-subagents/068026a8f410973fdb5dac47d0f2d2ff0b613b02' ${flakeFile}
+    grep -F 'github:LiGoldragon/pi-subagents/49697bccba12aaa50ac90f2dd54fbe71d4fd0265' ${flakeFile}
     ! grep -F 'pi-subagents-tintinweb-testing-src' ${flakeFile}
     ! grep -F 'pi-subagents-tintinweb-testing-src' ${piModelsModule}
     ! grep -F 'pi-subagents-tintinweb-testing' ${piModelsModule}
