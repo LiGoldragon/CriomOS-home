@@ -2,7 +2,7 @@
 
 pkgs.stdenvNoCC.mkDerivation {
   pname = "pi-continue";
-  version = "0.8.2";
+  version = "0.9.3";
 
   dontUnpack = true;
   dontBuild = true;
