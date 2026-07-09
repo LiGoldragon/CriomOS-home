@@ -191,7 +191,7 @@
       flake = false;
     };
     pi-subagents-tintinweb-src = {
-      url = "github:LiGoldragon/pi-subagents/9a90c54ec6193b824944d67236df7d9bd98095df";
+      url = "github:LiGoldragon/pi-subagents/1a26c0dca1392fcd3cef50f2cbdb41e446beed6d";
       flake = false;
     };
     pi-subagents-tintinweb-typebox-src = {
