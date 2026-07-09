@@ -59,7 +59,7 @@
     # Replaces darkman + nightshift + the brightness shell wrapper.
     # Per-user systemd unit + apply script + default config.nota.
     ./profiles/min/chroma.nix
-    # Despite the filename, this configures programs.noctalia-shell
+    # Despite the filename, this configures programs.noctalia
     # (bar widgets, idle timer, lock timeout). Without it the user
     # gets noctalia's upstream defaults.
     ./profiles/min/sfwbar.nix

@@ -3,42 +3,32 @@
 pkgs.runCommand "listener-level-widget" { } ''
   set -eu
 
-  widget=${../../modules/home/profiles/min/noctalia-plugins/listener-level/BarWidget.qml}
-  manifest=${../../modules/home/profiles/min/noctalia-plugins/listener-level/manifest.json}
   sfwbar=${../../modules/home/profiles/min/sfwbar.nix}
 
-  ${pkgs.jq}/bin/jq -e '.id == "listener-level" and .entryPoints.barWidget == "BarWidget.qml"' "$manifest"
-
-  ${pkgs.gnugrep}/bin/grep -F '{ id = "plugin:listener-level"; }' "$sfwbar"
-  ${pkgs.gnugrep}/bin/grep -F '/states/listener-level' "$sfwbar"
-  ${pkgs.gnugrep}/bin/grep -F '"noctalia/plugins/listener-level/BarWidget.qml".source' "$sfwbar"
+  ${pkgs.gnugrep}/bin/grep -F 'programs.noctalia = {' "$sfwbar"
+  ${pkgs.gnugrep}/bin/grep -F 'bar.main = {' "$sfwbar"
+  ${pkgs.gnugrep}/bin/grep -F '"control-center"' "$sfwbar"
+  ${pkgs.gnugrep}/bin/grep -F 'pre_action_fade_seconds = 5.0;' "$sfwbar"
+  ${pkgs.gnugrep}/bin/grep -F 'timeout = 300;' "$sfwbar"
+  ${pkgs.gnugrep}/bin/grep -F 'timeout = 3600;' "$sfwbar"
+  ${pkgs.gnugrep}/bin/grep -F 'Luau' "$sfwbar"
+  ${pkgs.gnugrep}/bin/grep -F 'leaves the Listener widget disabled until it is rewritten as a v5 plugin' "$sfwbar"
   ${pkgs.gnugrep}/bin/grep -F 'home.packages = [ pkgs.libnotify ];' "$sfwbar"
-  if ${pkgs.gnugrep}/bin/grep -F 'plugin:whisrs-level' "$sfwbar" >/dev/null; then
-    echo 'Whisrs level widget must not remain in the bar' >&2
+
+  if ${pkgs.gnugrep}/bin/grep -E '^[[:space:]]*programs\.noctalia-shell[[:space:]]*=' "$sfwbar" >/dev/null; then
+    echo 'Noctalia v5 must use programs.noctalia, not programs.noctalia-shell' >&2
     exit 1
   fi
-
-  ${pkgs.gnugrep}/bin/grep -F 'runtimeDirectory + "/listener/status.sock"' "$widget"
-  ${pkgs.gnugrep}/bin/grep -F 'JSON.parse(String(message))' "$widget"
-  ${pkgs.gnugrep}/bin/grep -F 'listenerState === "recording"' "$widget"
-  ${pkgs.gnugrep}/bin/grep -F 'listenerState === "transcribing"' "$widget"
-  ${pkgs.gnugrep}/bin/grep -F 'listenerState === "copied"' "$widget"
-  ${pkgs.gnugrep}/bin/grep -F 'listenerState === "cancelled"' "$widget"
-  ${pkgs.gnugrep}/bin/grep -F 'listenerState === "error"' "$widget"
-  ${pkgs.gnugrep}/bin/grep -F 'Number(event.level || 0.0)' "$widget"
-  ${pkgs.gnugrep}/bin/grep -F 'microphoneLevel * 2.75' "$widget"
-  ${pkgs.gnugrep}/bin/grep -F 'visibleMicrophoneLevel' "$widget"
-  ${pkgs.gnugrep}/bin/grep -F 'levelAgeMilliseconds > 450' "$widget"
-  ${pkgs.gnugrep}/bin/grep -F '#ef4444' "$widget"
-  ${pkgs.gnugrep}/bin/grep -F '#facc15' "$widget"
-  ${pkgs.gnugrep}/bin/grep -F '#38bdf8' "$widget"
-  ${pkgs.gnugrep}/bin/grep -F 'notify-send' "$widget"
-  ${pkgs.gnugrep}/bin/grep -F 'Transcription copied to clipboard' "$widget"
-  ${pkgs.gnugrep}/bin/grep -F 'Capture cancelled' "$widget"
-  ${pkgs.gnugrep}/bin/grep -F 'Transcription failed' "$widget"
-
-  if ${pkgs.gnugrep}/bin/grep -E 'transcript|text' "$widget" >/dev/null; then
-    echo 'listener-level widget must not carry transcript text' >&2
+  if ${pkgs.gnugrep}/bin/grep -F 'plugin:listener-level' "$sfwbar" >/dev/null; then
+    echo 'legacy QML listener-level plugin must not be wired into Noctalia v5' >&2
+    exit 1
+  fi
+  if ${pkgs.gnugrep}/bin/grep -E 'file = .*plugins\.json|plugins/listener-level' "$sfwbar" >/dev/null; then
+    echo 'legacy Noctalia plugin files must not be managed for Noctalia v5' >&2
+    exit 1
+  fi
+  if ${pkgs.gnugrep}/bin/grep -F 'niri-title-only-updates.patch' "$sfwbar" >/dev/null; then
+    echo 'legacy QML patch must not be applied to Noctalia v5 C++ source' >&2
     exit 1
   fi
 

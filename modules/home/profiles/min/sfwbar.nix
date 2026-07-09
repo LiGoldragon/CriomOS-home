@@ -10,82 +10,55 @@
 let
   inherit (horizon.node) behavesAs;
   colors = config.lib.stylix.colors.withHashtag;
-  noctaliaShell =
-    inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
-      (old: {
-        patches = (old.patches or [ ]) ++ [
-          ./noctalia-patches/niri-title-only-updates.patch
-        ];
-      });
+  noctaliaShell = inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default;
 in
 lib.mkIf behavesAs.edge {
   home.packages = [ pkgs.libnotify ];
 
-  programs.noctalia-shell = {
+  programs.noctalia = {
     enable = true;
     package = noctaliaShell;
     systemd.enable = false;
     settings = {
       idle = {
-        enabled = true;
-        screenOffTimeout = 300;
-        lockTimeout = 3600;
-        suspendTimeout = 0;
-        fadeDuration = 5;
-      };
-      bar.widgets = {
-        left = [
-          { id = "Launcher"; }
-          { id = "Clock"; }
-          { id = "MediaMini"; }
-        ];
-        center = [
-          { id = "Workspace"; }
-        ];
-        right = [
-          { id = "plugin:listener-level"; }
-          {
-            id = "Tray";
-            colorizeIcons = false;
-            drawerEnabled = true;
-            hidePassive = false;
-          }
-          {
-            id = "Battery";
-            displayMode = "graphic";
-          }
-          { id = "Volume"; }
-          { id = "Brightness"; }
-          { id = "ControlCenter"; }
-        ];
-      };
-    };
-  };
-
-  home.activation.mergeNoctaliaPlugins = inputs.hexis.lib.mkManagedConfig {
-    inherit lib pkgs hexis;
-    file = "$HOME/.config/noctalia/plugins.json";
-    declared = {
-      version = 2;
-      states = {
-        listener-level = {
-          enabled = true;
-          sourceUrl = "https://github.com/noctalia-dev/noctalia-plugins";
+        pre_action_fade_seconds = 5.0;
+        behavior = {
+          screen-off = {
+            enabled = true;
+            timeout = 300;
+            action = "screen_off";
+          };
+          lock = {
+            enabled = true;
+            timeout = 3600;
+            action = "lock";
+          };
         };
       };
-    };
-    modes = {
-      "/version" = "always";
-      "/states/listener-level" = "always";
+      bar.main = {
+        start = [
+          "launcher"
+          "clock"
+          "media"
+        ];
+        center = [ "workspaces" ];
+        end = [
+          "tray"
+          "battery"
+          "volume"
+          "brightness"
+          "control-center"
+        ];
+      };
     };
   };
 
-  xdg.configFile = {
-    "noctalia/plugins/listener-level/manifest.json".source =
-      ./noctalia-plugins/listener-level/manifest.json;
-    "noctalia/plugins/listener-level/BarWidget.qml".source =
-      ./noctalia-plugins/listener-level/BarWidget.qml;
-  };
+  # Noctalia v5 replaced the old `programs.noctalia-shell` QML settings and
+  # `plugins.json` model with `programs.noctalia`, TOML settings, and Luau
+  # plugin manifests whose ids are shaped like `author/plugin:entry`. The old
+  # listener-level QML widget cannot be carried forward as a safe compatibility
+  # shim, so the v5 migration keeps the core bar and idle policy declarative and
+  # leaves the Listener widget disabled until it is rewritten as a v5 plugin.
 
   services.mako = {
     enable = true;
