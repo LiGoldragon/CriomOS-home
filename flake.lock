@@ -1756,17 +1756,17 @@
     "pi-subagents-tintinweb-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1783605215,
-        "narHash": "sha256-z4PtpLixJaMX64jb+vo5LpOoBYItU+4QMI5KLGWDZOk=",
+        "lastModified": 1783618882,
+        "narHash": "sha256-trDD4bPUhp8bUWa1rBmP0L22ciQt3V8eKL9x1CrvffQ=",
         "owner": "LiGoldragon",
         "repo": "pi-subagents",
-        "rev": "1a26c0dca1392fcd3cef50f2cbdb41e446beed6d",
+        "rev": "068026a8f410973fdb5dac47d0f2d2ff0b613b02",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "pi-subagents",
-        "rev": "1a26c0dca1392fcd3cef50f2cbdb41e446beed6d",
+        "rev": "068026a8f410973fdb5dac47d0f2d2ff0b613b02",
         "type": "github"
       }
     },
