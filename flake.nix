@@ -141,7 +141,7 @@
 
     # Aggregator — local transcript/evidence recovery daemon. Pinned to the
     # audited source accepted for Home-profile deployment.
-    aggregator.url = "github:LiGoldragon/aggregator/dbd1857dc557bb3e485718dc57d1418dc93e2c96";
+    aggregator.url = "github:LiGoldragon/aggregator/5853dcb8f2876f78c5032978f9482c879a5eb627";
     aggregator.inputs.nixpkgs.follows = "nixpkgs";
     aggregator.inputs.crane.follows = "crane";
 
