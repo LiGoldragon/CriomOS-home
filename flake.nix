@@ -157,10 +157,10 @@
     # The daemon repo is packaged locally because it does not expose a flake;
     # mentci-egui exposes the GUI and its remote-control helper binaries.
     mentci-src = {
-      url = "github:LiGoldragon/mentci";
+      url = "github:LiGoldragon/mentci/mentci-os-update-2026-07-08";
       flake = false;
     };
-    mentci-egui.url = "github:LiGoldragon/mentci-egui";
+    mentci-egui.url = "github:LiGoldragon/mentci-egui/mentci-egui-os-update-2026-07-08";
     mentci-egui.inputs.nixpkgs.follows = "nixpkgs";
 
     # `pi` (earendil-works/pi coding-agent CLI) — TypeScript npm
