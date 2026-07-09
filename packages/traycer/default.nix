@@ -24,19 +24,43 @@ let
     runScript = "${rawAppimageContents}/resources/cli/linux-x64/traycer";
   };
 
-  appimageContents = pkgs.runCommand "${pname}-${version}-nix-extracted" { } ''
+  appimageContents =
+    pkgs.runCommand "${pname}-${version}-nix-extracted"
+      {
+        nativeBuildInputs = [ pkgs.asar ];
+      }
+      ''
         cp -a ${rawAppimageContents} "$out"
         chmod -R u+w "$out"
+
+        # Upstream attaches an Electron application menu to each Linux window.
+        # Keep the menu and accelerators available but hide the native menu bar by
+        # default so the packaged desktop window does not show a top menu strip.
+        appAsar="$out/resources/app.asar"
+        mainBundle="app-asar/dist/main/index.js"
+        asar extract "$appAsar" app-asar
+        substituteInPlace "$mainBundle" \
+          --replace-fail \
+            '    titleBarStyle: isMac ? "hiddenInset" : isWindows ? "hidden" : "default",' \
+            $'    titleBarStyle: isMac ? "hiddenInset" : isWindows ? "hidden" : "default",\n    autoHideMenuBar: true,' \
+          --replace-fail \
+            '        record2.window.setMenu(menu);' \
+            $'        record2.window.setMenu(menu);\n        record2.window.setAutoHideMenuBar(true);'
+        grep -Fq '    autoHideMenuBar: true,' "$mainBundle"
+        grep -Fq '        record2.window.setAutoHideMenuBar(true);' "$mainBundle"
+        asar pack --unpack-dir node_modules/font-list app-asar "$appAsar"
+        test -d "$out/resources/app.asar.unpacked/node_modules/font-list"
+        rm -rf app-asar
 
         cliDir="$out/resources/cli/linux-x64"
         test -x "$cliDir/traycer"
         mv "$cliDir/traycer" "$cliDir/traycer-unwrapped"
-    printf '%s\n' \
-      '#!${pkgs.runtimeShell}' \
-      'exec ${traycerCliFhs}/bin/traycer-cli-linux-compat "$@"' \
-      > "$cliDir/traycer"
-    chmod 755 "$cliDir/traycer"
-  '';
+        printf '%s\n' \
+          '#!${pkgs.runtimeShell}' \
+          'exec ${traycerCliFhs}/bin/traycer-cli-linux-compat "$@"' \
+          > "$cliDir/traycer"
+        chmod 755 "$cliDir/traycer"
+      '';
 in
 pkgs.appimageTools.wrapAppImage {
   inherit pname version;
