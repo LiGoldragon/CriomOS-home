@@ -488,6 +488,11 @@ mkIf size.min {
       enable = true;
       defaultCommand = "fd --type f";
       defaultOptions = [ fzfBindsString ];
+      # Home Manager now asserts that Nushell integration needs fzf >= 0.73.0.
+      # This profile does not configure Nushell, so keep existing bash/zsh fzf
+      # behavior and disable only the unrelated Nushell integration on package
+      # sets that still carry an older fzf.
+      enableNushellIntegration = false;
     };
 
     git = {
