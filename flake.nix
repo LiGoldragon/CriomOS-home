@@ -199,7 +199,7 @@
     # The revision is immutable in flake.lock; its package-lock pins runtime
     # dependencies such as Jiti reproducibly.
     pi-subagents-src = {
-      url = "github:LiGoldragon/pi-subagents-nicobailon/41c3048a3182fc2c874943f4768260677e1da967";
+      url = "github:LiGoldragon/pi-subagents-nicobailon/68733be4dbeea1b1a99018c8745d044c9c472f37";
       flake = false;
     };
     pi-intercom-src = {
