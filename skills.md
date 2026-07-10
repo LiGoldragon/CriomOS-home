@@ -204,9 +204,13 @@ Build from pushed origin with `--refresh` before treating package changes
 as verified. Home activation should restart `listener.service`; do not
 signal niri.
 
-Submit deployment work directly through the typed Lojix interfaces. Use
-`meta-lojix` for privileged deploy admission and `lojix` for observations;
-there is no profile wrapper or compatibility translator. A user-environment
+Submit deployment work directly through the typed Lojix interfaces. With an
+authorized user target and selected revision, submit the documented user-
+environment path before treating apparent source or documentation tension as a
+reason to redesign it; investigate only an actual admission, authorization,
+reachability, build, activation, or verification failure. Use `meta-lojix` for
+privileged deploy admission and `lojix` for observations; there is no profile
+wrapper or compatibility translator. A user-environment
 activation is submitted as a `UserEnvironment` deploy through the selected
 CriomOS flake revision, with an explicit builder value (`None` or
 `(Some <builder-node>)`) and explicit substituter records when needed. The
