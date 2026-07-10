@@ -18,23 +18,21 @@ let
   system = pkgs.stdenv.hostPlatform.system;
   agentPackage = inputs.agent.packages.${system}.default;
   spiritPackage = inputs.spirit.packages.${system}.default;
+  spiritJudgePackage = inputs.spirit-judge.packages.${system}.default;
+  spiritJudgeConfig = inputs.spirit-judge-config;
 
   providerName = "deepseek";
   defaultModel = "deepseek-v4-flash";
-  # The guardian is a deliberate judge: a well-trained DeepSeek Pro at high
-  # reasoning effort beats Flash on the discriminating admission cases
-  # (missing-testimony, certainty over-claim) per the flash-vs-pro eval.
+  # The judge is a deliberate external adapter: DeepSeek Pro is retained as
+  # the production model for discriminating admission cases.
   guardianModel = "deepseek-v4-pro";
   providerEndpoint = "https://api.deepseek.com/v1";
   providerGopassPath = "platform.deepseek.com/api-key";
 
-  # The guardian resolves its provider API key at runtime by shelling out to
-  # `gopass` (which itself calls `gpg`). systemd --user starts these daemons
-  # with only a minimal default PATH, so the user profile and system tool
-  # directories must be placed on PATH explicitly; otherwise the gopass spawn
-  # fails with ENOENT and every guardian-gated Spirit write is rejected as
-  # DaemonUnconfigured. No secret value is embedded here — only the search path
-  # the daemon uses to fetch the secret itself.
+  # The judge resolves its provider API key at runtime through `gopass` (which
+  # itself calls `gpg`). systemd --user starts with a minimal PATH, so the user
+  # profile and system tool directories must be present. No secret value is
+  # embedded here — only the runtime lookup path is recorded.
   guardianServicePath = lib.concatStringsSep ":" [
     "${config.home.homeDirectory}/.nix-profile/bin"
     "/run/current-system/sw/bin"
@@ -44,6 +42,7 @@ let
   stateDirectory = "${config.home.homeDirectory}/.local/state/spirit";
   socketPath = "${stateDirectory}/spirit.sock";
   metaSocketPath = "${stateDirectory}/meta-spirit.sock";
+  spiritJudgeSocketPath = "${stateDirectory}/spirit-judge.sock";
   databasePath = "${stateDirectory}/spirit.sema";
   configurationPath = "spirit.config.rkyv";
 
@@ -63,14 +62,15 @@ let
     test -s "$out/${agentConfigurationPath}"
   '';
 
-  guardianAgentConfiguration = "(Some (${agentSocketPath} (Some ${providerName}) (Some ${guardianModel}) 180000 None))";
+  # The compatibility-named configuration field now carries only Spirit's
+  # typed judge socket and timeout. Provider/model selection belongs to the
+  # adapter service, not the Spirit daemon, so the legacy provider fields stay
+  # empty and cannot silently select a fallback judge.
+  guardianAgentConfiguration = "(Some (${spiritJudgeSocketPath} None None 180000 None))";
 
-  # ConfigurationWriteRequest gained a 5th positional field in spirit 0.18.0:
-  # authorization_mode (AuthorizationMode [Gating Observing]), sitting between
-  # trace_socket_path and guardian_agent_configuration. It gates only the
-  # criome/mirror-shipper path, which the deployed `--features agent-guardian`
-  # daemon build excludes, so the value is inert here. `Gating` matches spirit's
-  # own SpiritDaemonConfiguration::new default, preserving prior behavior.
+  # AuthorizationMode gates the separate criome/mirror path. `Gating` remains
+  # Spirit's default; judge admission is independently mandatory through the
+  # configured typed judge socket.
   authorizationMode = "Gating";
 
   daemonConfiguration = pkgs.runCommand "spirit-daemon-configuration" { } ''
@@ -123,6 +123,34 @@ let
     ${migrateState}
   '';
 
+  initializeJudgeState = pkgs.writeShellScript "spirit-judge-startup-state" ''
+    set -eu
+
+    ${pkgs.coreutils}/bin/mkdir -p ${lib.escapeShellArg stateDirectory}
+    ${pkgs.coreutils}/bin/rm -f ${lib.escapeShellArg spiritJudgeSocketPath}
+  '';
+
+  spiritJudgeServiceWrapper = pkgs.writeShellScriptBin "spirit-judge-daemon-service" ''
+    set -eu
+
+    # Resolve the provider credential only in this service process. The value
+    # never enters Nix evaluation, the unit definition, or Spirit's archive.
+    SPIRIT_JUDGE_API_KEY="$(${pkgs.gopass}/bin/gopass show -o ${providerGopassPath})"
+    if [ -z "$SPIRIT_JUDGE_API_KEY" ]; then
+      echo "spirit-judge: gopass provider credential is empty" >&2
+      exit 1
+    fi
+    export SPIRIT_JUDGE_API_KEY
+
+    exec ${spiritJudgePackage}/bin/spirit-judge serve \
+      --socket ${lib.escapeShellArg spiritJudgeSocketPath} \
+      --config-root ${lib.escapeShellArg spiritJudgeConfig} \
+      --provider openai-compatible \
+      --endpoint ${lib.escapeShellArg providerEndpoint} \
+      --model ${lib.escapeShellArg guardianModel} \
+      --bearer-secret-source env:SPIRIT_JUDGE_API_KEY
+  '';
+
   commandLineWrapper = pkgs.writeShellScriptBin "spirit" ''
     export SPIRIT_SOCKET=${lib.escapeShellArg socketPath}
     exec ${spiritPackage}/bin/spirit "$@"
@@ -165,6 +193,24 @@ in
     '';
 
     systemd.user.services = {
+      spirit-judge = {
+        Unit = {
+          Description = "Spirit fail-closed judgment adapter";
+          StartLimitIntervalSec = 60;
+          StartLimitBurst = 5;
+        };
+
+        Service = {
+          ExecStartPre = "${initializeJudgeState}";
+          ExecStart = "${spiritJudgeServiceWrapper}/bin/spirit-judge-daemon-service";
+          Environment = [ "PATH=${guardianServicePath}" ];
+          Restart = "on-failure";
+          RestartSec = "2s";
+        };
+
+        Install.WantedBy = [ "default.target" ];
+      };
+
       agent-daemon = {
         Unit = {
           Description = "Agent schema-derived daemon";
@@ -205,8 +251,8 @@ in
           StartLimitBurst = 5;
         }
         // {
-          After = [ "agent-daemon.service" ];
-          Wants = [ "agent-daemon.service" ];
+          After = [ "spirit-judge.service" ];
+          Requires = [ "spirit-judge.service" ];
         };
 
         Service = {

@@ -53,7 +53,7 @@ let
       case "$request" in
         *'['* | *']'*) exit 64 ;;
         *'ConfigurationWriterGuardianAgent'*) exit 65 ;;
-        *'Some ('*'deepseek'*'deepseek-v4-pro'*'180000 None'*')'*) ;;
+        *'Some (/home/li/.local/state/spirit/spirit-judge.sock None None 180000 None)'*) ;;
         *) exit 66 ;;
       esac
       output_path=''${request##* }
@@ -80,6 +80,21 @@ let
     '';
   };
 
+  fakeSpiritJudge = {
+    packages.${system}.default = pkgs.runCommand "fake-spirit-judge" { } ''
+      mkdir -p "$out/bin"
+      cat > "$out/bin/spirit-judge" <<'EOF'
+      #!${pkgs.runtimeShell}
+      printf 'judge=%s\n' "$*"
+      EOF
+      chmod +x "$out/bin/spirit-judge"
+    '';
+  };
+
+  fakeSpiritJudgeConfig = pkgs.runCommand "fake-spirit-judge-config" { } ''
+    mkdir -p "$out/prompts"
+  '';
+
   moduleResult = import ../../modules/home/profiles/min/spirit.nix {
     inherit pkgs;
     lib = lib // {
@@ -90,6 +105,8 @@ let
       agent = fakeAgent;
       criomos-lib = ../../stubs/criomos-lib;
       spirit = fakeSpirit;
+      spirit-judge = fakeSpiritJudge;
+      spirit-judge-config = fakeSpiritJudgeConfig;
     };
     config = {
       home.homeDirectory = "/home/li";
@@ -122,8 +139,16 @@ let
       message = "the schema-derived agent daemon service must exist.";
     }
     {
+      condition = builtins.hasAttr "spirit-judge" services;
+      message = "the persistent Spirit judge service must exist.";
+    }
+    {
       condition = builtins.hasAttr "spirit-daemon" services;
       message = "the schema-derived spirit daemon service must exist.";
+    }
+    {
+      condition = builtins.elem "spirit-judge.service" services.spirit-daemon.Unit.Requires;
+      message = "the Spirit daemon must require the judgment adapter service.";
     }
     {
       condition = !(builtins.hasAttr "persona-spirit-daemon" services);
@@ -155,12 +180,16 @@ else
 
     agent_exec_start="${services.agent-daemon.Service.ExecStart}"
     agent_exec_start_pre="${services.agent-daemon.Service.ExecStartPre}"
+    judge_exec_start="${services.spirit-judge.Service.ExecStart}"
+    judge_exec_start_pre="${services.spirit-judge.Service.ExecStartPre}"
     exec_start="${services.spirit-daemon.Service.ExecStart}"
     exec_start_pre="${services.spirit-daemon.Service.ExecStartPre}"
     activation_script="${pkgs.writeText "activation" activation}"
 
     printf '%s\n' "$agent_exec_start" > agent-exec-start
     printf '%s\n' "$agent_exec_start_pre" > agent-exec-start-pre
+    printf '%s\n' "$judge_exec_start" > judge-exec-start
+    printf '%s\n' "$judge_exec_start_pre" > judge-exec-start-pre
     printf '%s\n' "$exec_start" > exec-start
     printf '%s\n' "$exec_start_pre" > exec-start-pre
     cat "$activation_script" > activation
@@ -177,6 +206,14 @@ else
     test -s "$agent_configuration_archive"
     grep -q 'mkdir -p' "$agent_exec_start_pre"
     grep -q '/agent/agent.sock' "$agent_exec_start_pre"
+
+    grep -q '/bin/spirit-judge-daemon-service$' judge-exec-start
+    cat "$judge_exec_start" > spirit-judge-daemon-service
+    cat "$judge_exec_start_pre" > spirit-judge-startup-state
+    grep -q '/spirit-judge.sock' spirit-judge-startup-state
+    grep -q -- '--provider openai-compatible' spirit-judge-daemon-service
+    grep -q -- '--bearer-secret-source env:SPIRIT_JUDGE_API_KEY' spirit-judge-daemon-service
+    ! grep -q 'platform.deepseek.com/api-key' spirit-judge-daemon-service
 
     grep -q '/bin/spirit-daemon ' exec-start
     grep -q '/spirit.config.rkyv$' exec-start

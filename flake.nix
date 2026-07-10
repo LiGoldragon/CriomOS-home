@@ -133,6 +133,16 @@
     spirit.url = "github:LiGoldragon/spirit";
     spirit.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Spirit judge — the persistent model-backed admission adapter. Prompt
+    # prose is a separate non-flake input so it stays reloadable data rather
+    # than being embedded in the Spirit daemon closure.
+    spirit-judge.url = "github:LiGoldragon/spirit-judge";
+    spirit-judge.inputs.nixpkgs.follows = "nixpkgs";
+    spirit-judge-config = {
+      url = "github:LiGoldragon/spirit-judge-config";
+      flake = false;
+    };
+
     # Agent — local OpenAI-compatible provider daemon used by Spirit's guardian.
     # Consumed in modules/home/profiles/min/spirit.nix.
     agent.url = "github:LiGoldragon/agent";
