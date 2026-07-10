@@ -22,19 +22,16 @@ let
   spiritJudgeConfig = inputs.spirit-judge-config;
   codexCliPackage = inputs.codex-cli.packages.${system}.default;
 
+  # These values configure the retained agent daemon only. Spirit judgment is
+  # served by the separate OpenAI Codex adapter below.
   providerName = "deepseek";
   defaultModel = "deepseek-v4-flash";
-  # The judge is a deliberate external adapter: DeepSeek Pro is retained as
-  # the production model for discriminating admission cases.
-  guardianModel = "deepseek-v4-pro";
   providerEndpoint = "https://api.deepseek.com/v1";
   providerGopassPath = "platform.deepseek.com/api-key";
 
-  # The judge resolves its provider API key at runtime through `gopass` (which
-  # itself calls `gpg`). systemd --user starts with a minimal PATH, so the user
-  # profile and system tool directories must be present. No secret value is
-  # embedded here — only the runtime lookup path is recorded.
-  guardianServicePath = lib.concatStringsSep ":" [
+  # The agent daemon resolves its own provider credential at runtime. No secret
+  # value is embedded in this Nix configuration.
+  agentServicePath = lib.concatStringsSep ":" [
     "${config.home.homeDirectory}/.nix-profile/bin"
     "/run/current-system/sw/bin"
     "/run/wrappers/bin"
@@ -142,6 +139,7 @@ let
       --provider openai-codex \
       --model gpt-5.6-terra \
       --reasoning-effort medium \
+      --provider-timeout-milliseconds 180000 \
       --external-authorization-source codex-login \
       --codex-command ${codexCliPackage}/bin/codex
   '';
@@ -198,7 +196,6 @@ in
         Service = {
           ExecStartPre = "${initializeJudgeState}";
           ExecStart = "${spiritJudgeServiceWrapper}/bin/spirit-judge-daemon-service";
-          Environment = [ "PATH=${guardianServicePath}" ];
           Restart = "on-failure";
           RestartSec = "2s";
         };
@@ -216,7 +213,7 @@ in
         Service = {
           ExecStartPre = "${initializeAgentState}";
           ExecStart = "${agentServiceWrapper}/bin/agent-daemon-service";
-          Environment = [ "PATH=${guardianServicePath}" ];
+          Environment = [ "PATH=${agentServicePath}" ];
           Restart = "on-failure";
           RestartSec = "2s";
         };
@@ -253,7 +250,6 @@ in
         Service = {
           ExecStartPre = "${initializeState}";
           ExecStart = "${spiritPackage}/bin/spirit-daemon ${daemonConfiguration}/${configurationPath}";
-          Environment = [ "PATH=${guardianServicePath}" ];
           Restart = "on-failure";
           RestartSec = "2s";
         };

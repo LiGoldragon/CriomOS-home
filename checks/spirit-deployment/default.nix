@@ -226,6 +226,7 @@ else
     grep -q -- '--provider openai-codex' spirit-judge-daemon-service
     grep -q -- '--model gpt-5.6-terra' spirit-judge-daemon-service
     grep -q -- '--reasoning-effort medium' spirit-judge-daemon-service
+    grep -q -- '--provider-timeout-milliseconds 180000' spirit-judge-daemon-service
     grep -q -- '--external-authorization-source codex-login' spirit-judge-daemon-service
     grep -q -- '--codex-command ' spirit-judge-daemon-service
     ! grep -q 'gopass show' spirit-judge-daemon-service
