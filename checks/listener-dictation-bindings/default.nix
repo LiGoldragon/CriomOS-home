@@ -161,7 +161,8 @@ let
     {
       condition = lib.hasInfix "media.class = \"Audio/Source\"" capturePolicy
         && lib.hasInfix "node.name = \"~bluez_input.*\"" capturePolicy
-        && lib.hasInfix "node.name = \"~alsa_input.usb-.*\"" capturePolicy;
+        && lib.hasInfix "node.name = \"~alsa_input.usb-.*\"" capturePolicy
+        && lib.hasInfix "priority.session = 2200" capturePolicy;
       message = "capture policy must prefer real Bluetooth and USB sources without admitting monitor or internal nodes";
     }
     {
