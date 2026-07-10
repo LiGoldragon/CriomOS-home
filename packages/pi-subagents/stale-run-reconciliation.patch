@@ -1,0 +1,60 @@
+--- a/src/runs/background/stale-run-reconciler.ts
++++ b/src/runs/background/stale-run-reconciler.ts
+@@ -172,7 +172,11 @@
+ function buildFailedRepair(status: AsyncStatus, asyncDir: string, now: number, reason?: string): { status: AsyncStatus; result: object; message: string } {
+ 	const runId = status.runId || path.basename(asyncDir);
+ 	const pid = typeof status.pid === "number" ? status.pid : "unknown";
+-	const message = reason ?? `Async runner process ${pid} exited or disappeared before writing a result. Marked run failed by stale-run reconciliation.`;
++	const runnerStderrPath = path.join(asyncDir, "runner-stderr.log");
++	const runnerDiagnostics = fs.existsSync(runnerStderrPath)
++		? ` Runner diagnostics were captured at ${runnerStderrPath}.`
++		: "";
++	const message = reason ?? `Async runner process ${pid} exited or disappeared before writing a result. Marked run failed by stale-run reconciliation.${runnerDiagnostics}`;
+ 	const steps = status.steps?.length ? status.steps : [{ agent: "subagent", status: "running" as const }];
+ 	const repairedSteps = steps.map((step) => step.status === "running" || step.status === "pending"
+ 		? {
+@@ -220,11 +224,28 @@
+ 			asyncDir,
+ 			sessionId: status.sessionId,
+ 			sessionFile: status.sessionFile,
++			...(fs.existsSync(runnerStderrPath) ? { runnerStderrPath } : {}),
+ 		},
+ 	};
+ }
+ 
++function repairStatusFromResult(status: AsyncStatus, asyncDir: string, resultPath: string, now: number): ReconcileAsyncRunResult | undefined {
++	const terminalStatus = terminalStatusFromResult(status, resultPath, now);
++	if (!terminalStatus) return undefined;
++	writeAtomicJson(path.join(asyncDir, "status.json"), terminalStatus);
++	return {
++		status: terminalStatus,
++		repaired: true,
++		resultPath,
++		message: "Existing async result file was used to repair stale running status.",
++	};
++}
++
+ function writeFailedRepair(asyncDir: string, status: AsyncStatus, resultPath: string, now: number, reason?: string): ReconcileAsyncRunResult {
++	// Re-check immediately before materializing failure. A runner can finish
++	// between the caller's first result-path observation and this repair.
++	const resultRepair = repairStatusFromResult(status, asyncDir, resultPath, now);
++	if (resultRepair) return resultRepair;
+ 	const repair = buildFailedRepair(status, asyncDir, now, reason);
+ 	writeAtomicJson(resultPath, repair.result);
+ 	writeAtomicJson(path.join(asyncDir, "status.json"), repair.status);
+@@ -307,12 +328,9 @@
+ 	const runId = effectiveStatus.runId || path.basename(asyncDir);
+ 	const resultPath = path.join(options.resultsDir ?? RESULTS_DIR, `${runId}.json`);
+ 	if (fs.existsSync(resultPath)) {
+-		const terminalStatus = effectiveStatus.state === "running" || effectiveStatus.state === "queued"
+-			? terminalStatusFromResult(effectiveStatus, resultPath, now)
+-			: undefined;
+-		if (terminalStatus) {
+-			writeAtomicJson(path.join(asyncDir, "status.json"), terminalStatus);
+-			return { status: terminalStatus, repaired: true, resultPath, message: "Existing async result file was used to repair stale running status." };
++		if (effectiveStatus.state === "running" || effectiveStatus.state === "queued") {
++			const resultRepair = repairStatusFromResult(effectiveStatus, asyncDir, resultPath, now);
++			if (resultRepair) return resultRepair;
+ 		}
+ 		return { status: effectiveStatus, repaired: false, resultPath };
+ 	}

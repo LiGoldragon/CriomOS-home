@@ -313,5 +313,110 @@ EOF
     test "$(cat "$workDir/child.orchestrator")" = 'supervisor'
     grep -F 'contact_supervisor' "${pi-intercom}/share/pi-packages/pi-intercom/index.ts"
 
+    # A dead runner remains failed, but a result that appears while liveness is
+    # checked is authoritative. This exercises the repair ordering used by
+    # resumed async runs and ensures its completion notification remains final.
+    cat > "$workDir/stale-run-reconciliation.ts" <<'EOF'
+import * as fs from "node:fs";
+import * as path from "node:path";
+import { reconcileAsyncRun } from "${pi-subagents}/share/pi-packages/pi-subagents/src/runs/background/stale-run-reconciler.ts";
+import { resolveAsyncResumeTarget } from "${pi-subagents}/share/pi-packages/pi-subagents/src/runs/background/async-resume.ts";
+
+const root = process.argv[2];
+if (!root) throw new Error("reconciliation test root is required");
+const resultsDir = path.join(root, "results");
+const now = 1_700_000_000_000;
+
+function writeRunningStatus(runId: string, asyncDir: string, pid: number): void {
+  fs.mkdirSync(asyncDir, { recursive: true });
+  fs.writeFileSync(path.join(asyncDir, "status.json"), JSON.stringify({
+    runId,
+    mode: "single",
+    state: "running",
+    pid,
+    startedAt: now - 100,
+    lastUpdate: now - 50,
+    currentStep: 0,
+    steps: [{ agent: "generalist", status: "running", startedAt: now - 100 }],
+  }));
+}
+
+function deadPid(): never {
+  const error = new Error("process missing") as NodeJS.ErrnoException;
+  error.code = "ESRCH";
+  throw error;
+}
+
+const vanishedId = "vanished-run";
+const vanishedDir = path.join(root, "async", vanishedId);
+writeRunningStatus(vanishedId, vanishedDir, 101);
+fs.writeFileSync(path.join(vanishedDir, "runner-stderr.log"), "runner startup diagnostic\n");
+const vanished = reconcileAsyncRun(vanishedDir, { resultsDir, now: () => now, kill: () => deadPid() });
+if (vanished.status?.state !== "failed" || !vanished.message?.includes("runner-stderr.log")) {
+  throw new Error("disappeared runner did not retain failure and diagnostic location");
+}
+const vanishedResult = JSON.parse(fs.readFileSync(path.join(resultsDir, vanishedId + ".json"), "utf8"));
+if (vanishedResult.success !== false || vanishedResult.runnerStderrPath !== path.join(vanishedDir, "runner-stderr.log")) {
+  throw new Error("disappeared runner result did not preserve diagnostic truth");
+}
+
+const completedId = "completed-during-reconciliation";
+const completedDir = path.join(root, "async", completedId);
+writeRunningStatus(completedId, completedDir, 102);
+const completedResultPath = path.join(resultsDir, completedId + ".json");
+const completed = reconcileAsyncRun(completedDir, {
+  resultsDir,
+  now: () => now,
+  kill: () => {
+    fs.mkdirSync(resultsDir, { recursive: true });
+    fs.writeFileSync(completedResultPath, JSON.stringify({
+      id: completedId,
+      success: true,
+      state: "complete",
+      exitCode: 0,
+      results: [{ agent: "generalist", success: true }],
+    }));
+    return deadPid();
+  },
+});
+if (completed.status?.state !== "complete" || completed.message?.includes("failed")) {
+  throw new Error("result persisted during reconciliation was converted to failure");
+}
+if (JSON.parse(fs.readFileSync(completedResultPath, "utf8")).success !== true) {
+  throw new Error("successful result was overwritten during reconciliation");
+}
+
+const resumedId = "resumed-after-reconciliation";
+const resumedDir = path.join(root, "async", resumedId);
+const sessionFile = path.join(root, "resumed-session.jsonl");
+fs.writeFileSync(sessionFile, "{}\n");
+writeRunningStatus(resumedId, resumedDir, 103);
+const resumedResultPath = path.join(resultsDir, resumedId + ".json");
+const resumed = resolveAsyncResumeTarget(
+  { id: resumedId },
+  {
+    asyncDirRoot: path.join(root, "async"),
+    resultsDir,
+    now: () => now,
+    kill: () => {
+      fs.mkdirSync(resultsDir, { recursive: true });
+      fs.writeFileSync(resumedResultPath, JSON.stringify({
+        id: resumedId,
+        success: true,
+        state: "complete",
+        exitCode: 0,
+        results: [{ agent: "generalist", success: true, sessionFile }],
+      }));
+      return deadPid();
+    },
+  },
+);
+if (resumed.state !== "complete" || resumed.sessionFile !== sessionFile) {
+  throw new Error("resumed async run did not use the terminal result written during reconciliation");
+}
+EOF
+    ${pkgs.nodejs}/bin/node "${pi-subagents}/share/pi-packages/pi-subagents/node_modules/jiti/lib/jiti-cli.mjs" \
+      "$workDir/stale-run-reconciliation.ts" "$workDir/reconciliation"
+
     touch "$out"
   ''

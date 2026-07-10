@@ -49,6 +49,7 @@ pkgs.stdenvNoCC.mkDerivation {
     patch -d "$packageRoot" -p1 < ${./slim-parent-skill.patch}
     patch -d "$packageRoot" -p1 < ${./detached-runner-peer-isolation.patch}
     patch -d "$packageRoot" -p1 < ${./async-runner-stderr.patch}
+    patch -d "$packageRoot" -p1 < ${./stale-run-reconciliation.patch}
     patch -d "$packageRoot" -p1 < ${./full-child-extension-bridge.patch}
     patch -d "$packageRoot" -p1 < ${./acceptance-read-only-evidence.patch}
 
