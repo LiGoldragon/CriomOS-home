@@ -29,6 +29,8 @@ let
   listenerService = moduleContent.systemd.user.services.listener.Service;
   listenerPackage = inputs.listener.packages.${pkgs.stdenv.hostPlatform.system}.default;
   listenerEnvironmentExample = moduleContent.xdg.configFile."listener/environment.example".text;
+  capturePolicy = moduleContent.xdg.configFile."wireplumber/wireplumber.conf.d/60-capture-policy.conf".text;
+  keepalivePolicy = moduleContent.xdg.configFile."pipewire/pipewire.conf.d/60-dji-mic-keepalive.conf".text;
 
   commandFor = key: binds.${key}.action.command or [ ];
 
@@ -141,6 +143,31 @@ let
     {
       condition = !(lib.hasInfix "LISTENER_TRANSCRIPTION_PROGRAM" listenerEnvironmentExample);
       message = "listener environment example must not point production at an external transcriber";
+    }
+    {
+      condition = lib.hasInfix "bluetooth.autoswitch-to-headset-profile = false" capturePolicy;
+      message = "capture policy must prevent Bluetooth profile restore after capture streams stop";
+    }
+    {
+      condition = lib.hasInfix "node.restore-default-targets = false" capturePolicy;
+      message = "capture policy must select current inputs by priority rather than stale default-source state";
+    }
+    {
+      condition = lib.hasInfix "device.name = \"bluez_card.04_A8_5A_0B_EB_B0\"" capturePolicy
+        && lib.hasInfix "device.profile = \"headset-head-unit\"" capturePolicy
+        && lib.hasInfix "session.dont-restore-off-profile = true" capturePolicy;
+      message = "DJI profile policy must match its stable card identity and reject restored Off profiles";
+    }
+    {
+      condition = lib.hasInfix "media.class = \"Audio/Source\"" capturePolicy
+        && lib.hasInfix "node.name = \"~bluez_input.*\"" capturePolicy
+        && lib.hasInfix "node.name = \"~alsa_input.usb-.*\"" capturePolicy;
+      message = "capture policy must prefer real Bluetooth and USB sources without admitting monitor or internal nodes";
+    }
+    {
+      condition = lib.hasInfix "node.dont-fallback = true" keepalivePolicy
+        && lib.hasInfix "node.linger = true" keepalivePolicy;
+      message = "DJI keepalive must wait for its named source through profile replacement instead of falling back";
     }
   ];
 

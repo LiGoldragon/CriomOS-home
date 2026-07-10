@@ -218,7 +218,13 @@ mkIf (size.min && behavesAs.edge) {
           node.description = "DJI Mic Keepalive"
           capture.props = {
             node.name = "dji_mic_keepalive_capture"
+            # WirePlumber owns this address-derived loopback source and recreates
+            # it when the Bluetooth profile changes. Keep this sidecar attached
+            # only to that source; linger through a replacement instead of
+            # falling back to whichever microphone happens to be default.
             target.object = "bluez_input.04:A8:5A:0B:EB:B0"
+            node.dont-fallback = true
+            node.linger = true
             audio.position = [ MONO ]
             stream.dont-remix = true
             node.passive = false
@@ -235,17 +241,46 @@ mkIf (size.min && behavesAs.edge) {
     ]
   '';
 
-  xdg.configFile."wireplumber/wireplumber.conf.d/60-dji-source-priority.conf".text = ''
+  xdg.configFile."wireplumber/wireplumber.conf.d/60-capture-policy.conf".text = ''
+    # Default selection is priority-based, not a remembered transient node.
+    # Audio/Source excludes sinks, monitors, and WirePlumber's internal
+    # Bluetooth transport node; only real external capture endpoints qualify.
+    wireplumber.settings = {
+      bluetooth.autoswitch-to-headset-profile = false
+      node.restore-default-targets = false
+    }
+
     monitor.bluez.rules = [
       {
+        # Keep the DJI in its capture-capable profile. The device name derives
+        # from its Bluetooth address and survives node/profile recreation.
         matches = [
           {
-            node.name = "bluez_input.04_A8_5A_0B_EB_B0.0"
+            device.name = "bluez_card.04_A8_5A_0B_EB_B0"
           }
         ]
         actions = {
           update-props = {
-            priority.session = 3000
+            device.profile = "headset-head-unit"
+            session.dont-restore-off-profile = true
+            bluez5.auto-connect = [ hsp_ag hfp_ag ]
+          }
+        }
+      }
+      {
+        matches = [
+          {
+            media.class = "Audio/Source"
+            node.name = "~bluez_input.*"
+          }
+          {
+            media.class = "Audio/Source"
+            node.name = "~alsa_input.usb-.*"
+          }
+        ]
+        actions = {
+          update-props = {
+            priority.session = 2200
           }
         }
       }
