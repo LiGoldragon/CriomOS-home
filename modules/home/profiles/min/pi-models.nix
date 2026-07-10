@@ -100,6 +100,8 @@ let
 
   piIntercomConfig = {
     enabled = true;
+    brokerCommand = "${pkgs.nodejs}/bin/node";
+    brokerArgs = [ "${pi-intercom}/share/pi-packages/pi-intercom/node_modules/tsx/dist/cli.mjs" ];
   };
 
   piSettingsConfig = {

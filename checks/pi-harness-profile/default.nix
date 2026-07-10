@@ -44,6 +44,24 @@ pkgs.runCommand "pi-harness-profile"
     test -d "${pi-intercom}/share/pi-packages/pi-intercom/node_modules/resolve-pkg-maps"
     test -x "${pi-intercom}/share/pi-packages/pi-intercom/node_modules/@esbuild/linux-x64/bin/esbuild"
     ${pkgs.nodejs}/bin/node "${pi-intercom}/share/pi-packages/pi-intercom/node_modules/tsx/dist/cli.mjs" --version >/dev/null
+
+    intercom_home="$TMPDIR/intercom-home"
+    broker_socket="$intercom_home/.pi/agent/intercom/broker.sock"
+    HOME="$intercom_home" ${pkgs.nodejs}/bin/node \
+      "${pi-intercom}/share/pi-packages/pi-intercom/node_modules/tsx/dist/cli.mjs" \
+      "${pi-intercom}/share/pi-packages/pi-intercom/broker/broker.ts" \
+      >"$TMPDIR/intercom-broker.log" 2>&1 &
+    broker_pid=$!
+    trap 'kill "$broker_pid" 2>/dev/null || true; wait "$broker_pid" 2>/dev/null || true' EXIT
+    for attempt in $(seq 1 50); do
+      test -S "$broker_socket" && break
+      sleep 0.1
+    done
+    test -S "$broker_socket"
+    kill "$broker_pid"
+    wait "$broker_pid" || true
+    trap - EXIT
+
     jq -e '.name == "pi-intercom" and .version == "0.6.0" and .pi.extensions == ["./index.ts"] and .pi.skills == ["./skills"]' \
       "${pi-intercom}/share/pi-packages/pi-intercom/package.json"
     test -f "${pi-ultra-subagents}/share/pi-packages/pi-ultra-subagents/extensions/subagent/index.ts"
@@ -177,6 +195,8 @@ pkgs.runCommand "pi-harness-profile"
     grep -F 'home.file.".pi-testing/agent/packages/pi-intercom".source' ${piModelsModule}
     test "$(grep -F '"''${pi-intercom}/share/pi-packages/pi-intercom";' ${piModelsModule} | wc -l)" -eq 2
     grep -F 'piIntercomConfig = {' ${piModelsModule}
+    grep -F 'brokerCommand = "${pkgs.nodejs}/bin/node";' ${piModelsModule}
+    grep -F 'brokerArgs = [ "${pi-intercom}/share/pi-packages/pi-intercom/node_modules/tsx/dist/cli.mjs" ];' ${piModelsModule}
     grep -F 'file = "$HOME/.pi/agent/intercom/config.json";' ${piModelsModule}
     grep -F 'file = "$HOME/.pi-testing/agent/intercom/config.json";' ${piModelsModule}
     ! grep -F 'home.file.".pi-testing/agent/packages/pi-ultra-subagents".source' ${piModelsModule}
