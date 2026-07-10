@@ -20,7 +20,7 @@ let
   pi = pkgs.callPackage ../../../../packages/pi { inherit inputs; };
   pi-criomos = pkgs.callPackage ../../../../packages/pi-criomos { };
   pi-linkup = pkgs.callPackage ../../../../packages/pi-linkup { inherit inputs; };
-  pi-subagents-tintinweb = pkgs.callPackage ../../../../packages/pi-subagents-tintinweb {
+  pi-subagents = pkgs.callPackage ../../../../packages/pi-subagents {
     inherit inputs;
   };
   pi-continue = pkgs.callPackage ../../../../packages/pi-continue { inherit inputs; };
@@ -49,7 +49,7 @@ let
   normalPiPackages = [
     piCriomosPackage
     "packages/pi-linkup"
-    "packages/pi-subagents-tintinweb"
+    "packages/pi-subagents"
     "packages/pi-continue"
     "packages/pi-session-namer"
   ];
@@ -153,9 +153,9 @@ lib.mkIf (size.min && endpointNode != null) {
   home.file.".pi/agent/packages/pi-linkup".source = "${pi-linkup}/share/pi-packages/pi-linkup";
   home.file.".pi/agent/packages/pi-linkup".force = true;
 
-  home.file.".pi/agent/packages/pi-subagents-tintinweb".source =
-    "${pi-subagents-tintinweb}/share/pi-packages/pi-subagents-tintinweb";
-  home.file.".pi/agent/packages/pi-subagents-tintinweb".force = true;
+  home.file.".pi/agent/packages/pi-subagents".source =
+    "${pi-subagents}/share/pi-packages/pi-subagents";
+  home.file.".pi/agent/packages/pi-subagents".force = true;
 
   home.file.".pi/agent/packages/pi-continue".source = "${pi-continue}/share/pi-packages/pi-continue";
   home.file.".pi/agent/packages/pi-continue".force = true;
@@ -175,9 +175,9 @@ lib.mkIf (size.min && endpointNode != null) {
     "${pi-linkup}/share/pi-packages/pi-linkup";
   home.file.".pi-testing/agent/packages/pi-linkup".force = true;
 
-  home.file.".pi-testing/agent/packages/pi-subagents-tintinweb".source =
-    "${pi-subagents-tintinweb}/share/pi-packages/pi-subagents-tintinweb";
-  home.file.".pi-testing/agent/packages/pi-subagents-tintinweb".force = true;
+  home.file.".pi-testing/agent/packages/pi-subagents".source =
+    "${pi-subagents}/share/pi-packages/pi-subagents";
+  home.file.".pi-testing/agent/packages/pi-subagents".force = true;
 
   home.file.".pi-testing/agent/packages/pi-continue".source =
     "${pi-continue}/share/pi-packages/pi-continue";

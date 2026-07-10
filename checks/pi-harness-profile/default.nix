@@ -5,12 +5,10 @@ let
   pi-criomos = inputs.self.packages.${system}.pi-criomos;
   pi-linkup = inputs.self.packages.${system}.pi-linkup;
   pi-subagents = inputs.self.packages.${system}.pi-subagents;
-  pi-subagents-tintinweb = inputs.self.packages.${system}.pi-subagents-tintinweb;
   pi-ultra-subagents = inputs.self.packages.${system}.pi-ultra-subagents;
   pi-continue = inputs.self.packages.${system}.pi-continue;
   piLinkupPackage = ../../packages/pi-linkup/default.nix;
   piSubagentsPackage = ../../packages/pi-subagents/default.nix;
-  piSubagentsTintinwebPackage = ../../packages/pi-subagents-tintinweb/default.nix;
   piUltraSubagentsPackage = ../../packages/pi-ultra-subagents/default.nix;
   piContinuePackage = ../../packages/pi-continue/default.nix;
   piModelsModule = ../../modules/home/profiles/min/pi-models.nix;
@@ -34,17 +32,8 @@ pkgs.runCommand "pi-harness-profile"
     grep -F 'Clarify UI is explicit opt-in' "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md"
     grep -F 'Subagents are independent Pi processes.' "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md"
     grep -F 'selected child agent, runtime, packages, and prompt, not from the parent' "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md"
+    grep -F '`pi-subagents` works without `pi-intercom`.' "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md"
     ! grep -F 'Chains default to clarify mode' "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md"
-    test -f "${pi-subagents-tintinweb}/share/pi-packages/pi-subagents-tintinweb/src/index.ts"
-    grep -F 'renderSubagentResultSummary' \
-      "${pi-subagents-tintinweb}/share/pi-packages/pi-subagents-tintinweb/src/index.ts"
-    grep -F 'if (expanded) return new Text(text, 0, 0);' \
-      "${pi-subagents-tintinweb}/share/pi-packages/pi-subagents-tintinweb/src/index.ts"
-    test -d "${pi-subagents-tintinweb}/share/pi-packages/pi-subagents-tintinweb/node_modules/@sinclair/typebox"
-    test -d "${pi-subagents-tintinweb}/share/pi-packages/pi-subagents-tintinweb/node_modules/croner"
-    test -d "${pi-subagents-tintinweb}/share/pi-packages/pi-subagents-tintinweb/node_modules/nanoid"
-    jq -e '.name == "@tintinweb/pi-subagents" and .version == "0.13.0" and .pi.extensions == ["./src/index.ts"]' \
-      "${pi-subagents-tintinweb}/share/pi-packages/pi-subagents-tintinweb/package.json"
     test -f "${pi-ultra-subagents}/share/pi-packages/pi-ultra-subagents/extensions/subagent/index.ts"
     test -f "${pi-ultra-subagents}/share/pi-packages/pi-ultra-subagents/extensions/subagent/agents.ts"
     test -d "${pi-ultra-subagents}/share/pi-packages/pi-ultra-subagents/node_modules/typebox"
@@ -117,16 +106,11 @@ pkgs.runCommand "pi-harness-profile"
     grep -F 'inputs.pi-linkup-src' ${piLinkupPackage}
     grep -F 'inputs.pi-utils-ui-src' ${piLinkupPackage}
     grep -F 'inputs.pi-subagents-src' ${piSubagentsPackage}
-    grep -F 'inputs.pi-subagents-tintinweb-src' ${piSubagentsTintinwebPackage}
-    grep -F 'inputs.pi-subagents-tintinweb-typebox-src' ${piSubagentsTintinwebPackage}
-    grep -F 'inputs.pi-subagents-tintinweb-croner-src' ${piSubagentsTintinwebPackage}
-    grep -F 'inputs.pi-subagents-tintinweb-nanoid-src' ${piSubagentsTintinwebPackage}
     grep -F 'inputs.pi-ultra-subagents-src' ${piUltraSubagentsPackage}
     grep -F 'inputs.pi-ultra-subagents-typebox-src' ${piUltraSubagentsPackage}
     grep -F 'inputs.pi-continue-src' ${piContinuePackage}
     ! grep -E '\bfetchurl\b|hash[[:space:]]*=' ${piLinkupPackage}
     ! grep -E '\bfetchurl\b|hash[[:space:]]*=' ${piSubagentsPackage}
-    ! grep -E '\bfetchurl\b|hash[[:space:]]*=' ${piSubagentsTintinwebPackage}
     ! grep -E '\bfetchurl\b|hash[[:space:]]*=' ${piUltraSubagentsPackage}
     ! grep -E '\bfetchurl\b|hash[[:space:]]*=' ${piContinuePackage}
 
@@ -153,9 +137,9 @@ pkgs.runCommand "pi-harness-profile"
     grep -F 'system/SYSTEM.md' ${piModelsModule}
     grep -F '"packages/pi-linkup"' ${piModelsModule}
     ! grep -F '"packages/pi-web-access"' ${piModelsModule}
-    grep -F '"packages/pi-subagents-tintinweb"' ${piModelsModule}
+    grep -F '"packages/pi-subagents"' ${piModelsModule}
+    ! grep -F '"packages/pi-subagents-tintinweb"' ${piModelsModule}
     ! grep -F '"packages/pi-ultra-subagents"' ${piModelsModule}
-    ! grep -F '"packages/pi-subagents"' ${piModelsModule}
     grep -F 'normalPiPackages = [' ${piModelsModule}
     ! grep -F 'piTestingPackages = [' ${piModelsModule}
     grep -F 'packages = normalPiPackages;' ${piModelsModule}
@@ -164,11 +148,11 @@ pkgs.runCommand "pi-harness-profile"
     ! grep -F 'pi-subagents-tintinweb-testing-src' ${flakeFile}
     ! grep -F 'pi-subagents-tintinweb-testing-src' ${piModelsModule}
     ! grep -F 'pi-subagents-tintinweb-testing' ${piModelsModule}
-    grep -F 'home.file.".pi/agent/packages/pi-subagents-tintinweb".source' ${piModelsModule}
-    grep -F 'home.file.".pi-testing/agent/packages/pi-subagents-tintinweb".source' ${piModelsModule}
-    test "$(grep -F '"''${pi-subagents-tintinweb}/share/pi-packages/pi-subagents-tintinweb";' ${piModelsModule} | wc -l)" -eq 2
+    grep -F 'home.file.".pi/agent/packages/pi-subagents".source' ${piModelsModule}
+    grep -F 'home.file.".pi-testing/agent/packages/pi-subagents".source' ${piModelsModule}
+    test "$(grep -F '"''${pi-subagents}/share/pi-packages/pi-subagents";' ${piModelsModule} | wc -l)" -eq 2
     ! grep -F 'home.file.".pi-testing/agent/packages/pi-ultra-subagents".source' ${piModelsModule}
-    ! grep -F 'home.file.".pi/agent/packages/pi-subagents".source' ${piModelsModule}
+    ! grep -F 'home.file.".pi/agent/packages/pi-subagents-tintinweb".source' ${piModelsModule}
     grep -F '"packages/pi-continue"' ${piModelsModule}
     grep -F 'file = "$HOME/.pi-testing/agent/settings.json";' ${piModelsModule}
 
