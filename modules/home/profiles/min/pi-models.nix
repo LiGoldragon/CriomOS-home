@@ -168,6 +168,9 @@ lib.mkIf (size.min && endpointNode != null) {
   home.file.".pi/agent/packages/pi-intercom".source = "${pi-intercom}/share/pi-packages/pi-intercom";
   home.file.".pi/agent/packages/pi-intercom".force = true;
 
+  # pi-subagents resolves this supported override before legacy extension paths.
+  home.sessionVariables.PI_INTERCOM_EXTENSION_DIR = "${pi-intercom}/share/pi-packages/pi-intercom";
+
   home.file.".pi/agent/packages/pi-continue".source = "${pi-continue}/share/pi-packages/pi-continue";
   home.file.".pi/agent/packages/pi-continue".force = true;
 

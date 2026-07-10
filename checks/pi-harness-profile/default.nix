@@ -21,6 +21,8 @@ pkgs.runCommand "pi-harness-profile"
     nativeBuildInputs = [
       pkgs.jq
       pkgs.gnugrep
+      pkgs.nodejs
+      pkgs.util-linux
     ];
   }
   ''
@@ -30,6 +32,11 @@ pkgs.runCommand "pi-harness-profile"
     test -d "${pi-linkup}/share/pi-packages/pi-linkup/node_modules/@aliou/pi-utils-ui"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/index.ts"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md"
+    test -f "${pi-subagents}/share/pi-packages/pi-subagents/node_modules/jiti/lib/jiti-cli.mjs"
+    test -f "${pi-subagents}/share/pi-packages/pi-subagents/node_modules/typebox/package.json"
+    test -f "${pi-subagents}/share/pi-packages/pi-subagents/node_modules/@earendil-works/pi-tui/package.json"
+    test -f "${pi-subagents}/share/pi-packages/pi-subagents/src/runs/background/async-execution.ts"
+    grep -F 'runner-stderr.log' "${pi-subagents}/share/pi-packages/pi-subagents/src/runs/background/async-execution.ts"
     test "$(wc -l < "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md")" -le 150
     grep -F 'Clarify UI is explicit opt-in' "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md"
     grep -F 'Subagents are independent Pi processes.' "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md"
@@ -136,6 +143,9 @@ pkgs.runCommand "pi-harness-profile"
     grep -F 'inputs.pi-linkup-src' ${piLinkupPackage}
     grep -F 'inputs.pi-utils-ui-src' ${piLinkupPackage}
     grep -F 'inputs.pi-subagents-src' ${piSubagentsPackage}
+    grep -F 'inputs.pi-subagents-jiti-src' ${piSubagentsPackage}
+    grep -F 'inputs.pi-subagents-typebox-src' ${piSubagentsPackage}
+    grep -F 'inputs.pi-subagents-pi-tui-src' ${piSubagentsPackage}
     grep -F 'inputs.pi-intercom-src' ${piIntercomPackage}
     grep -F 'inputs.pi-intercom-tsx-src' ${piIntercomPackage}
     grep -F 'inputs.pi-intercom-typebox-src' ${piIntercomPackage}
@@ -197,12 +207,60 @@ pkgs.runCommand "pi-harness-profile"
     grep -F 'piIntercomConfig = {' ${piModelsModule}
     grep -F 'brokerCommand = "''${pkgs.nodejs}/bin/node";' ${piModelsModule}
     grep -F 'brokerArgs = [ "''${pi-intercom}/share/pi-packages/pi-intercom/node_modules/tsx/dist/cli.mjs" ];' ${piModelsModule}
+    grep -F 'home.sessionVariables.PI_INTERCOM_EXTENSION_DIR = "''${pi-intercom}/share/pi-packages/pi-intercom";' ${piModelsModule}
     grep -F 'file = "$HOME/.pi/agent/intercom/config.json";' ${piModelsModule}
     grep -F 'file = "$HOME/.pi-testing/agent/intercom/config.json";' ${piModelsModule}
     ! grep -F 'home.file.".pi-testing/agent/packages/pi-ultra-subagents".source' ${piModelsModule}
     ! grep -F 'home.file.".pi/agent/packages/pi-subagents-tintinweb".source' ${piModelsModule}
     grep -F '"packages/pi-continue"' ${piModelsModule}
     grep -F 'file = "$HOME/.pi-testing/agent/settings.json";' ${piModelsModule}
+
+    workDir="$(mktemp -d)"
+    trap 'rm -rf "$workDir"' EXIT
+    cat > "$workDir/bridge.ts" <<'EOF'
+import * as fs from "node:fs";
+import * as path from "node:path";
+import { diagnoseIntercomBridge } from "${pi-subagents}/share/pi-packages/pi-subagents/src/intercom/intercom-bridge.ts";
+
+const [agentDir, intercomDir] = process.argv.slice(2);
+if (!agentDir || !intercomDir) throw new Error("bridge test paths are required");
+fs.mkdirSync(path.join(agentDir, "intercom"), { recursive: true });
+fs.writeFileSync(path.join(agentDir, "intercom", "config.json"), JSON.stringify({ enabled: true }));
+const diagnostic = diagnoseIntercomBridge({
+  config: undefined,
+  context: "fresh",
+  orchestratorTarget: "supervisor",
+  agentDir,
+});
+if (!diagnostic.active || diagnostic.extensionDir !== intercomDir) {
+  throw new Error(`bridge did not resolve the declared pi-intercom override: ''${JSON.stringify(diagnostic)}`);
+}
+EOF
+    PI_INTERCOM_EXTENSION_DIR="${pi-intercom}/share/pi-packages/pi-intercom" \
+      ${pkgs.nodejs}/bin/node "${pi-subagents}/share/pi-packages/pi-subagents/node_modules/jiti/lib/jiti-cli.mjs" \
+      "$workDir/bridge.ts" "$workDir/agent" "${pi-intercom}/share/pi-packages/pi-intercom"
+
+    mkdir -p "$workDir/bin" "$workDir/async"
+    cat > "$workDir/bin/pi" <<'EOF'
+#!${pkgs.runtimeShell}
+printf '%s\n' '{"type":"message_end","message":{"role":"assistant","content":[{"type":"text","text":"detached runner result"}],"stopReason":"stop"}}'
+EOF
+    chmod +x "$workDir/bin/pi"
+    cat > "$workDir/config.json" <<EOF
+{"id":"detached-bootstrap","steps":[{"agent":"bootstrap-test","task":"write a bootstrap result","cwd":"$workDir","inheritProjectContext":false,"inheritSkills":false,"maxSubagentDepth":0,"completionGuard":false}],"resultPath":"$workDir/result.json","cwd":"$workDir","placeholder":"{previous}","asyncDir":"$workDir/async","resultMode":"single"}
+EOF
+    PATH="$workDir/bin:$PATH" ${pkgs.util-linux}/bin/setsid ${pkgs.nodejs}/bin/node \
+      "${pi-subagents}/share/pi-packages/pi-subagents/node_modules/jiti/lib/jiti-cli.mjs" \
+      "${pi-subagents}/share/pi-packages/pi-subagents/src/runs/background/subagent-runner.ts" \
+      "$workDir/config.json" > "$workDir/runner.stdout" 2> "$workDir/async/runner-stderr.log" &
+    runnerPid=$!
+    for _attempt in $(seq 1 100); do
+      test -f "$workDir/result.json" && break
+      sleep 0.1
+    done
+    wait "$runnerPid"
+    jq -e '.exitCode == 0 and .results[0].success == true and .results[0].output == "detached runner result"' "$workDir/result.json"
+    jq -e '.state == "complete" and .steps[0].status == "complete" and .steps[0].exitCode == 0' "$workDir/async/status.json"
 
     touch "$out"
   ''

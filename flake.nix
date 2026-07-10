@@ -190,6 +190,51 @@
       url = "https://registry.npmjs.org/pi-subagents/-/pi-subagents-0.31.0.tgz";
       flake = false;
     };
+    pi-subagents-jiti-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/jiti/-/jiti-2.7.0.tgz";
+      flake = false;
+    };
+    pi-subagents-typebox-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/typebox/-/typebox-1.1.24.tgz";
+      flake = false;
+    };
+    pi-subagents-pi-tui-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/@earendil-works/pi-tui/-/pi-tui-0.74.0.tgz";
+      flake = false;
+    };
+    pi-subagents-chalk-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/chalk/-/chalk-5.5.0.tgz";
+      flake = false;
+    };
+    pi-subagents-marked-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/marked/-/marked-15.0.12.tgz";
+      flake = false;
+    };
+    pi-subagents-mime-types-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/mime-types/-/mime-types-3.0.1.tgz";
+      flake = false;
+    };
+    pi-subagents-mime-types-types-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/@types/mime-types/-/mime-types-2.1.4.tgz";
+      flake = false;
+    };
+    pi-subagents-get-east-asian-width-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/get-east-asian-width/-/get-east-asian-width-1.3.0.tgz";
+      flake = false;
+    };
+    pi-subagents-mime-db-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/mime-db/-/mime-db-1.54.0.tgz";
+      flake = false;
+    };
     pi-intercom-src = {
       type = "file";
       url = "https://registry.npmjs.org/pi-intercom/-/pi-intercom-0.6.0.tgz";
