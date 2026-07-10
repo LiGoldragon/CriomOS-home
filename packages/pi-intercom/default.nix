@@ -1,7 +1,7 @@
 { inputs, pkgs, ... }:
 pkgs.stdenvNoCC.mkDerivation {
   pname = "pi-intercom";
-  version = "0.6.1";
+  version = "0.6.0";
 
   dontUnpack = true;
   dontBuild = true;
@@ -21,7 +21,6 @@ pkgs.stdenvNoCC.mkDerivation {
       "$packageRoot/node_modules/@esbuild"
 
     tar -xzf ${inputs.pi-intercom-src} -C "$packageRoot" --strip-components=1
-    patch -d "$packageRoot" -p1 < ${./noninteractive-inbound-follow-up.patch}
     tar -xzf ${inputs.pi-intercom-tsx-src} -C "$packageRoot/.pi-deps/tsx" --strip-components=1
     tar -xzf ${inputs.pi-intercom-typebox-src} -C "$packageRoot/.pi-deps/typebox" --strip-components=1
     tar -xzf ${inputs.pi-intercom-esbuild-src} -C "$packageRoot/.pi-deps/esbuild" --strip-components=1
