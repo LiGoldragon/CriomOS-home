@@ -35,6 +35,11 @@ let
     '';
   };
 
+  fakeCodex = {
+    packages.${system}.default = pkgs.writeShellScriptBin "codex" "exit 0";
+  };
+
+
   fakeSpirit = {
     packages.${system}.default = pkgs.runCommand "fake-spirit" { } ''
       mkdir -p "$out/bin"
@@ -103,6 +108,7 @@ let
     };
     inputs = {
       agent = fakeAgent;
+      codex-cli = fakeCodex;
       criomos-lib = ../../stubs/criomos-lib;
       spirit = fakeSpirit;
       spirit-judge = fakeSpiritJudge;
@@ -145,6 +151,10 @@ let
     {
       condition = builtins.hasAttr "spirit-daemon" services;
       message = "the schema-derived spirit daemon service must exist.";
+    }
+    {
+      condition = builtins.hasAttr "spirit-judge" services;
+      message = "the fail-closed Spirit judge service must exist.";
     }
     {
       condition = builtins.elem "spirit-judge.service" services.spirit-daemon.Unit.Requires;
@@ -211,9 +221,16 @@ else
     cat "$judge_exec_start" > spirit-judge-daemon-service
     cat "$judge_exec_start_pre" > spirit-judge-startup-state
     grep -q '/spirit-judge.sock' spirit-judge-startup-state
-    grep -q -- '--provider openai-compatible' spirit-judge-daemon-service
-    grep -q -- '--bearer-secret-source env:SPIRIT_JUDGE_API_KEY' spirit-judge-daemon-service
-    ! grep -q 'platform.deepseek.com/api-key' spirit-judge-daemon-service
+
+    cat "$judge_exec_start" > spirit-judge-daemon-service
+    grep -q -- '--provider openai-codex' spirit-judge-daemon-service
+    grep -q -- '--model gpt-5.6-terra' spirit-judge-daemon-service
+    grep -q -- '--reasoning-effort medium' spirit-judge-daemon-service
+    grep -q -- '--external-authorization-source codex-login' spirit-judge-daemon-service
+    grep -q -- '--codex-command ' spirit-judge-daemon-service
+    ! grep -q 'gopass show' spirit-judge-daemon-service
+    ! grep -q 'bearer-secret-source' spirit-judge-daemon-service
+    ! grep -q 'deepseek-v4-pro' spirit-judge-daemon-service
 
     grep -q '/bin/spirit-daemon ' exec-start
     grep -q '/spirit.config.rkyv$' exec-start

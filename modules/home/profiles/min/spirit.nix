@@ -20,6 +20,7 @@ let
   spiritPackage = inputs.spirit.packages.${system}.default;
   spiritJudgePackage = inputs.spirit-judge.packages.${system}.default;
   spiritJudgeConfig = inputs.spirit-judge-config;
+  codexCliPackage = inputs.codex-cli.packages.${system}.default;
 
   providerName = "deepseek";
   defaultModel = "deepseek-v4-flash";
@@ -133,22 +134,16 @@ let
   spiritJudgeServiceWrapper = pkgs.writeShellScriptBin "spirit-judge-daemon-service" ''
     set -eu
 
-    # Resolve the provider credential only in this service process. The value
-    # never enters Nix evaluation, the unit definition, or Spirit's archive.
-    SPIRIT_JUDGE_API_KEY="$(${pkgs.gopass}/bin/gopass show -o ${providerGopassPath})"
-    if [ -z "$SPIRIT_JUDGE_API_KEY" ]; then
-      echo "spirit-judge: gopass provider credential is empty" >&2
-      exit 1
-    fi
-    export SPIRIT_JUDGE_API_KEY
-
+    # OpenAI Codex owns the authenticated session and receives no copied token.
+    # The reference is policy data only; the executable resolves it at runtime.
     exec ${spiritJudgePackage}/bin/spirit-judge serve \
       --socket ${lib.escapeShellArg spiritJudgeSocketPath} \
       --config-root ${lib.escapeShellArg spiritJudgeConfig} \
-      --provider openai-compatible \
-      --endpoint ${lib.escapeShellArg providerEndpoint} \
-      --model ${lib.escapeShellArg guardianModel} \
-      --bearer-secret-source env:SPIRIT_JUDGE_API_KEY
+      --provider openai-codex \
+      --model gpt-5.6-terra \
+      --reasoning-effort medium \
+      --external-authorization-source codex-login \
+      --codex-command ${codexCliPackage}/bin/codex
   '';
 
   commandLineWrapper = pkgs.writeShellScriptBin "spirit" ''
