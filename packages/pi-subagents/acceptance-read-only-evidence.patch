@@ -1,6 +1,49 @@
 --- a/src/runs/shared/acceptance.ts
 +++ b/src/runs/shared/acceptance.ts
-@@ -631,8 +631,8 @@
+@@ -79,8 +79,8 @@
+ 	const reasons: string[] = [];
+ 	const readOnlyAgent = /\b(?:reviewer|scout|context-builder|researcher|analyst)\b/.test(agent);
+ 	const readOnlyTask = /\b(?:read[- ]only|review[- ]only|do not edit|don't edit|no edits|without edits|inspect|summari[sz]e)\b/.test(task);
+-	const writeTask = /\b(?:fix|implement|update|write|edit|modify|migrate|release|security|delete|remove|refactor|commit)\b/.test(task)
+-		|| /\bworker\b/.test(agent);
++	const writeTask = !readOnlyTask && (/\b(?:fix|implement|update|write|edit|modify|migrate|release|security|delete|remove|refactor|commit)\b/.test(task)
++		|| /\bworker\b/.test(agent));
+ 	const risky = Boolean(input.async && writeTask)
+ 		|| Boolean(input.dynamic)
+ 		|| Boolean(input.dynamicGroup)
+@@ -285,8 +285,9 @@
+ 		evidence,
+ 	);
+ 	let review = explicit.review !== undefined ? explicit.review : inferred.review;
+-	if (level === "reviewed" && explicitLevel !== "auto" && explicitLevel !== "reviewed" && explicit.review === undefined && review && review !== false) {
+-		review = { ...review, required: false };
++	if (level === "reviewed" && explicit.review === undefined) {
++		if (explicitLevel === "reviewed" && inferred.level !== "reviewed") review = { required: false };
++		else if (explicitLevel !== "auto" && explicitLevel !== "reviewed" && review && review !== false) review = { ...review, required: false };
+ 	}
+ 	return {
+ 		level,
+@@ -385,7 +386,7 @@
+ 		if (!item || typeof item !== "object" || Array.isArray(item)) return false;
+ 		const command = item as { command?: unknown; result?: unknown; summary?: unknown };
+ 		return typeof command.command === "string"
+-			&& (command.result === "passed" || command.result === "failed" || command.result === "not-run")
++			&& (command.result === "passed" || command.result === "failed" || command.result === "not-run" || command.result === "blocked")
+ 			&& typeof command.summary === "string";
+ 	});
+ }
+@@ -588,8 +589,8 @@
+ 				}
+ 				const command = item as { command?: unknown; result?: unknown; summary?: unknown };
+ 				if (typeof command.command !== "string" || !command.command.trim()) pushTypeError(errors, `${itemPath}.command`, "non-empty string", command.command);
+-				if (command.result !== "passed" && command.result !== "failed" && command.result !== "not-run") {
+-					pushTypeError(errors, `${itemPath}.result`, "one of \"passed\", \"failed\", \"not-run\"", command.result);
++				if (command.result !== "passed" && command.result !== "failed" && command.result !== "not-run" && command.result !== "blocked") {
++					pushTypeError(errors, `${itemPath}.result`, "one of \"passed\", \"failed\", \"not-run\", \"blocked\"", command.result);
+ 				}
+ 				if (typeof command.summary !== "string") pushTypeError(errors, `${itemPath}.summary`, "string", command.summary);
+ 			}
+@@ -631,8 +632,8 @@
  
  function reportEvidencePresent(report: AcceptanceReport, kind: AcceptanceEvidenceKind): boolean {
  	switch (kind) {
@@ -11,12 +54,23 @@
  		case "commands-run": return Array.isArray(report.commandsRun) && report.commandsRun.length > 0;
  		case "validation-output": return isStringArray(report.validationOutput) && report.validationOutput.length > 0;
  		case "residual-risks": return isStringArray(report.residualRisks);
+--- a/src/shared/types.ts
++++ b/src/shared/types.ts
+@@ -315,7 +315,7 @@
+ 	testsAddedOrUpdated?: string[];
+ 	commandsRun?: Array<{
+ 		command: string;
+-		result: "passed" | "failed" | "not-run";
++		result: "passed" | "failed" | "not-run" | "blocked";
+ 		summary: string;
+ 	}>;
+ 	validationOutput?: string[];
 --- /dev/null
 +++ b/test/unit/acceptance-read-only-evidence.test.ts
-@@ -0,0 +1,51 @@
+@@ -0,0 +1,89 @@
 +import assert from "node:assert/strict";
 +import test from "node:test";
-+import { evaluateAcceptance, resolveEffectiveAcceptance } from "../../src/runs/shared/acceptance.ts";
++import { acceptanceFailureMessage, evaluateAcceptance, resolveEffectiveAcceptance } from "../../src/runs/shared/acceptance.ts";
 +
 +const readOnlyReport = (changedFiles?: string[], testsAddedOrUpdated?: string[]) => ({
 +	criteriaSatisfied: [{ id: "criterion-1", status: "satisfied" as const, evidence: "Read-only findings returned." }],
@@ -45,6 +99,44 @@
 +		ledger.runtimeChecks.filter((check) => check.id.startsWith("evidence:") && check.status === "failed"),
 +		[],
 +	);
++});
++
++test("reviewed background scout with blocked validation is completed", async () => {
++	const acceptance = resolveEffectiveAcceptance({
++		explicit: "reviewed",
++		agentName: "scout",
++		task: "Inspect the implementation. Do not edit files, do not add tests, and do not create an output artifact.",
++		async: true,
++	});
++	const report = {
++		...readOnlyReport([], []),
++		commandsRun: [{ command: "nix build .#check", result: "blocked" as const, summary: "Nested checkout is unavailable to Nix." }],
++	};
++	const ledger = await evaluateAcceptance({
++		acceptance,
++		output: `Findings returned.\n\n\`\`\`acceptance-report\n${JSON.stringify(report)}\n\`\`\``,
++		cwd: process.cwd(),
++	});
++	assert.deepEqual(acceptance.inferredReason, ["read-only/reviewer-style agent"]);
++	assert.deepEqual(acceptance.review, { required: false });
++	assert.equal(ledger.status, "checked");
++	assert.equal(acceptanceFailureMessage(ledger), undefined);
++});
++
++test("required reviewer still rejects a reviewed run without review evidence", async () => {
++	const acceptance = resolveEffectiveAcceptance({
++		explicit: { level: "reviewed", review: { required: true } },
++		agentName: "scout",
++		task: "Inspect the implementation. Do not edit files.",
++	});
++	const ledger = await evaluateAcceptance({
++		acceptance,
++		output: "",
++		cwd: process.cwd(),
++		report: readOnlyReport([], []),
++	});
++	assert.equal(ledger.status, "rejected");
++	assert.match(acceptanceFailureMessage(ledger) ?? "", /review required/);
 +});
 +
 +test("missing change evidence remains rejected", async () => {
