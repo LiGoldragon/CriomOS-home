@@ -2,7 +2,6 @@
 
 let
   system = pkgs.stdenv.hostPlatform.system;
-  pi = inputs.self.packages.${system}.pi;
   pi-criomos = inputs.self.packages.${system}.pi-criomos;
   pi-linkup = inputs.self.packages.${system}.pi-linkup;
   pi-subagents = inputs.self.packages.${system}.pi-subagents;
@@ -237,8 +236,7 @@ if (!diagnostic.active || diagnostic.extensionDir !== intercomDir) {
   throw new Error(`bridge did not resolve the declared pi-intercom override: ''${JSON.stringify(diagnostic)}`);
 }
 EOF
-    NODE_PATH="${pi}/lib/pi-monorepo/node_modules" \
-      PI_INTERCOM_EXTENSION_DIR="${pi-intercom}/share/pi-packages/pi-intercom" \
+    PI_INTERCOM_EXTENSION_DIR="${pi-intercom}/share/pi-packages/pi-intercom" \
       ${pkgs.nodejs}/bin/node "${pi-subagents}/share/pi-packages/pi-subagents/node_modules/jiti/lib/jiti-cli.mjs" \
       "$workDir/bridge.ts" "$workDir/agent" "${pi-intercom}/share/pi-packages/pi-intercom"
 
@@ -251,7 +249,7 @@ EOF
     cat > "$workDir/config.json" <<EOF
 {"id":"detached-bootstrap","steps":[{"agent":"bootstrap-test","task":"write a bootstrap result","cwd":"$workDir","inheritProjectContext":false,"inheritSkills":false,"maxSubagentDepth":0,"completionGuard":false}],"resultPath":"$workDir/result.json","cwd":"$workDir","placeholder":"{previous}","asyncDir":"$workDir/async","resultMode":"single"}
 EOF
-    NODE_PATH="${pi}/lib/pi-monorepo/node_modules" PATH="$workDir/bin:$PATH" ${pkgs.util-linux}/bin/setsid ${pkgs.nodejs}/bin/node \
+    PATH="$workDir/bin:$PATH" ${pkgs.util-linux}/bin/setsid ${pkgs.nodejs}/bin/node \
       "${pi-subagents}/share/pi-packages/pi-subagents/node_modules/jiti/lib/jiti-cli.mjs" \
       "${pi-subagents}/share/pi-packages/pi-subagents/src/runs/background/subagent-runner.ts" \
       "$workDir/config.json" > "$workDir/runner.stdout" 2> "$workDir/async/runner-stderr.log" &

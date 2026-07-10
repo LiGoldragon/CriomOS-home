@@ -47,6 +47,7 @@ pkgs.stdenvNoCC.mkDerivation {
 
     patch -d "$packageRoot" -p1 < ${./agent-chain-clarify-opt-in.patch}
     patch -d "$packageRoot" -p1 < ${./slim-parent-skill.patch}
+    patch -d "$packageRoot" -p1 < ${./detached-runner-peer-isolation.patch}
     patch -d "$packageRoot" -p1 < ${./async-runner-stderr.patch}
 
     runHook postInstall
