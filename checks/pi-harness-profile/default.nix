@@ -146,6 +146,9 @@ pkgs.runCommand "pi-harness-profile"
     grep -F 'inputs.pi-subagents-jiti-src' ${piSubagentsPackage}
     grep -F 'inputs.pi-subagents-typebox-src' ${piSubagentsPackage}
     grep -F 'full-child-extension-bridge.patch' ${piSubagentsPackage}
+    grep -F 'local-package-intercom-discovery.patch' ${piSubagentsPackage}
+    grep -F 'sendIncomingMessage(entry, "followUp", messageGeneration);' ${pi-intercom}/share/pi-packages/pi-intercom/index.ts
+    ! grep -F 'cannot respond to intercom messages while it is working' ${pi-intercom}/share/pi-packages/pi-intercom/index.ts
     grep -F 'inputs.pi-subagents-pi-tui-src' ${piSubagentsPackage}
     grep -F 'inputs.pi-intercom-src' ${piIntercomPackage}
     grep -F 'inputs.pi-intercom-tsx-src' ${piIntercomPackage}
@@ -164,10 +167,13 @@ pkgs.runCommand "pi-harness-profile"
     ! grep -E '\bfetchurl\b|hash[[:space:]]*=' ${piContinuePackage}
 
     grep -F 'defaultProvider = "openai-codex";' ${piModelsModule}
-    grep -F 'defaultOpenAiCodexModel = "gpt-5.5";' ${piModelsModule}
+    grep -F 'defaultOpenAiCodexModel = "gpt-5.6-sol";' ${piModelsModule}
     grep -F 'defaultModel = defaultOpenAiCodexModel;' ${piModelsModule}
     grep -F 'defaultThinkingLevel = "high";' ${piModelsModule}
-    grep -F '"openai-codex/gpt-5.4-mini"' ${piModelsModule}
+    grep -F '"openai-codex/gpt-5.6-sol"' ${piModelsModule}
+    grep -F '"openai-codex/gpt-5.6-terra"' ${piModelsModule}
+    grep -F '"openai-codex/gpt-5.6-luna"' ${piModelsModule}
+    ! grep -F 'gpt-5.5' ${piModelsModule}
     grep -F 'localLlmApiKeyCommand = "!gopass show -o goldragon.criome/local-llm-api-token";' ${piModelsModule}
     grep -F 'file = "$HOME/.pi/agent/auth.json";' ${piModelsModule}
     grep -F 'theme = "criomos-light/criomos-dark";' ${piModelsModule}
@@ -222,24 +228,51 @@ pkgs.runCommand "pi-harness-profile"
     cat > "$workDir/bridge.ts" <<'EOF'
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { diagnoseIntercomBridge } from "${pi-subagents}/share/pi-packages/pi-subagents/src/intercom/intercom-bridge.ts";
+import {
+  applyIntercomBridgeToAgent,
+  diagnoseIntercomBridge,
+  resolveIntercomBridge,
+} from "${pi-subagents}/share/pi-packages/pi-subagents/src/intercom/intercom-bridge.ts";
+import { buildPiArgs } from "${pi-subagents}/share/pi-packages/pi-subagents/src/runs/shared/pi-args.ts";
 
 const [agentDir, intercomDir] = process.argv.slice(2);
 if (!agentDir || !intercomDir) throw new Error("bridge test paths are required");
 fs.mkdirSync(path.join(agentDir, "intercom"), { recursive: true });
+fs.mkdirSync(path.join(agentDir, "packages"), { recursive: true });
+fs.symlinkSync(intercomDir, path.join(agentDir, "packages", "pi-intercom"), "dir");
 fs.writeFileSync(path.join(agentDir, "intercom", "config.json"), JSON.stringify({ enabled: true }));
-const diagnostic = diagnoseIntercomBridge({
+fs.writeFileSync(path.join(agentDir, "settings.json"), JSON.stringify({ packages: ["packages/pi-intercom"] }));
+
+const input = {
   config: undefined,
-  context: "fresh",
+  context: "fresh" as const,
   orchestratorTarget: "supervisor",
   agentDir,
+  globalNpmRoot: null,
+};
+const diagnostic = diagnoseIntercomBridge(input);
+if (!diagnostic.active || diagnostic.extensionDir !== path.join(agentDir, "packages", "pi-intercom")) {
+  throw new Error(`bridge did not resolve configured package loading: ''${JSON.stringify(diagnostic)}`);
+}
+const bridgedAgent = applyIntercomBridgeToAgent(
+  { name: "delegate", tools: ["read"], systemPrompt: "" } as any,
+  resolveIntercomBridge(input),
+);
+const { args } = buildPiArgs({
+  baseArgs: [],
+  task: "verify configured extension loading",
+  sessionEnabled: false,
+  inheritProjectContext: false,
+  inheritSkills: false,
+  tools: bridgedAgent.tools,
 });
-if (!diagnostic.active || diagnostic.extensionDir !== intercomDir) {
-  throw new Error(`bridge did not resolve the declared pi-intercom override: ''${JSON.stringify(diagnostic)}`);
+const toolsIndex = args.indexOf("--tools");
+if (toolsIndex === -1 || args[toolsIndex + 1] !== "read,intercom,contact_supervisor") {
+  throw new Error(`child did not expose intercom tools from startup: ''${JSON.stringify(args)}`);
 }
 EOF
-    PI_INTERCOM_EXTENSION_DIR="${pi-intercom}/share/pi-packages/pi-intercom" \
-      ${pkgs.nodejs}/bin/node "${pi-subagents}/share/pi-packages/pi-subagents/node_modules/jiti/lib/jiti-cli.mjs" \
+    env -u PI_INTERCOM_EXTENSION_DIR ${pkgs.nodejs}/bin/node \
+      "${pi-subagents}/share/pi-packages/pi-subagents/node_modules/jiti/lib/jiti-cli.mjs" \
       "$workDir/bridge.ts" "$workDir/agent" "${pi-intercom}/share/pi-packages/pi-intercom"
 
     # Exercise the packaged async runner itself. The launch witness deliberately
@@ -256,7 +289,7 @@ exit 0
 EOF
     chmod +x "$workDir/bin/pi"
     cat > "$workDir/config.json" <<EOF
-{"id":"packaged-child-bridge","steps":[{"agent":"delegate","task":"verify configured extension loading","cwd":"$workDir","inheritProjectContext":false,"inheritSkills":false,"extensions":["narrow-child-extension.ts"],"tools":["read"],"systemPrompt":"Intercom orchestration channel: use contact_supervisor.","maxSubagentDepth":0,"completionGuard":false}],"resultPath":"$workDir/result.json","cwd":"$workDir","placeholder":"{previous}","asyncDir":"$workDir/async","controlIntercomTarget":"supervisor","childIntercomTargets":["child-bridge"],"resultMode":"single"}
+{"id":"packaged-child-bridge","steps":[{"agent":"delegate","task":"verify configured extension loading","cwd":"$workDir","inheritProjectContext":false,"inheritSkills":false,"extensions":["narrow-child-extension.ts"],"tools":["read","intercom","contact_supervisor"],"systemPrompt":"Intercom orchestration channel: use contact_supervisor.","maxSubagentDepth":0,"completionGuard":false}],"resultPath":"$workDir/result.json","cwd":"$workDir","placeholder":"{previous}","asyncDir":"$workDir/async","controlIntercomTarget":"supervisor","childIntercomTargets":["child-bridge"],"resultMode":"single"}
 EOF
     PI_CHILD_ARGUMENTS="$workDir/child.args" \
       PI_CHILD_SESSION_NAME="$workDir/child.session" \
@@ -276,6 +309,7 @@ EOF
     ! grep -Fx -- '--no-extensions' "$workDir/child.args"
     grep -Fx -- '--extension' "$workDir/child.args"
     grep -Fx -- 'narrow-child-extension.ts' "$workDir/child.args"
+    grep -Fx -- 'read,intercom,contact_supervisor' "$workDir/child.args"
     test "$(cat "$workDir/child.session")" = 'child-bridge'
     test "$(cat "$workDir/child.orchestrator")" = 'supervisor'
     grep -F 'contact_supervisor' "${pi-intercom}/share/pi-packages/pi-intercom/index.ts"
