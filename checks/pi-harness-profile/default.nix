@@ -5,10 +5,12 @@ let
   pi-criomos = inputs.self.packages.${system}.pi-criomos;
   pi-linkup = inputs.self.packages.${system}.pi-linkup;
   pi-subagents = inputs.self.packages.${system}.pi-subagents;
+  pi-intercom = inputs.self.packages.${system}.pi-intercom;
   pi-ultra-subagents = inputs.self.packages.${system}.pi-ultra-subagents;
   pi-continue = inputs.self.packages.${system}.pi-continue;
   piLinkupPackage = ../../packages/pi-linkup/default.nix;
   piSubagentsPackage = ../../packages/pi-subagents/default.nix;
+  piIntercomPackage = ../../packages/pi-intercom/default.nix;
   piUltraSubagentsPackage = ../../packages/pi-ultra-subagents/default.nix;
   piContinuePackage = ../../packages/pi-continue/default.nix;
   piModelsModule = ../../modules/home/profiles/min/pi-models.nix;
@@ -33,6 +35,16 @@ pkgs.runCommand "pi-harness-profile"
     grep -F 'Subagents are independent Pi processes.' "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md"
     grep -F 'selected child agent, runtime, packages, and prompt, not from the parent' "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md"
     ! grep -F 'Chains default to clarify mode' "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md"
+    test -f "${pi-intercom}/share/pi-packages/pi-intercom/index.ts"
+    test -f "${pi-intercom}/share/pi-packages/pi-intercom/skills/pi-intercom/SKILL.md"
+    test -d "${pi-intercom}/share/pi-packages/pi-intercom/node_modules/tsx"
+    test -d "${pi-intercom}/share/pi-packages/pi-intercom/node_modules/typebox"
+    test -d "${pi-intercom}/share/pi-packages/pi-intercom/node_modules/esbuild"
+    test -d "${pi-intercom}/share/pi-packages/pi-intercom/node_modules/get-tsconfig"
+    test -d "${pi-intercom}/share/pi-packages/pi-intercom/node_modules/resolve-pkg-maps"
+    test -x "${pi-intercom}/share/pi-packages/pi-intercom/node_modules/@esbuild/linux-x64/bin/esbuild"
+    jq -e '.name == "pi-intercom" and .version == "0.6.0" and .pi.extensions == ["./index.ts"] and .pi.skills == ["./skills"]' \
+      "${pi-intercom}/share/pi-packages/pi-intercom/package.json"
     test -f "${pi-ultra-subagents}/share/pi-packages/pi-ultra-subagents/extensions/subagent/index.ts"
     test -f "${pi-ultra-subagents}/share/pi-packages/pi-ultra-subagents/extensions/subagent/agents.ts"
     test -d "${pi-ultra-subagents}/share/pi-packages/pi-ultra-subagents/node_modules/typebox"
@@ -105,11 +117,19 @@ pkgs.runCommand "pi-harness-profile"
     grep -F 'inputs.pi-linkup-src' ${piLinkupPackage}
     grep -F 'inputs.pi-utils-ui-src' ${piLinkupPackage}
     grep -F 'inputs.pi-subagents-src' ${piSubagentsPackage}
+    grep -F 'inputs.pi-intercom-src' ${piIntercomPackage}
+    grep -F 'inputs.pi-intercom-tsx-src' ${piIntercomPackage}
+    grep -F 'inputs.pi-intercom-typebox-src' ${piIntercomPackage}
+    grep -F 'inputs.pi-intercom-esbuild-src' ${piIntercomPackage}
+    grep -F 'inputs.pi-intercom-esbuild-linux-x64-src' ${piIntercomPackage}
+    grep -F 'inputs.pi-intercom-get-tsconfig-src' ${piIntercomPackage}
+    grep -F 'inputs.pi-intercom-resolve-pkg-maps-src' ${piIntercomPackage}
     grep -F 'inputs.pi-ultra-subagents-src' ${piUltraSubagentsPackage}
     grep -F 'inputs.pi-ultra-subagents-typebox-src' ${piUltraSubagentsPackage}
     grep -F 'inputs.pi-continue-src' ${piContinuePackage}
     ! grep -E '\bfetchurl\b|hash[[:space:]]*=' ${piLinkupPackage}
     ! grep -E '\bfetchurl\b|hash[[:space:]]*=' ${piSubagentsPackage}
+    ! grep -E '\bfetchurl\b|hash[[:space:]]*=' ${piIntercomPackage}
     ! grep -E '\bfetchurl\b|hash[[:space:]]*=' ${piUltraSubagentsPackage}
     ! grep -E '\bfetchurl\b|hash[[:space:]]*=' ${piContinuePackage}
 
@@ -137,6 +157,7 @@ pkgs.runCommand "pi-harness-profile"
     grep -F '"packages/pi-linkup"' ${piModelsModule}
     ! grep -F '"packages/pi-web-access"' ${piModelsModule}
     grep -F '"packages/pi-subagents"' ${piModelsModule}
+    grep -F '"packages/pi-intercom"' ${piModelsModule}
     ! grep -F '"packages/pi-subagents-tintinweb"' ${piModelsModule}
     ! grep -F '"packages/pi-ultra-subagents"' ${piModelsModule}
     grep -F 'normalPiPackages = [' ${piModelsModule}
@@ -144,12 +165,19 @@ pkgs.runCommand "pi-harness-profile"
     grep -F 'packages = normalPiPackages;' ${piModelsModule}
     grep -F 'piTestingSettingsConfig = piSettingsConfig;' ${piModelsModule}
     grep -F 'github:LiGoldragon/pi-subagents/49697bccba12aaa50ac90f2dd54fbe71d4fd0265' ${flakeFile}
+    grep -F 'https://registry.npmjs.org/pi-intercom/-/pi-intercom-0.6.0.tgz' ${flakeFile}
     ! grep -F 'pi-subagents-tintinweb-testing-src' ${flakeFile}
     ! grep -F 'pi-subagents-tintinweb-testing-src' ${piModelsModule}
     ! grep -F 'pi-subagents-tintinweb-testing' ${piModelsModule}
     grep -F 'home.file.".pi/agent/packages/pi-subagents".source' ${piModelsModule}
     grep -F 'home.file.".pi-testing/agent/packages/pi-subagents".source' ${piModelsModule}
     test "$(grep -F '"''${pi-subagents}/share/pi-packages/pi-subagents";' ${piModelsModule} | wc -l)" -eq 2
+    grep -F 'home.file.".pi/agent/packages/pi-intercom".source' ${piModelsModule}
+    grep -F 'home.file.".pi-testing/agent/packages/pi-intercom".source' ${piModelsModule}
+    test "$(grep -F '"''${pi-intercom}/share/pi-packages/pi-intercom";' ${piModelsModule} | wc -l)" -eq 2
+    grep -F 'piIntercomConfig = {' ${piModelsModule}
+    grep -F 'file = "$HOME/.pi/agent/intercom/config.json";' ${piModelsModule}
+    grep -F 'file = "$HOME/.pi-testing/agent/intercom/config.json";' ${piModelsModule}
     ! grep -F 'home.file.".pi-testing/agent/packages/pi-ultra-subagents".source' ${piModelsModule}
     ! grep -F 'home.file.".pi/agent/packages/pi-subagents-tintinweb".source' ${piModelsModule}
     grep -F '"packages/pi-continue"' ${piModelsModule}

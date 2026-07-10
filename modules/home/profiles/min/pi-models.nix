@@ -23,6 +23,7 @@ let
   pi-subagents = pkgs.callPackage ../../../../packages/pi-subagents {
     inherit inputs;
   };
+  pi-intercom = pkgs.callPackage ../../../../packages/pi-intercom { inherit inputs; };
   pi-continue = pkgs.callPackage ../../../../packages/pi-continue { inherit inputs; };
   pi-session-namer = pkgs.callPackage ../../../../packages/pi-session-namer { inherit inputs; };
   piPackageHomePath = "$HOME/.local/share/criomos/pi/package";
@@ -50,6 +51,7 @@ let
     piCriomosPackage
     "packages/pi-linkup"
     "packages/pi-subagents"
+    "packages/pi-intercom"
     "packages/pi-continue"
     "packages/pi-session-namer"
   ];
@@ -95,6 +97,10 @@ let
       value = localProviderAuth;
     }) ([ providerName ] ++ legacyLocalProviderNames)
   );
+
+  piIntercomConfig = {
+    enabled = true;
+  };
 
   piSettingsConfig = {
     defaultProvider = "openai-codex";
@@ -157,6 +163,9 @@ lib.mkIf (size.min && endpointNode != null) {
     "${pi-subagents}/share/pi-packages/pi-subagents";
   home.file.".pi/agent/packages/pi-subagents".force = true;
 
+  home.file.".pi/agent/packages/pi-intercom".source = "${pi-intercom}/share/pi-packages/pi-intercom";
+  home.file.".pi/agent/packages/pi-intercom".force = true;
+
   home.file.".pi/agent/packages/pi-continue".source = "${pi-continue}/share/pi-packages/pi-continue";
   home.file.".pi/agent/packages/pi-continue".force = true;
 
@@ -178,6 +187,10 @@ lib.mkIf (size.min && endpointNode != null) {
   home.file.".pi-testing/agent/packages/pi-subagents".source =
     "${pi-subagents}/share/pi-packages/pi-subagents";
   home.file.".pi-testing/agent/packages/pi-subagents".force = true;
+
+  home.file.".pi-testing/agent/packages/pi-intercom".source =
+    "${pi-intercom}/share/pi-packages/pi-intercom";
+  home.file.".pi-testing/agent/packages/pi-intercom".force = true;
 
   home.file.".pi-testing/agent/packages/pi-continue".source =
     "${pi-continue}/share/pi-packages/pi-continue";
@@ -203,6 +216,15 @@ lib.mkIf (size.min && endpointNode != null) {
         value = "always";
       }) ([ providerName ] ++ legacyLocalProviderNames)
     );
+  };
+
+  home.activation.mergePiIntercomConfig = inputs.hexis.lib.mkManagedConfig {
+    inherit lib pkgs hexis;
+    file = "$HOME/.pi/agent/intercom/config.json";
+    declared = piIntercomConfig;
+    modes = {
+      "/enabled" = "always";
+    };
   };
 
   home.activation.mergePiSettings = inputs.hexis.lib.mkManagedConfig {
@@ -238,6 +260,15 @@ lib.mkIf (size.min && endpointNode != null) {
         value = "always";
       }) ([ providerName ] ++ legacyLocalProviderNames)
     );
+  };
+
+  home.activation.mergePiTestingIntercomConfig = inputs.hexis.lib.mkManagedConfig {
+    inherit lib pkgs hexis;
+    file = "$HOME/.pi-testing/agent/intercom/config.json";
+    declared = piIntercomConfig;
+    modes = {
+      "/enabled" = "always";
+    };
   };
 
   home.activation.mergePiTestingSettings = inputs.hexis.lib.mkManagedConfig {

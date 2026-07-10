@@ -190,6 +190,41 @@
       url = "https://registry.npmjs.org/pi-subagents/-/pi-subagents-0.31.0.tgz";
       flake = false;
     };
+    pi-intercom-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/pi-intercom/-/pi-intercom-0.6.0.tgz";
+      flake = false;
+    };
+    pi-intercom-tsx-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/tsx/-/tsx-4.20.0.tgz";
+      flake = false;
+    };
+    pi-intercom-typebox-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/typebox/-/typebox-1.1.38.tgz";
+      flake = false;
+    };
+    pi-intercom-esbuild-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/esbuild/-/esbuild-0.25.0.tgz";
+      flake = false;
+    };
+    pi-intercom-esbuild-linux-x64-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/@esbuild/linux-x64/-/linux-x64-0.25.0.tgz";
+      flake = false;
+    };
+    pi-intercom-get-tsconfig-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/get-tsconfig/-/get-tsconfig-4.7.5.tgz";
+      flake = false;
+    };
+    pi-intercom-resolve-pkg-maps-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/resolve-pkg-maps/-/resolve-pkg-maps-1.0.0.tgz";
+      flake = false;
+    };
     pi-subagents-tintinweb-src = {
       url = "github:LiGoldragon/pi-subagents/49697bccba12aaa50ac90f2dd54fbe71d4fd0265";
       flake = false;
