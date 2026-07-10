@@ -145,6 +145,7 @@ pkgs.runCommand "pi-harness-profile"
     grep -F 'inputs.pi-subagents-src' ${piSubagentsPackage}
     grep -F 'inputs.pi-subagents-jiti-src' ${piSubagentsPackage}
     grep -F 'inputs.pi-subagents-typebox-src' ${piSubagentsPackage}
+    grep -F 'full-child-extension-bridge.patch' ${piSubagentsPackage}
     grep -F 'inputs.pi-subagents-pi-tui-src' ${piSubagentsPackage}
     grep -F 'inputs.pi-intercom-src' ${piIntercomPackage}
     grep -F 'inputs.pi-intercom-tsx-src' ${piIntercomPackage}
@@ -193,7 +194,7 @@ pkgs.runCommand "pi-harness-profile"
     ! grep -F 'piTestingPackages = [' ${piModelsModule}
     grep -F 'packages = normalPiPackages;' ${piModelsModule}
     grep -F 'piTestingSettingsConfig = piSettingsConfig;' ${piModelsModule}
-    grep -F 'github:LiGoldragon/pi-subagents/49697bccba12aaa50ac90f2dd54fbe71d4fd0265' ${flakeFile}
+    grep -F 'https://registry.npmjs.org/pi-subagents/-/pi-subagents-0.31.0.tgz' ${flakeFile}
     grep -F 'https://registry.npmjs.org/pi-intercom/-/pi-intercom-0.6.0.tgz' ${flakeFile}
     ! grep -F 'pi-subagents-tintinweb-testing-src' ${flakeFile}
     ! grep -F 'pi-subagents-tintinweb-testing-src' ${piModelsModule}
@@ -213,6 +214,7 @@ pkgs.runCommand "pi-harness-profile"
     ! grep -F 'home.file.".pi-testing/agent/packages/pi-ultra-subagents".source' ${piModelsModule}
     ! grep -F 'home.file.".pi/agent/packages/pi-subagents-tintinweb".source' ${piModelsModule}
     grep -F '"packages/pi-continue"' ${piModelsModule}
+    grep -F '"packages/pi-intercom"' ${piModelsModule}
     grep -F 'file = "$HOME/.pi-testing/agent/settings.json";' ${piModelsModule}
 
     workDir="$(mktemp -d)"
@@ -240,27 +242,43 @@ EOF
       ${pkgs.nodejs}/bin/node "${pi-subagents}/share/pi-packages/pi-subagents/node_modules/jiti/lib/jiti-cli.mjs" \
       "$workDir/bridge.ts" "$workDir/agent" "${pi-intercom}/share/pi-packages/pi-intercom"
 
+    # Exercise the packaged async runner itself. The launch witness deliberately
+    # is not a synthetic Pi JSON child: it records the runner's real child argv
+    # and inherited bridge environment before exiting. A missing bridge field,
+    # contact-supervisor injection, or --no-extensions regression fails here.
     mkdir -p "$workDir/bin" "$workDir/async"
     cat > "$workDir/bin/pi" <<'EOF'
 #!${pkgs.runtimeShell}
-printf '%s\n' '{"type":"message_end","message":{"role":"assistant","content":[{"type":"text","text":"detached runner result"}],"stopReason":"stop"}}'
+printf '%s\n' "$@" > "$PI_CHILD_ARGUMENTS"
+printf '%s\n' "$PI_SUBAGENT_INTERCOM_SESSION_NAME" > "$PI_CHILD_SESSION_NAME"
+printf '%s\n' "$PI_SUBAGENT_ORCHESTRATOR_TARGET" > "$PI_CHILD_ORCHESTRATOR_TARGET"
+exit 0
 EOF
     chmod +x "$workDir/bin/pi"
     cat > "$workDir/config.json" <<EOF
-{"id":"detached-bootstrap","steps":[{"agent":"bootstrap-test","task":"write a bootstrap result","cwd":"$workDir","inheritProjectContext":false,"inheritSkills":false,"maxSubagentDepth":0,"completionGuard":false}],"resultPath":"$workDir/result.json","cwd":"$workDir","placeholder":"{previous}","asyncDir":"$workDir/async","resultMode":"single"}
+{"id":"packaged-child-bridge","steps":[{"agent":"delegate","task":"verify configured extension loading","cwd":"$workDir","inheritProjectContext":false,"inheritSkills":false,"extensions":["narrow-child-extension.ts"],"tools":["read"],"systemPrompt":"Intercom orchestration channel: use contact_supervisor.","maxSubagentDepth":0,"completionGuard":false}],"resultPath":"$workDir/result.json","cwd":"$workDir","placeholder":"{previous}","asyncDir":"$workDir/async","controlIntercomTarget":"supervisor","childIntercomTargets":["child-bridge"],"resultMode":"single"}
 EOF
-    PATH="$workDir/bin:$PATH" ${pkgs.util-linux}/bin/setsid ${pkgs.nodejs}/bin/node \
-      "${pi-subagents}/share/pi-packages/pi-subagents/node_modules/jiti/lib/jiti-cli.mjs" \
-      "${pi-subagents}/share/pi-packages/pi-subagents/src/runs/background/subagent-runner.ts" \
-      "$workDir/config.json" > "$workDir/runner.stdout" 2> "$workDir/async/runner-stderr.log" &
+    PI_CHILD_ARGUMENTS="$workDir/child.args" \
+      PI_CHILD_SESSION_NAME="$workDir/child.session" \
+      PI_CHILD_ORCHESTRATOR_TARGET="$workDir/child.orchestrator" \
+      PATH="$workDir/bin:$PATH" ${pkgs.util-linux}/bin/setsid ${pkgs.nodejs}/bin/node \
+        "${pi-subagents}/share/pi-packages/pi-subagents/node_modules/jiti/lib/jiti-cli.mjs" \
+        "${pi-subagents}/share/pi-packages/pi-subagents/src/runs/background/subagent-runner.ts" \
+        "$workDir/config.json" > "$workDir/runner.stdout" 2> "$workDir/async/runner-stderr.log" &
     runnerPid=$!
     for _attempt in $(seq 1 100); do
       test -f "$workDir/result.json" && break
       sleep 0.1
     done
     wait "$runnerPid"
-    jq -e '.exitCode == 0 and .results[0].success == true and .results[0].output == "detached runner result"' "$workDir/result.json"
+    jq -e '.exitCode == 0 and .results[0].success == true' "$workDir/result.json"
     jq -e '.state == "complete" and .steps[0].status == "complete" and .steps[0].exitCode == 0' "$workDir/async/status.json"
+    ! grep -Fx -- '--no-extensions' "$workDir/child.args"
+    grep -Fx -- '--extension' "$workDir/child.args"
+    grep -Fx -- 'narrow-child-extension.ts' "$workDir/child.args"
+    test "$(cat "$workDir/child.session")" = 'child-bridge'
+    test "$(cat "$workDir/child.orchestrator")" = 'supervisor'
+    grep -F 'contact_supervisor' "${pi-intercom}/share/pi-packages/pi-intercom/index.ts"
 
     touch "$out"
   ''
