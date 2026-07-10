@@ -144,6 +144,9 @@ lib.mkIf (size.min && endpointNode != null) {
   home.file.".local/share/criomos/pi/package".source = "${pi}/lib/pi-monorepo/packages/coding-agent";
   home.file.".local/share/criomos/pi/package".force = true;
 
+  home.file.".pi/agent/bin/pi".source = "${pi}/bin/pi";
+  home.file.".pi/agent/bin/pi".force = true;
+
   home.file.".pi/agent/SYSTEM.md".source =
     "${pi-criomos}/share/pi-packages/pi-criomos/system/SYSTEM.md";
 
