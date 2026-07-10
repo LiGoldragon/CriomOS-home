@@ -183,9 +183,11 @@ sync after crashes or reboots.
 
 Cluster-host update authority: Bird/Zeus update authority uses LiGoldragon
 `main` by default, not per-user branches. For Crayon OS host maintenance the
-maintainer has root SSH on all cluster hosts but cannot SSH as Bird on Zeus,
-so Bird's Zeus home-profile redeploy uses an existing root or maintainer-user
-path rather than direct Bird SSH.
+maintainer has root SSH on all cluster hosts but cannot SSH as Bird on Zeus.
+Bird's Zeus home-profile redeploy therefore runs through lojix's root-mediated
+user-environment activation: lojix reaches Zeus as `root` and drops privilege to
+Bird through a login (`runuser --login`) to set and activate Bird's Home Manager
+profile, needing no direct Bird SSH. Witnessed working as of lojix `0.4.5`.
 
 ## Networking and media
 
