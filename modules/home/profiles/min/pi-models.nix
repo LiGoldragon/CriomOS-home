@@ -33,15 +33,16 @@ let
   largeAiNode = lib.findFirst (node: node.behavesAs.largeAi or false) null clusterNodes;
   endpointNode = if routerNode != null then routerNode else largeAiNode;
   providerName = "criomos-local";
-  defaultOpenAiCodexModel = "gpt-5.5";
+  defaultOpenAiCodexModel = "gpt-5.6-sol";
   localLlmApiKeyCommand = "!gopass show -o goldragon.criome/local-llm-api-token";
   legacyLocalProviderNames = [
     "prometheus"
     "criomos-largeai"
   ];
   remoteOpenAiCodexModels = [
-    "openai-codex/gpt-5.5"
-    "openai-codex/gpt-5.4-mini"
+    "openai-codex/gpt-5.6-sol"
+    "openai-codex/gpt-5.6-terra"
+    "openai-codex/gpt-5.6-luna"
   ];
   piCriomosPackage = {
     source = "packages/pi-criomos";

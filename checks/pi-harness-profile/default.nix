@@ -2,6 +2,7 @@
 
 let
   system = pkgs.stdenv.hostPlatform.system;
+  pi = inputs.self.packages.${system}.pi;
   pi-criomos = inputs.self.packages.${system}.pi-criomos;
   pi-linkup = inputs.self.packages.${system}.pi-linkup;
   pi-subagents = inputs.self.packages.${system}.pi-subagents;
@@ -164,10 +165,40 @@ pkgs.runCommand "pi-harness-profile"
     ! grep -E '\bfetchurl\b|hash[[:space:]]*=' ${piContinuePackage}
 
     grep -F 'defaultProvider = "openai-codex";' ${piModelsModule}
-    grep -F 'defaultOpenAiCodexModel = "gpt-5.5";' ${piModelsModule}
+    grep -F 'defaultOpenAiCodexModel = "gpt-5.6-sol";' ${piModelsModule}
     grep -F 'defaultModel = defaultOpenAiCodexModel;' ${piModelsModule}
     grep -F 'defaultThinkingLevel = "high";' ${piModelsModule}
-    grep -F '"openai-codex/gpt-5.4-mini"' ${piModelsModule}
+    grep -F '"openai-codex/gpt-5.6-sol"' ${piModelsModule}
+    grep -F '"openai-codex/gpt-5.6-terra"' ${piModelsModule}
+    grep -F '"openai-codex/gpt-5.6-luna"' ${piModelsModule}
+    ! grep -F '"openai-codex/gpt-5.5"' ${piModelsModule}
+
+    # Launch the packaged `pi` without PI_CODING_AGENT_DIR or model flags;
+    # the temporary HOME preserves the standard $HOME/.pi/agent lookup.
+    normalPiHome="$TMPDIR/normal-pi-home"
+    mkdir -p "$normalPiHome/.pi/agent" "$normalPiHome/workspace"
+    printf '%s\n' \
+      '{' \
+      '  "defaultProvider": "openai-codex",' \
+      '  "defaultModel": "gpt-5.6-sol",' \
+      '  "defaultThinkingLevel": "high",' \
+      '  "enabledModels": [' \
+      '    "openai-codex/gpt-5.6-sol",' \
+      '    "openai-codex/gpt-5.6-terra",' \
+      '    "openai-codex/gpt-5.6-luna"' \
+      '  ]' \
+      '}' > "$normalPiHome/.pi/agent/settings.json"
+    printf '%s\n' '{"openai-codex":{"type":"api_key","key":"test-only-no-network"}}' \
+      > "$normalPiHome/.pi/agent/auth.json"
+    (
+      cd "$normalPiHome/workspace"
+      HOME="$normalPiHome" PI_OFFLINE=1 PATH="${pi}/bin:$PATH" \
+        pi --list-models gpt-5.6
+    ) > "$normalPiHome/launcher.log"
+    grep -F 'gpt-5.6-sol' "$normalPiHome/launcher.log"
+    grep -F 'gpt-5.6-terra' "$normalPiHome/launcher.log"
+    grep -F 'gpt-5.6-luna' "$normalPiHome/launcher.log"
+    ! grep -F 'gpt-5.5' "$normalPiHome/launcher.log"
     grep -F 'localLlmApiKeyCommand = "!gopass show -o goldragon.criome/local-llm-api-token";' ${piModelsModule}
     grep -F 'file = "$HOME/.pi/agent/auth.json";' ${piModelsModule}
     grep -F 'theme = "criomos-light/criomos-dark";' ${piModelsModule}
