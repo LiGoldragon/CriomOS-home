@@ -38,6 +38,8 @@ pkgs.runCommand "pi-harness-profile"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/node_modules/@earendil-works/pi-tui/package.json"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/src/runs/background/async-execution.ts"
     grep -F 'runner-stderr.log' "${pi-subagents}/share/pi-packages/pi-subagents/src/runs/background/async-execution.ts"
+    ${pkgs.nodejs}/bin/node --experimental-strip-types --test \
+      "${pi-subagents}/share/pi-packages/pi-subagents/test/unit/acceptance-read-only-evidence.test.ts"
     test "$(wc -l < "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md")" -le 150
     grep -F 'Clarify UI is explicit opt-in' "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md"
     grep -F 'Subagents are independent Pi processes.' "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md"
