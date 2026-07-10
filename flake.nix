@@ -195,54 +195,11 @@
       url = "https://registry.npmjs.org/@aliou/pi-utils-ui/-/pi-utils-ui-0.5.0.tgz";
       flake = false;
     };
+    # Maintained fork of the source packaged by npm as pi-subagents 0.31.0.
+    # The revision is immutable in flake.lock; its package-lock pins runtime
+    # dependencies such as Jiti reproducibly.
     pi-subagents-src = {
-      type = "file";
-      url = "https://registry.npmjs.org/pi-subagents/-/pi-subagents-0.31.0.tgz";
-      flake = false;
-    };
-    pi-subagents-jiti-src = {
-      type = "file";
-      url = "https://registry.npmjs.org/jiti/-/jiti-2.7.0.tgz";
-      flake = false;
-    };
-    pi-subagents-typebox-src = {
-      type = "file";
-      url = "https://registry.npmjs.org/typebox/-/typebox-1.1.24.tgz";
-      flake = false;
-    };
-    pi-subagents-pi-tui-src = {
-      type = "file";
-      url = "https://registry.npmjs.org/@earendil-works/pi-tui/-/pi-tui-0.74.0.tgz";
-      flake = false;
-    };
-    pi-subagents-chalk-src = {
-      type = "file";
-      url = "https://registry.npmjs.org/chalk/-/chalk-5.5.0.tgz";
-      flake = false;
-    };
-    pi-subagents-marked-src = {
-      type = "file";
-      url = "https://registry.npmjs.org/marked/-/marked-15.0.12.tgz";
-      flake = false;
-    };
-    pi-subagents-mime-types-src = {
-      type = "file";
-      url = "https://registry.npmjs.org/mime-types/-/mime-types-3.0.1.tgz";
-      flake = false;
-    };
-    pi-subagents-mime-types-types-src = {
-      type = "file";
-      url = "https://registry.npmjs.org/@types/mime-types/-/mime-types-2.1.4.tgz";
-      flake = false;
-    };
-    pi-subagents-get-east-asian-width-src = {
-      type = "file";
-      url = "https://registry.npmjs.org/get-east-asian-width/-/get-east-asian-width-1.3.0.tgz";
-      flake = false;
-    };
-    pi-subagents-mime-db-src = {
-      type = "file";
-      url = "https://registry.npmjs.org/mime-db/-/mime-db-1.54.0.tgz";
+      url = "github:LiGoldragon/pi-subagents-nicobailon/41c3048a3182fc2c874943f4768260677e1da967";
       flake = false;
     };
     pi-intercom-src = {
@@ -278,25 +235,6 @@
     pi-intercom-resolve-pkg-maps-src = {
       type = "file";
       url = "https://registry.npmjs.org/resolve-pkg-maps/-/resolve-pkg-maps-1.0.0.tgz";
-      flake = false;
-    };
-    pi-subagents-tintinweb-src = {
-      url = "github:LiGoldragon/pi-subagents/49697bccba12aaa50ac90f2dd54fbe71d4fd0265";
-      flake = false;
-    };
-    pi-subagents-tintinweb-typebox-src = {
-      type = "file";
-      url = "https://registry.npmjs.org/@sinclair/typebox/-/typebox-0.34.49.tgz";
-      flake = false;
-    };
-    pi-subagents-tintinweb-croner-src = {
-      type = "file";
-      url = "https://registry.npmjs.org/croner/-/croner-10.0.1.tgz";
-      flake = false;
-    };
-    pi-subagents-tintinweb-nanoid-src = {
-      type = "file";
-      url = "https://registry.npmjs.org/nanoid/-/nanoid-5.1.16.tgz";
       flake = false;
     };
     pi-ultra-subagents-src = {

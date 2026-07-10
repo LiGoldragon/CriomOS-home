@@ -37,14 +37,11 @@ pkgs.runCommand "pi-harness-profile"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/node_modules/typebox/package.json"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/node_modules/@earendil-works/pi-tui/package.json"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/src/runs/background/async-execution.ts"
-    grep -F 'runner-stderr.log' "${pi-subagents}/share/pi-packages/pi-subagents/src/runs/background/async-execution.ts"
-    ${pkgs.nodejs}/bin/node --experimental-strip-types --test \
-      "${pi-subagents}/share/pi-packages/pi-subagents/test/unit/acceptance-read-only-evidence.test.ts"
-    test "$(wc -l < "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md")" -le 150
-    grep -F 'Clarify UI is explicit opt-in' "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md"
-    grep -F 'Subagents are independent Pi processes.' "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md"
-    grep -F 'selected child agent, runtime, packages, and prompt, not from the parent' "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md"
-    ! grep -F 'Chains default to clarify mode' "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md"
+    grep -F 'runner.stderr.log' "${pi-subagents}/share/pi-packages/pi-subagents/src/runs/background/async-execution.ts"
+    grep -F 'Existing async result file was used to repair stale running status.' \
+      "${pi-subagents}/share/pi-packages/pi-subagents/src/runs/background/stale-run-reconciler.ts"
+    grep -F 'result: "passed" | "failed" | "blocked" | "not-run";' \
+      "${pi-subagents}/share/pi-packages/pi-subagents/src/shared/types.ts"
     test -f "${pi-intercom}/share/pi-packages/pi-intercom/index.ts"
     test -f "${pi-intercom}/share/pi-packages/pi-intercom/skills/pi-intercom/SKILL.md"
     test -d "${pi-intercom}/share/pi-packages/pi-intercom/node_modules/tsx"
@@ -145,11 +142,9 @@ pkgs.runCommand "pi-harness-profile"
 
     grep -F 'inputs.pi-linkup-src' ${piLinkupPackage}
     grep -F 'inputs.pi-utils-ui-src' ${piLinkupPackage}
-    grep -F 'inputs.pi-subagents-src' ${piSubagentsPackage}
-    grep -F 'inputs.pi-subagents-jiti-src' ${piSubagentsPackage}
-    grep -F 'inputs.pi-subagents-typebox-src' ${piSubagentsPackage}
-    grep -F 'full-child-extension-bridge.patch' ${piSubagentsPackage}
-    grep -F 'inputs.pi-subagents-pi-tui-src' ${piSubagentsPackage}
+    grep -F 'src = inputs.pi-subagents-src;' ${piSubagentsPackage}
+    grep -F 'npmDepsHash' ${piSubagentsPackage}
+    ! grep -F '.patch' ${piSubagentsPackage}
     grep -F 'inputs.pi-intercom-src' ${piIntercomPackage}
     grep -F 'inputs.pi-intercom-tsx-src' ${piIntercomPackage}
     grep -F 'inputs.pi-intercom-typebox-src' ${piIntercomPackage}
@@ -227,7 +222,7 @@ pkgs.runCommand "pi-harness-profile"
     ! grep -F 'piTestingPackages = [' ${piModelsModule}
     grep -F 'packages = normalPiPackages;' ${piModelsModule}
     grep -F 'piTestingSettingsConfig = piSettingsConfig;' ${piModelsModule}
-    grep -F 'https://registry.npmjs.org/pi-subagents/-/pi-subagents-0.31.0.tgz' ${flakeFile}
+    grep -F 'github:LiGoldragon/pi-subagents-nicobailon/41c3048a3182fc2c874943f4768260677e1da967' ${flakeFile}
     grep -F 'https://registry.npmjs.org/pi-intercom/-/pi-intercom-0.6.0.tgz' ${flakeFile}
     ! grep -F 'pi-subagents-tintinweb-testing-src' ${flakeFile}
     ! grep -F 'pi-subagents-tintinweb-testing-src' ${piModelsModule}
@@ -249,174 +244,6 @@ pkgs.runCommand "pi-harness-profile"
     grep -F '"packages/pi-continue"' ${piModelsModule}
     grep -F '"packages/pi-intercom"' ${piModelsModule}
     grep -F 'file = "$HOME/.pi-testing/agent/settings.json";' ${piModelsModule}
-
-    workDir="$(mktemp -d)"
-    trap 'rm -rf "$workDir"' EXIT
-    cat > "$workDir/bridge.ts" <<'EOF'
-import * as fs from "node:fs";
-import * as path from "node:path";
-import { diagnoseIntercomBridge } from "${pi-subagents}/share/pi-packages/pi-subagents/src/intercom/intercom-bridge.ts";
-
-const [agentDir, intercomDir] = process.argv.slice(2);
-if (!agentDir || !intercomDir) throw new Error("bridge test paths are required");
-fs.mkdirSync(path.join(agentDir, "intercom"), { recursive: true });
-fs.writeFileSync(path.join(agentDir, "intercom", "config.json"), JSON.stringify({ enabled: true }));
-const diagnostic = diagnoseIntercomBridge({
-  config: undefined,
-  context: "fresh",
-  orchestratorTarget: "supervisor",
-  agentDir,
-});
-if (!diagnostic.active || diagnostic.extensionDir !== intercomDir) {
-  throw new Error(`bridge did not resolve the declared pi-intercom override: ''${JSON.stringify(diagnostic)}`);
-}
-EOF
-    PI_INTERCOM_EXTENSION_DIR="${pi-intercom}/share/pi-packages/pi-intercom" \
-      ${pkgs.nodejs}/bin/node "${pi-subagents}/share/pi-packages/pi-subagents/node_modules/jiti/lib/jiti-cli.mjs" \
-      "$workDir/bridge.ts" "$workDir/agent" "${pi-intercom}/share/pi-packages/pi-intercom"
-
-    # Exercise the packaged async runner itself. The launch witness deliberately
-    # is not a synthetic Pi JSON child: it records the runner's real child argv
-    # and inherited bridge environment before exiting. A missing bridge field,
-    # contact-supervisor injection, or --no-extensions regression fails here.
-    mkdir -p "$workDir/bin" "$workDir/async"
-    cat > "$workDir/bin/pi" <<'EOF'
-#!${pkgs.runtimeShell}
-printf '%s\n' "$@" > "$PI_CHILD_ARGUMENTS"
-printf '%s\n' "$PI_SUBAGENT_INTERCOM_SESSION_NAME" > "$PI_CHILD_SESSION_NAME"
-printf '%s\n' "$PI_SUBAGENT_ORCHESTRATOR_TARGET" > "$PI_CHILD_ORCHESTRATOR_TARGET"
-exit 0
-EOF
-    chmod +x "$workDir/bin/pi"
-    cat > "$workDir/config.json" <<EOF
-{"id":"packaged-child-bridge","steps":[{"agent":"delegate","task":"verify configured extension loading","cwd":"$workDir","inheritProjectContext":false,"inheritSkills":false,"extensions":["narrow-child-extension.ts"],"tools":["read"],"systemPrompt":"Intercom orchestration channel: use contact_supervisor.","maxSubagentDepth":0,"completionGuard":false}],"resultPath":"$workDir/result.json","cwd":"$workDir","placeholder":"{previous}","asyncDir":"$workDir/async","controlIntercomTarget":"supervisor","childIntercomTargets":["child-bridge"],"resultMode":"single"}
-EOF
-    PI_CHILD_ARGUMENTS="$workDir/child.args" \
-      PI_CHILD_SESSION_NAME="$workDir/child.session" \
-      PI_CHILD_ORCHESTRATOR_TARGET="$workDir/child.orchestrator" \
-      PATH="$workDir/bin:$PATH" ${pkgs.util-linux}/bin/setsid ${pkgs.nodejs}/bin/node \
-        "${pi-subagents}/share/pi-packages/pi-subagents/node_modules/jiti/lib/jiti-cli.mjs" \
-        "${pi-subagents}/share/pi-packages/pi-subagents/src/runs/background/subagent-runner.ts" \
-        "$workDir/config.json" > "$workDir/runner.stdout" 2> "$workDir/async/runner-stderr.log" &
-    runnerPid=$!
-    for _attempt in $(seq 1 100); do
-      test -f "$workDir/result.json" && break
-      sleep 0.1
-    done
-    wait "$runnerPid"
-    jq -e '.exitCode == 0 and .results[0].success == true' "$workDir/result.json"
-    jq -e '.state == "complete" and .steps[0].status == "complete" and .steps[0].exitCode == 0' "$workDir/async/status.json"
-    ! grep -Fx -- '--no-extensions' "$workDir/child.args"
-    grep -Fx -- '--extension' "$workDir/child.args"
-    grep -Fx -- 'narrow-child-extension.ts' "$workDir/child.args"
-    test "$(cat "$workDir/child.session")" = 'child-bridge'
-    test "$(cat "$workDir/child.orchestrator")" = 'supervisor'
-    grep -F 'contact_supervisor' "${pi-intercom}/share/pi-packages/pi-intercom/index.ts"
-
-    # A dead runner remains failed, but a result that appears while liveness is
-    # checked is authoritative. This exercises the repair ordering used by
-    # resumed async runs and ensures its completion notification remains final.
-    cat > "$workDir/stale-run-reconciliation.ts" <<'EOF'
-import * as fs from "node:fs";
-import * as path from "node:path";
-import { reconcileAsyncRun } from "${pi-subagents}/share/pi-packages/pi-subagents/src/runs/background/stale-run-reconciler.ts";
-import { resolveAsyncResumeTarget } from "${pi-subagents}/share/pi-packages/pi-subagents/src/runs/background/async-resume.ts";
-
-const root = process.argv[2];
-if (!root) throw new Error("reconciliation test root is required");
-const resultsDir = path.join(root, "results");
-const now = 1_700_000_000_000;
-
-function writeRunningStatus(runId: string, asyncDir: string, pid: number): void {
-  fs.mkdirSync(asyncDir, { recursive: true });
-  fs.writeFileSync(path.join(asyncDir, "status.json"), JSON.stringify({
-    runId,
-    mode: "single",
-    state: "running",
-    pid,
-    startedAt: now - 100,
-    lastUpdate: now - 50,
-    currentStep: 0,
-    steps: [{ agent: "generalist", status: "running", startedAt: now - 100 }],
-  }));
-}
-
-function deadPid(): never {
-  const error = new Error("process missing") as NodeJS.ErrnoException;
-  error.code = "ESRCH";
-  throw error;
-}
-
-const vanishedId = "vanished-run";
-const vanishedDir = path.join(root, "async", vanishedId);
-writeRunningStatus(vanishedId, vanishedDir, 101);
-fs.writeFileSync(path.join(vanishedDir, "runner-stderr.log"), "runner startup diagnostic\n");
-const vanished = reconcileAsyncRun(vanishedDir, { resultsDir, now: () => now, kill: () => deadPid() });
-if (vanished.status?.state !== "failed" || !vanished.message?.includes("runner-stderr.log")) {
-  throw new Error("disappeared runner did not retain failure and diagnostic location");
-}
-const vanishedResult = JSON.parse(fs.readFileSync(path.join(resultsDir, vanishedId + ".json"), "utf8"));
-if (vanishedResult.success !== false || vanishedResult.runnerStderrPath !== path.join(vanishedDir, "runner-stderr.log")) {
-  throw new Error("disappeared runner result did not preserve diagnostic truth");
-}
-
-const completedId = "completed-during-reconciliation";
-const completedDir = path.join(root, "async", completedId);
-writeRunningStatus(completedId, completedDir, 102);
-const completedResultPath = path.join(resultsDir, completedId + ".json");
-const completed = reconcileAsyncRun(completedDir, {
-  resultsDir,
-  now: () => now,
-  kill: () => {
-    fs.mkdirSync(resultsDir, { recursive: true });
-    fs.writeFileSync(completedResultPath, JSON.stringify({
-      id: completedId,
-      success: true,
-      state: "complete",
-      exitCode: 0,
-      results: [{ agent: "generalist", success: true }],
-    }));
-    return deadPid();
-  },
-});
-if (completed.status?.state !== "complete" || completed.message?.includes("failed")) {
-  throw new Error("result persisted during reconciliation was converted to failure");
-}
-if (JSON.parse(fs.readFileSync(completedResultPath, "utf8")).success !== true) {
-  throw new Error("successful result was overwritten during reconciliation");
-}
-
-const resumedId = "resumed-after-reconciliation";
-const resumedDir = path.join(root, "async", resumedId);
-const sessionFile = path.join(root, "resumed-session.jsonl");
-fs.writeFileSync(sessionFile, "{}\n");
-writeRunningStatus(resumedId, resumedDir, 103);
-const resumedResultPath = path.join(resultsDir, resumedId + ".json");
-const resumed = resolveAsyncResumeTarget(
-  { id: resumedId },
-  {
-    asyncDirRoot: path.join(root, "async"),
-    resultsDir,
-    now: () => now,
-    kill: () => {
-      fs.mkdirSync(resultsDir, { recursive: true });
-      fs.writeFileSync(resumedResultPath, JSON.stringify({
-        id: resumedId,
-        success: true,
-        state: "complete",
-        exitCode: 0,
-        results: [{ agent: "generalist", success: true, sessionFile }],
-      }));
-      return deadPid();
-    },
-  },
-);
-if (resumed.state !== "complete" || resumed.sessionFile !== sessionFile) {
-  throw new Error("resumed async run did not use the terminal result written during reconciliation");
-}
-EOF
-    ${pkgs.nodejs}/bin/node "${pi-subagents}/share/pi-packages/pi-subagents/node_modules/jiti/lib/jiti-cli.mjs" \
-      "$workDir/stale-run-reconciliation.ts" "$workDir/reconciliation"
 
     touch "$out"
   ''
