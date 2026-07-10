@@ -195,8 +195,8 @@ pkgs.runCommand "pi-harness-profile"
     grep -F 'home.file.".pi-testing/agent/packages/pi-intercom".source' ${piModelsModule}
     test "$(grep -F '"''${pi-intercom}/share/pi-packages/pi-intercom";' ${piModelsModule} | wc -l)" -eq 2
     grep -F 'piIntercomConfig = {' ${piModelsModule}
-    grep -F 'brokerCommand = "${pkgs.nodejs}/bin/node";' ${piModelsModule}
-    grep -F 'brokerArgs = [ "${pi-intercom}/share/pi-packages/pi-intercom/node_modules/tsx/dist/cli.mjs" ];' ${piModelsModule}
+    grep -F 'brokerCommand = "''${pkgs.nodejs}/bin/node";' ${piModelsModule}
+    grep -F 'brokerArgs = [ "''${pi-intercom}/share/pi-packages/pi-intercom/node_modules/tsx/dist/cli.mjs" ];' ${piModelsModule}
     grep -F 'file = "$HOME/.pi/agent/intercom/config.json";' ${piModelsModule}
     grep -F 'file = "$HOME/.pi-testing/agent/intercom/config.json";' ${piModelsModule}
     ! grep -F 'home.file.".pi-testing/agent/packages/pi-ultra-subagents".source' ${piModelsModule}
