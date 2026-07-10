@@ -35,7 +35,7 @@
  /**
   * Spawn the async runner process
   */
-@@ -238,15 +266,23 @@
+@@ -238,15 +266,24 @@
  	const runner = path.join(path.dirname(fileURLToPath(import.meta.url)), "subagent-runner.ts");
  	const nodeCommand = resolveAsyncRunnerNodeCommand();
  
