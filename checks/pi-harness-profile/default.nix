@@ -203,7 +203,7 @@ pkgs.runCommand "pi-harness-profile"
     test "$(grep -F '"''${pi-subagents}/share/pi-packages/pi-subagents";' ${piModelsModule} | wc -l)" -eq 2
     grep -F 'home.file.".pi/agent/packages/pi-intercom".source' ${piModelsModule}
     grep -F 'home.file.".pi-testing/agent/packages/pi-intercom".source' ${piModelsModule}
-    test "$(grep -F '"''${pi-intercom}/share/pi-packages/pi-intercom";' ${piModelsModule} | wc -l)" -eq 2
+    test "$(grep -F '"''${pi-intercom}/share/pi-packages/pi-intercom";' ${piModelsModule} | wc -l)" -eq 3
     grep -F 'piIntercomConfig = {' ${piModelsModule}
     grep -F 'brokerCommand = "''${pkgs.nodejs}/bin/node";' ${piModelsModule}
     grep -F 'brokerArgs = [ "''${pi-intercom}/share/pi-packages/pi-intercom/node_modules/tsx/dist/cli.mjs" ];' ${piModelsModule}
