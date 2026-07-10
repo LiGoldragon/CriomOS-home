@@ -3334,11 +3334,11 @@
     "spirit-judge-config": {
       "flake": false,
       "locked": {
-        "lastModified": 1783708246,
-        "narHash": "sha256-Do5R3SAR791jTsBvwCBp1qBLDBl6hLlu/jYjYD37Ej0=",
+        "lastModified": 1783708669,
+        "narHash": "sha256-7cqxS1edOxCKqfExvC/KtHb+Rc9xhK36PPskVAfgPBc=",
         "owner": "LiGoldragon",
         "repo": "spirit-judge-config",
-        "rev": "a59eb6e9856fa8e10bbaafcd437900c91fc8e9f2",
+        "rev": "b6a3fe7e0f91f2e5ff8ddec94ebfe2b489fc355d",
         "type": "github"
       },
       "original": {
