@@ -1807,13 +1807,18 @@
     "pi-intercom-src": {
       "flake": false,
       "locked": {
-        "narHash": "sha256-S3IJYICzhXtJZsazq/scywd5GoYZzZfjtIWzY7UOw2s=",
-        "type": "file",
-        "url": "https://registry.npmjs.org/pi-intercom/-/pi-intercom-0.6.0.tgz"
+        "lastModified": 1783781272,
+        "narHash": "sha256-y7hc6WCM4bskqd5wiJqKqsMuVHxLXcv9BA5oKY2fsdY=",
+        "owner": "LiGoldragon",
+        "repo": "pi-intercom",
+        "rev": "1fe0fcb210f235890363fbb5c667db4d0896f332",
+        "type": "github"
       },
       "original": {
-        "type": "file",
-        "url": "https://registry.npmjs.org/pi-intercom/-/pi-intercom-0.6.0.tgz"
+        "owner": "LiGoldragon",
+        "repo": "pi-intercom",
+        "rev": "1fe0fcb210f235890363fbb5c667db4d0896f332",
+        "type": "github"
       }
     },
     "pi-intercom-tsx-src": {
@@ -1893,17 +1898,17 @@
     "pi-subagents-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1783714338,
-        "narHash": "sha256-dWHzsRUJ3Ol2jElEdjMupekrOSUKOccQJQkvlohS5Es=",
+        "lastModified": 1783781396,
+        "narHash": "sha256-mLk8hNf9pEcR/bA8cZE7d4W0ANc2WfVx6CkNX+sm+QE=",
         "owner": "LiGoldragon",
         "repo": "pi-subagents-nicobailon",
-        "rev": "68733be4dbeea1b1a99018c8745d044c9c472f37",
+        "rev": "b839d8904b6aa33c6dfe9ed2840832c02e67b0fc",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "pi-subagents-nicobailon",
-        "rev": "68733be4dbeea1b1a99018c8745d044c9c472f37",
+        "rev": "b839d8904b6aa33c6dfe9ed2840832c02e67b0fc",
         "type": "github"
       }
     },

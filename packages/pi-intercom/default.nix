@@ -40,7 +40,7 @@ pkgs.stdenvNoCC.mkDerivation {
 
   meta = {
     description = "Pi extension for local inter-session communication";
-    homepage = "https://github.com/nicobailon/pi-intercom";
+    homepage = "https://github.com/LiGoldragon/pi-intercom";
     license = pkgs.lib.licenses.mit;
     platforms = [ "x86_64-linux" ];
   };

@@ -196,16 +196,13 @@
       url = "https://registry.npmjs.org/@aliou/pi-utils-ui/-/pi-utils-ui-0.5.0.tgz";
       flake = false;
     };
-    # Maintained fork of the source packaged by npm as pi-subagents 0.31.0.
-    # The revision is immutable in flake.lock; its package-lock pins runtime
-    # dependencies such as Jiti reproducibly.
+    # Maintained reliability forks pinned to immutable published revisions.
     pi-subagents-src = {
-      url = "github:LiGoldragon/pi-subagents-nicobailon/68733be4dbeea1b1a99018c8745d044c9c472f37";
+      url = "github:LiGoldragon/pi-subagents-nicobailon/b839d8904b6aa33c6dfe9ed2840832c02e67b0fc";
       flake = false;
     };
     pi-intercom-src = {
-      type = "file";
-      url = "https://registry.npmjs.org/pi-intercom/-/pi-intercom-0.6.0.tgz";
+      url = "github:LiGoldragon/pi-intercom/1fe0fcb210f235890363fbb5c667db4d0896f332";
       flake = false;
     };
     pi-intercom-tsx-src = {

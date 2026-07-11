@@ -222,8 +222,8 @@ pkgs.runCommand "pi-harness-profile"
     ! grep -F 'piTestingPackages = [' ${piModelsModule}
     grep -F 'packages = normalPiPackages;' ${piModelsModule}
     grep -F 'piTestingSettingsConfig = piSettingsConfig;' ${piModelsModule}
-    grep -F 'github:LiGoldragon/pi-subagents-nicobailon/68733be4dbeea1b1a99018c8745d044c9c472f37' ${flakeFile}
-    grep -F 'https://registry.npmjs.org/pi-intercom/-/pi-intercom-0.6.0.tgz' ${flakeFile}
+    grep -F 'github:LiGoldragon/pi-subagents-nicobailon/b839d8904b6aa33c6dfe9ed2840832c02e67b0fc' ${flakeFile}
+    grep -F 'github:LiGoldragon/pi-intercom/1fe0fcb210f235890363fbb5c667db4d0896f332' ${flakeFile}
     ! grep -F 'pi-subagents-tintinweb-testing-src' ${flakeFile}
     ! grep -F 'pi-subagents-tintinweb-testing-src' ${piModelsModule}
     ! grep -F 'pi-subagents-tintinweb-testing' ${piModelsModule}
