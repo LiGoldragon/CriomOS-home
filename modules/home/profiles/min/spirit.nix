@@ -141,6 +141,7 @@ let
       --reasoning-effort medium \
       --provider-timeout-milliseconds 180000 \
       --external-authorization-source codex-login \
+      --session-launcher ${pkgs.util-linux}/bin/setsid \
       --codex-command ${codexCliPackage}/bin/codex
   '';
 

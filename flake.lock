@@ -3149,11 +3149,11 @@
         "rust-build": "rust-build_6"
       },
       "locked": {
-        "lastModified": 1783708259,
-        "narHash": "sha256-+PhMH5OQ9KT7uir9taDEMxNhbeh5r0dKXjAmb3DRWlE=",
+        "lastModified": 1783726310,
+        "narHash": "sha256-0FND98H/ZEW8KTH6MwwXxB8eF5lED2nOW8LAH2xufjA=",
         "owner": "LiGoldragon",
         "repo": "spirit-judge",
-        "rev": "04e473d85e4ebcf14fd785f33410e1455fa08ead",
+        "rev": "c2303a30ff88fea527a8075b22f1d598a80fdb80",
         "type": "github"
       },
       "original": {

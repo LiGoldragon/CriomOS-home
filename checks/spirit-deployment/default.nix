@@ -35,6 +35,9 @@ let
     '';
   };
 
+  # This fake only renders and inspects Home's argv; it proves no real Codex
+  # executable, ambient login, or provider call. The pinned-package CLI contract
+  # is checked separately in checks/spirit-judge-cli-contract.
   fakeCodex = {
     packages.${system}.default = pkgs.writeShellScriptBin "codex" "exit 0";
   };
@@ -228,6 +231,7 @@ else
     grep -q -- '--reasoning-effort medium' spirit-judge-daemon-service
     grep -q -- '--provider-timeout-milliseconds 180000' spirit-judge-daemon-service
     grep -q -- '--external-authorization-source codex-login' spirit-judge-daemon-service
+    grep -q -- '--session-launcher ' spirit-judge-daemon-service
     grep -q -- '--codex-command ' spirit-judge-daemon-service
     ! grep -q 'gopass show' spirit-judge-daemon-service
     ! grep -q 'bearer-secret-source' spirit-judge-daemon-service
