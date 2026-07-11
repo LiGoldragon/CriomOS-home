@@ -1730,11 +1730,11 @@
         "rust-build": "rust-build_4"
       },
       "locked": {
-        "lastModified": 1783728281,
-        "narHash": "sha256-qXTEd1ZrHkIHK4SzZnclzPKGasS0ieEQ6kud1VOYURU=",
+        "lastModified": 1783760306,
+        "narHash": "sha256-EBcSujIc3jHLNNcy4tjVsmRpHp2uhGjL6tM1ZR2gji8=",
         "owner": "LiGoldragon",
         "repo": "orchestrate",
-        "rev": "382b96854116f920b26e63406339d2007c0258d2",
+        "rev": "df8dd6d550287f602ddc0e85818868759eb229e2",
         "type": "github"
       },
       "original": {
