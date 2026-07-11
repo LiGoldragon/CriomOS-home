@@ -160,7 +160,7 @@
     # modules/home/profiles/min/orchestrate.nix, which gives it a systemd
     # --user supervisor. Pinned to the revision carrying claim-age projection
     # and v5-to-v6 store migration for workflow model-resolution storage.
-    orchestrate.url = "github:LiGoldragon/orchestrate/e6b6b17d2ddfce88cda792dff03215c2936a3c70";
+    orchestrate.url = "github:LiGoldragon/orchestrate/382b96854116f920b26e63406339d2007c0258d2";
     orchestrate.inputs.nixpkgs.follows = "nixpkgs";
 
     # Mentci — psyche-facing approval daemon and egui client surface.
