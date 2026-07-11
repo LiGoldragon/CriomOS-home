@@ -2,6 +2,7 @@
 pkgs.stdenvNoCC.mkDerivation {
   pname = "pi-intercom";
   version = "0.6.0";
+  src = inputs.pi-intercom-src;
 
   dontUnpack = true;
   dontBuild = true;
@@ -20,7 +21,7 @@ pkgs.stdenvNoCC.mkDerivation {
       "$packageRoot/.pi-deps/resolve-pkg-maps" \
       "$packageRoot/node_modules/@esbuild"
 
-    tar -xzf ${inputs.pi-intercom-src} -C "$packageRoot" --strip-components=1
+    cp -R "$src"/. "$packageRoot"
     tar -xzf ${inputs.pi-intercom-tsx-src} -C "$packageRoot/.pi-deps/tsx" --strip-components=1
     tar -xzf ${inputs.pi-intercom-typebox-src} -C "$packageRoot/.pi-deps/typebox" --strip-components=1
     tar -xzf ${inputs.pi-intercom-esbuild-src} -C "$packageRoot/.pi-deps/esbuild" --strip-components=1
