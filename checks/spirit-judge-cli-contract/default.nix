@@ -3,7 +3,10 @@ let
   system = pkgs.stdenv.hostPlatform.system;
   spiritJudge = inputs.spirit-judge.packages.${system}.default;
 in
-pkgs.runCommand "spirit-judge-cli-contract" { } ''
+pkgs.runCommand "spirit-judge-cli-contract" {
+  allowSubstitutes = false;
+  preferLocalBuild = false;
+} ''
   set -eu
 
   # This calls the real package locked by this flake. It proves only the
