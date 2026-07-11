@@ -38,7 +38,9 @@ pkgs.runCommand "pi-harness-profile"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/node_modules/@earendil-works/pi-tui/package.json"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/src/runs/background/async-execution.ts"
     grep -F 'runner.stderr.log' "${pi-subagents}/share/pi-packages/pi-subagents/src/runs/background/async-execution.ts"
-    grep -F 'Existing async result file was used to repair stale running status.' \
+    # The stable reconciliation contract is a durable repaired-stale event,
+    # not a particular explanatory sentence in its human-facing message.
+    grep -F 'type: "subagent.run.repaired_stale"' \
       "${pi-subagents}/share/pi-packages/pi-subagents/src/runs/background/stale-run-reconciler.ts"
     grep -F 'result: "passed" | "failed" | "blocked" | "not-run";' \
       "${pi-subagents}/share/pi-packages/pi-subagents/src/shared/types.ts"
