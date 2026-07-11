@@ -178,7 +178,10 @@ in
 if failures != [ ] then
   throw (lib.concatMapStringsSep "\n" (assertion: assertion.message) failures)
 else
-  pkgs.runCommand "spirit-deployment" { } ''
+  pkgs.runCommand "spirit-deployment" {
+    allowSubstitutes = false;
+    preferLocalBuild = false;
+  } ''
     set -eu
 
     test -x "${profileWitness}/bin/spirit"
