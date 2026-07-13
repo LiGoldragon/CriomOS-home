@@ -1,10 +1,10 @@
 { inputs, pkgs, ... }:
 pkgs.buildNpmPackage {
   pname = "pi-subagents";
-  version = "0.34.0+fork";
+  version = "0.35.0";
 
   src = inputs.pi-subagents-src;
-  npmDepsHash = "sha256-IJJ3hceNvHUr5QFIa/+0tnxNiEPh7jifE9dvPHrLE58=";
+  npmDepsHash = "sha256-9+xwfnd7+2BYcV170bh5jlYkFbD1l8pHkAFgI8l+ucE=";
   dontNpmBuild = true;
   dontNpmInstall = true;
 
