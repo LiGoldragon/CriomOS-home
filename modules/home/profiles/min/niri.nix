@@ -191,6 +191,17 @@ in
     };
   };
 
+  # GNOME Settings' Bluetooth panel talks to this narrow settings-daemon
+  # component on the user bus. Niri does not start a GNOME session, so make
+  # that otherwise packaged component part of the desktop user environment.
+  systemd.user.targets."org.gnome.SettingsDaemon.Rfkill" = lib.mkIf behavesAs.edge {
+    Unit = {
+      Description = "GNOME Settings Bluetooth rfkill integration";
+      Wants = [ "org.gnome.SettingsDaemon.Rfkill.service" ];
+    };
+    Install.WantedBy = [ "default.target" ];
+  };
+
   programs.niri = {
     settings = {
       prefer-no-csd = true;
@@ -288,13 +299,6 @@ in
         { command = [ "${syncSessionEnvironment}" ]; }
         { command = [ "mako" ]; }
         { command = [ "noctalia-shell" ]; }
-        {
-          command = [
-            "${pkgs.networkmanagerapplet}/bin/nm-applet"
-            "--indicator"
-          ];
-        }
-        { command = [ "${pkgs.blueman}/bin/blueman-applet" ]; }
       ];
 
       animations = {
