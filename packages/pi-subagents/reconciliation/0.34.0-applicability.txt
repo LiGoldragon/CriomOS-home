@@ -1,0 +1,35 @@
+acceptance-read-only-evidence.patch exit=0
+7:checking file src/runs/shared/acceptance.ts
+8:Hunk #1 succeeded at 631.
+15:checking file test/unit/acceptance-read-only-evidence.test.ts
+16:Hunk #1 succeeded at 1.
+agent-chain-clarify-opt-in.patch exit=1
+9:checking file src/extension/schemas.ts
+10:Hunk #1 succeeded at 275 (offset 29 lines).
+19:checking file src/runs/foreground/chain-execution.ts
+20:Reversed (or previously applied) patch detected!  Skipping patch.
+21:Hunk #1 ignored at 504.
+22:1 out of 1 hunk ignored
+async-runner-stderr.patch exit=1
+7:checking file src/runs/background/async-execution.ts
+8:Hunk #1 succeeded at 277 with fuzz 1 (offset 62 lines).
+9:Hunk #2 FAILED at 266.
+10:1 out of 2 hunks FAILED
+detached-runner-peer-isolation.patch exit=1
+7:checking file src/shared/utils.ts
+8:Reversed (or previously applied) patch detected!  Skipping patch.
+9:Hunk #1 ignored at 5.
+10:Hunk #2 ignored at 16.
+11:2 out of 2 hunks ignored
+full-child-extension-bridge.patch exit=1
+7:checking file src/intercom/intercom-bridge.ts
+8:Reversed (or previously applied) patch detected!  Skipping patch.
+9:Hunk #1 ignored at 238.
+10:Hunk #2 ignored at 365.
+11:2 out of 2 hunks ignored
+18:checking file src/runs/shared/pi-args.ts
+19:Hunk #1 succeeded at 141 (offset 16 lines).
+slim-parent-skill.patch exit=1
+7:checking file skills/pi-subagents/SKILL.md
+8:Hunk #1 FAILED at 10.
+9:1 out of 1 hunk FAILED
