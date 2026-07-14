@@ -1,0 +1,26 @@
+diff --git a/src/extension/schemas.ts b/src/extension/schemas.ts
+index 359951d..d7ab236 100644
+--- a/src/extension/schemas.ts
++++ b/src/extension/schemas.ts
+@@ -246,7 +246,7 @@ export const SubagentParams = Type.Object({
+ 		Type.String({ description: "Directory to store session logs (default: temp; enables sessions even if share=false)" }),
+ 	),
+ 	// Clarification TUI
+-	clarify: Type.Optional(Type.Boolean({ description: "Show TUI to preview/edit before execution. Explicit clarify: true keeps the run foreground for the clarify UI; omitted clarify can still run in the background when async: true is set." })),
++	clarify: Type.Optional(Type.Boolean({ description: "Set true only when human preview/edit confirmation is needed before execution. Omitted or false runs directly, so agent-started automation does not wait for manual UI approval." })),
+ 	control: Type.Optional(ControlOverrides),
+ 	// Solo agent overrides
+ 	output: Type.Optional(Type.Unsafe({
+diff --git a/src/runs/foreground/chain-execution.ts b/src/runs/foreground/chain-execution.ts
+index 192624b..3bc85c3 100644
+--- a/src/runs/foreground/chain-execution.ts
++++ b/src/runs/foreground/chain-execution.ts
+@@ -504,7 +504,7 @@ export async function executeChain(params: ChainExecutionParams): Promise<ChainEx
+ 	const chainDir = createChainDir(runId, chainDirBase);
+ 	const hasParallelSteps = chainSteps.some((step) => isParallelStep(step) || isDynamicParallelStep(step));
+ 	let templates: ResolvedTemplates = resolveChainTemplates(chainSteps);
+-	const shouldClarify = clarify !== false && ctx.hasUI && !hasParallelSteps;
++	const shouldClarify = clarify === true && ctx.hasUI && !hasParallelSteps;
+ 	let tuiBehaviorOverrides: (BehaviorOverride | undefined)[] | undefined;
+ 	const availableModels: ModelInfo[] = ctx.modelRegistry.getAvailable().map(toModelInfo);
+ 	const availableSkills = discoverAvailableSkills(cwd ?? ctx.cwd);

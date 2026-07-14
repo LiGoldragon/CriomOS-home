@@ -1,0 +1,67 @@
+--- a/src/runs/shared/acceptance.ts
++++ b/src/runs/shared/acceptance.ts
+@@ -631,8 +631,8 @@
+ 
+ function reportEvidencePresent(report: AcceptanceReport, kind: AcceptanceEvidenceKind): boolean {
+ 	switch (kind) {
+-		case "changed-files": return isStringArray(report.changedFiles) && report.changedFiles.length > 0;
+-		case "tests-added": return isStringArray(report.testsAddedOrUpdated) && report.testsAddedOrUpdated.length > 0;
++		case "changed-files": return isStringArray(report.changedFiles);
++		case "tests-added": return isStringArray(report.testsAddedOrUpdated);
+ 		case "commands-run": return Array.isArray(report.commandsRun) && report.commandsRun.length > 0;
+ 		case "validation-output": return isStringArray(report.validationOutput) && report.validationOutput.length > 0;
+ 		case "residual-risks": return isStringArray(report.residualRisks);
+--- /dev/null
++++ b/test/unit/acceptance-read-only-evidence.test.ts
+@@ -0,0 +1,51 @@
++import assert from "node:assert/strict";
++import test from "node:test";
++import { evaluateAcceptance, resolveEffectiveAcceptance } from "../../src/runs/shared/acceptance.ts";
++
++const readOnlyReport = (changedFiles?: string[], testsAddedOrUpdated?: string[]) => ({
++	criteriaSatisfied: [{ id: "criterion-1", status: "satisfied" as const, evidence: "Read-only findings returned." }],
++	...(changedFiles === undefined ? {} : { changedFiles }),
++	...(testsAddedOrUpdated === undefined ? {} : { testsAddedOrUpdated }),
++	commandsRun: [{ command: "node --test", result: "passed" as const, summary: "targeted validation" }],
++	validationOutput: ["Read-only validation completed."],
++	residualRisks: [],
++	noStagedFiles: true,
++});
++
++test("reviewed read-only work accepts explicit empty change evidence", async () => {
++	const acceptance = resolveEffectiveAcceptance({
++		explicit: { level: "reviewed", review: { required: false } },
++		agentName: "scout",
++		task: "Inspect the implementation. Do not edit files.",
++	});
++	const ledger = await evaluateAcceptance({
++		acceptance,
++		output: "",
++		cwd: process.cwd(),
++		report: readOnlyReport([], []),
++	});
++	assert.equal(ledger.status, "checked");
++	assert.deepEqual(
++		ledger.runtimeChecks.filter((check) => check.id.startsWith("evidence:") && check.status === "failed"),
++		[],
++	);
++});
++
++test("missing change evidence remains rejected", async () => {
++	const acceptance = resolveEffectiveAcceptance({
++		explicit: { level: "checked" },
++		agentName: "worker",
++		task: "Implement the requested change.",
++	});
++	const ledger = await evaluateAcceptance({
++		acceptance,
++		output: "",
++		cwd: process.cwd(),
++		report: readOnlyReport(undefined, []),
++	});
++	assert.equal(ledger.status, "rejected");
++	assert.match(
++		ledger.runtimeChecks.find((check) => check.id === "evidence:changed-files")?.message ?? "",
++		/missing/,
++	);
++});
