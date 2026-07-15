@@ -122,6 +122,7 @@ let
     retry.enabled = true;
     transport = "websocket";
     packages = normalPiPackages;
+    subagents.disableBuiltins = true;
   };
 
   piTestingSettingsConfig = piSettingsConfig;
@@ -247,6 +248,7 @@ lib.mkIf (size.min && endpointNode != null) {
       "/compaction" = "always";
       "/transport" = "always";
       "/packages" = "always";
+      "/subagents/disableBuiltins" = "always";
     };
   };
 
@@ -291,6 +293,7 @@ lib.mkIf (size.min && endpointNode != null) {
       "/compaction" = "always";
       "/transport" = "always";
       "/packages" = "always";
+      "/subagents/disableBuiltins" = "always";
     };
   };
 }

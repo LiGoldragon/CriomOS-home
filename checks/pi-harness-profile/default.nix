@@ -16,6 +16,34 @@ let
   piContinuePackage = ../../packages/pi-continue/default.nix;
   piModelsModule = ../../modules/home/profiles/min/pi-models.nix;
   flakeFile = ../../flake.nix;
+  piRuntimeHome = inputs.home-manager.lib.homeManagerConfiguration {
+    inherit pkgs;
+    extraSpecialArgs = {
+      inherit inputs;
+      hexis = inputs.hexis.packages.${system}.default;
+      horizon = {
+        node = {
+          typeIs.largeAiRouter = false;
+          behavesAs.largeAi = true;
+          criomeDomainName = "pi-runtime-test.invalid";
+        };
+        exNodes = { };
+      };
+      user.size.min = true;
+    };
+    modules = [
+      piModelsModule
+      {
+        home = {
+          username = "pi-runtime-test";
+          homeDirectory = "/home/pi-runtime-test";
+          stateVersion = "26.05";
+        };
+      }
+    ];
+  };
+  piRuntimeFiles = piRuntimeHome.config.home.file;
+  piRuntimeActivations = piRuntimeHome.config.home.activation;
 in
 pkgs.runCommand "pi-harness-profile"
   {
@@ -210,6 +238,124 @@ pkgs.runCommand "pi-harness-profile"
     grep -F 'gpt-5.6-terra' "$normalPiHome/launcher.log"
     grep -F 'gpt-5.6-luna' "$normalPiHome/launcher.log"
     ! grep -F 'gpt-5.5' "$normalPiHome/launcher.log"
+
+    # Materialize the owning Home Manager module's evaluated file layout into
+    # an isolated HOME, then run its managed settings activations. The resulting
+    # normal and testing directories are passed to Pi and pi-subagents at runtime;
+    # this guards effective layout and discovery rather than only matching Nix text.
+    runtimeHome="$TMPDIR/pi-runtime-home"
+    link_runtime_file() {
+      target="$1"
+      source="$2"
+      mkdir -p "$(dirname "$target")"
+      ln -s "$source" "$target"
+    }
+    link_runtime_file "$runtimeHome/.local/share/criomos/pi/package" \
+      "${piRuntimeFiles.".local/share/criomos/pi/package".source}"
+    link_runtime_file "$runtimeHome/.pi/agent/SYSTEM.md" \
+      "${piRuntimeFiles.".pi/agent/SYSTEM.md".source}"
+    link_runtime_file "$runtimeHome/.pi/agent/packages/pi-subagents" \
+      "${piRuntimeFiles.".pi/agent/packages/pi-subagents".source}"
+    link_runtime_file "$runtimeHome/.pi-testing/agent/SYSTEM.md" \
+      "${piRuntimeFiles.".pi-testing/agent/SYSTEM.md".source}"
+    link_runtime_file "$runtimeHome/.pi-testing/agent/packages/pi-subagents" \
+      "${piRuntimeFiles.".pi-testing/agent/packages/pi-subagents".source}"
+    DRY_RUN_CMD=
+    run() { "$@"; }
+    export HOME="$runtimeHome"
+    ${piRuntimeActivations.mergePiSettings.data}
+    ${piRuntimeActivations.mergePiTestingSettings.data}
+
+    test ! -e "$runtimeHome/.pi/agents"
+
+    cat > "$TMPDIR/check-pi-runtime-discovery.ts" <<'EOF'
+    import { discoverAgents, discoverAgentsAll } from "${pi-subagents}/share/pi-packages/pi-subagents/src/agents/agents.ts";
+
+    const [cwd, expectedBuiltinState] = process.argv.slice(2);
+    if (!cwd || !expectedBuiltinState) throw new Error("expected cwd and builtin state");
+
+    const discovered = discoverAgents(cwd, "both").agents;
+    const all = discoverAgentsAll(cwd);
+    const builtinVisible = discovered.some((agent) => agent.source === "builtin");
+    const projectAgentVisible = discovered.some((agent) => agent.name === "project-runtime-agent" && agent.source === "project");
+    const builtinDisabled = all.builtin.every((agent) => agent.disabled === true);
+
+    if (!projectAgentVisible) throw new Error("project-scoped .pi/agents entry was not discovered");
+    if (expectedBuiltinState === "project-enabled") {
+      if (!builtinVisible || builtinDisabled) throw new Error("project settings did not override user builtin suppression");
+    } else if (expectedBuiltinState === "user-disabled") {
+      if (builtinVisible || !builtinDisabled) throw new Error("user builtin suppression was not applied");
+    } else {
+      throw new Error(`unknown expected builtin state: ''${expectedBuiltinState}`);
+    }
+    EOF
+
+    check_effective_pi_layout() {
+      agent_directory="$1"
+      layout_name="$2"
+      project_directory="$runtimeHome/$layout_name-project"
+
+      test -f "$agent_directory/settings.json"
+      ${pkgs.jq}/bin/jq -e '.subagents.disableBuiltins == true' "$agent_directory/settings.json"
+      test -L "$agent_directory/packages/pi-subagents"
+      test -f "$agent_directory/SYSTEM.md"
+
+      mkdir -p "$project_directory/.pi/agents"
+      cat > "$project_directory/.pi/agents/project-runtime-agent.md" <<'EOF'
+    ---
+    name: project-runtime-agent
+    description: Hermetic project discovery witness
+    ---
+    This agent exists only to prove project-scoped discovery.
+    EOF
+      printf '%s\n' '{"subagents":{"disableBuiltins":false}}' > "$project_directory/.pi/settings.json"
+
+      if [ "$layout_name" = normal ]; then
+        (
+          cd "$project_directory"
+          HOME="$runtimeHome" PI_OFFLINE=1 PATH="${pi}/bin:$PATH" pi list
+        ) > "$runtimeHome/$layout_name-pi-list.log"
+        (
+          cd "$project_directory"
+          HOME="$runtimeHome" ${pkgs.nodejs}/bin/node \
+            "${pi-subagents}/share/pi-packages/pi-subagents/node_modules/jiti/lib/jiti-cli.mjs" \
+            "$TMPDIR/check-pi-runtime-discovery.ts" "$project_directory" project-enabled
+        )
+      else
+        (
+          cd "$project_directory"
+          HOME="$runtimeHome" PI_CODING_AGENT_DIR="$agent_directory" PI_OFFLINE=1 PATH="${pi}/bin:$PATH" pi list
+        ) > "$runtimeHome/$layout_name-pi-list.log"
+        (
+          cd "$project_directory"
+          HOME="$runtimeHome" PI_CODING_AGENT_DIR="$agent_directory" ${pkgs.nodejs}/bin/node \
+            "${pi-subagents}/share/pi-packages/pi-subagents/node_modules/jiti/lib/jiti-cli.mjs" \
+            "$TMPDIR/check-pi-runtime-discovery.ts" "$project_directory" project-enabled
+        )
+      fi
+      grep -F 'pi-subagents' "$runtimeHome/$layout_name-pi-list.log"
+
+      printf '%s\n' '{}' > "$project_directory/.pi/settings.json"
+      if [ "$layout_name" = normal ]; then
+        (
+          cd "$project_directory"
+          HOME="$runtimeHome" ${pkgs.nodejs}/bin/node \
+            "${pi-subagents}/share/pi-packages/pi-subagents/node_modules/jiti/lib/jiti-cli.mjs" \
+            "$TMPDIR/check-pi-runtime-discovery.ts" "$project_directory" user-disabled
+        )
+      else
+        (
+          cd "$project_directory"
+          HOME="$runtimeHome" PI_CODING_AGENT_DIR="$agent_directory" ${pkgs.nodejs}/bin/node \
+            "${pi-subagents}/share/pi-packages/pi-subagents/node_modules/jiti/lib/jiti-cli.mjs" \
+            "$TMPDIR/check-pi-runtime-discovery.ts" "$project_directory" user-disabled
+        )
+      fi
+    }
+
+    check_effective_pi_layout "$runtimeHome/.pi/agent" normal
+    check_effective_pi_layout "$runtimeHome/.pi-testing/agent" testing
+
     grep -F 'localLlmApiKeyCommand = "!gopass show -o goldragon.criome/local-llm-api-token";' ${piModelsModule}
     grep -F 'file = "$HOME/.pi/agent/auth.json";' ${piModelsModule}
     grep -F 'theme = "criomos-light/criomos-dark";' ${piModelsModule}
