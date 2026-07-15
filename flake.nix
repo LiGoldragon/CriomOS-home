@@ -198,7 +198,7 @@
     };
     # Maintained reliability forks pinned to immutable published revisions.
     pi-subagents-src = {
-      url = "github:LiGoldragon/pi-subagents-nicobailon/921a8878044d1ff478228e0cf495857b2285fcb3";
+      url = "github:LiGoldragon/pi-subagents-nicobailon/31330f7f92a8e0710e71ed109184a539c4e18b33";
       flake = false;
     };
     pi-intercom-src = {
