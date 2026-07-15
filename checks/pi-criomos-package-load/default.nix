@@ -9,7 +9,10 @@ let
 in
 pkgs.runCommand "pi-criomos-package-load"
   {
-    nativeBuildInputs = [ pkgs.gnugrep ];
+    nativeBuildInputs = [
+      pkgs.gnugrep
+      pkgs.nodejs
+    ];
   }
   ''
     set -eu
@@ -100,6 +103,10 @@ pkgs.runCommand "pi-criomos-package-load"
       "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
     grep -q -F 'ctx.ui.setTheme(themeInstance)' \
       "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+    grep -q -F 'ctx.setTheme(selection.themeName)' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+    grep -q -F 'setTheme(theme: string): void;' \
+      "${pi}/lib/pi-monorepo/packages/coding-agent/src/core/extensions/types.ts"
     ! grep -q -F 'ctx.ui.setTheme(selection.themeName)' \
       "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
     ! grep -q -F 'this.ctx.ui.' \
@@ -108,6 +115,18 @@ pkgs.runCommand "pi-criomos-package-load"
       "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
     ! grep -q -F 'pi-live-theme.sock' \
       "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+
+    grep -q -F 'persists a theme through the bound settings capability' \
+      "${pi}/lib/pi-monorepo/packages/coding-agent/test/extensions-runner.test.ts"
+    cp -r "${pi}/lib/pi-monorepo" "$TMPDIR/pi-monorepo"
+    chmod -R u+w "$TMPDIR/pi-monorepo"
+    cd "$TMPDIR/pi-monorepo"
+    if ! npm --workspace @earendil-works/pi-coding-agent test -- test/extensions-runner.test.ts \
+      > "$TMPDIR/extension-context-theme.log" 2>&1; then
+      cat "$TMPDIR/extension-context-theme.log" >&2
+      exit 1
+    fi
+    cd "$TMPDIR"
 
     ${pi}/bin/pi \
       --list-models gpt > "$TMPDIR/models" 2>&1

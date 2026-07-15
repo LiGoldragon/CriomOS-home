@@ -1,0 +1,96 @@
+--- a/packages/coding-agent/src/core/extensions/types.ts
++++ b/packages/coding-agent/src/core/extensions/types.ts
+@@ -314,6 +314,8 @@
+ 	modelRegistry: ModelRegistry;
+ 	/** Current model (may be undefined) */
+ 	model: Model<any> | undefined;
++	/** Persist a concrete theme selection through Pi's settings manager. */
++	setTheme(theme: string): void;
+ 	/** Whether the agent is idle (not streaming) */
+ 	isIdle(): boolean;
+ 	/** Whether project-local trust is active for this context. */
+@@ -1588,6 +1590,7 @@
+  */
+ export interface ExtensionContextActions {
+ 	getModel: () => Model<any> | undefined;
++	setTheme: (theme: string) => void;
+ 	isIdle: () => boolean;
+ 	isProjectTrusted: () => boolean;
+ 	getSignal: () => AbortSignal | undefined;
+--- a/packages/coding-agent/src/core/extensions/runner.ts
++++ b/packages/coding-agent/src/core/extensions/runner.ts
+@@ -273,6 +273,7 @@
+ 	private modelRegistry: ModelRegistry;
+ 	private errorListeners: Set<ExtensionErrorListener> = new Set();
+ 	private getModel: () => Model<any> | undefined = () => undefined;
++	private setThemeFn: (theme: string) => void = () => {};
+ 	private isIdleFn: () => boolean = () => true;
+ 	private isProjectTrustedFn: () => boolean = () => true;
+ 	private getSignalFn: () => AbortSignal | undefined = () => undefined;
+@@ -334,6 +335,7 @@
+ 
+ 		// Context actions (required)
+ 		this.getModel = contextActions.getModel;
++		this.setThemeFn = contextActions.setTheme;
+ 		this.isIdleFn = contextActions.isIdle;
+ 		this.isProjectTrustedFn = contextActions.isProjectTrusted;
+ 		this.getSignalFn = contextActions.getSignal;
+@@ -665,6 +667,10 @@
+ 				runner.assertActive();
+ 				return getModel();
+ 			},
++			setTheme: (theme) => {
++				runner.assertActive();
++				runner.setThemeFn(theme);
++			},
+ 			isIdle: () => {
+ 				runner.assertActive();
+ 				return runner.isIdleFn();
+--- a/packages/coding-agent/src/core/agent-session.ts
++++ b/packages/coding-agent/src/core/agent-session.ts
+@@ -2352,6 +2352,7 @@
+ 			},
+ 			{
+ 				getModel: () => this.model,
++				setTheme: (theme) => this.settingsManager.setTheme(theme),
+ 				isIdle: () => this.isIdle,
+ 				isProjectTrusted: () => this.settingsManager.isProjectTrusted(),
+ 				getSignal: () => this.agent.signal,
+--- a/packages/coding-agent/test/extensions-runner.test.ts
++++ b/packages/coding-agent/test/extensions-runner.test.ts
+@@ -89,6 +89,7 @@
+ 
+ 	const extensionContextActions: ExtensionContextActions = {
+ 		getModel: () => undefined,
++		setTheme: () => {},
+ 		isIdle: () => true,
+ 		isProjectTrusted: () => true,
+ 		getSignal: () => undefined,
+@@ -523,6 +524,17 @@
+ 			expect(ctx.isProjectTrusted()).toBe(false);
+ 		});
+ 
++		it("persists a theme through the bound settings capability", async () => {
++			const result = await discoverAndLoadExtensions([], tempDir, tempDir);
++			const runner = new ExtensionRunner(result.extensions, result.runtime, tempDir, sessionManager, modelRegistry);
++			const setTheme = vi.fn();
++			runner.bindCore(extensionActions, { ...extensionContextActions, setTheme });
++
++			runner.createContext().setTheme("criomos-dark");
++
++			expect(setTheme).toHaveBeenCalledWith("criomos-dark");
++		});
++
+ 		it("exposes rpc mode with hasUI true when an RPC UI context is provided", async () => {
+ 			const result = await discoverAndLoadExtensions([], tempDir, tempDir);
+ 			const runner = new ExtensionRunner(result.extensions, result.runtime, tempDir, sessionManager, modelRegistry);
+--- a/packages/coding-agent/src/modes/interactive/interactive-mode.ts
++++ b/packages/coding-agent/src/modes/interactive/interactive-mode.ts
+@@ -1779,6 +1779,7 @@
+ 			sessionManager: this.sessionManager,
+ 			modelRegistry: this.session.modelRegistry,
+ 			model: this.session.model,
++			setTheme: (theme) => this.settingsManager.setTheme(theme),
+ 			isIdle: () => this.session.isIdle,
+ 			isProjectTrusted: () => this.settingsManager.isProjectTrusted(),
+ 			signal: this.session.agent.signal,

@@ -141,10 +141,20 @@ the same rule: the live Pi settings file names
   accepts `dark\n` and `light\n`, and maps those modes to
   `criomos-dark` and `criomos-light` by default. The Home profile stores
   Pi's automatic light/dark theme setting, `criomos-light/criomos-dark`,
-  so fresh sessions choose the terminal-matching initial theme. Live socket
-  changes apply loaded theme objects through Pi's UI API, leaving the
-  persisted automatic setting intact. It does not poll, watch sidecar files,
-  or read a Chroma `current-mode` file.
+  so fresh sessions choose the terminal-matching initial theme. After the
+  listener is ready, its registry registration is an explicit Chroma
+  subscription: the daemon's bounded registry watcher pushes its current
+  persisted mode to the new peer. If Chroma is unavailable, registration is
+  still local and harmless; Chroma's normal startup reapply scans that entry
+  and sends its persisted mode once the daemon returns. A live socket update applies the loaded
+  theme through Pi's UI API and asks Pi's sanctioned extension context to
+  persist the same concrete `criomos-light` or `criomos-dark` selection.
+  Chroma remains the authority; Pi's concrete value is only its startup cache
+  and fallback. The Home Manager `/theme = "always"` policy deliberately
+  restores `criomos-light/criomos-dark` on the next profile activation for
+  both the normal and testing Pi settings files, so a live concrete selection
+  is not expected to survive activation. It does not poll, watch sidecar
+  files, or read a Chroma `current-mode` file.
 - `operator-safety.ts` is not part of the default package. The basic
   CriomOS Pi profile is YOLO-mode: theme support, Linkup web/search
   support, subagents support, and continuation support, without repeated

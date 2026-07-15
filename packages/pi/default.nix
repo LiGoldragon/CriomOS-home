@@ -8,6 +8,7 @@ pkgs.buildNpmPackage (finalAttrs: {
   patches = [
     ./patches/complete-pasted-skill-blocks-are-loaded.patch
     ./patches/preserve-active-action-space-for-pi-docs.patch
+    ./patches/extension-context-theme-persistence.patch
   ];
 
   # No `npmWorkspace` — pi is `@earendil-works/pi-coding-agent` in the

@@ -399,7 +399,11 @@ class LiveThemeControlSession {
       if (!themeInstance) {
         return { success: false, error: `theme not found: ${selection.themeName}` };
       }
-      return ctx.ui.setTheme(themeInstance);
+      const themeResult = ctx.ui.setTheme(themeInstance);
+      if (themeResult.success) {
+        ctx.setTheme(selection.themeName);
+      }
+      return themeResult;
     });
     if (result.state !== "succeeded" || !this.isActive()) {
       return;
