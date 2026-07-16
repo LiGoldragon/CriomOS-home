@@ -35,6 +35,14 @@ Item {
     solarAvailable = false;
   }
 
+  function solarClockText() {
+    const apparentSolarDate = new Date(sharedNow.getTime() + solarOffsetSeconds * 1000);
+    const padded = value => String(value).padStart(2, "0");
+    return "☼ " + padded(apparentSolarDate.getUTCHours())
+      + ":" + padded(apparentSolarDate.getUTCMinutes())
+      + ":" + padded(apparentSolarDate.getUTCSeconds());
+  }
+
   Process {
     id: solarStatusProcess
 
@@ -69,7 +77,7 @@ Item {
     anchors.centerIn: parent
     color: root.solarAvailable ? Color.mOnSurface : Color.mOnSurfaceVariant
     text: root.solarAvailable
-      ? "☼ " + new Date(root.sharedNow.getTime() + root.solarOffsetSeconds * 1000).toISOString().slice(11, 19)
+      ? root.solarClockText()
       : "☼ --:--:--"
 
     HoverHandler {
