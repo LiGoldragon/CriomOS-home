@@ -237,15 +237,16 @@
         "rust-build": "rust-build"
       },
       "locked": {
-        "lastModified": 1784101701,
-        "narHash": "sha256-elUVmLLyzIl/ZP65rb4r3aTE39UQN5TjOnAdHePAdBM=",
+        "lastModified": 1784204101,
+        "narHash": "sha256-m8QDJMdWUbKQmx+HXj4D+WRHLFHh48s61PFHCxE1Y8Q=",
         "owner": "LiGoldragon",
         "repo": "chroma",
-        "rev": "f38317ef8ca48d747237bd4bf3a213630ed5e9d3",
+        "rev": "d946a0c5cb42fb97fb5105931013a321e2632773",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
+        "ref": "solar-time-status-bar-chroma",
         "repo": "chroma",
         "type": "github"
       }

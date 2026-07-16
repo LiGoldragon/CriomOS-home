@@ -125,7 +125,7 @@
     # Chroma — unified visual-state daemon (theme + warmth + brightness).
     # Replaces darkman + the nightshift-* services + the brightness shell
     # wrapper. Consumed in modules/home/profiles/min/chroma.nix.
-    chroma.url = "github:LiGoldragon/chroma";
+    chroma.url = "github:LiGoldragon/chroma?ref=solar-time-status-bar-chroma";
     chroma.inputs.nixpkgs.follows = "nixpkgs";
 
     # Spirit — schema-derived psyche record command line and user-session daemon.
@@ -415,6 +415,7 @@
             inherit inputs;
           };
           listener-level-widget = checkPkgs.callPackage ./checks/listener-level-widget { };
+          solar-time-widget = checkPkgs.callPackage ./checks/solar-time-widget { };
           keyboard-layout-policy = checkPkgs.callPackage ./checks/keyboard-layout-policy { inherit inputs; };
           rust-toolchain = checkPkgs.callPackage ./checks/rust-toolchain { inherit inputs; };
           leta = checkPkgs.callPackage ./checks/leta { inherit inputs; };

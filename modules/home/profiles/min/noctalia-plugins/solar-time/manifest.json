@@ -1,0 +1,15 @@
+{
+  "id": "solar-time",
+  "name": "Solar Time",
+  "version": "1.0.0",
+  "author": "CriomOS",
+  "description": "Shows local apparent solar time from Chroma's fresh authoritative GeoClue location.",
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "metadata": {
+    "category": "system",
+    "cpuIntensive": false,
+    "defaultSettings": {}
+  }
+}

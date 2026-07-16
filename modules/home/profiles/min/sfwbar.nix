@@ -37,6 +37,7 @@ lib.mkIf behavesAs.edge {
         left = [
           { id = "Launcher"; }
           { id = "Clock"; }
+          { id = "plugin:solar-time"; }
           { id = "MediaMini"; }
         ];
         center = [
@@ -72,11 +73,16 @@ lib.mkIf behavesAs.edge {
           enabled = true;
           sourceUrl = "https://github.com/noctalia-dev/noctalia-plugins";
         };
+        solar-time = {
+          enabled = true;
+          sourceUrl = "https://github.com/noctalia-dev/noctalia-plugins";
+        };
       };
     };
     modes = {
       "/version" = "always";
       "/states/listener-level" = "always";
+      "/states/solar-time" = "always";
     };
   };
 
@@ -85,6 +91,8 @@ lib.mkIf behavesAs.edge {
       ./noctalia-plugins/listener-level/manifest.json;
     "noctalia/plugins/listener-level/BarWidget.qml".source =
       ./noctalia-plugins/listener-level/BarWidget.qml;
+    "noctalia/plugins/solar-time/manifest.json".source = ./noctalia-plugins/solar-time/manifest.json;
+    "noctalia/plugins/solar-time/BarWidget.qml".source = ./noctalia-plugins/solar-time/BarWidget.qml;
   };
 
   services.mako = {
