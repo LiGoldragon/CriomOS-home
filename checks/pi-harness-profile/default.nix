@@ -225,12 +225,14 @@ pkgs.runCommand "pi-harness-profile"
       '    "openai-codex/gpt-5.6-luna"' \
       '  ]' \
       '}' > "$normalPiHome/.pi/agent/settings.json"
-    printf '%s\n' '{"openai-codex":{"type":"api_key","key":"test-only-no-network"}}' \
+    printf '%s\n' \
+      '{"openai-codex":{"type":"oauth","access":"test-only-no-network","refresh":"test-only-no-network","expires":4102444800000}}' \
       > "$normalPiHome/.pi/agent/auth.json"
     (
       cd "$normalPiHome/workspace"
-      HOME="$normalPiHome" PI_OFFLINE=1 PATH="${pi}/bin:$PATH" \
-        pi --list-models gpt-5.6
+      HOME="$normalPiHome" PI_OFFLINE=1 \
+        PI_PACKAGE_DIR="${pi}/lib/pi-monorepo/packages/coding-agent" \
+        PATH="${pi}/bin:$PATH" pi --list-models gpt-5.6
     ) > "$normalPiHome/launcher.log"
     grep -F 'gpt-5.6-sol' "$normalPiHome/launcher.log"
     grep -F 'gpt-5.6-terra' "$normalPiHome/launcher.log"
