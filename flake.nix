@@ -161,7 +161,7 @@
     # --user supervisor. Pinned to the revision that reaps dead lanes so the
     # registry reflects only real lanes: last-activity-stamped lanes, terminal
     # records pruned by age, and idle Active lanes aged out on a generous window.
-    orchestrate.url = "github:LiGoldragon/orchestrate/d7398eee44d27f22661bef0cb74c380bf8c3a0ab";
+    orchestrate.url = "github:LiGoldragon/orchestrate";
     orchestrate.inputs.nixpkgs.follows = "nixpkgs";
 
     # Mentci — psyche-facing approval daemon and egui client surface.

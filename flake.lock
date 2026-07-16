@@ -1705,17 +1705,16 @@
         "rust-build": "rust-build_4"
       },
       "locked": {
-        "lastModified": 1783760938,
-        "narHash": "sha256-fWl+XLaDZ1AoQ5KhSSgbfDK8CXuzgd1KMsxv9NRVpgo=",
+        "lastModified": 1784207904,
+        "narHash": "sha256-jCjL55yUhYxCsqBpAIgxTQ/ZacINkyhOi33qHjOIm7I=",
         "owner": "LiGoldragon",
         "repo": "orchestrate",
-        "rev": "d7398eee44d27f22661bef0cb74c380bf8c3a0ab",
+        "rev": "37fac7453c1f35f0b269feeb18341e8a59906098",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "orchestrate",
-        "rev": "d7398eee44d27f22661bef0cb74c380bf8c3a0ab",
         "type": "github"
       }
     },
@@ -3107,11 +3106,11 @@
         "version-projection-source": "version-projection-source"
       },
       "locked": {
-        "lastModified": 1784124444,
-        "narHash": "sha256-KjRg/AdpcbZp4QpUCM1LKnMuLSkGcOz5nz3tWtn/Om8=",
+        "lastModified": 1784152527,
+        "narHash": "sha256-xHmjcl2a1j5V5DuE3Vwq7HMx8sE5EF0RmkZ9mGQbvCA=",
         "owner": "LiGoldragon",
         "repo": "spirit",
-        "rev": "7cd3ad86468a4a78e0d5fc586aa1ff22ea8604aa",
+        "rev": "1049b8a1a9e3c2be7ece3553b89c7e3815939d43",
         "type": "github"
       },
       "original": {
