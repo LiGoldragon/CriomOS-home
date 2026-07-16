@@ -4,7 +4,7 @@ pkgs.buildNpmPackage {
   version = "0.35.0";
 
   src = inputs.pi-subagents-src;
-  npmDepsHash = "sha256-9+xwfnd7+2BYcV170bh5jlYkFbD1l8pHkAFgI8l+ucE=";
+  npmDepsHash = "sha256-cdR9sJ84gZwLPy9GzyZxNX9pNkE7/QnSTiYAmfKefDo=";
   dontNpmBuild = true;
   dontNpmInstall = true;
 
@@ -13,7 +13,7 @@ pkgs.buildNpmPackage {
 
     packageRoot=$out/share/pi-packages/pi-subagents
     mkdir -p "$packageRoot"
-    cp -r agents install.mjs package.json package-lock.json prompts README.md CHANGELOG.md skills src node_modules "$packageRoot"
+    cp -r agents index.ts install.mjs package.json package-lock.json prompts README.md CHANGELOG.md skills src node_modules "$packageRoot"
 
     runHook postInstall
   '';

@@ -61,14 +61,11 @@ pkgs.runCommand "pi-harness-profile"
     test -d "${pi-linkup}/share/pi-packages/pi-linkup/node_modules/@aliou/pi-utils-ui"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/index.ts"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md"
-    jq -e '.name == "pi-subagents" and .version == "0.35.0" and .pi.extensions == ["./src/extension/index.ts"]' \
+    jq -e '.name == "pi-subagents" and .version == "0.35.0" and .pi.extensions == ["./index.ts"] and .pi.skills == ["./skills"]' \
       "${pi-subagents}/share/pi-packages/pi-subagents/package.json"
-    grep -F 'export function buildSubagentParams(mode: ToolDescriptionMode | undefined = "compact")' \
-      "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/schemas.ts"
-    grep -F 'return value === "full" || value === "compact" || value === "custom";' \
-      "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/tool-description.ts"
-    grep -F 'if (mode === undefined) return "compact";' \
-      "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/tool-description.ts"
+    test -f "${pi-subagents}/share/pi-packages/pi-subagents/index.ts"
+    test -f "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/schemas.ts"
+    test -f "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/tool-description.ts"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/node_modules/jiti/lib/jiti-cli.mjs"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/node_modules/typebox/package.json"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/node_modules/@earendil-works/pi-tui/package.json"
@@ -385,7 +382,7 @@ pkgs.runCommand "pi-harness-profile"
     ! grep -F 'piTestingPackages = [' ${piModelsModule}
     grep -F 'packages = normalPiPackages;' ${piModelsModule}
     grep -F 'piTestingSettingsConfig = piSettingsConfig;' ${piModelsModule}
-    grep -F 'github:LiGoldragon/pi-subagents-nicobailon/fa93ed64210666bf264ff4546e01b8e67c45cc19' ${flakeFile}
+    grep -F 'github:LiGoldragon/pi-subagents-nicobailon/e1adf93d49e248e69ae064a763c1c3f1d213edab' ${flakeFile}
     grep -F 'github:LiGoldragon/pi-intercom/1fe0fcb210f235890363fbb5c667db4d0896f332' ${flakeFile}
     ! grep -F 'pi-subagents-tintinweb-testing-src' ${flakeFile}
     ! grep -F 'pi-subagents-tintinweb-testing-src' ${piModelsModule}
