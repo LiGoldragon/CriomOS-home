@@ -69,7 +69,7 @@ Item {
     anchors.centerIn: parent
     color: root.solarAvailable ? Color.mOnSurface : Color.mOnSurfaceVariant
     text: root.solarAvailable
-      ? "☼ " + Qt.formatTime(new Date(root.sharedNow.getTime() + root.solarOffsetSeconds * 1000), "HH:mm:ss")
+      ? "☼ " + new Date(root.sharedNow.getTime() + root.solarOffsetSeconds * 1000).toISOString().slice(11, 19)
       : "☼ --:--:--"
 
     HoverHandler {

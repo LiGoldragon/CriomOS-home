@@ -14,12 +14,17 @@ pkgs.runCommand "solar-time-widget" { } ''
   ${pkgs.gnugrep}/bin/grep -F 'Time.now' "$widget"
   ${pkgs.gnugrep}/bin/grep -F 'GetSolarClock' "$widget"
   ${pkgs.gnugrep}/bin/grep -F 'interval: 60000' "$widget"
+  ${pkgs.gnugrep}/bin/grep -F 'toISOString().slice(11, 19)' "$widget"
   ${pkgs.gnugrep}/bin/grep -F 'waiting for a fresh authoritative GeoClue fix' "$widget"
   ${pkgs.gnugrep}/bin/grep -F 'import qs.Services.UI' "$widget"
   ${pkgs.gnugrep}/bin/grep -F 'TooltipService.show(root, root.tooltipText)' "$widget"
 
   if ${pkgs.gnugrep}/bin/grep -E 'interval:[[:space:]]*(1000|[1-9][0-9]{0,2})([^0-9]|$)' "$widget" >/dev/null; then
     echo 'solar-time widget must not add a per-second display timer' >&2
+    exit 1
+  fi
+  if ${pkgs.gnugrep}/bin/grep -F 'Qt.formatTime' "$widget" >/dev/null; then
+    echo 'solar-time widget must project apparent solar time in UTC rather than civil local time' >&2
     exit 1
   fi
   if ${pkgs.gnugrep}/bin/grep -F 'ToolTip.' "$widget" >/dev/null; then
