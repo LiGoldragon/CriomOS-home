@@ -53,6 +53,13 @@ in
   config = mkIf (size.min && config.criomosHome.orchestrate.enable) {
     home.packages = [ orchestrateProfilePackage ];
 
+    # The daemon indexes this user-owned workspace at startup. Ensure the
+    # configured root exists on newly provisioned user environments before
+    # systemd starts the service; repository contents remain user-owned.
+    home.activation.orchestrateWorkspace = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      $DRY_RUN_CMD ${pkgs.coreutils}/bin/mkdir -p ${lib.escapeShellArg workspaceRoot}
+    '';
+
     systemd.user.services.orchestrate-daemon = {
       Unit = {
         Description = "Orchestrate multi-agent claim/coordination daemon";
