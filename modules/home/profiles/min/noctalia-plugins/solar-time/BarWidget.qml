@@ -1,8 +1,8 @@
 import QtQuick
-import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
 import qs.Commons
+import qs.Services.UI
 
 Item {
   id: root
@@ -18,6 +18,9 @@ Item {
   readonly property var sharedNow: Time.now
   property int solarOffsetSeconds: 0
   property bool solarAvailable: false
+  readonly property string tooltipText: solarAvailable
+    ? "Solar time: local apparent solar time. UTC corrected by longitude and the equation of time; civil time is the Clock beside it."
+    : "Solar time unavailable: waiting for a fresh authoritative GeoClue fix. Civil time remains available in the Clock beside it."
 
   implicitWidth: solarLabel.implicitWidth + 12
   implicitHeight: 22
@@ -69,11 +72,15 @@ Item {
       ? "☼ " + Qt.formatTime(new Date(root.sharedNow.getTime() + root.solarOffsetSeconds * 1000), "HH:mm:ss")
       : "☼ --:--:--"
 
-    ToolTip.visible: solarHover.hovered
-    ToolTip.text: root.solarAvailable
-      ? "Solar time: local apparent solar time (UTC corrected by longitude and equation of time). Civil time is the Clock beside it."
-      : "Solar time unavailable: waiting for a fresh authoritative GeoClue fix. Civil time is the Clock beside it."
+    HoverHandler {
+      id: solarHover
 
-    HoverHandler { id: solarHover }
+      onHoveredChanged: {
+        if (hovered)
+          TooltipService.show(root, root.tooltipText);
+        else
+          TooltipService.hide();
+      }
+    }
   }
 }

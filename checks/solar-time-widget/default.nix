@@ -15,9 +15,15 @@ pkgs.runCommand "solar-time-widget" { } ''
   ${pkgs.gnugrep}/bin/grep -F 'GetSolarClock' "$widget"
   ${pkgs.gnugrep}/bin/grep -F 'interval: 60000' "$widget"
   ${pkgs.gnugrep}/bin/grep -F 'waiting for a fresh authoritative GeoClue fix' "$widget"
+  ${pkgs.gnugrep}/bin/grep -F 'import qs.Services.UI' "$widget"
+  ${pkgs.gnugrep}/bin/grep -F 'TooltipService.show(root, root.tooltipText)' "$widget"
 
   if ${pkgs.gnugrep}/bin/grep -E 'interval:[[:space:]]*(1000|[1-9][0-9]{0,2})([^0-9]|$)' "$widget" >/dev/null; then
     echo 'solar-time widget must not add a per-second display timer' >&2
+    exit 1
+  fi
+  if ${pkgs.gnugrep}/bin/grep -F 'ToolTip.' "$widget" >/dev/null; then
+    echo 'solar-time widget must use Noctalia TooltipService rather than an unstyled Qt tooltip' >&2
     exit 1
   fi
   if ${pkgs.gnugrep}/bin/grep -E 'latitude:|longitude:|coordinate[[:space:]]*=' "$widget" >/dev/null; then
