@@ -44,6 +44,7 @@ let
   };
   piRuntimeFiles = piRuntimeHome.config.home.file;
   piRuntimeActivations = piRuntimeHome.config.home.activation;
+  primaryGenerated = inputs.primary-generated-src;
 in
 pkgs.runCommand "pi-harness-profile"
   {
@@ -61,7 +62,7 @@ pkgs.runCommand "pi-harness-profile"
     test -d "${pi-linkup}/share/pi-packages/pi-linkup/node_modules/@aliou/pi-utils-ui"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/index.ts"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md"
-    jq -e '.name == "pi-subagents" and .version == "0.35.0" and .pi.extensions == ["./index.ts"] and .pi.skills == ["./skills"]' \
+    jq -e '.name == "pi-subagents" and .version == "0.36.0" and .pi.extensions == ["./index.ts"] and .pi.skills == ["./skills"]' \
       "${pi-subagents}/share/pi-packages/pi-subagents/package.json"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/index.ts"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/schemas.ts"
@@ -253,10 +254,14 @@ pkgs.runCommand "pi-harness-profile"
       "${piRuntimeFiles.".pi/agent/SYSTEM.md".source}"
     link_runtime_file "$runtimeHome/.pi/agent/packages/pi-subagents" \
       "${piRuntimeFiles.".pi/agent/packages/pi-subagents".source}"
+    link_runtime_file "$runtimeHome/.pi/agent/extensions/subagent/config.json" \
+      "${piRuntimeFiles.".pi/agent/extensions/subagent/config.json".source}"
     link_runtime_file "$runtimeHome/.pi-testing/agent/SYSTEM.md" \
       "${piRuntimeFiles.".pi-testing/agent/SYSTEM.md".source}"
     link_runtime_file "$runtimeHome/.pi-testing/agent/packages/pi-subagents" \
       "${piRuntimeFiles.".pi-testing/agent/packages/pi-subagents".source}"
+    link_runtime_file "$runtimeHome/.pi-testing/agent/extensions/subagent/config.json" \
+      "${piRuntimeFiles.".pi-testing/agent/extensions/subagent/config.json".source}"
     DRY_RUN_CMD=
     run() { "$@"; }
     export HOME="$runtimeHome"
@@ -265,93 +270,116 @@ pkgs.runCommand "pi-harness-profile"
 
     test ! -e "$runtimeHome/.pi/agents"
 
-    cat > "$TMPDIR/check-pi-runtime-discovery.ts" <<'EOF'
-    import { discoverAgents, discoverAgentsAll } from "${pi-subagents}/share/pi-packages/pi-subagents/src/agents/agents.ts";
+    cat > "$TMPDIR/check-managed-project-roles.ts" <<'EOF'
+    import { discoverAgents } from "${pi-subagents}/share/pi-packages/pi-subagents/src/agents/agents.ts";
+    import {
+      authorizeProjectRoleDispatch,
+      discoverRootManagerPolicy,
+      type CallerRolePolicy,
+    } from "${pi-subagents}/share/pi-packages/pi-subagents/src/agents/project-role-policy.ts";
+    import {
+      COMPACT_SUBAGENT_TOOL_DESCRIPTION,
+      FULL_SUBAGENT_TOOL_DESCRIPTION,
+    } from "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/tool-description.ts";
+    import {
+      SubagentParams,
+      FullSubagentParams,
+    } from "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/schemas.ts";
 
-    const [cwd, expectedBuiltinState] = process.argv.slice(2);
-    if (!cwd || !expectedBuiltinState) throw new Error("expected cwd and builtin state");
+    const projectRoot = process.argv[2];
+    if (!projectRoot) throw new Error("expected generated project root");
 
-    const discovered = discoverAgents(cwd, "both").agents;
-    const all = discoverAgentsAll(cwd);
-    const builtinVisible = discovered.some((agent) => agent.source === "builtin");
-    const projectAgentVisible = discovered.some((agent) => agent.name === "project-runtime-agent" && agent.source === "project");
-    const builtinDisabled = all.builtin.every((agent) => agent.disabled === true);
+    const expected: Record<string, [string, string | false, "manager" | "nested" | "leaf", string[]]> = {
+      "crucial-greenfield-developer-for-chatgpt": ["openai-codex/gpt-5.6-sol", "high", "nested", ["scout", "repo-scaffolder", "general-code-implementer", "rust-auditor", "nix-auditor", "repository-closeout"]],
+      "general-code-implementer": ["openai-codex/gpt-5.6-terra", "high", "leaf", []],
+      "generalist": ["openai-codex/gpt-5.6-sol", "medium", "nested", ["scout", "repo-scaffolder", "general-code-implementer", "rust-auditor", "nix-auditor", "repository-closeout", "tracker-weaver"]],
+      "intent-curator": ["openai-codex/gpt-5.6-sol", "high", "leaf", []],
+      "intent-recorder": ["openai-codex/gpt-5.6-luna", "medium", "leaf", []],
+      "intent-translator": ["openai-codex/gpt-5.6-sol", "high", "leaf", []],
+      "manager": ["openai-codex/gpt-5.6-sol", "high", "manager", []],
+      "nix-auditor": ["openai-codex/gpt-5.6-terra", "medium", "leaf", []],
+      "operating-system-implementer": ["openai-codex/gpt-5.6-sol", "medium", "nested", ["scout", "general-code-implementer", "rust-auditor", "nix-auditor", "repository-closeout"]],
+      "repo-scaffolder": ["openai-codex/gpt-5.6-terra", "high", "leaf", []],
+      "repository-closeout": ["openai-codex/gpt-5.6-luna", "medium", "leaf", []],
+      "rust-auditor": ["openai-codex/gpt-5.6-terra", "medium", "leaf", []],
+      "scout": ["openai-codex/gpt-5.6-luna", "medium", "leaf", []],
+      "skill-editor": ["openai-codex/gpt-5.6-sol", "high", "nested", ["scout", "general-code-implementer", "rust-auditor", "repository-closeout"]],
+      "tracker-weaver": ["openai-codex/gpt-5.6-terra", "medium", "leaf", []],
+    };
 
-    if (!projectAgentVisible) throw new Error("project-scoped .pi/agents entry was not discovered");
-    if (expectedBuiltinState === "project-enabled") {
-      if (!builtinVisible || builtinDisabled) throw new Error("project settings did not override user builtin suppression");
-    } else if (expectedBuiltinState === "user-disabled") {
-      if (builtinVisible || !builtinDisabled) throw new Error("user builtin suppression was not applied");
-    } else {
-      throw new Error(`unknown expected builtin state: ''${expectedBuiltinState}`);
+    const agents = discoverAgents(projectRoot, "project").agents.filter((agent) => agent.source === "project");
+    if (agents.length !== Object.keys(expected).length) throw new Error(`expected exact generated role set, got ''${agents.length}`);
+    for (const agent of agents) {
+      const contract = expected[agent.name];
+      if (!contract) throw new Error(`undeclared generated role: ''${agent.name}`);
+      const [model, thinking, kind, children] = contract;
+      if (agent.source !== "project" || agent.model !== model || agent.thinking !== thinking) {
+        throw new Error(`effective model metadata mismatch for ''${agent.name}`);
+      }
+      if (!agent.projectRole || agent.projectRole.projectRoleIdentity !== agent.name || agent.projectRole.projectRoleDispatchKind !== kind) {
+        throw new Error(`project role identity/kind mismatch for ''${agent.name}`);
+      }
+      if (JSON.stringify(agent.projectRole.allowedChildRoleNames) !== JSON.stringify(children)) {
+        throw new Error(`exclusive child roster mismatch for ''${agent.name}`);
+      }
     }
+
+    const manager = discoverRootManagerPolicy(agents);
+    if (!manager || manager.metadata.projectRoleIdentity !== "manager") throw new Error("exactly one generated manager was not discovered");
+    const directLeafError = authorizeProjectRoleDispatch({ caller: manager, agents, targetNames: ["scout"], hasPerCallModelOverride: false, policyConfig: { required: true } });
+    if (directLeafError) throw new Error(`manager direct leaf authorization failed: ''${directLeafError}`);
+
+    const operatingSystem = agents.find((agent) => agent.name === "operating-system-implementer")!;
+    const nested: CallerRolePolicy = { metadata: operatingSystem.projectRole!, source: "discovery" };
+    const allowedLeafError = authorizeProjectRoleDispatch({ caller: nested, agents, targetNames: ["nix-auditor"], hasPerCallModelOverride: false, policyConfig: { required: true } });
+    if (allowedLeafError) throw new Error(`allowed nested leaf was rejected: ''${allowedLeafError}`);
+    const forbiddenLeafError = authorizeProjectRoleDispatch({ caller: nested, agents, targetNames: ["tracker-weaver"], hasPerCallModelOverride: false, policyConfig: { required: true } });
+    if (!forbiddenLeafError?.includes("not allowed")) throw new Error("undeclared leaf was not rejected");
+    const forbiddenNestedError = authorizeProjectRoleDispatch({ caller: nested, agents, targetNames: ["skill-editor"], hasPerCallModelOverride: false, policyConfig: { required: true } });
+    if (!forbiddenNestedError) throw new Error("nested-to-nested dispatch was not rejected");
+    const missingCallerError = authorizeProjectRoleDispatch({ caller: undefined, agents, targetNames: ["scout"], hasPerCallModelOverride: false, policyConfig: { required: true } });
+    if (!missingCallerError?.includes("required")) throw new Error("required managed policy did not fail closed");
+
+    const compactSurfaceSize = COMPACT_SUBAGENT_TOOL_DESCRIPTION.length + JSON.stringify(SubagentParams).length;
+    if (compactSurfaceSize !== 1741) throw new Error(`compact registered surface changed: ''${compactSurfaceSize}`);
+    if (Object.keys((SubagentParams as { properties: Record<string, unknown> }).properties).sort().join(",") !== "agent,async,context,task") {
+      throw new Error("compact schema is not the minimal direct-launch surface");
+    }
+    const fullProperties = (FullSubagentParams as { properties: Record<string, unknown> }).properties;
+    for (const mechanism of ["action", "chain", "tasks", "acceptance", "turnBudget", "worktree"]) {
+      if (!(mechanism in fullProperties)) throw new Error(`full mechanism missing: ''${mechanism}`);
+    }
+    if (!FULL_SUBAGENT_TOOL_DESCRIPTION.includes("DIAGNOSTICS:") || !FULL_SUBAGENT_TOOL_DESCRIPTION.includes("CHAIN:")) {
+      throw new Error("full optional mechanism description is incomplete");
+    }
+
+    console.log(`managed-role-witness roles=''${agents.length} compact-surface=''${compactSurfaceSize} direct=allowed forbidden-leaf=rejected forbidden-nested=rejected`);
     EOF
 
     check_effective_pi_layout() {
       agent_directory="$1"
-      layout_name="$2"
-      project_directory="$runtimeHome/$layout_name-project"
-
       test -f "$agent_directory/settings.json"
       ${pkgs.jq}/bin/jq -e '.subagents.disableBuiltins == true' "$agent_directory/settings.json"
       test -L "$agent_directory/packages/pi-subagents"
       test -f "$agent_directory/SYSTEM.md"
-
-      mkdir -p "$project_directory/.pi/agents"
-      cat > "$project_directory/.pi/agents/project-runtime-agent.md" <<'EOF'
-    ---
-    name: project-runtime-agent
-    description: Hermetic project discovery witness
-    ---
-    This agent exists only to prove project-scoped discovery.
-    EOF
-      printf '%s\n' '{"subagents":{"disableBuiltins":false}}' > "$project_directory/.pi/settings.json"
-
-      if [ "$layout_name" = normal ]; then
-        (
-          cd "$project_directory"
-          HOME="$runtimeHome" PI_OFFLINE=1 PATH="${pi}/bin:$PATH" pi list
-        ) > "$runtimeHome/$layout_name-pi-list.log"
-        (
-          cd "$project_directory"
-          HOME="$runtimeHome" ${pkgs.nodejs}/bin/node \
-            "${pi-subagents}/share/pi-packages/pi-subagents/node_modules/jiti/lib/jiti-cli.mjs" \
-            "$TMPDIR/check-pi-runtime-discovery.ts" "$project_directory" project-enabled
-        )
-      else
-        (
-          cd "$project_directory"
-          HOME="$runtimeHome" PI_CODING_AGENT_DIR="$agent_directory" PI_OFFLINE=1 PATH="${pi}/bin:$PATH" pi list
-        ) > "$runtimeHome/$layout_name-pi-list.log"
-        (
-          cd "$project_directory"
-          HOME="$runtimeHome" PI_CODING_AGENT_DIR="$agent_directory" ${pkgs.nodejs}/bin/node \
-            "${pi-subagents}/share/pi-packages/pi-subagents/node_modules/jiti/lib/jiti-cli.mjs" \
-            "$TMPDIR/check-pi-runtime-discovery.ts" "$project_directory" project-enabled
-        )
-      fi
-      grep -F 'pi-subagents' "$runtimeHome/$layout_name-pi-list.log"
-
-      printf '%s\n' '{}' > "$project_directory/.pi/settings.json"
-      if [ "$layout_name" = normal ]; then
-        (
-          cd "$project_directory"
-          HOME="$runtimeHome" ${pkgs.nodejs}/bin/node \
-            "${pi-subagents}/share/pi-packages/pi-subagents/node_modules/jiti/lib/jiti-cli.mjs" \
-            "$TMPDIR/check-pi-runtime-discovery.ts" "$project_directory" user-disabled
-        )
-      else
-        (
-          cd "$project_directory"
-          HOME="$runtimeHome" PI_CODING_AGENT_DIR="$agent_directory" ${pkgs.nodejs}/bin/node \
-            "${pi-subagents}/share/pi-packages/pi-subagents/node_modules/jiti/lib/jiti-cli.mjs" \
-            "$TMPDIR/check-pi-runtime-discovery.ts" "$project_directory" user-disabled
-        )
-      fi
+      ${pkgs.jq}/bin/jq -e '
+        .toolDescriptionMode == "compact" and
+        .proactiveSkillSubagents == false and
+        .projectRolePolicy.required == true and
+        (.projectRolePolicy | has("allowLegacyNonProject") | not)
+      ' "$agent_directory/extensions/subagent/config.json"
     }
 
-    check_effective_pi_layout "$runtimeHome/.pi/agent" normal
-    check_effective_pi_layout "$runtimeHome/.pi-testing/agent" testing
+    check_effective_pi_layout "$runtimeHome/.pi/agent"
+    check_effective_pi_layout "$runtimeHome/.pi-testing/agent"
+
+    HOME="$runtimeHome" ${pkgs.nodejs}/bin/node \
+      "${pi-subagents}/share/pi-packages/pi-subagents/node_modules/jiti/lib/jiti-cli.mjs" \
+      "$TMPDIR/check-managed-project-roles.ts" "${primaryGenerated}"
+
+    ${pkgs.jq}/bin/jq -e '
+      .nodes.skills.locked.rev == "72bdcd7e8e7dc24ed15ad25405a0a98e5c42823f"
+    ' "${primaryGenerated}/flake.lock"
 
     grep -F 'localLlmApiKeyCommand = "!gopass show -o goldragon.criome/local-llm-api-token";' ${piModelsModule}
     grep -F 'file = "$HOME/.pi/agent/auth.json";' ${piModelsModule}
@@ -382,7 +410,8 @@ pkgs.runCommand "pi-harness-profile"
     ! grep -F 'piTestingPackages = [' ${piModelsModule}
     grep -F 'packages = normalPiPackages;' ${piModelsModule}
     grep -F 'piTestingSettingsConfig = piSettingsConfig;' ${piModelsModule}
-    grep -F 'github:LiGoldragon/pi-subagents-nicobailon/e1adf93d49e248e69ae064a763c1c3f1d213edab' ${flakeFile}
+    grep -F 'github:LiGoldragon/pi-subagents-nicobailon/858f57b768be604306231008d203fd9dc98dc6a2' ${flakeFile}
+    grep -F 'github:LiGoldragon/primary/ee0e3c785393243b2022b4eeed5245ae72a790f0' ${flakeFile}
     grep -F 'github:LiGoldragon/pi-intercom/1fe0fcb210f235890363fbb5c667db4d0896f332' ${flakeFile}
     ! grep -F 'pi-subagents-tintinweb-testing-src' ${flakeFile}
     ! grep -F 'pi-subagents-tintinweb-testing-src' ${piModelsModule}

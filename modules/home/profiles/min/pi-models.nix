@@ -105,6 +105,14 @@ let
     brokerArgs = [ "${pi-intercom}/share/pi-packages/pi-intercom/node_modules/tsx/dist/cli.mjs" ];
   };
 
+  piSubagentsConfigFile = pkgs.writeText "pi-subagents-config.json" (
+    builtins.toJSON {
+      toolDescriptionMode = "compact";
+      proactiveSkillSubagents = false;
+      projectRolePolicy.required = true;
+    }
+  );
+
   piSettingsConfig = {
     defaultProvider = "openai-codex";
     defaultModel = defaultOpenAiCodexModel;
@@ -166,6 +174,8 @@ lib.mkIf (size.min && endpointNode != null) {
   home.file.".pi/agent/packages/pi-subagents".source =
     "${pi-subagents}/share/pi-packages/pi-subagents";
   home.file.".pi/agent/packages/pi-subagents".force = true;
+  home.file.".pi/agent/extensions/subagent/config.json".source = piSubagentsConfigFile;
+  home.file.".pi/agent/extensions/subagent/config.json".force = true;
 
   home.file.".pi/agent/packages/pi-intercom".source = "${pi-intercom}/share/pi-packages/pi-intercom";
   home.file.".pi/agent/packages/pi-intercom".force = true;
@@ -194,6 +204,8 @@ lib.mkIf (size.min && endpointNode != null) {
   home.file.".pi-testing/agent/packages/pi-subagents".source =
     "${pi-subagents}/share/pi-packages/pi-subagents";
   home.file.".pi-testing/agent/packages/pi-subagents".force = true;
+  home.file.".pi-testing/agent/extensions/subagent/config.json".source = piSubagentsConfigFile;
+  home.file.".pi-testing/agent/extensions/subagent/config.json".force = true;
 
   home.file.".pi-testing/agent/packages/pi-intercom".source =
     "${pi-intercom}/share/pi-packages/pi-intercom";
