@@ -237,12 +237,13 @@
         "rust-build": "rust-build"
       },
       "locked": {
-        "lastModified": 1784227877,
-        "narHash": "sha256-W7TEeM523zp7dzyUO5iP7JvVzAaxt6dDiPVAMPLM1wo=",
-        "owner": "LiGoldragon",
-        "repo": "chroma",
-        "rev": "beb68fc587d0be9a2672004f79a7e2ff66fdfd31",
-        "type": "github"
+        "lastModified": 1784245239,
+        "narHash": "sha256-pzqRz8wxw2JnfJA0E7hnzVkwW8xGKVqyEGBKrm1Ppcw=",
+        "ref": "refs/heads/main",
+        "rev": "d4282a5a4744e527de1aee1e5da435b5abfca231",
+        "revCount": 54,
+        "type": "git",
+        "url": "https://github.com/LiGoldragon/chroma.git"
       },
       "original": {
         "owner": "LiGoldragon",

@@ -93,6 +93,7 @@ lib.mkIf behavesAs.edge {
       ./noctalia-plugins/listener-level/BarWidget.qml;
     "noctalia/plugins/solar-time/manifest.json".source = ./noctalia-plugins/solar-time/manifest.json;
     "noctalia/plugins/solar-time/BarWidget.qml".source = ./noctalia-plugins/solar-time/BarWidget.qml;
+    "noctalia/plugins/solar-time/SolarClock.js".source = ./noctalia-plugins/solar-time/SolarClock.js;
   };
 
   services.mako = {

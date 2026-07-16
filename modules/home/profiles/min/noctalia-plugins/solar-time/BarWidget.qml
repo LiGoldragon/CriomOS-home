@@ -3,6 +3,7 @@ import Quickshell
 import Quickshell.Io
 import qs.Commons
 import qs.Services.UI
+import "SolarClock.js" as SolarClock
 
 Item {
   id: root
@@ -26,6 +27,8 @@ Item {
   implicitHeight: 22
 
   function refreshSolarClock(status) {
+    // The second positional value preserves the wire contract and is only the
+    // equation-of-time UTC-day validity boundary, not location freshness.
     const match = /\(SolarClock\s+(-?\d+)\s+(\d+)\)/.exec(String(status));
     if (match) {
       solarOffsetSeconds = Number(match[1]);
@@ -36,11 +39,7 @@ Item {
   }
 
   function solarClockText() {
-    const apparentSolarDate = new Date(sharedNow.getTime() + solarOffsetSeconds * 1000);
-    const padded = value => String(value).padStart(2, "0");
-    return "☼ " + padded(apparentSolarDate.getUTCHours())
-      + ":" + padded(apparentSolarDate.getUTCMinutes())
-      + ":" + padded(apparentSolarDate.getUTCSeconds());
+    return "☼ " + SolarClock.projectedText(sharedNow.getTime(), solarOffsetSeconds);
   }
 
   Process {
