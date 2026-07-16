@@ -246,7 +246,7 @@
       },
       "original": {
         "owner": "LiGoldragon",
-        "ref": "solar-time-status-bar-chroma",
+        "ref": "main",
         "repo": "chroma",
         "type": "github"
       }
