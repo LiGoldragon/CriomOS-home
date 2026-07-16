@@ -69,7 +69,7 @@ Item {
       ? "☼ " + Qt.formatTime(new Date(root.sharedNow.getTime() + root.solarOffsetSeconds * 1000), "HH:mm:ss")
       : "☼ --:--:--"
 
-    ToolTip.visible: solarHover.containsMouse
+    ToolTip.visible: solarHover.hovered
     ToolTip.text: root.solarAvailable
       ? "Solar time: local apparent solar time (UTC corrected by longitude and equation of time). Civil time is the Clock beside it."
       : "Solar time unavailable: waiting for a fresh authoritative GeoClue fix. Civil time is the Clock beside it."
