@@ -33,6 +33,9 @@ lib.mkIf behavesAs.edge {
         suspendTimeout = 0;
         fadeDuration = 5;
       };
+      # Noctalia only supports IP geolocation; it is not an authoritative
+      # physical-location source and must not overwrite the GeoClue path.
+      location.autoLocate = false;
       bar.widgets = {
         left = [
           { id = "Launcher"; }
@@ -61,6 +64,10 @@ lib.mkIf behavesAs.edge {
       };
     };
   };
+
+  home.activation.clearNoctaliaIpLocation = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    rm -f "$HOME/.cache/noctalia/location.json"
+  '';
 
   home.activation.mergeNoctaliaPlugins = inputs.hexis.lib.mkManagedConfig {
     inherit lib pkgs hexis;

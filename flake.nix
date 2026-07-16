@@ -411,6 +411,7 @@
         checks
         // {
           chroma-nota-config = checkPkgs.callPackage ./checks/chroma-nota-config { inherit inputs; };
+          noctalia-location-policy = checkPkgs.callPackage ./checks/noctalia-location-policy { };
           listener-dictation-bindings = checkPkgs.callPackage ./checks/listener-dictation-bindings {
             inherit inputs;
           };
