@@ -161,7 +161,10 @@
     # --user supervisor. Pinned to the revision that reaps dead lanes so the
     # registry reflects only real lanes: last-activity-stamped lanes, terminal
     # records pruned by age, and idle Active lanes aged out on a generous window.
-    orchestrate.url = "github:LiGoldragon/orchestrate";
+    # b106f82 carries the v6 store migration required by retained state. The
+    # following main commit adds worktree tests that cannot create Jujutsu's
+    # sandbox configuration directory, so it is not deployable yet.
+    orchestrate.url = "github:LiGoldragon/orchestrate/b106f82ca17e6cd178995a7a80820237075b454e";
     orchestrate.inputs.nixpkgs.follows = "nixpkgs";
 
     # Mentci — psyche-facing approval daemon and egui client surface.
