@@ -80,7 +80,7 @@
     claude-answers.inputs.nixpkgs.follows = "nixpkgs";
 
     # Listener — CriomOS speech-to-text runtime for the daily dictation path.
-    listener.url = "github:LiGoldragon/listener";
+    listener.url = "github:LiGoldragon/listener/cf6a82c02085f570cd66bf446b6dc350d1ea349a";
     listener.inputs.nixpkgs.follows = "nixpkgs";
     listener.inputs.crane.follows = "crane";
 
@@ -130,7 +130,7 @@
 
     # Spirit — schema-derived psyche record command line and user-session daemon.
     # Consumed in modules/home/profiles/min/spirit.nix.
-    spirit.url = "github:LiGoldragon/spirit";
+    spirit.url = "github:LiGoldragon/spirit/1049b8a1a9e3c2be7ece3553b89c7e3815939d43";
     spirit.inputs.nixpkgs.follows = "nixpkgs";
 
     # Spirit judge — the persistent model-backed admission adapter. Prompt
@@ -151,7 +151,7 @@
 
     # Aggregator — local transcript/evidence recovery daemon. Pinned to the
     # audited source accepted for Home-profile deployment.
-    aggregator.url = "github:LiGoldragon/aggregator/86f8eb04d7f0bc1913c36a1a65e6782db98b6523";
+    aggregator.url = "github:LiGoldragon/aggregator/3bb2c9758715bf84a62247d295b6abb5f6c7a7d3";
     aggregator.inputs.nixpkgs.follows = "nixpkgs";
     aggregator.inputs.crane.follows = "crane";
 
@@ -161,7 +161,7 @@
     # --user supervisor. Pinned to the revision that reaps dead lanes so the
     # registry reflects only real lanes: last-activity-stamped lanes, terminal
     # records pruned by age, and idle Active lanes aged out on a generous window.
-    orchestrate.url = "github:LiGoldragon/orchestrate/d7398eee44d27f22661bef0cb74c380bf8c3a0ab";
+    orchestrate.url = "github:LiGoldragon/orchestrate/b106f82ca17e6cd178995a7a80820237075b454e";
     orchestrate.inputs.nixpkgs.follows = "nixpkgs";
 
     # Mentci — psyche-facing approval daemon and egui client surface.
