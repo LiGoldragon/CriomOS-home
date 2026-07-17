@@ -95,8 +95,8 @@ let
 
     status="$(${listener}/bin/listener status 2>/dev/null || true)"
     case "$status" in
-      "(StatusReported (Capturing ("*)
-        session_and_artifact="''${status#"(StatusReported (Capturing ("}"
+      "StatusReported.Capturing.{"*)
+        session_and_artifact="''${status#StatusReported.Capturing.\{}"
         session="''${session_and_artifact%% *}"
         case "$session" in
           "" | *[!0-9]*)

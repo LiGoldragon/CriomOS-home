@@ -183,7 +183,12 @@ else
       echo 'listener toggle wrapper must issue exactly one atomic daemon toggle, not status then start/stop' >&2
       exit 1
     fi
+    grep -F 'StatusReported.Capturing.{' ${listenerCancelExecutable} >/dev/null
     grep -F '/bin/listener cancel "$session"' ${listenerCancelExecutable} >/dev/null
+    if grep -F '(StatusReported (Capturing (' ${listenerCancelExecutable} >/dev/null; then
+      echo 'listener cancel wrapper must parse the current status projection' >&2
+      exit 1
+    fi
     if grep -E '/bin/listener (stop|transcribe)|listener-openai-transcribe|wl-copy|LISTENER_CLIPBOARD_PROGRAM' ${listenerCancelExecutable} >/dev/null; then
       echo 'listener cancel wrapper must not stop/transcribe/copy' >&2
       exit 1
