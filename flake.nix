@@ -164,7 +164,7 @@
     # terminal records pruned by age, idle Active lanes aged out) and the v0.6.0
     # additive agent-registry migration (registry rows recreated by harnesses).
     # 964f3d55 fast-forwards 4b717484 with checkPhase hermeticity (writable HOME).
-    orchestrate.url = "github:LiGoldragon/orchestrate/964f3d55f6d5713c78dd5e65f6108ae90a22e539";
+    orchestrate.url = "github:LiGoldragon/orchestrate/d7398eee44d27f22661bef0cb74c380bf8c3a0ab";
     orchestrate.inputs.nixpkgs.follows = "nixpkgs";
 
     # Mentci — psyche-facing approval daemon and egui client surface.
