@@ -135,8 +135,8 @@ let
       message = "listener.service must set UMask=0077 for private capture artifacts";
     }
     {
-      condition = lib.versionAtLeast (listenerPackage.version or "0") "0.7.1";
-      message = "Listener package must be version 0.7.1 or newer (ships private capture artifact hardening)";
+      condition = lib.versionAtLeast (listenerPackage.version or "0") "0.10.0";
+      message = "Listener package must be version 0.10.0 or newer (ships atomic toggle and nonblocking status maintenance)";
     }
     {
       condition = !(lib.hasInfix "LISTENER_TRANSCRIPTION_PROGRAM" listenerEnvironmentExample);
@@ -178,8 +178,12 @@ else
       echo 'listener transcription customization archive must exist and be non-empty' >&2
       exit 1
     fi
+    grep -F '/bin/listener toggle' ${listenerToggleExecutable} >/dev/null
+    if grep -E '/bin/listener (status|start|stop)' ${listenerToggleExecutable} >/dev/null; then
+      echo 'listener toggle wrapper must issue exactly one atomic daemon toggle, not status then start/stop' >&2
+      exit 1
+    fi
     grep -F '/bin/listener cancel "$session"' ${listenerCancelExecutable} >/dev/null
-    grep -F 'read_active_listener_session' ${listenerCancelExecutable} >/dev/null
     if grep -E '/bin/listener (stop|transcribe)|listener-openai-transcribe|wl-copy|LISTENER_CLIPBOARD_PROGRAM' ${listenerCancelExecutable} >/dev/null; then
       echo 'listener cancel wrapper must not stop/transcribe/copy' >&2
       exit 1

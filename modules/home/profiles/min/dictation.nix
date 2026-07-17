@@ -81,72 +81,35 @@ let
     exec ${listener}/bin/listener-daemon
   '';
 
-  readActiveListenerSession = ''
-    read_active_listener_session() {
-      case "$1" in
-        "(StatusReported (Capturing ("*)
-          capture_prefix="(StatusReported (Capturing ("
-          session_and_artifact="''${1#"$capture_prefix"}"
-          session="''${session_and_artifact%% *}"
-          case "$session" in
-            "" | *[!0-9]*)
-              return 1
-              ;;
-          esac
-          printf '%s\n' "$session"
-          ;;
-        *)
-          return 1
-          ;;
-      esac
-    }
-  '';
-
   listenerToggle = pkgs.writeShellScriptBin "listener-toggle-capture" ''
     set -eu
 
-    ${readActiveListenerSession}
-
-    status="$(${listener}/bin/listener status 2>/dev/null || true)"
-    if [ -z "$status" ]; then
-      ${pkgs.systemd}/bin/systemctl --user start listener.service
-      for _ in 1 2 3 4 5 6 7 8 9 10; do
-        status="$(${listener}/bin/listener status 2>/dev/null || true)"
-        [ -n "$status" ] && break
-        sleep 0.2
-      done
-    fi
-
-    case "$status" in
-      "(StatusReported Idle)")
-        exec ${listener}/bin/listener start
-        ;;
-      "(StatusReported (Capturing ("*)
-        session="$(read_active_listener_session "$status")" || {
-          echo "listener-toggle-capture: could not read active session from status: $status" >&2
-          exit 1
-        }
-        exec ${listener}/bin/listener stop "$session"
-        ;;
-      *)
-        echo "listener-toggle-capture: unexpected listener status: ''${status:-unavailable}" >&2
-        exit 1
-        ;;
-    esac
+    # Toggle is one daemon-owned transition. Do not read status and issue a
+    # follow-up start/stop request: that race can target a different session.
+    ${pkgs.systemd}/bin/systemctl --user start listener.service
+    exec ${listener}/bin/listener toggle
   '';
 
   listenerCancel = pkgs.writeShellScriptBin "listener-cancel-capture" ''
     set -eu
 
-    ${readActiveListenerSession}
-
     status="$(${listener}/bin/listener status 2>/dev/null || true)"
-    session="$(read_active_listener_session "$status")" || {
-      echo "listener-cancel-capture: no active Listener capture to cancel" >&2
-      exit 0
-    }
-
-    exec ${listener}/bin/listener cancel "$session"
+    case "$status" in
+      "(StatusReported (Capturing ("*)
+        session_and_artifact="''${status#"(StatusReported (Capturing ("}"
+        session="''${session_and_artifact%% *}"
+        case "$session" in
+          "" | *[!0-9]*)
+            echo "listener-cancel-capture: could not read active session" >&2
+            exit 1
+            ;;
+        esac
+        exec ${listener}/bin/listener cancel "$session"
+        ;;
+      *)
+        exit 0
+        ;;
+    esac
   '';
 in
 mkIf (size.min && behavesAs.edge) {

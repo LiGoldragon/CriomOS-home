@@ -1276,11 +1276,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1784124121,
-        "narHash": "sha256-GBlsYLrtuCD/rpbH+OjZi/oI1svnVj9a6ICjc+Vcwzk=",
+        "lastModified": 1784314276,
+        "narHash": "sha256-YRdb55a9Z0tHIbf6F9IMgpayt1IPqnL6LndCUQ/oOQc=",
         "owner": "LiGoldragon",
         "repo": "listener",
-        "rev": "565f691050d6c817688c0788ff973cfe6380ae49",
+        "rev": "c7e3e7329a4e977a729fe68a92f346d938045b96",
         "type": "github"
       },
       "original": {
