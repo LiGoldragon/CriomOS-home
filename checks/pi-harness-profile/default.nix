@@ -333,6 +333,26 @@ pkgs.runCommand "pi-harness-profile"
       throw new Error("generated role metadata must remain inert frontmatter, not runtime state");
     }
 
+    const designAuthority = "Agents may investigate and propose major design changes";
+    const ephemeralCommitment = "Agents are ephemeral. A statement in chat does not change future agent behavior.";
+    const managerSpiritClause = "the psyche the exact proposed Spirit intent wording, scope, and proposed privacy,\nand receive explicit approval.";
+    const recorderSpiritClause = "Reject a submission brief unless it evidences that the exact proposed Spirit\nintent wording, scope, and proposed privacy were shown to and explicitly approved\nby the psyche. Never invent missing entry metadata.";
+    for (const agent of agents) {
+      const packet = fs.readFileSync(projectRoot + "/.pi/agents/" + agent.name + ".md", "utf8");
+      if (packet.split(designAuthority).length - 1 !== 1) {
+        throw new Error(`generated Pi packet lacks exactly one design-authority clause: ''${agent.name}`);
+      }
+      if (packet.includes(ephemeralCommitment) !== (agent.name === "manager")) {
+        throw new Error(`ephemeral commitment must be limited to Manager: ''${agent.name}`);
+      }
+    }
+    if (!fs.readFileSync(projectRoot + "/.pi/agents/manager.md", "utf8").includes(managerSpiritClause)) {
+      throw new Error("generated Manager packet lacks exact Spirit proposal-approval clause");
+    }
+    if (!fs.readFileSync(projectRoot + "/.pi/agents/intent-recorder.md", "utf8").includes(recorderSpiritClause)) {
+      throw new Error("generated Intent Recorder packet lacks exact Spirit proposal-evidence clause");
+    }
+
     const compactSurfaceSize = COMPACT_SUBAGENT_TOOL_DESCRIPTION.length + JSON.stringify(SubagentParams).length;
     if (compactSurfaceSize !== 2023) throw new Error(`compact registered surface changed: ''${compactSurfaceSize}`);
     const compactProperties = (SubagentParams as { properties: Record<string, { enum?: unknown }> }).properties;
@@ -378,7 +398,7 @@ pkgs.runCommand "pi-harness-profile"
       "$TMPDIR/check-managed-project-roles.ts" "${primaryGenerated}"
 
     ${pkgs.jq}/bin/jq -e '
-      .nodes.skills.locked.rev == "b9a9853016584f979a2ccaeacfc0d4b9db28adfb"
+      .nodes.skills.locked.rev == "3ad7fe51362ca7f27f93f512c669f438453ffd3d"
     ' "${primaryGenerated}/flake.lock"
 
     grep -F 'localLlmApiKeyCommand = "!gopass show -o goldragon.criome/local-llm-api-token";' ${piModelsModule}
@@ -411,7 +431,7 @@ pkgs.runCommand "pi-harness-profile"
     grep -F 'packages = normalPiPackages;' ${piModelsModule}
     grep -F 'piTestingSettingsConfig = piSettingsConfig;' ${piModelsModule}
     grep -F 'github:LiGoldragon/pi-subagents-nicobailon/d87cd2b11477' ${flakeFile}
-    grep -F 'github:LiGoldragon/primary/a087fdf3c2be209c03790a00273a736bce485d63' ${flakeFile}
+    grep -F 'github:LiGoldragon/primary/83abdf83dd03bbaf5e2775ad4c4663af7b0d95f8' ${flakeFile}
     grep -F 'if (toolDescriptionMode !== "compact") {' "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/index.ts"
     grep -F 'registerWaitTool(pi, state, waitToolConfig.enabled);' "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/index.ts"
     ! test -e "${pi-subagents}/share/pi-packages/pi-subagents/src/agents/project-role-policy.ts"
