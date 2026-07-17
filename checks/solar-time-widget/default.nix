@@ -12,6 +12,8 @@ pkgs.runCommand "solar-time-widget" { } ''
   ${pkgs.jq}/bin/jq -e '.id == "solar-time" and .entryPoints.barWidget == "BarWidget.qml"' "$manifest"
   ${pkgs.gnugrep}/bin/grep -F '{ id = "plugin:solar-time"; }' "$sfwbar"
   ${pkgs.gnugrep}/bin/grep -F '/states/solar-time' "$sfwbar"
+  ${pkgs.gnugrep}/bin/grep -F 'home.activation.removeDeprecatedSolarLocationBackup' "$sfwbar"
+  ${pkgs.gnugrep}/bin/grep -F 'settings.json.preNewCriomos' "$sfwbar"
   ${pkgs.gnugrep}/bin/grep -F '"noctalia/plugins/solar-time/BarWidget.qml".source' "$sfwbar"
   ${pkgs.gnugrep}/bin/grep -F 'Time.now' "$widget"
   ${pkgs.gnugrep}/bin/grep -F 'GetSolarClock' "$widget"

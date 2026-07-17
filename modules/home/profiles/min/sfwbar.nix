@@ -63,6 +63,13 @@ lib.mkIf behavesAs.edge {
     };
   };
 
+  # This pre-CriomOS backup is a disabled, obsolete cache rather than
+  # managed Noctalia configuration. Remove it during activation so it cannot
+  # restore stale solar-location state; no location provider is enabled here.
+  home.activation.removeDeprecatedSolarLocationBackup = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    run ${pkgs.coreutils}/bin/rm -f "$HOME/.config/noctalia/settings.json.preNewCriomos"
+  '';
+
   home.activation.mergeNoctaliaPlugins = inputs.hexis.lib.mkManagedConfig {
     inherit lib pkgs hexis;
     file = "$HOME/.config/noctalia/plugins.json";

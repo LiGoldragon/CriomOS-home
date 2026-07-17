@@ -125,7 +125,7 @@
     # Chroma — unified visual-state daemon (theme + warmth + brightness).
     # Replaces darkman + the nightshift-* services + the brightness shell
     # wrapper. Consumed in modules/home/profiles/min/chroma.nix.
-    chroma.url = "github:LiGoldragon/chroma?ref=main";
+    chroma.url = "github:LiGoldragon/chroma/2597c3f77a67";
     chroma.inputs.nixpkgs.follows = "nixpkgs";
 
     # Spirit — schema-derived psyche record command line and user-session daemon.
