@@ -62,7 +62,7 @@ pkgs.runCommand "pi-harness-profile"
     test -d "${pi-linkup}/share/pi-packages/pi-linkup/node_modules/@aliou/pi-utils-ui"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/index.ts"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md"
-    jq -e '.name == "pi-subagents" and .version == "0.36.0" and .pi.extensions == ["./index.ts"] and .pi.skills == ["./skills"]' \
+    jq -e '.name == "pi-subagents" and .version == "0.36.1" and .pi.extensions == ["./index.ts"] and .pi.skills == ["./skills"]' \
       "${pi-subagents}/share/pi-packages/pi-subagents/package.json"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/index.ts"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/schemas.ts"
@@ -292,25 +292,24 @@ pkgs.runCommand "pi-harness-profile"
     if (!projectRoot) throw new Error("expected generated project root");
 
     const expected: Record<string, [string, string | false, "manager" | "nested" | "leaf", string[]]> = {
-      "crucial-greenfield-developer-for-chatgpt": ["openai-codex/gpt-5.6-sol", "high", "nested", ["scout", "repo-scaffolder", "general-code-implementer", "rust-auditor", "nix-auditor", "repository-closeout"]],
       "general-code-implementer": ["openai-codex/gpt-5.6-terra", "high", "leaf", []],
-      "generalist": ["openai-codex/gpt-5.6-sol", "medium", "nested", ["scout", "repo-scaffolder", "general-code-implementer", "rust-auditor", "nix-auditor", "repository-closeout", "tracker-weaver"]],
-      "intent-curator": ["openai-codex/gpt-5.6-sol", "high", "leaf", []],
+      "generalist": ["openai-codex/gpt-5.6-terra", "xhigh", "nested", ["scout", "repo-scaffolder", "general-code-implementer", "rust-auditor", "nix-auditor", "repository-closeout", "tracker-weaver"]],
+      "intent-curator": ["openai-codex/gpt-5.6-terra", "xhigh", "leaf", []],
       "intent-recorder": ["openai-codex/gpt-5.6-luna", "medium", "leaf", []],
-      "intent-translator": ["openai-codex/gpt-5.6-sol", "high", "leaf", []],
+      "intent-translator": ["openai-codex/gpt-5.6-terra", "xhigh", "leaf", []],
       "manager": ["openai-codex/gpt-5.6-sol", "high", "manager", []],
       "nix-auditor": ["openai-codex/gpt-5.6-terra", "medium", "leaf", []],
-      "operating-system-implementer": ["openai-codex/gpt-5.6-sol", "medium", "nested", ["scout", "general-code-implementer", "rust-auditor", "nix-auditor", "repository-closeout"]],
+      "operating-system-implementer": ["openai-codex/gpt-5.6-terra", "xhigh", "nested", ["scout", "general-code-implementer", "rust-auditor", "nix-auditor", "repository-closeout"]],
       "repo-scaffolder": ["openai-codex/gpt-5.6-terra", "high", "leaf", []],
       "repository-closeout": ["openai-codex/gpt-5.6-luna", "medium", "leaf", []],
       "rust-auditor": ["openai-codex/gpt-5.6-terra", "medium", "leaf", []],
       "scout": ["openai-codex/gpt-5.6-luna", "medium", "leaf", []],
-      "skill-editor": ["openai-codex/gpt-5.6-sol", "high", "nested", ["scout", "general-code-implementer", "rust-auditor", "repository-closeout"]],
+      "skill-editor": ["openai-codex/gpt-5.6-terra", "xhigh", "nested", ["scout", "general-code-implementer", "rust-auditor", "repository-closeout"]],
       "tracker-weaver": ["openai-codex/gpt-5.6-terra", "medium", "leaf", []],
     };
 
     const agents = discoverAgents(projectRoot, "project").agents.filter((agent) => agent.source === "project");
-    if (agents.length !== Object.keys(expected).length) throw new Error(`expected exact generated role set, got ''${agents.length}`);
+    if (agents.length !== Object.keys(expected).length || agents.length - 1 !== 13) throw new Error(`expected one Manager and 13 active roles, got ''${agents.length}`);
     for (const agent of agents) {
       const contract = expected[agent.name];
       if (!contract) throw new Error(`undeclared generated role: ''${agent.name}`);
@@ -328,6 +327,16 @@ pkgs.runCommand "pi-harness-profile"
 
     const manager = discoverRootManagerPolicy(agents);
     if (!manager || manager.metadata.projectRoleIdentity !== "manager") throw new Error("exactly one generated manager was not discovered");
+    if (agents.filter((agent) => agent.model === "openai-codex/gpt-5.6-sol").map((agent) => agent.name).join(",") !== "manager") {
+      throw new Error("Sol must be reserved for the root Manager");
+    }
+    for (const name of ["generalist", "intent-curator", "intent-translator", "operating-system-implementer", "skill-editor"]) {
+      const agent = agents.find((candidate) => candidate.name === name);
+      if (agent?.model !== "openai-codex/gpt-5.6-terra" || agent.thinking !== "xhigh") {
+        throw new Error(`former Sol worker was not migrated to Terra xhigh: ''${name}`);
+      }
+    }
+    if (agents.some((agent) => /claude|fable/i.test(agent.model ?? ""))) throw new Error("generated roster contains a forbidden Claude Fable model");
     const directLeafError = authorizeProjectRoleDispatch({ caller: manager, agents, targetNames: ["scout"], hasPerCallModelOverride: false, policyConfig: { required: true } });
     if (directLeafError) throw new Error(`manager direct leaf authorization failed: ''${directLeafError}`);
 
@@ -343,9 +352,16 @@ pkgs.runCommand "pi-harness-profile"
     if (!missingCallerError?.includes("required")) throw new Error("required managed policy did not fail closed");
 
     const compactSurfaceSize = COMPACT_SUBAGENT_TOOL_DESCRIPTION.length + JSON.stringify(SubagentParams).length;
-    if (compactSurfaceSize !== 1741) throw new Error(`compact registered surface changed: ''${compactSurfaceSize}`);
-    if (Object.keys((SubagentParams as { properties: Record<string, unknown> }).properties).sort().join(",") !== "agent,async,context,task") {
-      throw new Error("compact schema is not the minimal direct-launch surface");
+    if (compactSurfaceSize !== 2471) throw new Error(`compact registered surface changed: ''${compactSurfaceSize}`);
+    const compactProperties = (SubagentParams as { properties: Record<string, { enum?: unknown }> }).properties;
+    if (Object.keys(compactProperties).sort().join(",") !== "action,agent,async,context,task") {
+      throw new Error("compact schema is not the minimal direct-launch surface plus filtered recovery list");
+    }
+    if (JSON.stringify(compactProperties.action?.enum) !== JSON.stringify(["list"])) {
+      throw new Error("compact recovery action must be the optional filtered list only");
+    }
+    if (COMPACT_SUBAGENT_TOOL_DESCRIPTION.includes("subagent_wait") || COMPACT_SUBAGENT_TOOL_DESCRIPTION.includes("CHAIN:")) {
+      throw new Error("compact description exposed wait or generic workflow mechanisms");
     }
     const fullProperties = (FullSubagentParams as { properties: Record<string, unknown> }).properties;
     for (const mechanism of ["action", "chain", "tasks", "acceptance", "turnBudget", "worktree"]) {
@@ -366,6 +382,7 @@ pkgs.runCommand "pi-harness-profile"
       test -f "$agent_directory/SYSTEM.md"
       ${pkgs.jq}/bin/jq -e '
         .toolDescriptionMode == "compact" and
+        .asyncByDefault == true and
         .proactiveSkillSubagents == false and
         .projectRolePolicy.required == true and
         (.projectRolePolicy | has("allowLegacyNonProject") | not)
@@ -380,7 +397,7 @@ pkgs.runCommand "pi-harness-profile"
       "$TMPDIR/check-managed-project-roles.ts" "${primaryGenerated}"
 
     ${pkgs.jq}/bin/jq -e '
-      .nodes.skills.locked.rev == "72bdcd7e8e7dc24ed15ad25405a0a98e5c42823f"
+      .nodes.skills.locked.rev == "b9a9853016584f979a2ccaeacfc0d4b9db28adfb"
     ' "${primaryGenerated}/flake.lock"
 
     grep -F 'localLlmApiKeyCommand = "!gopass show -o goldragon.criome/local-llm-api-token";' ${piModelsModule}
@@ -412,8 +429,14 @@ pkgs.runCommand "pi-harness-profile"
     ! grep -F 'piTestingPackages = [' ${piModelsModule}
     grep -F 'packages = normalPiPackages;' ${piModelsModule}
     grep -F 'piTestingSettingsConfig = piSettingsConfig;' ${piModelsModule}
-    grep -F 'github:LiGoldragon/pi-subagents-nicobailon/858f57b768be604306231008d203fd9dc98dc6a2' ${flakeFile}
-    grep -F 'github:LiGoldragon/primary/ee0e3c785393243b2022b4eeed5245ae72a790f0' ${flakeFile}
+    grep -F 'github:LiGoldragon/pi-subagents-nicobailon/872abad31473efe8f9476103a86cfe4b98952b33' ${flakeFile}
+    grep -F 'github:LiGoldragon/primary/a087fdf3c2be209c03790a00273a736bce485d63' ${flakeFile}
+    grep -F 'if (toolDescriptionMode !== "compact") {' "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/index.ts"
+    grep -F 'registerWaitTool(pi, state, waitToolConfig.enabled);' "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/index.ts"
+    grep -F 'projectRoleDispatchKind === "manager"' "${pi-subagents}/share/pi-packages/pi-subagents/src/runs/foreground/subagent-executor.ts"
+    grep -F 'dispatchParams = { ...dispatchParams, async: true, clarify: false };' "${pi-subagents}/share/pi-packages/pi-subagents/src/runs/foreground/subagent-executor.ts"
+    grep -F 'projectRoleDispatchKind !== "manager"' "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/index.ts"
+    grep -F 'Generated Manager roster' "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/index.ts"
     grep -F 'github:LiGoldragon/pi-intercom/1fe0fcb210f235890363fbb5c667db4d0896f332' ${flakeFile}
     ! grep -F 'pi-subagents-tintinweb-testing-src' ${flakeFile}
     ! grep -F 'pi-subagents-tintinweb-testing-src' ${piModelsModule}

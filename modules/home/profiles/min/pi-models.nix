@@ -108,6 +108,7 @@ let
   piSubagentsConfigFile = pkgs.writeText "pi-subagents-config.json" (
     builtins.toJSON {
       toolDescriptionMode = "compact";
+      asyncByDefault = true;
       proactiveSkillSubagents = false;
       projectRolePolicy.required = true;
     }
