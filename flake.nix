@@ -198,13 +198,13 @@
     };
     # Maintained reliability forks pinned to immutable published revisions.
     pi-subagents-src = {
-      url = "github:LiGoldragon/pi-subagents-nicobailon/858f57b768be604306231008d203fd9dc98dc6a2";
+      url = "github:LiGoldragon/pi-subagents-nicobailon/872abad31473efe8f9476103a86cfe4b98952b33";
       flake = false;
     };
     # Generated project-role packets used by the harness compatibility check.
     # The source revision itself pins skills at the authoritative generator revision.
     primary-generated-src = {
-      url = "github:LiGoldragon/primary/ee0e3c785393243b2022b4eeed5245ae72a790f0";
+      url = "github:LiGoldragon/primary/a087fdf3c2be209c03790a00273a736bce485d63";
       flake = false;
     };
     pi-intercom-src = {
