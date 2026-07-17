@@ -110,7 +110,6 @@ let
       toolDescriptionMode = "compact";
       asyncByDefault = true;
       proactiveSkillSubagents = false;
-      projectRolePolicy.required = true;
     }
   );
 

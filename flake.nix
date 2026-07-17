@@ -201,7 +201,7 @@
     };
     # Maintained reliability forks pinned to immutable published revisions.
     pi-subagents-src = {
-      url = "github:LiGoldragon/pi-subagents-nicobailon/872abad31473efe8f9476103a86cfe4b98952b33";
+      url = "github:LiGoldragon/pi-subagents-nicobailon/d87cd2b11477";
       flake = false;
     };
     # Generated project-role packets used by the harness compatibility check.
