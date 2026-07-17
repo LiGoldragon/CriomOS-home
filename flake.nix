@@ -158,13 +158,16 @@
     # Orchestrate — multi-agent claim/coordination daemon that supervises the
     # `primary` workspace's claim fabric. Consumed in
     # modules/home/profiles/min/orchestrate.nix, which gives it a systemd
-    # --user supervisor. Pinned to v0.7.0: registration supersedes terminal lane
+    # --user supervisor. Pinned to v0.7.1: registration supersedes terminal lane
     # records (Fresh over a closed record drops it and its stale claims in one
-    # step; Recovery stays honest), atop the dead-lane reaper (age-stamped lanes,
-    # terminal records pruned by age, idle Active lanes aged out) and the v0.6.0
-    # additive agent-registry migration (registry rows recreated by harnesses).
-    # 964f3d55 fast-forwards 4b717484 with checkPhase hermeticity (writable HOME).
-    orchestrate.url = "github:LiGoldragon/orchestrate/d7398eee44d27f22661bef0cb74c380bf8c3a0ab";
+    # step; Recovery stays honest), atop the dead-lane reaper. v0.7.1 adds a
+    # bounded typed store-open repair loop: on an already-v8 store carrying the
+    # stale orchestrator_agents family (the v0.6.0 schema change), it drops and
+    # recreates only that ephemeral family in one transaction and re-opens clean,
+    # leaving lanes, claims, topics, and worktrees untouched — self-healing on
+    # first start. (This supersedes the reverted 964f3d55, whose migration wedged
+    # the daemon against a real v7→v8-upgraded store.)
+    orchestrate.url = "github:LiGoldragon/orchestrate/04c10a52871f80eddd8fe239b3d107c0181bf67f";
     orchestrate.inputs.nixpkgs.follows = "nixpkgs";
 
     # Mentci — psyche-facing approval daemon and egui client surface.
