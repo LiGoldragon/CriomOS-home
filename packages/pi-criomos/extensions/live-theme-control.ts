@@ -10,26 +10,20 @@ const socketExtension = ".sock";
 const staleContextMessageFragment = "This extension ctx is stale after session replacement or reload";
 const processCleanupSignals = ["SIGTERM", "SIGHUP"] as const;
 
-type ThemeMode = "dark" | "light";
-
 interface ThemeSelection {
-  mode: ThemeMode;
   themeName: string;
 }
 
 class LiveThemeControlConfiguration {
-  readonly statusName: string;
   readonly registryDirectory: string;
   readonly darkThemeName: string;
   readonly lightThemeName: string;
 
   private constructor(input: {
-    statusName: string;
     registryDirectory: string;
     darkThemeName: string;
     lightThemeName: string;
   }) {
-    this.statusName = input.statusName;
     this.registryDirectory = input.registryDirectory;
     this.darkThemeName = input.darkThemeName;
     this.lightThemeName = input.lightThemeName;
@@ -37,7 +31,6 @@ class LiveThemeControlConfiguration {
 
   static fromEnvironment(): LiveThemeControlConfiguration {
     return new LiveThemeControlConfiguration({
-      statusName: process.env.PI_LIVE_THEME_CONTROL_STATUS ?? "live-theme-control",
       registryDirectory:
         process.env.PI_LIVE_THEME_CONTROL_REGISTRY_DIRECTORY ??
         LiveThemeControlConfiguration.defaultRegistryDirectory(),
@@ -58,10 +51,10 @@ class LiveThemeControlConfiguration {
   selectionFor(line: string): ThemeSelection | undefined {
     const mode = line.trim().toLowerCase();
     if (mode === "dark") {
-      return { mode, themeName: this.darkThemeName };
+      return { themeName: this.darkThemeName };
     }
     if (mode === "light") {
-      return { mode, themeName: this.lightThemeName };
+      return { themeName: this.lightThemeName };
     }
     return undefined;
   }
@@ -276,8 +269,6 @@ class LiveThemeControlSession {
       await this.retireStartedState(server);
       return;
     }
-
-    this.setStatus(undefined);
   }
 
   async shutdown(): Promise<void> {
@@ -409,18 +400,10 @@ class LiveThemeControlSession {
       return;
     }
     const themeResult = result.value;
-    if (themeResult.success) {
-      this.setStatus(`${selection.mode}: ${selection.themeName}`);
-    } else {
+    if (!themeResult.success) {
       const errorMessage = "error" in themeResult ? themeResult.error : "unknown error";
       this.notify(`Live theme control failed to set ${selection.themeName}: ${errorMessage}`, "error");
     }
-  }
-
-  private setStatus(status: string | undefined): void {
-    this.useActiveContext("set status", (ctx) => {
-      ctx.ui.setStatus(this.configuration.statusName, status);
-    });
   }
 
   private notify(message: string, level: "info" | "warning" | "error"): void {

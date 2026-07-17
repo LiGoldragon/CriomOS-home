@@ -149,6 +149,7 @@ the same rule: the live Pi settings file names
   and sends its persisted mode once the daemon returns. A live socket update applies the loaded
   theme through Pi's UI API and asks Pi's sanctioned extension context to
   persist the same concrete `criomos-light` or `criomos-dark` selection.
+  Successful live updates are silent and create no persistent Pi status.
   Chroma remains the authority; Pi's concrete value is only its startup cache
   and fallback. The Home Manager `/theme = "always"` policy deliberately
   restores `criomos-light/criomos-dark` on the next profile activation for

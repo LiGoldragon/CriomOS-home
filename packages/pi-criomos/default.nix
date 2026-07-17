@@ -2,7 +2,7 @@
 
 pkgs.stdenvNoCC.mkDerivation {
   pname = "pi-criomos";
-  version = "0.1.2";
+  version = "0.1.3";
 
   dontUnpack = true;
   dontBuild = true;
@@ -20,7 +20,7 @@ pkgs.stdenvNoCC.mkDerivation {
     cat > "$packageRoot/package.json" <<'JSON'
     {
       "name": "pi-criomos",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "keywords": ["pi-package"],
       "pi": {
         "themes": ["./themes"],

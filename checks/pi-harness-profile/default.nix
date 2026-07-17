@@ -125,7 +125,7 @@ pkgs.runCommand "pi-harness-profile"
     test ! -e "${pi-criomos}/share/pi-packages/pi-criomos/skills/pi-internals/SKILL.md"
     test ! -e "${pi-criomos}/share/pi-packages/pi-criomos/src/extensions/theme-switcher.ts"
     test ! -e "${pi-criomos}/share/pi-packages/pi-criomos/src/extensions/operator-safety.ts"
-    jq -e '.version == "0.1.2" and .pi.extensions == ["./extensions/live-theme-control.ts"] and .pi.skills == ["./skills"]' \
+    jq -e '.version == "0.1.3" and .pi.extensions == ["./extensions/live-theme-control.ts"] and .pi.skills == ["./skills"]' \
       "${pi-criomos}/share/pi-packages/pi-criomos/package.json"
     grep -F "You are Pi, a coding agent running inside the user's terminal." \
       "${pi-criomos}/share/pi-packages/pi-criomos/system/SYSTEM.md"
@@ -167,7 +167,9 @@ pkgs.runCommand "pi-harness-profile"
       "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
     ! grep -q -E 'notify\([^)]*(stale|ctx|contained)' \
       "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
-    ! grep -q -E 'setStatus\([^)]*(stale|ctx|contained)' \
+    ! grep -q -F 'setStatus(' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+    ! grep -q -F 'PI_LIVE_THEME_CONTROL_STATUS' \
       "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
     ! grep -q -F 'this.ctx.ui.' \
       "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"

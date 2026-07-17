@@ -97,7 +97,9 @@ pkgs.runCommand "pi-criomos-package-load"
       "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
     ! grep -q -E 'notify\([^)]*(stale|ctx|contained)' \
       "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
-    ! grep -q -E 'setStatus\([^)]*(stale|ctx|contained)' \
+    ! grep -q -F 'setStatus(' \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+    ! grep -q -F 'PI_LIVE_THEME_CONTROL_STATUS' \
       "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
     grep -q -F 'ctx.ui.getTheme(selection.themeName)' \
       "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
@@ -128,6 +130,10 @@ pkgs.runCommand "pi-criomos-package-load"
     fi
     cd "$TMPDIR"
 
+    PI_JITI_MODULE="${pi}/lib/pi-monorepo/node_modules/jiti" \
+      ${pkgs.nodejs}/bin/node ${./live-theme-control-regression.cjs} \
+      "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts"
+
     ${pi}/bin/pi \
       --list-models gpt > "$TMPDIR/models" 2>&1
 
@@ -157,7 +163,7 @@ pkgs.runCommand "pi-criomos-package-load"
       -e "${pi-criomos}/share/pi-packages/pi-criomos/extensions/live-theme-control.ts" \
       > "$TMPDIR/live-theme-control-rpc" 2>&1
 
-    grep -q -F '"statusKey":"live-theme-control"' "$TMPDIR/live-theme-control-rpc"
+    ! grep -q -F '"statusKey":"live-theme-control"' "$TMPDIR/live-theme-control-rpc"
     grep -q -F '"success":true' "$TMPDIR/live-theme-control-rpc"
 
     printf '{"type":"get_commands"}\n' | ${pi}/bin/pi \
