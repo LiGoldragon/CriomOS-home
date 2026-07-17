@@ -23,6 +23,7 @@ pkgs.runCommand "listener-level-widget" { } ''
   ${pkgs.gnugrep}/bin/grep -F 'listenerState === "starting"' "$widget"
   ${pkgs.gnugrep}/bin/grep -F 'listenerState === "recording"' "$widget"
   ${pkgs.gnugrep}/bin/grep -F 'listenerState === "transcribing"' "$widget"
+  ${pkgs.gnugrep}/bin/grep -F 'listenerState === "cancelling"' "$widget"
   ${pkgs.gnugrep}/bin/grep -F 'listenerState === "copied"' "$widget"
   ${pkgs.gnugrep}/bin/grep -F 'listenerState === "cancelled"' "$widget"
   ${pkgs.gnugrep}/bin/grep -F 'listenerState === "error"' "$widget"

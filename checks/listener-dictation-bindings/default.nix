@@ -135,8 +135,8 @@ let
       message = "listener.service must set UMask=0077 for private capture artifacts";
     }
     {
-      condition = lib.versionAtLeast (listenerPackage.version or "0") "0.10.0";
-      message = "Listener package must be version 0.10.0 or newer (ships atomic toggle and nonblocking status maintenance)";
+      condition = lib.versionAtLeast (listenerPackage.version or "0") "0.11.0";
+      message = "Listener package must be version 0.11.0 or newer (ships nonblocking cancellation acknowledgement)";
     }
     {
       condition = !(lib.hasInfix "LISTENER_TRANSCRIPTION_PROGRAM" listenerEnvironmentExample);

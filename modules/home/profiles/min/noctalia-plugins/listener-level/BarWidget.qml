@@ -25,15 +25,16 @@ Item {
   readonly property bool starting: listenerState === "starting"
   readonly property bool recording: listenerState === "recording"
   readonly property bool transcribing: listenerState === "transcribing"
+  readonly property bool cancelling: listenerState === "cancelling"
   readonly property bool cancelled: listenerState === "cancelled"
-  readonly property bool active: starting || recording || transcribing
+  readonly property bool active: starting || recording || transcribing || cancelling
   readonly property real amplifiedMicrophoneLevel: Math.min(1.0, microphoneLevel * 2.75)
   readonly property color barColor: {
     if (listenerState === "copied")
       return "#22c55e";
     if (listenerState === "cancelled")
       return "#38bdf8";
-    if (listenerState === "starting")
+    if (listenerState === "starting" || listenerState === "cancelling")
       return "#f59e0b";
     if (listenerState === "transcribing")
       return "#facc15";
@@ -129,7 +130,7 @@ Item {
   Timer {
     interval: 110
     repeat: true
-    running: root.starting || root.transcribing
+    running: root.starting || root.transcribing || root.cancelling
     onTriggered: root.activityTick = root.activityTick + 1
   }
 
@@ -165,7 +166,7 @@ Item {
             return Math.round(4 + root.visibleMicrophoneLevel * 16 * modelData);
           if (root.starting)
             return Math.round(5 + (Math.sin(root.activityTick * 0.9 + index) + 1.0) * 3 * modelData);
-          if (root.transcribing)
+          if (root.transcribing || root.cancelling)
             return Math.round(7 + (Math.sin(root.activityTick * 0.9 + index) + 1.0) * 4 * modelData);
           if (root.listenerState === "copied" || root.cancelled || root.listenerState === "error")
             return 12;
