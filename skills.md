@@ -111,15 +111,18 @@ The daily STT path is Listener. The owning files are
 
 Important current shape:
 
-- `Mod+V` runs the Nix-managed `listener-toggle-capture` wrapper for
-  clipboard-only dictation. This is the safe default because it does not inject
-  transcript letters through the compositor seat.
+- `Mod+V` invokes Listener with the schema-defined `Toggle.{}` NOTA request for
+  clipboard-only dictation. The first request starts capture; the second
+  immediately and idempotently requests cancellation. This is the safe default
+  because it does not inject transcript letters through the compositor seat.
 - `Mod+Alt+V` runs `listener-recall`, a Fuzzel-backed selector over Listener's
   transcript history. The selected full transcript is copied to the clipboard;
   it does not inject text into the focused window.
-- `Mod+Ctrl+V` runs the Nix-managed `listener-cancel-capture` wrapper. Cancel
-  stops local capture, retains the capture artifact, avoids transcription and
-  delivery, and does not write Listener history.
+- `Mod+Ctrl+V` runs the Nix-managed `listener-cancel-capture` helper. It reads
+  `Status.{}` and, only for the active numeric session, submits `Cancel.<session>`
+  through `listener`; it never uses a positional helper verb. Cancel stops local
+  capture, retains the capture artifact, avoids transcription and delivery, and
+  does not write Listener history.
 - `Mod+Shift+V` is intentionally unbound. Direct dictation through compositor
   keystroke insertion is outside the safe STT surface; use clipboard delivery or
   recall instead.
@@ -195,7 +198,7 @@ separate optional cleanup.
 For local checks that do not call paid APIs:
 
 - `systemctl --user is-active listener.service`
-- `listener status`
+- `listener 'Status.{}'`
 - `listener-recall` only with stubbed selector/clipboard programs unless a live
   manual recall is the explicit test
 - Noctalia Listener widget state through `$XDG_RUNTIME_DIR/listener/status.sock`

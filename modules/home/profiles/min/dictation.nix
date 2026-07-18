@@ -81,19 +81,10 @@ let
     exec ${listener}/bin/listener-daemon
   '';
 
-  listenerToggle = pkgs.writeShellScriptBin "listener-toggle-capture" ''
-    set -eu
-
-    # Toggle is one daemon-owned transition. Do not read status and issue a
-    # follow-up start/stop request: that race can target a different session.
-    ${pkgs.systemd}/bin/systemctl --user start listener.service
-    exec ${listener}/bin/listener toggle
-  '';
-
   listenerCancel = pkgs.writeShellScriptBin "listener-cancel-capture" ''
     set -eu
 
-    status="$(${listener}/bin/listener status 2>/dev/null || true)"
+    status="$(${listener}/bin/listener "Status.{}" 2>/dev/null || true)"
     case "$status" in
       "StatusReported.Capturing.{"*)
         session_and_artifact="''${status#StatusReported.Capturing.\{}"
@@ -104,7 +95,7 @@ let
             exit 1
             ;;
         esac
-        exec ${listener}/bin/listener cancel "$session"
+        exec ${listener}/bin/listener "Cancel.$session"
         ;;
       *)
         exit 0
@@ -115,7 +106,6 @@ in
 mkIf (size.min && behavesAs.edge) {
   home.packages = [
     listener
-    listenerToggle
     listenerCancel
     pkgs.fuzzel
     pkgs.wl-clipboard
@@ -221,7 +211,9 @@ mkIf (size.min && behavesAs.edge) {
     ];
 
     binds."Mod+V" = {
-      action = a.spawn "${listenerToggle}/bin/listener-toggle-capture" "toggle";
+      # Toggle is one daemon-owned schema request. Do not read status and issue
+      # a follow-up start/stop request: that race can target a different session.
+      action = a.spawn "${listener}/bin/listener" "Toggle.{}";
       repeat = false;
       hotkey-overlay.title = "Listener Capture";
     };
@@ -233,7 +225,7 @@ mkIf (size.min && behavesAs.edge) {
     };
 
     binds."Mod+Ctrl+V" = {
-      action = a.spawn "${listenerCancel}/bin/listener-cancel-capture" "cancel";
+      action = a.spawn "${listenerCancel}/bin/listener-cancel-capture";
       repeat = false;
       hotkey-overlay.title = "Listener Cancel";
     };
