@@ -172,13 +172,15 @@
     orchestrate.inputs.nixpkgs.follows = "nixpkgs";
 
     # Message — the messenger: stateful local messaging daemon owning the
-    # durable agent-identity map and delivery registry (messenger.sema).
-    # Consumed in modules/home/profiles/min/message.nix, which gives it a
-    # systemd --user supervisor. Pinned to v0.8.0: registry seats
-    # orchestrator-supplied identities (mint authority relocated to the
-    # orchestrator per the 2026-07-17 psyche ruling), messenger.sema family v2,
-    # and the default package ships the text-edge binaries (nota-text).
-    message.url = "github:LiGoldragon/message/85f28aa68d052d61704216212e348782a56c41e3";
+    # durable agent-identity map, delivery registry, message ledger,
+    # per-recipient inboxes, and thread index (messenger.sema). Consumed in
+    # modules/home/profiles/min/message.nix, which gives it a systemd --user
+    # supervisor. Pinned to v0.10.2: the phase-3 messenger promotion
+    # (converged contracts, delivery legs, PTY control-socket delivery) plus
+    # the additive v2 -> v3 store migration — the deployed store, born at v2,
+    # is preserved aside and re-stamped on first open — on the
+    # incident-hardened sema-engine 0.11.2 orchestrate 0.14.1 runs.
+    message.url = "github:LiGoldragon/message/1c47a20e9b9227d704d6e7ecab2c0d5dd136bba9";
     message.inputs.nixpkgs.follows = "nixpkgs";
     message.inputs.crane.follows = "crane";
 
