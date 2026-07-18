@@ -170,6 +170,17 @@
     orchestrate.url = "github:LiGoldragon/orchestrate/4f9f7d99374a036d1488c185b8705dd7cf62167c";
     orchestrate.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Message — the messenger: stateful local messaging daemon owning the
+    # durable agent-identity map and delivery registry (messenger.sema).
+    # Consumed in modules/home/profiles/min/message.nix, which gives it a
+    # systemd --user supervisor. Pinned to v0.8.0: registry seats
+    # orchestrator-supplied identities (mint authority relocated to the
+    # orchestrator per the 2026-07-17 psyche ruling), messenger.sema family v2,
+    # and the default package ships the text-edge binaries (nota-text).
+    message.url = "github:LiGoldragon/message/85f28aa68d052d61704216212e348782a56c41e3";
+    message.inputs.nixpkgs.follows = "nixpkgs";
+    message.inputs.crane.follows = "crane";
+
     # Mentci — psyche-facing approval daemon and egui client surface.
     # The daemon repo is packaged locally because it does not expose a flake;
     # mentci-egui exposes the GUI and its remote-control helper binaries.

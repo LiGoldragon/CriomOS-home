@@ -55,6 +55,10 @@
     # Orchestrate — supervises the multi-agent claim/coordination daemon
     # (systemd --user unit + pinned flake input).
     ./profiles/min/orchestrate.nix
+    # Message — supervises the messenger daemon (durable agent-identity
+    # map + delivery registry in messenger.sema; systemd --user unit +
+    # pinned flake input).
+    ./profiles/min/message.nix
     # Chroma — visual-state daemon (theme + warmth + brightness).
     # Replaces darkman + nightshift + the brightness shell wrapper.
     # Per-user systemd unit + apply script + default config.nota.
