@@ -158,16 +158,17 @@
     # Orchestrate — multi-agent claim/coordination daemon that supervises the
     # `primary` workspace's claim fabric. Consumed in
     # modules/home/profiles/min/orchestrate.nix, which gives it a systemd
-    # --user supervisor. Pinned to v0.7.1: registration supersedes terminal lane
-    # records (Fresh over a closed record drops it and its stale claims in one
-    # step; Recovery stays honest), atop the dead-lane reaper. v0.7.1 adds a
-    # bounded typed store-open repair loop: on an already-v8 store carrying the
-    # stale orchestrator_agents family (the v0.6.0 schema change), it drops and
-    # recreates only that ephemeral family in one transaction and re-opens clean,
-    # leaving lanes, claims, topics, and worktrees untouched — self-healing on
-    # first start. (This supersedes the reverted 964f3d55, whose migration wedged
-    # the daemon against a real v7→v8-upgraded store.)
-    orchestrate.url = "github:LiGoldragon/orchestrate/4f9f7d99374a036d1488c185b8705dd7cf62167c";
+    # --user supervisor. Pinned to v0.12.0: the configuration writer takes
+    # labeled downstream-socket optionals (router=<path>, messenger=<path>) so
+    # any subset is expressible — the module configures the messenger leg only,
+    # activating identity/endpoint push to the co-resident message daemon while
+    # no router is deployed. Carries the 0.11.x line beneath it: activity-read
+    # liveness (a live command child is positive liveness), the sema-engine
+    # family-evolution primitive replacing raw catalog surgery, contention-flow
+    # MVP (typed repository-main contention answers, lane-named feature
+    # worktrees, tracked auto-rebase landing), and the orchestrator identity
+    # mint.
+    orchestrate.url = "github:LiGoldragon/orchestrate/eafd7ef05396025284327c91a08e2e831b3cea29";
     orchestrate.inputs.nixpkgs.follows = "nixpkgs";
 
     # Message — the messenger: stateful local messaging daemon owning the

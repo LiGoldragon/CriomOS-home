@@ -40,6 +40,12 @@ let
   upgradeSocketPath = "${runtimeDirectory}/orchestrate-upgrade.sock";
   workspaceRoot = "${config.home.homeDirectory}/primary";
   gitIndexRoot = "/git/github.com/LiGoldragon";
+  # The co-resident messenger's working socket (the message module's unit
+  # binds it): the orchestrator pushes minted identities and discovered
+  # endpoints there. The router label stays absent — no router is deployed,
+  # and the labeled writer arguments make messenger-without-router a
+  # truthful configuration.
+  messengerSocketPath = "%t/message/message.sock";
 in
 {
   options.criomosHome.orchestrate = {
@@ -65,7 +71,7 @@ in
       Service = {
         RuntimeDirectory = "orchestrate";
         RuntimeDirectoryMode = "0700";
-        ExecStartPre = "${orchestratePackage}/bin/orchestrate-write-configuration ${signalPath} ${storePath} ${ordinarySocketPath} ${metaSocketPath} ${upgradeSocketPath} ${workspaceRoot} ${gitIndexRoot}";
+        ExecStartPre = "${orchestratePackage}/bin/orchestrate-write-configuration ${signalPath} ${storePath} ${ordinarySocketPath} ${metaSocketPath} ${upgradeSocketPath} ${workspaceRoot} ${gitIndexRoot} messenger=${messengerSocketPath}";
         ExecStart = "${orchestratePackage}/bin/orchestrate-daemon ${signalPath}";
         Restart = "on-failure";
         RestartSec = "2s";
