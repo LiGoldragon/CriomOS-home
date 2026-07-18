@@ -168,7 +168,7 @@
     # MVP (typed repository-main contention answers, lane-named feature
     # worktrees, tracked auto-rebase landing), and the orchestrator identity
     # mint.
-    orchestrate.url = "github:LiGoldragon/orchestrate/eafd7ef05396025284327c91a08e2e831b3cea29";
+    orchestrate.url = "github:LiGoldragon/orchestrate/9613b41271a015e898ff3da1bb86d75ba19176e5";
     orchestrate.inputs.nixpkgs.follows = "nixpkgs";
 
     # Message — the messenger: stateful local messaging daemon owning the
