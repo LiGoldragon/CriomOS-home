@@ -36,11 +36,15 @@ let
     command: executableSuffix:
     builtins.length command >= 1 && lib.hasSuffix executableSuffix (builtins.elemAt command 0);
 
-  commandRunsListenerToggle =
+  commandRunsListenerStart =
     command:
     builtins.length command == 2
     && commandRunsExecutable command "/bin/listener"
-    && builtins.elemAt command 1 == "Toggle.{}";
+    && builtins.elemAt command 1 == "Start.{}";
+
+  commandRunsListenerStop =
+    command:
+    builtins.length command == 1 && commandRunsExecutable command "/bin/listener-stop-capture";
 
   commandRunsListenerCancel =
     command:
@@ -51,12 +55,20 @@ let
 
   assertions = [
     {
-      condition = commandRunsListenerToggle (commandFor "Mod+V");
-      message = "Mod+V must submit the Listener Toggle.{} schema request";
+      condition = commandRunsListenerStart (commandFor "Mod+C");
+      message = "Mod+C must submit the Listener Start.{} schema request";
     }
     {
-      condition = commandRunsListenerCancel (commandFor "Mod+Ctrl+V");
-      message = "Mod+Ctrl+V must run the schema-requesting listener-cancel-capture helper";
+      condition = commandRunsListenerStop (commandFor "Mod+V");
+      message = "Mod+V must run the schema-requesting listener-stop-capture helper";
+    }
+    {
+      condition = commandRunsListenerCancel (commandFor "Mod+Ctrl+C");
+      message = "Mod+Ctrl+C must run the schema-requesting listener-cancel-capture helper";
+    }
+    {
+      condition = !(builtins.hasAttr "Mod+Ctrl+V" binds);
+      message = "Mod+Ctrl+V must remain unbound so Mod+V can never mean discard";
     }
     {
       condition = commandRunsListenerRecall (commandFor "Mod+Alt+V");
@@ -72,7 +84,7 @@ let
     }
     {
       condition = !(builtins.hasAttr "Mod+Ctrl+M" binds);
-      message = "Mod+Ctrl+M must not remain a Listener binding after Listener moves to Mod+Ctrl+V";
+      message = "Mod+Ctrl+M must not remain a Listener binding after Listener moves to Mod+Ctrl+C";
     }
     {
       condition = !(builtins.hasAttr "Mod+Alt+M" binds);
@@ -133,8 +145,8 @@ let
       message = "listener.service must set UMask=0077 for private capture artifacts";
     }
     {
-      condition = lib.versionAtLeast (listenerPackage.version or "0") "0.12.1";
-      message = "Listener package must be version 0.12.1 or newer (ships graceful Toggle completion)";
+      condition = lib.versionAtLeast (listenerPackage.version or "0") "0.13.0";
+      message = "Listener package must be version 0.13.0 or newer (ships asynchronous completion)";
     }
     {
       condition = !(lib.hasInfix "LISTENER_TRANSCRIPTION_PROGRAM" listenerEnvironmentExample);
@@ -148,10 +160,12 @@ if failures != [ ] then
   throw (lib.concatMapStringsSep "\n" (assertion: assertion.message) failures)
 else
   let
-    listenerCancelExecutable = builtins.elemAt (commandFor "Mod+Ctrl+V") 0;
+    listenerStopExecutable = builtins.elemAt (commandFor "Mod+V") 0;
+    listenerCancelExecutable = builtins.elemAt (commandFor "Mod+Ctrl+C") 0;
   in
   pkgs.runCommand "listener-dictation-bindings" { } ''
     ${pkgs.bash}/bin/bash -n ${listenerService.ExecStart}
+    ${pkgs.bash}/bin/bash -n ${listenerStopExecutable}
     ${pkgs.bash}/bin/bash -n ${listenerCancelExecutable}
 
     if grep -F 'LISTENER_TRANSCRIPTION_PROGRAM=' ${listenerService.ExecStart} >/dev/null; then
@@ -174,15 +188,26 @@ else
       echo 'listener transcription customization archive must exist and be non-empty' >&2
       exit 1
     fi
+    grep -F 'StatusReported.Capturing.{' ${listenerStopExecutable} >/dev/null
+    grep -F '/bin/listener "Status.{}"' ${listenerStopExecutable} >/dev/null
+    grep -F '/bin/listener "Stop.$session"' ${listenerStopExecutable} >/dev/null
+    if grep -F '/bin/listener "Cancel.$session"' ${listenerStopExecutable} >/dev/null; then
+      echo 'Mod+V stop helper must never discard a capture' >&2
+      exit 1
+    fi
     grep -F 'StatusReported.Capturing.{' ${listenerCancelExecutable} >/dev/null
     grep -F '/bin/listener "Status.{}"' ${listenerCancelExecutable} >/dev/null
     grep -F '/bin/listener "Cancel.$session"' ${listenerCancelExecutable} >/dev/null
-    if grep -F '(StatusReported (Capturing (' ${listenerCancelExecutable} >/dev/null; then
-      echo 'listener cancel helper must parse the current status projection' >&2
+    if grep -F '/bin/listener "Stop.$session"' ${listenerCancelExecutable} >/dev/null; then
+      echo 'explicit cancel helper must not request graceful completion' >&2
       exit 1
     fi
-    if grep -E '/bin/listener (start|stop|cancel|status|toggle|list|retry)|listener-openai-transcribe|wl-copy|LISTENER_CLIPBOARD_PROGRAM' ${listenerCancelExecutable} >/dev/null; then
-      echo 'listener cancel helper must use only schema objects and must not stop/transcribe/copy' >&2
+    if grep -F '(StatusReported (Capturing (' ${listenerStopExecutable} ${listenerCancelExecutable} >/dev/null; then
+      echo 'listener control helpers must parse the current status projection' >&2
+      exit 1
+    fi
+    if grep -E '/bin/listener (start|stop|cancel|status|toggle|list|retry)|listener-openai-transcribe|wl-copy|LISTENER_CLIPBOARD_PROGRAM' ${listenerStopExecutable} ${listenerCancelExecutable} >/dev/null; then
+      echo 'listener control helpers must use only schema objects and must not transcribe or copy' >&2
       exit 1
     fi
     printf 'listener dictation bindings checked\n' > "$out"

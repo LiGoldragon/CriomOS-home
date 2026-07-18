@@ -24,17 +24,18 @@ Item {
   readonly property string socketPath: runtimeDirectory.length > 0 ? runtimeDirectory + "/listener/status.sock" : ""
   readonly property bool starting: listenerState === "starting"
   readonly property bool recording: listenerState === "recording"
+  readonly property bool finalizing: listenerState === "finalizing"
   readonly property bool transcribing: listenerState === "transcribing"
   readonly property bool cancelling: listenerState === "cancelling"
   readonly property bool cancelled: listenerState === "cancelled"
-  readonly property bool active: starting || recording || transcribing || cancelling
+  readonly property bool active: starting || recording || finalizing || transcribing || cancelling
   readonly property real amplifiedMicrophoneLevel: Math.min(1.0, microphoneLevel * 2.75)
   readonly property color barColor: {
-    if (listenerState === "copied")
+    if (listenerState === "delivered")
       return "#22c55e";
     if (listenerState === "cancelled")
       return "#38bdf8";
-    if (listenerState === "starting" || listenerState === "cancelling")
+    if (listenerState === "starting" || listenerState === "finalizing" || listenerState === "cancelling")
       return "#f59e0b";
     if (listenerState === "transcribing")
       return "#facc15";
@@ -52,8 +53,8 @@ Item {
       const nextState = String(event.state || "idle");
 
       if (hasSeenEvent && listenerState !== nextState) {
-        if (nextState === "copied")
-          notify("Listener", "Transcription copied to clipboard");
+        if (nextState === "delivered")
+          notify("Listener", "Transcription delivered to clipboard");
         else if (nextState === "cancelled")
           notify("Listener", "Capture cancelled");
         else if (nextState === "error")
@@ -130,7 +131,7 @@ Item {
   Timer {
     interval: 110
     repeat: true
-    running: root.starting || root.transcribing || root.cancelling
+    running: root.starting || root.finalizing || root.transcribing || root.cancelling
     onTriggered: root.activityTick = root.activityTick + 1
   }
 
@@ -166,14 +167,14 @@ Item {
             return Math.round(4 + root.visibleMicrophoneLevel * 16 * modelData);
           if (root.starting)
             return Math.round(5 + (Math.sin(root.activityTick * 0.9 + index) + 1.0) * 3 * modelData);
-          if (root.transcribing || root.cancelling)
+          if (root.finalizing || root.transcribing || root.cancelling)
             return Math.round(7 + (Math.sin(root.activityTick * 0.9 + index) + 1.0) * 4 * modelData);
-          if (root.listenerState === "copied" || root.cancelled || root.listenerState === "error")
+          if (root.listenerState === "delivered" || root.cancelled || root.listenerState === "error")
             return 12;
           return 4;
         }
         color: root.barColor
-        opacity: root.active || root.listenerState === "copied" || root.cancelled || root.listenerState === "error" || statusSocket.connected ? 1.0 : 0.5
+        opacity: root.active || root.listenerState === "delivered" || root.cancelled || root.listenerState === "error" || statusSocket.connected ? 1.0 : 0.5
 
         Behavior on height {
           NumberAnimation {

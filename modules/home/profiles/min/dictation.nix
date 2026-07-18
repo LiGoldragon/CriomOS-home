@@ -81,6 +81,28 @@ let
     exec ${listener}/bin/listener-daemon
   '';
 
+  listenerStop = pkgs.writeShellScriptBin "listener-stop-capture" ''
+    set -eu
+
+    status="$(${listener}/bin/listener "Status.{}" 2>/dev/null || true)"
+    case "$status" in
+      "StatusReported.Capturing.{"*)
+        session_and_artifact="''${status#StatusReported.Capturing.\{}"
+        session="''${session_and_artifact%% *}"
+        case "$session" in
+          "" | *[!0-9]*)
+            echo "listener-stop-capture: could not read active session" >&2
+            exit 1
+            ;;
+        esac
+        exec ${listener}/bin/listener "Stop.$session"
+        ;;
+      *)
+        exit 0
+        ;;
+    esac
+  '';
+
   listenerCancel = pkgs.writeShellScriptBin "listener-cancel-capture" ''
     set -eu
 
@@ -106,6 +128,7 @@ in
 mkIf (size.min && behavesAs.edge) {
   home.packages = [
     listener
+    listenerStop
     listenerCancel
     pkgs.fuzzel
     pkgs.wl-clipboard
@@ -210,12 +233,16 @@ mkIf (size.min && behavesAs.edge) {
       { command = [ "${startDictationServices}" ]; }
     ];
 
-    binds."Mod+V" = {
-      # Toggle is one daemon-owned schema request. Do not read status and issue
-      # a follow-up start/stop request: that race can target a different session.
-      action = a.spawn "${listener}/bin/listener" "Toggle.{}";
+    binds."Mod+C" = {
+      action = a.spawn "${listener}/bin/listener" "Start.{}";
       repeat = false;
-      hotkey-overlay.title = "Listener Capture";
+      hotkey-overlay.title = "Listener Start";
+    };
+
+    binds."Mod+V" = {
+      action = a.spawn "${listenerStop}/bin/listener-stop-capture";
+      repeat = false;
+      hotkey-overlay.title = "Listener Complete";
     };
 
     binds."Mod+Alt+V" = {
@@ -224,7 +251,7 @@ mkIf (size.min && behavesAs.edge) {
       hotkey-overlay.title = "Listener Recall";
     };
 
-    binds."Mod+Ctrl+V" = {
+    binds."Mod+Ctrl+C" = {
       action = a.spawn "${listenerCancel}/bin/listener-cancel-capture";
       repeat = false;
       hotkey-overlay.title = "Listener Cancel";
