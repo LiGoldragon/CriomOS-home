@@ -44,8 +44,7 @@ let
 
   commandRunsListenerCancel =
     command:
-    builtins.length command == 1
-    && commandRunsExecutable command "/bin/listener-cancel-capture";
+    builtins.length command == 1 && commandRunsExecutable command "/bin/listener-cancel-capture";
 
   commandRunsListenerRecall =
     command: builtins.length command == 1 && commandRunsExecutable command "/bin/listener-recall";
@@ -134,8 +133,8 @@ let
       message = "listener.service must set UMask=0077 for private capture artifacts";
     }
     {
-      condition = lib.versionAtLeast (listenerPackage.version or "0") "0.12.0";
-      message = "Listener package must be version 0.12.0 or newer (ships the schema-only CLI)";
+      condition = lib.versionAtLeast (listenerPackage.version or "0") "0.12.1";
+      message = "Listener package must be version 0.12.1 or newer (ships graceful Toggle completion)";
     }
     {
       condition = !(lib.hasInfix "LISTENER_TRANSCRIPTION_PROGRAM" listenerEnvironmentExample);
