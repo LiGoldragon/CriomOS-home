@@ -167,7 +167,7 @@
     # leaving lanes, claims, topics, and worktrees untouched — self-healing on
     # first start. (This supersedes the reverted 964f3d55, whose migration wedged
     # the daemon against a real v7→v8-upgraded store.)
-    orchestrate.url = "github:LiGoldragon/orchestrate/e86502a116c1eba1280b5c93c00ed0b74c7fa020";
+    orchestrate.url = "github:LiGoldragon/orchestrate/4f9f7d99374a036d1488c185b8705dd7cf62167c";
     orchestrate.inputs.nixpkgs.follows = "nixpkgs";
 
     # Mentci — psyche-facing approval daemon and egui client surface.
