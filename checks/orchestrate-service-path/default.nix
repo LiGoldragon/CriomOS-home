@@ -6,7 +6,7 @@ in
 pkgs.runCommand "orchestrate-service-path" { nativeBuildInputs = [ pkgs.gnugrep ]; } ''
   set -eu
 
-  grep -F 'Environment = "PATH=''${lib.makeBinPath [ pkgs.gnupg pkgs.jujutsu ]}";' ${orchestrateModule}
+  grep -F 'Environment = "PATH=''${lib.makeBinPath [ pkgs.gnupg pkgs.jujutsu pkgs.git ]}";' ${orchestrateModule}
 
   touch "$out"
 ''

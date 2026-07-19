@@ -69,7 +69,10 @@ in
       };
 
       Service = {
-        Environment = "PATH=${lib.makeBinPath [ pkgs.gnupg pkgs.jujutsu ]}";
+        # Worktree rejection salvages through `jj git push`; Jujutsu delegates
+        # that leg to the standalone Git executable, so both must be present in
+        # the daemon's hermetic runtime PATH rather than inherited from login.
+        Environment = "PATH=${lib.makeBinPath [ pkgs.gnupg pkgs.jujutsu pkgs.git ]}";
         RuntimeDirectory = "orchestrate";
         RuntimeDirectoryMode = "0700";
         ExecStartPre = "${orchestratePackage}/bin/orchestrate-write-configuration ${signalPath} ${storePath} ${ordinarySocketPath} ${metaSocketPath} ${upgradeSocketPath} ${workspaceRoot} ${gitIndexRoot} messenger=${messengerSocketPath}";
