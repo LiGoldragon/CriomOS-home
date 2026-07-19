@@ -96,6 +96,7 @@ let
 
       # Org / markdown
       org-roam
+      markdown-mode
       poly-markdown
 
       # Auth (auth-source-pass is built into Emacs core)
@@ -517,7 +518,10 @@ let
       . adaptive-wrap-prefix-mode))
 
     (use-package visual-fill-column
-     :hook (markdown-mode . visual-fill-column-mode)
+     :hook
+     ((markdown-mode . visual-fill-column-mode)
+      ;; Wrap display lines at the available window width without splitting words.
+      (markdown-mode . visual-line-mode))
      :custom (visual-fill-column-width 80))
 
     (use-package find-file-in-project :custom (ffip-use-rust-fd t))
