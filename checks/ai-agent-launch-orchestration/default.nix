@@ -28,6 +28,7 @@ pkgs.runCommand "ai-agent-launch-orchestration" { nativeBuildInputs = [ pkgs.gnu
   ! grep -F 'CRIOMOS_AGENT_MODE' ${minProfileModule}
   ! grep -F 'PI_SUBAGENT_CHILD' ${minProfileModule}
   ! grep -F 'CLAUDE_CODE_SUBAGENT' ${minProfileModule}
+  grep -F 'CLAUDE_CODE_DISABLE_WORKFLOWS = "1";' ${minProfileModule}
 
   ! grep -F 'claudeCommand = mkDirectAgentCommand "claude"' ${minProfileModule}
   ! grep -F 'codexCommand = mkDirectAgentCommand "codex"' ${minProfileModule}

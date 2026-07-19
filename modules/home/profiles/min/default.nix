@@ -623,6 +623,7 @@ mkIf size.min {
 
   home = {
     sessionVariables = {
+      CLAUDE_CODE_DISABLE_WORKFLOWS = "1";
       ENABLE_CLAUDEAI_MCP_SERVERS = "false";
     };
 

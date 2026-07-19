@@ -450,6 +450,7 @@
           ai-agent-launch-orchestration = checkPkgs.callPackage ./checks/ai-agent-launch-orchestration {
             inherit inputs;
           };
+          orchestrate-service-path = checkPkgs.callPackage ./checks/orchestrate-service-path { };
           pi-criomos-package-load = checkPkgs.callPackage ./checks/pi-criomos-package-load {
             inherit inputs;
           };

@@ -69,6 +69,7 @@ in
       };
 
       Service = {
+        Environment = "PATH=${lib.makeBinPath [ pkgs.gnupg pkgs.jujutsu ]}";
         RuntimeDirectory = "orchestrate";
         RuntimeDirectoryMode = "0700";
         ExecStartPre = "${orchestratePackage}/bin/orchestrate-write-configuration ${signalPath} ${storePath} ${ordinarySocketPath} ${metaSocketPath} ${upgradeSocketPath} ${workspaceRoot} ${gitIndexRoot} messenger=${messengerSocketPath}";
