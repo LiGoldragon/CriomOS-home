@@ -71,7 +71,7 @@ in
       Service = {
         RuntimeDirectory = "orchestrate";
         RuntimeDirectoryMode = "0700";
-        Environment = [ "PATH=${lib.makeBinPath [ pkgs.jujutsu ]}" ];
+        Environment = [ "PATH=${lib.makeBinPath [ pkgs.gnupg pkgs.jujutsu ]}" ];
         ExecStartPre = "${orchestratePackage}/bin/orchestrate-write-configuration ${signalPath} ${storePath} ${ordinarySocketPath} ${metaSocketPath} ${upgradeSocketPath} ${workspaceRoot} ${gitIndexRoot} messenger=${messengerSocketPath}";
         ExecStart = "${orchestratePackage}/bin/orchestrate-daemon ${signalPath}";
         Restart = "on-failure";
