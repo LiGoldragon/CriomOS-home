@@ -62,7 +62,7 @@ pkgs.runCommand "pi-harness-profile"
     test -d "${pi-linkup}/share/pi-packages/pi-linkup/node_modules/@aliou/pi-utils-ui"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/index.ts"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md"
-    jq -e '.name == "pi-subagents" and .version == "0.36.2" and .pi.extensions == ["./index.ts"] and .pi.skills == ["./skills"]' \
+    jq -e '.name == "pi-subagents" and .version == "0.35.2" and .pi.extensions == ["./index.ts"] and .pi.skills == ["./skills"]' \
       "${pi-subagents}/share/pi-packages/pi-subagents/package.json"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/index.ts"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/schemas.ts"
@@ -281,10 +281,7 @@ pkgs.runCommand "pi-harness-profile"
       COMPACT_SUBAGENT_TOOL_DESCRIPTION,
       FULL_SUBAGENT_TOOL_DESCRIPTION,
     } from "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/tool-description.ts";
-    import {
-      SubagentParams,
-      FullSubagentParams,
-    } from "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/schemas.ts";
+    import { SubagentParams } from "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/schemas.ts";
 
     const projectRoot = process.argv[2];
     if (!projectRoot) throw new Error("expected generated project root");
@@ -356,20 +353,15 @@ pkgs.runCommand "pi-harness-profile"
     }
 
     const compactSurfaceSize = COMPACT_SUBAGENT_TOOL_DESCRIPTION.length + JSON.stringify(SubagentParams).length;
-    if (compactSurfaceSize !== 2023) throw new Error(`compact registered surface changed: ''${compactSurfaceSize}`);
-    const compactProperties = (SubagentParams as { properties: Record<string, { enum?: unknown }> }).properties;
-    if (Object.keys(compactProperties).sort().join(",") !== "action,agent,async,context,task") {
-      throw new Error("compact schema is not the minimal direct-launch surface plus filtered recovery list");
+    if (COMPACT_SUBAGENT_TOOL_DESCRIPTION.length >= FULL_SUBAGENT_TOOL_DESCRIPTION.length * 0.8) {
+      throw new Error(`compact tool description is not materially smaller: ''${compactSurfaceSize}`);
     }
-    if (JSON.stringify(compactProperties.action?.enum) !== JSON.stringify(["list"])) {
-      throw new Error("compact recovery action must be the optional filtered list only");
+    if (!COMPACT_SUBAGENT_TOOL_DESCRIPTION.includes("EXECUTE:")) {
+      throw new Error("compact description omitted execution guidance");
     }
-    if (COMPACT_SUBAGENT_TOOL_DESCRIPTION.includes("subagent_wait") || COMPACT_SUBAGENT_TOOL_DESCRIPTION.includes("CHAIN:")) {
-      throw new Error("compact description exposed wait or generic workflow mechanisms");
-    }
-    const fullProperties = (FullSubagentParams as { properties: Record<string, unknown> }).properties;
-    for (const mechanism of ["action", "chain", "tasks", "acceptance", "turnBudget", "worktree"]) {
-      if (!(mechanism in fullProperties)) throw new Error(`full mechanism missing: ''${mechanism}`);
+    const fullProperties = (SubagentParams as { properties: Record<string, unknown> }).properties;
+    for (const mechanism of ["agent", "task", "action", "chain", "tasks", "acceptance", "turnBudget", "worktree"]) {
+      if (!(mechanism in fullProperties)) throw new Error(`current schema mechanism missing: ''${mechanism}`);
     }
     if (!FULL_SUBAGENT_TOOL_DESCRIPTION.includes("DIAGNOSTICS:") || !FULL_SUBAGENT_TOOL_DESCRIPTION.includes("CHAIN:")) {
       throw new Error("full optional mechanism description is incomplete");
@@ -432,13 +424,11 @@ pkgs.runCommand "pi-harness-profile"
     ! grep -F 'piTestingPackages = [' ${piModelsModule}
     grep -F 'packages = normalPiPackages;' ${piModelsModule}
     grep -F 'piTestingSettingsConfig = piSettingsConfig;' ${piModelsModule}
-    grep -F 'github:LiGoldragon/pi-subagents-nicobailon/d87cd2b11477' ${flakeFile}
+    grep -F 'github:LiGoldragon/pi-subagents-nicobailon/e550e8289bcdf22cc1c4b553949deb5a70bcae2a' ${flakeFile}
     grep -F 'github:LiGoldragon/primary/83abdf83dd03bbaf5e2775ad4c4663af7b0d95f8' ${flakeFile}
-    grep -F 'if (toolDescriptionMode !== "compact") {' "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/index.ts"
     grep -F 'registerWaitTool(pi, state, waitToolConfig.enabled);' "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/index.ts"
     ! test -e "${pi-subagents}/share/pi-packages/pi-subagents/src/agents/project-role-policy.ts"
     ! grep -R -E 'authorizeProjectRoleDispatch|projectRoleDispatchKind|PROJECT_ROLE_METADATA_ENV|projectRolePolicy' "${pi-subagents}/share/pi-packages/pi-subagents/src"
-    grep -F 'Generated Manager roster' "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/index.ts"
     grep -F 'github:LiGoldragon/pi-intercom/1fe0fcb210f235890363fbb5c667db4d0896f332' ${flakeFile}
     ! grep -F 'pi-subagents-tintinweb-testing-src' ${flakeFile}
     ! grep -F 'pi-subagents-tintinweb-testing-src' ${piModelsModule}

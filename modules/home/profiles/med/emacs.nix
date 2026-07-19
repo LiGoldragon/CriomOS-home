@@ -89,7 +89,6 @@ let
       # Editing helpers
       lispy
       adaptive-wrap
-      visual-fill-column
 
       # Project env
       envrc
@@ -514,15 +513,15 @@ let
 
     (use-package adaptive-wrap
      :hook
-     ((emacs-lisp-mode lisp-mode nix-ts-mode)
+     ((emacs-lisp-mode lisp-mode nix-ts-mode markdown-mode)
       . adaptive-wrap-prefix-mode))
 
-    (use-package visual-fill-column
-     :hook
-     ((markdown-mode . visual-fill-column-mode)
-      ;; Wrap display lines at the available window width without splitting words.
-      (markdown-mode . visual-line-mode))
-     :custom (visual-fill-column-width 80))
+    (defun criomos-markdown-whole-word-visual-line-mode ()
+      "Wrap Markdown at the window edge without splitting words."
+      (setq-local word-wrap t)
+      (visual-line-mode 1))
+
+    (add-hook 'markdown-mode-hook #'criomos-markdown-whole-word-visual-line-mode)
 
     (use-package find-file-in-project :custom (ffip-use-rust-fd t))
     (use-package git-link :custom (git-link-use-commit t))
