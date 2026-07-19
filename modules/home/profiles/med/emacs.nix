@@ -89,7 +89,6 @@ let
       # Editing helpers
       lispy
       adaptive-wrap
-      visual-fill-column
 
       # Project env
       envrc
@@ -517,12 +516,10 @@ let
      ((emacs-lisp-mode lisp-mode nix-ts-mode)
       . adaptive-wrap-prefix-mode))
 
-    (use-package visual-fill-column
-     :hook
-     ((markdown-mode . visual-fill-column-mode)
-      ;; Wrap display lines at the available window width without splitting words.
-      (markdown-mode . visual-line-mode))
-     :custom (visual-fill-column-width 80))
+    ;; Visual Line mode uses each window's actual display width, wraps at words,
+    ;; and disables truncation for Markdown buffers.
+    (use-package markdown-mode
+     :hook (markdown-mode . visual-line-mode))
 
     (use-package find-file-in-project :custom (ffip-use-rust-fd t))
     (use-package git-link :custom (git-link-use-commit t))
