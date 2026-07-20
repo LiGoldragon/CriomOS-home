@@ -518,10 +518,15 @@ let
 
     (defun criomos-markdown-whole-word-visual-line-mode ()
       "Wrap Markdown at the window edge without splitting words."
+      (setq-local truncate-lines nil)
       (setq-local word-wrap t)
-      (visual-line-mode 1))
+      (visual-line-mode 1)
+      (when (bound-and-true-p visual-fill-column-mode)
+        (visual-fill-column-mode -1)))
 
-    (add-hook 'markdown-mode-hook #'criomos-markdown-whole-word-visual-line-mode)
+    ;; Run last so this also clears a legacy visual-fill hook retained by a
+    ;; daemon that predates the activated profile.
+    (add-hook 'markdown-mode-hook #'criomos-markdown-whole-word-visual-line-mode t)
 
     (use-package find-file-in-project :custom (ffip-use-rust-fd t))
     (use-package git-link :custom (git-link-use-commit t))
