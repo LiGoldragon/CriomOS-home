@@ -118,6 +118,10 @@ lib.mkIf behavesAs.edge {
       max-visible = 3;
       group-by = "app-name";
 
+      "app-name=Listener" = {
+        history = 0;
+      };
+
       # Critical-urgency notifications get a longer timeout than the
       # 5s default so they're easier to catch when heads-down, but
       # never sticky-forever — every notification clears itself
