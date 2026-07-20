@@ -326,9 +326,12 @@ pkgs.runCommand "pi-harness-profile"
     }
     if (agents.some((agent) => /claude|fable/i.test(agent.model ?? ""))) throw new Error("generated roster contains a forbidden Claude Fable model");
     const generalist = agents.find((agent) => agent.name === "generalist");
+    const generalistPacket = fs.readFileSync(projectRoot + "/.pi/agents/generalist.md", "utf8");
     if (
       !generalist ||
-      JSON.stringify(generalist.turnBudget) !== JSON.stringify({ maxTurns: 12, graceTurns: 2 }) ||
+      !generalistPacket.includes("turnBudget: '{\"maxTurns\":12,\"graceTurns\":2}'") ||
+      !generalistPacket.includes("toolBudget: '{\"soft\":24,\"hard\":30,\"block\":\"*\"}'") ||
+      JSON.stringify(generalist.defaultTurnBudget) !== JSON.stringify({ maxTurns: 12, graceTurns: 2 }) ||
       JSON.stringify(generalist.toolBudget) !== JSON.stringify({ soft: 24, hard: 30, block: "*" })
     ) {
       throw new Error("Generalist must retain finite turn and tool budgets");
