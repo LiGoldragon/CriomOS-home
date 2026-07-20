@@ -216,9 +216,10 @@
       url = "https://registry.npmjs.org/@aliou/pi-utils-ui/-/pi-utils-ui-0.5.0.tgz";
       flake = false;
     };
-    # Maintained reliability fork pinned at the packaged 0.36.3 revision.
+    # Maintained reliability fork rebased on upstream v0.35.1. Its ledger
+    # records the retained local acceptance behavior and validation witnesses.
     pi-subagents-src = {
-      url = "github:LiGoldragon/pi-subagents-nicobailon/4c4b72c569c2d32a2e87b430ffd7ba9014b4bfc7";
+      url = "github:LiGoldragon/pi-subagents-nicobailon/e550e8289bcdf22cc1c4b553949deb5a70bcae2a";
       flake = false;
     };
     # Generated project-role packets used by the harness compatibility check.
