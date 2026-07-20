@@ -13,6 +13,8 @@ pkgs.runCommand "listener-level-widget" { } ''
   ${pkgs.gnugrep}/bin/grep -F '/states/listener-level' "$sfwbar"
   ${pkgs.gnugrep}/bin/grep -F '"noctalia/plugins/listener-level/BarWidget.qml".source' "$sfwbar"
   ${pkgs.gnugrep}/bin/grep -F 'home.packages = [ pkgs.libnotify ];' "$sfwbar"
+  ${pkgs.gnugrep}/bin/grep -F '"app-name=Listener"' "$sfwbar"
+  ${pkgs.gnugrep}/bin/grep -F 'history = 0;' "$sfwbar"
   if ${pkgs.gnugrep}/bin/grep -F 'plugin:whisrs-level' "$sfwbar" >/dev/null; then
     echo 'Whisrs level widget must not remain in the bar' >&2
     exit 1
@@ -25,7 +27,9 @@ pkgs.runCommand "listener-level-widget" { } ''
   ${pkgs.gnugrep}/bin/grep -F 'listenerState === "finalizing"' "$widget"
   ${pkgs.gnugrep}/bin/grep -F 'listenerState === "transcribing"' "$widget"
   ${pkgs.gnugrep}/bin/grep -F 'listenerState === "cancelling"' "$widget"
-  ${pkgs.gnugrep}/bin/grep -F 'listenerState === "delivered"' "$widget"
+  ${pkgs.gnugrep}/bin/grep -F 'nextState === "delivered"' "$widget"
+  ${pkgs.gnugrep}/bin/grep -F 'successFlashTimer.restart()' "$widget"
+  ${pkgs.gnugrep}/bin/grep -F 'interval: 700' "$widget"
   ${pkgs.gnugrep}/bin/grep -F 'listenerState === "cancelled"' "$widget"
   ${pkgs.gnugrep}/bin/grep -F 'listenerState === "error"' "$widget"
   ${pkgs.gnugrep}/bin/grep -F 'Number(event.level || 0.0)' "$widget"
@@ -36,10 +40,14 @@ pkgs.runCommand "listener-level-widget" { } ''
   ${pkgs.gnugrep}/bin/grep -F '#f59e0b' "$widget"
   ${pkgs.gnugrep}/bin/grep -F '#facc15' "$widget"
   ${pkgs.gnugrep}/bin/grep -F '#38bdf8' "$widget"
-  ${pkgs.gnugrep}/bin/grep -F 'notify-send' "$widget"
-  ${pkgs.gnugrep}/bin/grep -F 'Transcription delivered to clipboard' "$widget"
-  ${pkgs.gnugrep}/bin/grep -F 'Capture cancelled' "$widget"
-  ${pkgs.gnugrep}/bin/grep -F 'Transcription failed' "$widget"
+  if ${pkgs.gnugrep}/bin/grep -F 'notify-send' "$widget" >/dev/null; then
+    echo 'listener-level widget must not duplicate Listener notifications' >&2
+    exit 1
+  fi
+  if ${pkgs.gnugrep}/bin/grep -F 'Process {' "$widget" >/dev/null; then
+    echo 'listener-level widget must not create notification processes' >&2
+    exit 1
+  fi
 
   if ${pkgs.gnugrep}/bin/grep -E 'transcript|text' "$widget" >/dev/null; then
     echo 'listener-level widget must not carry transcript text' >&2

@@ -17,6 +17,7 @@ Item {
   property real microphoneLevel: 0.0
   property real visibleMicrophoneLevel: 0.0
   property bool hasSeenEvent: false
+  property bool successFlash: false
   property int activityTick: 0
   property double lastLevelEventMilliseconds: 0
 
@@ -31,7 +32,7 @@ Item {
   readonly property bool active: starting || recording || finalizing || transcribing || cancelling
   readonly property real amplifiedMicrophoneLevel: Math.min(1.0, microphoneLevel * 2.75)
   readonly property color barColor: {
-    if (listenerState === "delivered")
+    if (successFlash)
       return "#22c55e";
     if (listenerState === "cancelled")
       return "#38bdf8";
@@ -52,13 +53,12 @@ Item {
       const event = JSON.parse(String(message));
       const nextState = String(event.state || "idle");
 
-      if (hasSeenEvent && listenerState !== nextState) {
-        if (nextState === "delivered")
-          notify("Listener", "Transcription delivered to clipboard");
-        else if (nextState === "cancelled")
-          notify("Listener", "Capture cancelled");
-        else if (nextState === "error")
-          notify("Listener", "Transcription failed");
+      if (hasSeenEvent && listenerState !== "delivered" && nextState === "delivered") {
+        successFlash = true;
+        successFlashTimer.restart();
+      } else if (nextState !== "delivered") {
+        successFlash = false;
+        successFlashTimer.stop();
       }
 
       listenerState = nextState;
@@ -74,17 +74,6 @@ Item {
       // Ignore malformed partial lines; the next newline-delimited event will
       // restore state.
     }
-  }
-
-  function notify(summary, body) {
-    notificationProcess.command = [
-      "notify-send",
-      "--app-name=Listener",
-      "--expire-time=2500",
-      summary,
-      body
-    ];
-    notificationProcess.running = true;
   }
 
   function scheduleReconnect() {
@@ -110,12 +99,6 @@ Item {
     onError: _error => root.scheduleReconnect()
   }
 
-  Process {
-    id: notificationProcess
-
-    running: false
-  }
-
   Timer {
     id: reconnectTimer
 
@@ -126,6 +109,14 @@ Item {
       if (root.socketPath.length > 0)
         statusSocket.connected = true;
     }
+  }
+
+  Timer {
+    id: successFlashTimer
+
+    interval: 700
+    repeat: false
+    onTriggered: root.successFlash = false
   }
 
   Timer {
@@ -169,12 +160,12 @@ Item {
             return Math.round(5 + (Math.sin(root.activityTick * 0.9 + index) + 1.0) * 3 * modelData);
           if (root.finalizing || root.transcribing || root.cancelling)
             return Math.round(7 + (Math.sin(root.activityTick * 0.9 + index) + 1.0) * 4 * modelData);
-          if (root.listenerState === "delivered" || root.cancelled || root.listenerState === "error")
+          if (root.successFlash || root.cancelled || root.listenerState === "error")
             return 12;
           return 4;
         }
         color: root.barColor
-        opacity: root.active || root.listenerState === "delivered" || root.cancelled || root.listenerState === "error" || statusSocket.connected ? 1.0 : 0.5
+        opacity: root.active || root.successFlash || root.cancelled || root.listenerState === "error" || statusSocket.connected ? 1.0 : 0.5
 
         Behavior on height {
           NumberAnimation {
