@@ -62,7 +62,7 @@ pkgs.runCommand "pi-harness-profile"
     test -d "${pi-linkup}/share/pi-packages/pi-linkup/node_modules/@aliou/pi-utils-ui"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/index.ts"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md"
-    jq -e '.name == "pi-subagents" and .version == "0.35.2" and .pi.extensions == ["./index.ts"] and .pi.skills == ["./skills"]' \
+    jq -e '.name == "pi-subagents" and .version == "0.36.3" and .pi.extensions == ["./index.ts"] and .pi.skills == ["./skills"]' \
       "${pi-subagents}/share/pi-packages/pi-subagents/package.json"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/index.ts"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/schemas.ts"
@@ -325,6 +325,14 @@ pkgs.runCommand "pi-harness-profile"
       }
     }
     if (agents.some((agent) => /claude|fable/i.test(agent.model ?? ""))) throw new Error("generated roster contains a forbidden Claude Fable model");
+    const generalist = agents.find((agent) => agent.name === "generalist");
+    if (
+      !generalist ||
+      JSON.stringify(generalist.turnBudget) !== JSON.stringify({ maxTurns: 12, graceTurns: 2 }) ||
+      JSON.stringify(generalist.toolBudget) !== JSON.stringify({ soft: 24, hard: 30, block: "*" })
+    ) {
+      throw new Error("Generalist must retain finite turn and tool budgets");
+    }
     if (fs.existsSync("${pi-subagents}/share/pi-packages/pi-subagents/src/agents/project-role-policy.ts")) {
       throw new Error("removed project-role authorization module is still packaged");
     }
@@ -424,8 +432,8 @@ pkgs.runCommand "pi-harness-profile"
     ! grep -F 'piTestingPackages = [' ${piModelsModule}
     grep -F 'packages = normalPiPackages;' ${piModelsModule}
     grep -F 'piTestingSettingsConfig = piSettingsConfig;' ${piModelsModule}
-    grep -F 'github:LiGoldragon/pi-subagents-nicobailon/e550e8289bcdf22cc1c4b553949deb5a70bcae2a' ${flakeFile}
-    grep -F 'github:LiGoldragon/primary/83abdf83dd03bbaf5e2775ad4c4663af7b0d95f8' ${flakeFile}
+    grep -F 'github:LiGoldragon/pi-subagents-nicobailon/4c4b72c569c2d32a2e87b430ffd7ba9014b4bfc7' ${flakeFile}
+    grep -F 'github:LiGoldragon/primary/a790d9215a24b9e9918ad26b023e4e56305a7547' ${flakeFile}
     grep -F 'registerWaitTool(pi, state, waitToolConfig.enabled);' "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/index.ts"
     ! test -e "${pi-subagents}/share/pi-packages/pi-subagents/src/agents/project-role-policy.ts"
     ! grep -R -E 'authorizeProjectRoleDispatch|projectRoleDispatchKind|PROJECT_ROLE_METADATA_ENV|projectRolePolicy' "${pi-subagents}/share/pi-packages/pi-subagents/src"
