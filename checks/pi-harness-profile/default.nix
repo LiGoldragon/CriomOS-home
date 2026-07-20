@@ -407,7 +407,7 @@ pkgs.runCommand "pi-harness-profile"
       "$TMPDIR/check-managed-project-roles.ts" "${primaryGenerated}"
 
     ${pkgs.jq}/bin/jq -e '
-      .nodes.skills.locked.rev == "3ad7fe51362ca7f27f93f512c669f438453ffd3d"
+      .nodes.skills.locked.rev == "083567d123801a934af467bd21e5552fbb5029b5"
     ' "${primaryGenerated}/flake.lock"
 
     grep -F 'localLlmApiKeyCommand = "!gopass show -o goldragon.criome/local-llm-api-token";' ${piModelsModule}
