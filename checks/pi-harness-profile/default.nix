@@ -281,7 +281,7 @@ pkgs.runCommand "pi-harness-profile"
       COMPACT_SUBAGENT_TOOL_DESCRIPTION,
       FULL_SUBAGENT_TOOL_DESCRIPTION,
     } from "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/tool-description.ts";
-    import { SubagentParams } from "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/schemas.ts";
+    import { FullSubagentParams, SubagentParams } from "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/schemas.ts";
 
     const projectRoot = process.argv[2];
     if (!projectRoot) throw new Error("expected generated project root");
@@ -370,9 +370,13 @@ pkgs.runCommand "pi-harness-profile"
     if (!COMPACT_SUBAGENT_TOOL_DESCRIPTION.includes("DIRECT LAUNCH:")) {
       throw new Error("compact description omitted direct launch guidance");
     }
-    const fullProperties = (SubagentParams as { properties: Record<string, unknown> }).properties;
-    for (const mechanism of ["agent", "task", "action", "chain", "tasks", "acceptance", "turnBudget", "worktree"]) {
-      if (!(mechanism in fullProperties)) throw new Error(`current schema mechanism missing: ''${mechanism}`);
+    const compactProperties = (SubagentParams as { properties: Record<string, unknown> }).properties;
+    for (const mechanism of ["agent", "task", "action", "async", "context"]) {
+      if (!(mechanism in compactProperties)) throw new Error(`compact schema mechanism missing: ''${mechanism}`);
+    }
+    const fullProperties = (FullSubagentParams as { properties: Record<string, unknown> }).properties;
+    for (const mechanism of ["chain", "tasks", "acceptance", "turnBudget", "worktree"]) {
+      if (!(mechanism in fullProperties)) throw new Error(`full schema mechanism missing: ''${mechanism}`);
     }
     if (!FULL_SUBAGENT_TOOL_DESCRIPTION.includes("DIAGNOSTICS:") || !FULL_SUBAGENT_TOOL_DESCRIPTION.includes("CHAIN:")) {
       throw new Error("full optional mechanism description is incomplete");
