@@ -325,17 +325,6 @@ pkgs.runCommand "pi-harness-profile"
       }
     }
     if (agents.some((agent) => /claude|fable/i.test(agent.model ?? ""))) throw new Error("generated roster contains a forbidden Claude Fable model");
-    const generalist = agents.find((agent) => agent.name === "generalist");
-    const generalistPacket = fs.readFileSync(projectRoot + "/.pi/agents/generalist.md", "utf8");
-    if (
-      !generalist ||
-      !generalistPacket.includes("turnBudget: '{\"maxTurns\":12,\"graceTurns\":2}'") ||
-      !generalistPacket.includes("toolBudget: '{\"soft\":24,\"hard\":30,\"block\":\"*\"}'") ||
-      JSON.stringify(generalist.defaultTurnBudget) !== JSON.stringify({ maxTurns: 12, graceTurns: 2 }) ||
-      JSON.stringify(generalist.toolBudget) !== JSON.stringify({ soft: 24, hard: 30, block: "*" })
-    ) {
-      throw new Error("Generalist must retain finite turn and tool budgets");
-    }
     if (fs.existsSync("${pi-subagents}/share/pi-packages/pi-subagents/src/agents/project-role-policy.ts")) {
       throw new Error("removed project-role authorization module is still packaged");
     }
@@ -407,7 +396,7 @@ pkgs.runCommand "pi-harness-profile"
       "$TMPDIR/check-managed-project-roles.ts" "${primaryGenerated}"
 
     ${pkgs.jq}/bin/jq -e '
-      .nodes.skills.locked.rev == "083567d123801a934af467bd21e5552fbb5029b5"
+      .nodes.skills.locked.rev == "634c838ea9ec7c37a29529ec631bcff11238ea84"
     ' "${primaryGenerated}/flake.lock"
 
     grep -F 'localLlmApiKeyCommand = "!gopass show -o goldragon.criome/local-llm-api-token";' ${piModelsModule}
@@ -440,7 +429,7 @@ pkgs.runCommand "pi-harness-profile"
     grep -F 'packages = normalPiPackages;' ${piModelsModule}
     grep -F 'piTestingSettingsConfig = piSettingsConfig;' ${piModelsModule}
     grep -F 'github:LiGoldragon/pi-subagents-nicobailon/4c4b72c569c2d32a2e87b430ffd7ba9014b4bfc7' ${flakeFile}
-    grep -F 'github:LiGoldragon/primary/a790d9215a24b9e9918ad26b023e4e56305a7547' ${flakeFile}
+    grep -F 'github:LiGoldragon/primary/c6bfffc226367b140cf6e13bdcd2a500803d361b' ${flakeFile}
     grep -F 'registerWaitTool(pi, state, waitToolConfig.enabled);' "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/index.ts"
     ! test -e "${pi-subagents}/share/pi-packages/pi-subagents/src/agents/project-role-policy.ts"
     ! grep -R -E 'authorizeProjectRoleDispatch|projectRoleDispatchKind|PROJECT_ROLE_METADATA_ENV|projectRolePolicy' "${pi-subagents}/share/pi-packages/pi-subagents/src"

@@ -2250,17 +2250,17 @@
     "primary-generated-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1784538323,
-        "narHash": "sha256-QjHKZ+mpOT6zMOcNkoWQJ+0tiyFRlptZ/wc1lYWs84Y=",
+        "lastModified": 1784550911,
+        "narHash": "sha256-MghcNiDG2nfRHx34rV3WjfG0fsKsh665XP7NiyEKaP0=",
         "owner": "LiGoldragon",
         "repo": "primary",
-        "rev": "a790d9215a24b9e9918ad26b023e4e56305a7547",
+        "rev": "c6bfffc226367b140cf6e13bdcd2a500803d361b",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "primary",
-        "rev": "a790d9215a24b9e9918ad26b023e4e56305a7547",
+        "rev": "c6bfffc226367b140cf6e13bdcd2a500803d361b",
         "type": "github"
       }
     },

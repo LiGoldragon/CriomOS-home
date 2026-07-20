@@ -224,7 +224,7 @@
     # Generated project-role packets used by the harness compatibility check.
     # The source revision itself pins skills at the authoritative generator revision.
     primary-generated-src = {
-      url = "github:LiGoldragon/primary/a790d9215a24b9e9918ad26b023e4e56305a7547";
+      url = "github:LiGoldragon/primary/c6bfffc226367b140cf6e13bdcd2a500803d361b";
       flake = false;
     };
     pi-intercom-src = {
