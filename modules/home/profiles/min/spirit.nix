@@ -139,7 +139,6 @@ let
       --provider openai-codex \
       --model gpt-5.6-terra \
       --reasoning-effort medium \
-      --provider-timeout-milliseconds 180000 \
       --external-authorization-source codex-login \
       --session-launcher ${pkgs.util-linux}/bin/setsid \
       --codex-command ${codexCliPackage}/bin/codex
