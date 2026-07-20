@@ -367,8 +367,8 @@ pkgs.runCommand "pi-harness-profile"
     if (COMPACT_SUBAGENT_TOOL_DESCRIPTION.length >= FULL_SUBAGENT_TOOL_DESCRIPTION.length * 0.8) {
       throw new Error(`compact tool description is not materially smaller: ''${compactSurfaceSize}`);
     }
-    if (!COMPACT_SUBAGENT_TOOL_DESCRIPTION.includes("EXECUTE:")) {
-      throw new Error("compact description omitted execution guidance");
+    if (!COMPACT_SUBAGENT_TOOL_DESCRIPTION.includes("DIRECT LAUNCH:")) {
+      throw new Error("compact description omitted direct launch guidance");
     }
     const fullProperties = (SubagentParams as { properties: Record<string, unknown> }).properties;
     for (const mechanism of ["agent", "task", "action", "chain", "tasks", "acceptance", "turnBudget", "worktree"]) {
