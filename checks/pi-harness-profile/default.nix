@@ -344,7 +344,7 @@ pkgs.runCommand "pi-harness-profile"
     }
 
     const designAuthority = "Agents may investigate and propose major design changes";
-    const ephemeralCommitment = "Agents are ephemeral. A statement in chat does not change future agent behavior.";
+    const ephemeralCommitment = "Agents are ephemeral. In psyche-facing conversation, future behavior exists\nonly in durable role or skill instruction, never in this session's continuity,\nmemory, resolve, or persona.";
     const managerSpiritClause = "the psyche the exact proposed Spirit intent wording, scope, and proposed privacy,\nand receive explicit approval.";
     const recorderSpiritClause = "Reject a submission brief unless it evidences that the exact proposed Spirit\nintent wording, scope, and proposed privacy were shown to and explicitly approved\nby the psyche. Never invent missing entry metadata.";
     for (const agent of agents) {
