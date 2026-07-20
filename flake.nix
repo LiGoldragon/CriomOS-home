@@ -119,7 +119,7 @@
 
     # CriomOS deploy CLI. This is the Nota-first deploy tool used for
     # system, OS-only, and direct home deployments.
-    lojix.url = "github:LiGoldragon/lojix";
+    lojix.url = "github:LiGoldragon/lojix/118a025ec44c72db5948a1f0cebe10ffdbd7f277";
     lojix.inputs.nixpkgs.follows = "nixpkgs";
 
     # Chroma — unified visual-state daemon (theme + warmth + brightness).
@@ -204,6 +204,51 @@
       flake = false;
     };
 
+    # Agent Intercom is a coordinated upstream family. These immutable
+    # source inputs deliberately move as one protocol-v3 set; the package
+    # derivation assembles their supported Pi, Codex, Claude, OpenCode, and
+    # orchestrator surfaces without mutable npm installation.
+    agent-intercom-pi-src = {
+      url = "github:dataforxyz/agent-intercom-pi/d539a5476c26679f558d74b894b902d6366770a4";
+      flake = false;
+    };
+    agent-intercom-codex-src = {
+      url = "github:dataforxyz/agent-intercom-codex/118c85391b525982f00f38a3e3b67278e20e2774";
+      flake = false;
+    };
+    agent-intercom-claude-src = {
+      url = "github:dataforxyz/agent-intercom-claude/f558e3bfa0d0df799b57f729a2be903e85760df4";
+      flake = false;
+    };
+    agent-intercom-opencode-src = {
+      url = "github:dataforxyz/agent-intercom-opencode/5aea7545e00af04f2dd14a05bff69436917a4f46";
+      flake = false;
+    };
+    agent-intercom-orchestrator-src = {
+      url = "github:dataforxyz/agent-intercom-orchestrator/fb3a74c9bf96373c82d8be31da7bae97d6ac0119";
+      flake = false;
+    };
+    agent-intercom-core-src = {
+      url = "github:dataforxyz/agent-intercom-core/cb5d2212912db0cd8abbb16ab08e4b539424a05d";
+      flake = false;
+    };
+    agent-intercom-esbuild-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/esbuild/-/esbuild-0.28.1.tgz";
+      flake = false;
+    };
+    agent-intercom-esbuild-linux-x64-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/@esbuild/linux-x64/-/linux-x64-0.28.1.tgz";
+      flake = false;
+    };
+
+    # Maintained unofficial Linux desktop integration. The lock file pins the
+    # source and its upstream DMG metadata; the Home Manager module owns its
+    # package, Computer Use, and experimental Remote Mobile Control shape.
+    codex-desktop-linux.url = "github:ilysenko/codex-desktop-linux";
+    codex-desktop-linux.inputs.nixpkgs.follows = "nixpkgs";
+
     # Pi extension packages. Kept as flake inputs so source revisions and
     # content hashes live in flake.lock, not in package Nix code.
     pi-linkup-src = {
@@ -225,10 +270,6 @@
     # The source revision itself pins skills at the authoritative generator revision.
     primary-generated-src = {
       url = "github:LiGoldragon/primary/a790d9215a24b9e9918ad26b023e4e56305a7547";
-      flake = false;
-    };
-    pi-intercom-src = {
-      url = "github:LiGoldragon/pi-intercom/1fe0fcb210f235890363fbb5c667db4d0896f332";
       flake = false;
     };
     pi-intercom-tsx-src = {
@@ -458,6 +499,7 @@
           playwright-cli = checkPkgs.callPackage ./checks/playwright-cli { };
           spirit-deployment = checkPkgs.callPackage ./checks/spirit-deployment { inherit inputs; };
           aggregator-deployment = checkPkgs.callPackage ./checks/aggregator-deployment { inherit inputs; };
+          agent-intercom = checkPkgs.callPackage ./checks/agent-intercom { inherit inputs; };
           vscodium-casual = checkPkgs.callPackage ./checks/vscodium-casual { };
         }
       ) derivationChecks;
@@ -505,6 +547,7 @@
             inputs.stylix.homeModules.stylix
             inputs.niri-flake.homeModules.config
             inputs.noctalia.homeModules.default
+            inputs.codex-desktop-linux.homeManagerModules.default
           ];
           # mkForce because the consumer (e.g. CriomOS userHomes.nix)
           # also passes its own `inputs` via extraSpecialArgs, which

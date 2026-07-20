@@ -157,6 +157,23 @@ wholesale. Persona Pi agent-chain automation in the user profile runs
 without a manual UI approval for already-authorized work, so the agent can
 start automated work without the operator in the loop.
 
+Agent Intercom is installed as one pinned protocol-v3 family: Pi is the
+primary manager with its native adapter and orchestrator, while Codex, Claude
+Code, and OpenCode receive their supported adapters. The user profile owns
+broker state, adapters, user services, MCP registration, OpenCode plugin
+configuration, and remote-manager credential references. Cross-machine access
+uses only the upstream authenticated `remote-gateway.sock` through supported
+SSH reverse Unix-socket transport; it never forwards `broker.sock` and never
+puts enrollment, reconnect, OAuth, pairing, or private-key material in a
+profile derivation.
+
+The user profile also owns the maintained unofficial Linux Codex Desktop
+module. It pins `CODEX_CLI_PATH` through the module launcher, enables its
+supported Linux Computer Use integration without weakening Electron sandboxing,
+and enables experimental Remote Mobile Control through its declarative user
+service. Linux remote hosting remains experimental and account rollout or
+pairing remains an interactive OpenAI-controlled operation.
+
 A Nix utility fetches Hugging Face models by URL or query, mirroring
 `nix-prefetch-url`: it prefetches via the Hugging Face CLI, hashes, and
 writes a fetcher derivation parameterised by the HF URL/query — a workspace

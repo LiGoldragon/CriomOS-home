@@ -23,7 +23,7 @@ let
   pi-subagents = pkgs.callPackage ../../../../packages/pi-subagents {
     inherit inputs;
   };
-  pi-intercom = pkgs.callPackage ../../../../packages/pi-intercom { inherit inputs; };
+  agent-intercom = pkgs.callPackage ../../../../packages/agent-intercom { inherit inputs; };
   pi-continue = pkgs.callPackage ../../../../packages/pi-continue { inherit inputs; };
   pi-session-namer = pkgs.callPackage ../../../../packages/pi-session-namer { inherit inputs; };
   piPackageHomePath = "$HOME/.local/share/criomos/pi/package";
@@ -52,7 +52,8 @@ let
     piCriomosPackage
     "packages/pi-linkup"
     "packages/pi-subagents"
-    "packages/pi-intercom"
+    "packages/agent-intercom-pi"
+    "packages/agent-intercom-orchestrator"
     "packages/pi-continue"
     "packages/pi-session-namer"
   ];
@@ -102,7 +103,13 @@ let
   piIntercomConfig = {
     enabled = true;
     brokerCommand = "${pkgs.nodejs}/bin/node";
-    brokerArgs = [ "${pi-intercom}/share/pi-packages/pi-intercom/node_modules/tsx/dist/cli.mjs" ];
+    brokerArgs = [
+      "${agent-intercom}/share/agent-intercom/pi/node_modules/tsx/dist/cli.mjs"
+    ];
+    confirmSend = false;
+    inboundTrigger = "always";
+    replyHint = true;
+    legacyTool = false;
   };
 
   piSubagentsConfigFile = pkgs.writeText "pi-subagents-config.json" (
@@ -177,11 +184,8 @@ lib.mkIf (size.min && endpointNode != null) {
   home.file.".pi/agent/extensions/subagent/config.json".source = piSubagentsConfigFile;
   home.file.".pi/agent/extensions/subagent/config.json".force = true;
 
-  home.file.".pi/agent/packages/pi-intercom".source = "${pi-intercom}/share/pi-packages/pi-intercom";
-  home.file.".pi/agent/packages/pi-intercom".force = true;
-
   # pi-subagents resolves this supported override before legacy extension paths.
-  home.sessionVariables.PI_INTERCOM_EXTENSION_DIR = "${pi-intercom}/share/pi-packages/pi-intercom";
+  home.sessionVariables.PI_INTERCOM_EXTENSION_DIR = "${agent-intercom}/share/agent-intercom/pi";
 
   home.file.".pi/agent/packages/pi-continue".source = "${pi-continue}/share/pi-packages/pi-continue";
   home.file.".pi/agent/packages/pi-continue".force = true;
@@ -206,10 +210,6 @@ lib.mkIf (size.min && endpointNode != null) {
   home.file.".pi-testing/agent/packages/pi-subagents".force = true;
   home.file.".pi-testing/agent/extensions/subagent/config.json".source = piSubagentsConfigFile;
   home.file.".pi-testing/agent/extensions/subagent/config.json".force = true;
-
-  home.file.".pi-testing/agent/packages/pi-intercom".source =
-    "${pi-intercom}/share/pi-packages/pi-intercom";
-  home.file.".pi-testing/agent/packages/pi-intercom".force = true;
 
   home.file.".pi-testing/agent/packages/pi-continue".source =
     "${pi-continue}/share/pi-packages/pi-continue";
