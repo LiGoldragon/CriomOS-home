@@ -31,6 +31,30 @@ let
   adaptersEnabled = user.size.min;
   agentIntercom = pkgs.callPackage ../../../../packages/agent-intercom { inherit inputs; };
   codexCliPackage = inputs.codex-cli.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  gatewaySshPublicKey = user.agentIntercomGatewaySshPubKey or null;
+  gatewayRemoteGatewaySocket = "${config.home.homeDirectory}/.pi/agent/intercom/remote-gateway.sock";
+  peerBrokerCompatibilitySocket = "${config.home.homeDirectory}/.pi/agent/intercom/broker.sock";
+
+  mkRemoteTunnelPreflight =
+    peer:
+    pkgs.writeShellApplication {
+      name = "agent-intercom-remote-tunnel-preflight-${peer.name}";
+      runtimeInputs = [ pkgs.openssh ];
+      text = ''
+        : "''${AGENT_INTERCOM_REMOTE_KEY:?Agent Intercom remote tunnel requires a runtime SSH private-key path}"
+        actual_public_key="$(ssh-keygen -y -f "$AGENT_INTERCOM_REMOTE_KEY" 2>/dev/null)" || {
+          echo "Agent Intercom remote tunnel cannot read its runtime SSH private key" >&2
+          exit 1
+        }
+        expected_public_key=${lib.escapeShellArg (
+          if gatewaySshPublicKey == null then "" else gatewaySshPublicKey
+        )}
+        if [ "$actual_public_key" != "$expected_public_key" ]; then
+          echo "Agent Intercom remote tunnel key does not match the projected gateway identity" >&2
+          exit 1
+        fi
+      '';
+    };
 
   mkRemoteTunnel =
     peer:
@@ -42,7 +66,11 @@ let
       ];
       text = ''
         export AGENT_INTERCOM_REMOTE_SSH="${user.name}@${peer.criomeDomainName}"
-        export AGENT_INTERCOM_REMOTE_SOCKET="$HOME/.pi/agent/intercom/broker.sock"
+        # The upstream `-R "$REMOTE_SOCK:$LOCAL_SOCK"` transport binds this
+        # peer-side compatibility endpoint only to the gateway's authenticated
+        # remote-gateway listener. It never sources the authoritative broker.
+        export AGENT_INTERCOM_REMOTE_SOCKET=${lib.escapeShellArg peerBrokerCompatibilitySocket}
+        export AGENT_INTERCOM_LOCAL_REMOTE_GATEWAY=${lib.escapeShellArg gatewayRemoteGatewaySocket}
         export AGENT_INTERCOM_REMOTE_HEALTH="/run/current-system/sw/bin/agent-intercom-access health"
         exec ${agentIntercom}/share/agent-intercom/secure-remote-tunnel.sh
       '';
@@ -58,7 +86,11 @@ let
           Wants = [ "network-online.target" ];
         };
         Service = {
+          # The environment file carries only the runtime private-key path. An
+          # ExecCondition failure skips this unit rather than silently retrying
+          # an absent or mismatched credential forever.
           EnvironmentFile = "-%h/.config/agent-intercom/remote-tunnel.env";
+          ExecCondition = "${mkRemoteTunnelPreflight peer}/bin/agent-intercom-remote-tunnel-preflight-${peer.name}";
           ExecStart = "${mkRemoteTunnel peer}/bin/agent-intercom-remote-tunnel-${peer.name}";
           Restart = "always";
           RestartSec = 5;
@@ -77,6 +109,10 @@ lib.mkIf adaptersEnabled {
     {
       assertion = !isPeer || builtins.length gatewayNodes == 1;
       message = "Agent Intercom peers require exactly one projected gateway";
+    }
+    {
+      assertion = !isGateway || gatewaySshPublicKey != null;
+      message = "Agent Intercom gateway users require exactly one projected gateway SSH public key";
     }
   ];
 

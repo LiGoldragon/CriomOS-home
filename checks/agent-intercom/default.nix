@@ -25,6 +25,7 @@ let
         user = {
           name = "test-user";
           size.min = true;
+          agentIntercomGatewaySshPubKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA";
         };
         hexis = inputs.hexis.packages.${pkgs.stdenv.hostPlatform.system}.default;
       };
@@ -55,6 +56,7 @@ assert homeConfiguration.programs.codexDesktopLinux.enable;
 assert homeConfiguration.programs.codexDesktopLinux.computerUseUi.enable;
 assert homeConfiguration.programs.codexDesktopLinux.remoteMobileControl.enable;
 assert homeConfiguration.systemd.user.services ? agent-intercom-remote-peer;
+assert homeConfiguration.systemd.user.services.agent-intercom-remote-peer.Service ? ExecCondition;
 assert noTransportHomeConfiguration.home.file ? ".pi/agent/packages/agent-intercom-pi";
 assert noTransportHomeConfiguration.home.file ? ".pi/agent/packages/agent-intercom-orchestrator";
 assert !(noTransportHomeConfiguration.systemd.user.services ? agent-intercom-remote-peer);
@@ -110,6 +112,12 @@ pkgs.runCommand "agent-intercom-home-contract"
 
     grep -F 'AgentIntercomGateway' ${agentIntercomModule}
     grep -F 'AgentIntercomPeer' ${agentIntercomModule}
+    grep -F 'agentIntercomGatewaySshPubKey' ${agentIntercomModule}
+    grep -F 'AGENT_INTERCOM_LOCAL_REMOTE_GATEWAY' ${agentIntercomModule}
+    grep -F 'remote-gateway.sock' ${agentIntercomModule}
+    grep -F 'peer-side compatibility endpoint' ${agentIntercomModule}
+    grep -F 'ExecCondition' ${agentIntercomModule}
+    grep -F 'ssh-keygen -y' ${agentIntercomModule}
     grep -F 'codex-intercom-mcp' ${agentIntercomModule}
     grep -F 'claude-intercom-mcp' ${agentIntercomModule}
     grep -F 'opencode/dist/plugin.mjs' ${agentIntercomModule}
