@@ -1921,17 +1921,17 @@
     "pi-subagents-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1784476374,
-        "narHash": "sha256-ajIfjdV5zp9TRaPXOsGX2KKpVz9pm6JZqvGcbsopB7Q=",
+        "lastModified": 1784567468,
+        "narHash": "sha256-G93wx7gUhaPRuQiGWfo4bq7QyW/4LMHlhZ68W4GFL3s=",
         "owner": "LiGoldragon",
         "repo": "pi-subagents-nicobailon",
-        "rev": "e550e8289bcdf22cc1c4b553949deb5a70bcae2a",
+        "rev": "8b7d204fd0fd4427acdea5c1c60a2697221194ea",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "pi-subagents-nicobailon",
-        "rev": "e550e8289bcdf22cc1c4b553949deb5a70bcae2a",
+        "rev": "8b7d204fd0fd4427acdea5c1c60a2697221194ea",
         "type": "github"
       }
     },

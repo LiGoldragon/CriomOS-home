@@ -62,7 +62,7 @@ pkgs.runCommand "pi-harness-profile"
     test -d "${pi-linkup}/share/pi-packages/pi-linkup/node_modules/@aliou/pi-utils-ui"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/index.ts"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/skills/pi-subagents/SKILL.md"
-    jq -e '.name == "pi-subagents" and .version == "0.35.2" and .pi.extensions == ["./index.ts"] and .pi.skills == ["./skills"]' \
+    jq -e '.name == "pi-subagents" and .version == "0.36.3" and .pi.extensions == ["./index.ts"] and .pi.skills == ["./skills"]' \
       "${pi-subagents}/share/pi-packages/pi-subagents/package.json"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/index.ts"
     test -f "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/schemas.ts"
@@ -281,7 +281,7 @@ pkgs.runCommand "pi-harness-profile"
       COMPACT_SUBAGENT_TOOL_DESCRIPTION,
       FULL_SUBAGENT_TOOL_DESCRIPTION,
     } from "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/tool-description.ts";
-    import { SubagentParams } from "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/schemas.ts";
+    import { FullSubagentParams, SubagentParams } from "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/schemas.ts";
 
     const projectRoot = process.argv[2];
     if (!projectRoot) throw new Error("expected generated project root");
@@ -356,12 +356,16 @@ pkgs.runCommand "pi-harness-profile"
     if (COMPACT_SUBAGENT_TOOL_DESCRIPTION.length >= FULL_SUBAGENT_TOOL_DESCRIPTION.length * 0.8) {
       throw new Error(`compact tool description is not materially smaller: ''${compactSurfaceSize}`);
     }
-    if (!COMPACT_SUBAGENT_TOOL_DESCRIPTION.includes("EXECUTE:")) {
-      throw new Error("compact description omitted execution guidance");
+    if (!COMPACT_SUBAGENT_TOOL_DESCRIPTION.includes("DIRECT LAUNCH:")) {
+      throw new Error("compact description omitted direct-launch guidance");
     }
-    const fullProperties = (SubagentParams as { properties: Record<string, unknown> }).properties;
+    const minimalProperties = (SubagentParams as { properties: Record<string, unknown> }).properties;
+    if (Object.keys(minimalProperties).sort().join(",") !== "action,agent,async,context,task") {
+      throw new Error("compact schema does not expose only direct-launch recovery fields");
+    }
+    const fullProperties = (FullSubagentParams as { properties: Record<string, unknown> }).properties;
     for (const mechanism of ["agent", "task", "action", "chain", "tasks", "acceptance", "turnBudget", "worktree"]) {
-      if (!(mechanism in fullProperties)) throw new Error(`current schema mechanism missing: ''${mechanism}`);
+      if (!(mechanism in fullProperties)) throw new Error(`full schema mechanism missing: ''${mechanism}`);
     }
     if (!FULL_SUBAGENT_TOOL_DESCRIPTION.includes("DIAGNOSTICS:") || !FULL_SUBAGENT_TOOL_DESCRIPTION.includes("CHAIN:")) {
       throw new Error("full optional mechanism description is incomplete");
@@ -424,8 +428,9 @@ pkgs.runCommand "pi-harness-profile"
     ! grep -F 'piTestingPackages = [' ${piModelsModule}
     grep -F 'packages = normalPiPackages;' ${piModelsModule}
     grep -F 'piTestingSettingsConfig = piSettingsConfig;' ${piModelsModule}
-    grep -F 'github:LiGoldragon/pi-subagents-nicobailon/e550e8289bcdf22cc1c4b553949deb5a70bcae2a' ${flakeFile}
+    grep -F 'github:LiGoldragon/pi-subagents-nicobailon/8b7d204fd0fd4427acdea5c1c60a2697221194ea' ${flakeFile}
     grep -F 'github:LiGoldragon/primary/c6bfffc226367b140cf6e13bdcd2a500803d361b' ${flakeFile}
+    grep -F 'if (toolDescriptionMode !== "compact") {' "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/index.ts"
     grep -F 'registerWaitTool(pi, state, waitToolConfig.enabled);' "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/index.ts"
     ! test -e "${pi-subagents}/share/pi-packages/pi-subagents/src/agents/project-role-policy.ts"
     ! grep -R -E 'authorizeProjectRoleDispatch|projectRoleDispatchKind|PROJECT_ROLE_METADATA_ENV|projectRolePolicy' "${pi-subagents}/share/pi-packages/pi-subagents/src"
