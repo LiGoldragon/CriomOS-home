@@ -1,0 +1,122 @@
+{ inputs, pkgs, ... }:
+let
+  agentIntercomCore = pkgs.buildNpmPackage {
+    pname = "agent-intercom-core";
+    version = "0.1.0";
+    src = inputs.agent-intercom-core-src;
+    npmDepsHash = "sha256-UFt9ES1iyxZQQz8/kIYmL+R0RdErP+qktS+/OPeW/0Y=";
+    npmDepsFetcherVersion = 2;
+    dontNpmInstall = true;
+
+    installPhase = ''
+      runHook preInstall
+      mkdir -p "$out"
+      cp -R dist package.json "$out/"
+      runHook postInstall
+    '';
+  };
+
+  installTsxRuntime = packageRoot: ''
+    mkdir -p \
+      "${packageRoot}/.pi-deps/tsx" \
+      "${packageRoot}/.pi-deps/typebox" \
+      "${packageRoot}/.pi-deps/esbuild" \
+      "${packageRoot}/.pi-deps/esbuild-linux-x64" \
+      "${packageRoot}/.pi-deps/get-tsconfig" \
+      "${packageRoot}/.pi-deps/resolve-pkg-maps" \
+      "${packageRoot}/node_modules/@dataforxyz" \
+      "${packageRoot}/node_modules/@esbuild"
+
+    tar -xzf ${inputs.pi-intercom-tsx-src} -C "${packageRoot}/.pi-deps/tsx" --strip-components=1
+    tar -xzf ${inputs.pi-intercom-typebox-src} -C "${packageRoot}/.pi-deps/typebox" --strip-components=1
+    tar -xzf ${inputs.pi-intercom-esbuild-src} -C "${packageRoot}/.pi-deps/esbuild" --strip-components=1
+    tar -xzf ${inputs.pi-intercom-esbuild-linux-x64-src} -C "${packageRoot}/.pi-deps/esbuild-linux-x64" --strip-components=1
+    tar -xzf ${inputs.pi-intercom-get-tsconfig-src} -C "${packageRoot}/.pi-deps/get-tsconfig" --strip-components=1
+    tar -xzf ${inputs.pi-intercom-resolve-pkg-maps-src} -C "${packageRoot}/.pi-deps/resolve-pkg-maps" --strip-components=1
+
+    ln -s ../.pi-deps/tsx "${packageRoot}/node_modules/tsx"
+    ln -s ../.pi-deps/typebox "${packageRoot}/node_modules/typebox"
+    ln -s ../.pi-deps/esbuild "${packageRoot}/node_modules/esbuild"
+    ln -s ../.pi-deps/get-tsconfig "${packageRoot}/node_modules/get-tsconfig"
+    ln -s ../.pi-deps/resolve-pkg-maps "${packageRoot}/node_modules/resolve-pkg-maps"
+    ln -s ../../.pi-deps/esbuild-linux-x64 "${packageRoot}/node_modules/@esbuild/linux-x64"
+    cp -R ${agentIntercomCore}/. "${packageRoot}/node_modules/@dataforxyz/agent-intercom-core"
+  '';
+in
+pkgs.stdenvNoCC.mkDerivation {
+  pname = "agent-intercom";
+  version = "0.10.0";
+  dontUnpack = true;
+  dontBuild = true;
+  nativeBuildInputs = [
+    pkgs.gnutar
+    pkgs.makeWrapper
+    pkgs.nodejs
+  ];
+
+  installPhase = ''
+    runHook preInstall
+
+    root="$out/share/agent-intercom"
+    mkdir -p "$root"
+
+    cp -R ${inputs.agent-intercom-pi-src}/. "$root/pi"
+    cp -R ${inputs.agent-intercom-orchestrator-src}/. "$root/orchestrator"
+    cp -R ${inputs.agent-intercom-codex-src}/. "$root/codex"
+    cp -R ${inputs.agent-intercom-opencode-src}/. "$root/opencode"
+    chmod -R u+w "$root/pi" "$root/orchestrator" "$root/codex" "$root/opencode"
+
+    ${installTsxRuntime "$root/pi"}
+    ${installTsxRuntime "$root/orchestrator"}
+
+    claudeBuild="$TMPDIR/claude"
+    cp -R ${inputs.agent-intercom-claude-src}/. "$claudeBuild"
+    chmod -R u+w "$claudeBuild"
+    mkdir -p \
+      "$claudeBuild/node_modules/@dataforxyz" \
+      "$claudeBuild/node_modules/@esbuild/linux-x64" \
+      "$claudeBuild/node_modules/esbuild"
+    cp -R ${agentIntercomCore}/. "$claudeBuild/node_modules/@dataforxyz/agent-intercom-core"
+    tar -xzf ${inputs.agent-intercom-esbuild-src} -C "$claudeBuild/node_modules/esbuild" --strip-components=1
+    tar -xzf ${inputs.agent-intercom-esbuild-linux-x64-src} -C "$claudeBuild/node_modules/@esbuild/linux-x64" --strip-components=1
+    (cd "$claudeBuild" && ${pkgs.nodejs}/bin/node scripts/build.mjs)
+    cp -R "$claudeBuild/dist" "$root/claude"
+
+    cp ${inputs.agent-intercom-orchestrator-src}/examples/secure-remote-tunnel.sh \
+      "$root/secure-remote-tunnel.sh"
+    cp ${inputs.agent-intercom-orchestrator-src}/examples/check-remote-gateway.py \
+      "$root/check-remote-gateway.py"
+    chmod 0555 "$root/secure-remote-tunnel.sh" "$root/check-remote-gateway.py"
+
+    mkdir -p "$out/bin"
+    makeWrapper ${pkgs.nodejs}/bin/node "$out/bin/codex-intercom-mcp" \
+      --add-flags "$root/codex/dist/codex-server.mjs"
+    makeWrapper ${pkgs.nodejs}/bin/node "$out/bin/codex-intercom-bridge" \
+      --add-flags "$root/codex/dist/bridge-daemon.mjs"
+    makeWrapper ${pkgs.nodejs}/bin/node "$out/bin/coi" \
+      --add-flags "$root/codex/dist/coi.mjs"
+    makeWrapper ${pkgs.nodejs}/bin/node "$out/bin/claude-intercom-mcp" \
+      --add-flags "$root/claude/claude-server.mjs"
+    makeWrapper ${pkgs.nodejs}/bin/node "$out/bin/claude-intercom-worker" \
+      --add-flags "$root/claude/worker-daemon.mjs"
+    makeWrapper ${pkgs.nodejs}/bin/node "$out/bin/cci" \
+      --add-flags "$root/claude/cci.mjs"
+    makeWrapper ${pkgs.nodejs}/bin/node "$out/bin/ccim" \
+      --add-flags "$root/claude/ccim.mjs"
+    makeWrapper ${pkgs.nodejs}/bin/node "$out/bin/agent-intercom-fleet" \
+      --add-flags "--experimental-strip-types $root/orchestrator/src/agent-fleet-cli.mjs"
+    makeWrapper ${pkgs.nodejs}/bin/node "$out/bin/agent-intercom-fleet-cleanup" \
+      --add-flags "--experimental-strip-types $root/orchestrator/src/agent-fleet-cleanup.mjs"
+    makeWrapper ${pkgs.nodejs}/bin/node "$out/bin/agent-intercom-access" \
+      --add-flags "--experimental-strip-types $root/orchestrator/src/agent-intercom-access.mjs"
+
+    runHook postInstall
+  '';
+
+  meta = {
+    description = "Pinned Agent Intercom adapters and orchestrator";
+    homepage = "https://github.com/dataforxyz/agent-intercom-pi";
+    license = pkgs.lib.licenses.agpl3Plus;
+    platforms = [ "x86_64-linux" ];
+  };
+}
