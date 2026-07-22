@@ -6,14 +6,15 @@ from __future__ import annotations
 import asyncio
 import importlib.util
 import json
+import socket
 import stat
 import sys
 import tempfile
+from collections.abc import Callable
 from pathlib import Path
 
 helper_path = Path(sys.argv[1])
 fixtures = Path(sys.argv[2])
-widget_path = Path(sys.argv[3])
 spec = importlib.util.spec_from_file_location("active_network_helper", helper_path)
 assert spec is not None and spec.loader is not None
 helper = importlib.util.module_from_spec(spec)
@@ -21,9 +22,6 @@ sys.modules[spec.name] = helper
 spec.loader.exec_module(helper)
 
 states = json.loads((fixtures / "network-states.json").read_text())
-widget_events = json.loads((fixtures / "widget-status-events.json").read_text())
-widget_source = widget_path.read_text()
-
 
 def projection(name: str) -> dict:
     fixture = states[name]
@@ -84,59 +82,6 @@ assert cache.refresh_due(True, 5)
 cache.record(-60, 5)
 assert cache.visible_value(35) == -60
 assert cache.visible_value(35.001) is None
-
-
-def expected_widget_signal(rssi: int | None) -> tuple[str, str, int]:
-    quality = helper.signal_quality(rssi)
-    return quality["quality"], quality["qualityColor"], quality["bars"]
-
-
-def valid_widget_event(event: object) -> bool:
-    if not isinstance(event, dict):
-        return False
-    if event.get("state") not in {
-        "unknown", "connecting", "limited", "portal", "failed", "disconnected", "connected"
-    }:
-        return False
-    if event.get("connectivity") not in {"unknown", "none", "portal", "limited", "full"}:
-        return False
-    if event.get("kind") not in {"unknown", "ethernet", "wifi"}:
-        return False
-    if not isinstance(event.get("interface"), str) or len(event["interface"]) > 15:
-        return False
-    if not isinstance(event.get("vpn"), bool) or not isinstance(event.get("wifiActive"), bool):
-        return False
-    rssi = event.get("rssi")
-    if rssi is not None and (type(rssi) is not int or not -200 <= rssi <= 0):
-        return False
-    bars = event.get("bars")
-    if type(bars) is not int or not 0 <= bars <= 4:
-        return False
-    if (event.get("quality"), event.get("qualityColor"), bars) != expected_widget_signal(rssi):
-        return False
-    if event["kind"] != "wifi" and event["wifiActive"]:
-        return False
-    return not ((event["kind"] != "wifi" or not event["wifiActive"]) and rssi is not None)
-
-
-# The fixture is a generated, non-personal status contract. It proves the
-# expected bad enum/type/inconsistent-value cases stay rejected, while source
-# assertions pin those rules to the QML validation boundary before mutation.
-for event in widget_events["valid"]:
-    assert valid_widget_event(event), event
-for event in widget_events["invalid"]:
-    assert not valid_widget_event(event), event
-for source_fragment in [
-    "function validateStatusEvent(event)",
-    "Number.isFinite(rssiValue)",
-    "Number.isInteger(rssiValue)",
-    "Number.isInteger(event.bars)",
-    "if (event.kind !== \"wifi\" && event.wifiActive)",
-    "const status = validateStatusEvent(JSON.parse(String(message)));",
-    "if (status === null)",
-    "networkState = status.state;",
-]:
-    assert source_fragment in widget_source, source_fragment
 
 
 class FakeServer:
@@ -259,9 +204,82 @@ async def slow_client_backpressure_test() -> None:
         assert slow not in service.client_deliveries
 
 
+async def wait_until(predicate: Callable[[], bool], timeout: float = 1) -> None:
+    deadline = asyncio.get_running_loop().time() + timeout
+    while not predicate():
+        if asyncio.get_running_loop().time() >= deadline:
+            raise AssertionError("timed out waiting for socket delivery state")
+        await asyncio.sleep(0.005)
+
+
+async def next_ndjson_with_sequence(
+    reader: asyncio.StreamReader, sequence: int
+) -> dict[str, object]:
+    while True:
+        line = await asyncio.wait_for(reader.readline(), timeout=1)
+        assert line.endswith(b"\n"), line
+        event = json.loads(line)
+        if event.get("sequence") == sequence:
+            return event
+
+
+async def fast_peer_vs_slow_peer_socket_delivery_test() -> None:
+    """A non-reading Unix peer is evicted without blocking a healthy peer."""
+    with tempfile.TemporaryDirectory() as temporary:
+        service = helper.ActiveNetworkHelper("iw", Path(temporary) / "status.sock")
+        original_timeout = helper.CLIENT_DRAIN_TIMEOUT_SECONDS
+        helper.CLIENT_DRAIN_TIMEOUT_SECONDS = 0.05
+        server = await service.create_socket()
+        fast_writer: asyncio.StreamWriter | None = None
+        slow_writer: asyncio.StreamWriter | None = None
+        try:
+            fast_reader, fast_writer = await asyncio.open_unix_connection(
+                str(service.socket_path), limit=512 * 1024
+            )
+            await wait_until(lambda: len(service.clients) == 1)
+            fast_server_writer = next(iter(service.clients))
+            _slow_reader, slow_writer = await asyncio.open_unix_connection(
+                str(service.socket_path), limit=1
+            )
+            await wait_until(lambda: len(service.clients) == 2)
+            slow_server_writer = next(
+                writer for writer in service.clients if writer is not fast_server_writer
+            )
+            slow_socket = slow_server_writer.get_extra_info("socket")
+            assert slow_socket is not None
+            slow_socket.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 4096)
+
+            # The slow Unix peer has a deliberately small send buffer and
+            # never reads. Its timed drain must evict it, while the fast peer
+            # reads concurrently and receives complete latest-state NDJSON.
+            service.model = {"sequence": 1, "padding": "x" * (128 * 1024)}
+            service.broadcast()
+            first = await next_ndjson_with_sequence(fast_reader, 1)
+            assert first == service.model
+            await wait_until(lambda: slow_server_writer not in service.clients)
+            assert slow_server_writer not in service.client_deliveries
+
+            service.model = {"sequence": 2}
+            service.broadcast()
+            second = await next_ndjson_with_sequence(fast_reader, 2)
+            assert second == {"sequence": 2}
+            assert len(service.clients) == 1
+        finally:
+            helper.CLIENT_DRAIN_TIMEOUT_SECONDS = original_timeout
+            service.close_clients()
+            if fast_writer is not None:
+                fast_writer.close()
+                await fast_writer.wait_closed()
+            if slow_writer is not None:
+                slow_writer.close()
+                await slow_writer.wait_closed()
+            await service.close_socket_server(server)
+
+
 async def async_contract_tests() -> None:
     await lifecycle_and_socket_tests()
     await slow_client_backpressure_test()
+    await fast_peer_vs_slow_peer_socket_delivery_test()
 
 
 asyncio.run(async_contract_tests())

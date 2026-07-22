@@ -2,32 +2,37 @@
 let
   helper = ../../modules/home/profiles/min/noctalia-plugins/active-network/active_network_helper.py;
   widget = ../../modules/home/profiles/min/noctalia-plugins/active-network/BarWidget.qml;
+  statusValidation = ../../modules/home/profiles/min/noctalia-plugins/active-network/StatusValidation.js;
   manifest = ../../modules/home/profiles/min/noctalia-plugins/active-network/manifest.json;
   module = ../../modules/home/profiles/min/active-network.nix;
   sfwbar = ../../modules/home/profiles/min/sfwbar.nix;
   helperTests = ./active_network_helper_test.py;
+  statusValidationTests = ./status_validation_test.js;
   fixtures = ./fixtures;
   helperPython = pkgs.python3.withPackages (pythonPackages: [ pythonPackages.dbus-next ]);
 in
 pkgs.runCommand "active-network-widget" { } ''
   set -eu
 
-  ${helperPython}/bin/python ${helperTests} ${helper} ${fixtures} ${widget}
+  ${helperPython}/bin/python ${helperTests} ${helper} ${fixtures}
+  cat ${statusValidation} ${statusValidationTests} > status-validation-test.js
+  ${pkgs.nodejs}/bin/node status-validation-test.js ${fixtures}
   ${pkgs.jq}/bin/jq -e '.id == "active-network" and .entryPoints.barWidget == "BarWidget.qml"' ${manifest}
 
   ${pkgs.gnugrep}/bin/grep -F '{ id = "plugin:active-network"; }' ${sfwbar}
   ${pkgs.gnugrep}/bin/grep -F '/states/active-network' ${sfwbar}
   ${pkgs.gnugrep}/bin/grep -F '"noctalia/plugins/active-network/BarWidget.qml".source' ${sfwbar}
+  ${pkgs.gnugrep}/bin/grep -F '"noctalia/plugins/active-network/StatusValidation.js".source' ${sfwbar}
   ${pkgs.gnugrep}/bin/grep -F './noctalia-plugins/active-network/active_network_helper.py' ${module}
   ${pkgs.gnugrep}/bin/grep -F 'NetworkManager event helper' ${module}
   ${pkgs.gnugrep}/bin/grep -F 'RuntimeDirectory = "active-network"' ${module}
   ${pkgs.gnugrep}/bin/grep -F 'Restart = "on-failure"' ${module}
   ${pkgs.gnugrep}/bin/grep -F 'RestartSec = "2s"' ${module}
 
-  ${pkgs.gnugrep}/bin/grep -F 'function validateStatusEvent(event)' ${widget}
-  ${pkgs.gnugrep}/bin/grep -F 'Number.isFinite(rssiValue)' ${widget}
-  ${pkgs.gnugrep}/bin/grep -F 'Number.isInteger(event.bars)' ${widget}
-  ${pkgs.gnugrep}/bin/grep -F 'const status = validateStatusEvent(JSON.parse(String(message)));' ${widget}
+  ${pkgs.gnugrep}/bin/grep -F 'import "StatusValidation.js" as StatusValidation' ${widget}
+  ${pkgs.gnugrep}/bin/grep -F 'StatusValidation.validateStatusEvent(JSON.parse(String(message)))' ${widget}
+  ${pkgs.gnugrep}/bin/grep -F 'Number.isFinite(rssiValue)' ${statusValidation}
+  ${pkgs.gnugrep}/bin/grep -F 'Number.isInteger(event.bars)' ${statusValidation}
   ${pkgs.gnugrep}/bin/grep -F 'networkState = status.state;' ${widget}
   ${pkgs.gnugrep}/bin/grep -F '" dBm"' ${widget}
   ${pkgs.gnugrep}/bin/grep -F 'VPN' ${widget}

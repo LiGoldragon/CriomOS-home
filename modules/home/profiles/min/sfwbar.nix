@@ -104,6 +104,8 @@ lib.mkIf behavesAs.edge {
       ./noctalia-plugins/active-network/manifest.json;
     "noctalia/plugins/active-network/BarWidget.qml".source =
       ./noctalia-plugins/active-network/BarWidget.qml;
+    "noctalia/plugins/active-network/StatusValidation.js".source =
+      ./noctalia-plugins/active-network/StatusValidation.js;
   };
 
   services.mako = {

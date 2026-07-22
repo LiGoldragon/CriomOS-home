@@ -40,6 +40,30 @@
     },
     {
       "state": "connected",
+      "connectivity": "not-a-connectivity",
+      "kind": "wifi",
+      "interface": "wlp0s20f3",
+      "vpn": false,
+      "wifiActive": true,
+      "rssi": -57,
+      "quality": "fair",
+      "qualityColor": "#eab308",
+      "bars": 3
+    },
+    {
+      "state": "connected",
+      "connectivity": "full",
+      "kind": "not-a-kind",
+      "interface": "wlp0s20f3",
+      "vpn": false,
+      "wifiActive": true,
+      "rssi": -57,
+      "quality": "fair",
+      "qualityColor": "#eab308",
+      "bars": 3
+    },
+    {
+      "state": "connected",
       "connectivity": "full",
       "kind": "wifi",
       "interface": "wlp0s20f3",
