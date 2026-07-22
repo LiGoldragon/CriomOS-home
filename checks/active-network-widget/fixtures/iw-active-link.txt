@@ -1,0 +1,5 @@
+Connected to 00:11:22:33:44:55 (on wlp0s20f3)
+	SSID: fixture-network
+	freq: 5180
+	signal: -55 dBm
+	rx bitrate: 866.7 MBit/s

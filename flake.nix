@@ -442,6 +442,7 @@
             inherit inputs;
           };
           listener-level-widget = checkPkgs.callPackage ./checks/listener-level-widget { };
+          active-network-widget = checkPkgs.callPackage ./checks/active-network-widget { };
           solar-time-widget = checkPkgs.callPackage ./checks/solar-time-widget { };
           keyboard-layout-policy = checkPkgs.callPackage ./checks/keyboard-layout-policy { inherit inputs; };
           rust-toolchain = checkPkgs.callPackage ./checks/rust-toolchain { inherit inputs; };

@@ -45,6 +45,7 @@ lib.mkIf behavesAs.edge {
         ];
         right = [
           { id = "plugin:listener-level"; }
+          { id = "plugin:active-network"; }
           {
             id = "Tray";
             colorizeIcons = false;
@@ -77,12 +78,17 @@ lib.mkIf behavesAs.edge {
           enabled = true;
           sourceUrl = "https://github.com/noctalia-dev/noctalia-plugins";
         };
+        active-network = {
+          enabled = true;
+          sourceUrl = "https://github.com/noctalia-dev/noctalia-plugins";
+        };
       };
     };
     modes = {
       "/version" = "always";
       "/states/listener-level" = "always";
       "/states/solar-time" = "always";
+      "/states/active-network" = "always";
     };
   };
 
@@ -94,6 +100,10 @@ lib.mkIf behavesAs.edge {
     "noctalia/plugins/solar-time/manifest.json".source = ./noctalia-plugins/solar-time/manifest.json;
     "noctalia/plugins/solar-time/BarWidget.qml".source = ./noctalia-plugins/solar-time/BarWidget.qml;
     "noctalia/plugins/solar-time/SolarClock.js".source = ./noctalia-plugins/solar-time/SolarClock.js;
+    "noctalia/plugins/active-network/manifest.json".source =
+      ./noctalia-plugins/active-network/manifest.json;
+    "noctalia/plugins/active-network/BarWidget.qml".source =
+      ./noctalia-plugins/active-network/BarWidget.qml;
   };
 
   services.mako = {

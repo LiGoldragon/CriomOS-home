@@ -67,6 +67,7 @@
     # (bar widgets, idle timer, lock timeout). Without it the user
     # gets noctalia's upstream defaults.
     ./profiles/min/sfwbar.nix
+    ./profiles/min/active-network.nix
     ./profiles/med
     ./profiles/med/cli-tools.nix
     ./profiles/med/codium.nix

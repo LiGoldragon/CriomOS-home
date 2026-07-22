@@ -1,0 +1,56 @@
+{
+  "primaryWifiWithVpn": {
+    "manager": {"state": 70, "connectivity": 4, "primaryConnection": "/active/wifi", "activatingConnection": "/"},
+    "activeConnections": [
+      {"path": "/active/wifi", "devices": ["/device/wifi"], "type": "802-11-wireless", "state": 2, "vpn": false},
+      {"path": "/active/ethernet", "devices": ["/device/ethernet"], "type": "802-3-ethernet", "state": 2, "vpn": false},
+      {"path": "/active/vpn", "devices": ["/device/tun"], "type": "vpn", "state": 2, "vpn": true}
+    ],
+    "devices": [
+      {"path": "/device/wifi", "type": 2, "interface": "wlp0s20f3", "state": 100},
+      {"path": "/device/ethernet", "type": 1, "interface": "enp0s31f6", "state": 100},
+      {"path": "/device/tun", "type": 16, "interface": "tun0", "state": 100}
+    ]
+  },
+  "primaryEthernetWithWifi": {
+    "manager": {"state": 70, "connectivity": 0, "primaryConnection": "/active/ethernet", "activatingConnection": "/"},
+    "activeConnections": [
+      {"path": "/active/wifi", "devices": ["/device/wifi"], "type": "802-11-wireless", "state": 2, "vpn": false},
+      {"path": "/active/ethernet", "devices": ["/device/ethernet"], "type": "802-3-ethernet", "state": 2, "vpn": false}
+    ],
+    "devices": [
+      {"path": "/device/wifi", "type": 2, "interface": "wlp0s20f3", "state": 100},
+      {"path": "/device/ethernet", "type": 1, "interface": "enp0s31f6", "state": 100}
+    ]
+  },
+  "connecting": {
+    "manager": {"state": 40, "connectivity": 0, "primaryConnection": "/", "activatingConnection": "/active/wifi"},
+    "activeConnections": [{"path": "/active/wifi", "devices": ["/device/wifi"], "type": "802-11-wireless", "state": 1, "vpn": false}],
+    "devices": [{"path": "/device/wifi", "type": 2, "interface": "wlp0s20f3", "state": 70}]
+  },
+  "limited": {
+    "manager": {"state": 50, "connectivity": 1, "primaryConnection": "/active/ethernet", "activatingConnection": "/"},
+    "activeConnections": [{"path": "/active/ethernet", "devices": ["/device/ethernet"], "type": "802-3-ethernet", "state": 2, "vpn": false}],
+    "devices": [{"path": "/device/ethernet", "type": 1, "interface": "enp0s31f6", "state": 100}]
+  },
+  "portal": {
+    "manager": {"state": 70, "connectivity": 2, "primaryConnection": "/active/wifi", "activatingConnection": "/"},
+    "activeConnections": [{"path": "/active/wifi", "devices": ["/device/wifi"], "type": "802-11-wireless", "state": 2, "vpn": false}],
+    "devices": [{"path": "/device/wifi", "type": 2, "interface": "wlp0s20f3", "state": 100}]
+  },
+  "failed": {
+    "manager": {"state": 40, "connectivity": 0, "primaryConnection": "/", "activatingConnection": "/active/wifi"},
+    "activeConnections": [{"path": "/active/wifi", "devices": ["/device/wifi"], "type": "802-11-wireless", "state": 1, "vpn": false}],
+    "devices": [{"path": "/device/wifi", "type": 2, "interface": "wlp0s20f3", "state": 60}]
+  },
+  "disconnected": {
+    "manager": {"state": 20, "connectivity": 1, "primaryConnection": "/", "activatingConnection": "/"},
+    "activeConnections": [],
+    "devices": []
+  },
+  "tunnelOnly": {
+    "manager": {"state": 70, "connectivity": 4, "primaryConnection": "/active/wireguard", "activatingConnection": "/"},
+    "activeConnections": [{"path": "/active/wireguard", "devices": ["/device/wg"], "type": "wireguard", "state": 2, "vpn": false}],
+    "devices": [{"path": "/device/wg", "type": 29, "interface": "wg0", "state": 100}]
+  }
+}

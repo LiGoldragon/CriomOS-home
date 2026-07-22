@@ -1,0 +1,15 @@
+{
+  "id": "active-network",
+  "name": "Active Network",
+  "version": "1.0.0",
+  "author": "CriomOS",
+  "description": "Shows the NetworkManager primary physical connection with truthful Wi-Fi current-link RSSI.",
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "metadata": {
+    "category": "system",
+    "cpuIntensive": false,
+    "defaultSettings": {}
+  }
+}
