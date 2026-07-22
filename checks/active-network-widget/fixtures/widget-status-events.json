@@ -97,6 +97,18 @@
       "quality": "fair",
       "qualityColor": "#eab308",
       "bars": 3
+    },
+    {
+      "state": "connected",
+      "connectivity": "full",
+      "kind": "ethernet",
+      "interface": "enp0s31f6",
+      "vpn": false,
+      "wifiActive": true,
+      "rssi": null,
+      "quality": "unavailable",
+      "qualityColor": "#6b7280",
+      "bars": 0
     }
   ]
 }

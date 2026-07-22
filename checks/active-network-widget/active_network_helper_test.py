@@ -114,6 +114,8 @@ def valid_widget_event(event: object) -> bool:
         return False
     if (event.get("quality"), event.get("qualityColor"), bars) != expected_widget_signal(rssi):
         return False
+    if event["kind"] != "wifi" and event["wifiActive"]:
+        return False
     return not ((event["kind"] != "wifi" or not event["wifiActive"]) and rssi is not None)
 
 
@@ -129,6 +131,7 @@ for source_fragment in [
     "Number.isFinite(rssiValue)",
     "Number.isInteger(rssiValue)",
     "Number.isInteger(event.bars)",
+    "if (event.kind !== \"wifi\" && event.wifiActive)",
     "const status = validateStatusEvent(JSON.parse(String(message)));",
     "if (status === null)",
     "networkState = status.state;",

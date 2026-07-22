@@ -90,6 +90,8 @@ Item {
     if (event.quality !== expected.quality || event.qualityColor !== expected.qualityColor
         || event.bars !== expected.bars)
       return null;
+    if (event.kind !== "wifi" && event.wifiActive)
+      return null;
     if ((event.kind !== "wifi" || !event.wifiActive) && rssiValue !== null)
       return null;
 
