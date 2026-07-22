@@ -44,8 +44,13 @@ CONNECTING_DEVICE_STATES = {40, 50, 70, 80, 90}
 RSSI_REFRESH_SECONDS = 5
 RSSI_STALE_SECONDS = 30
 IW_TIMEOUT_SECONDS = 2
+CLIENT_DRAIN_TIMEOUT_SECONDS = 1
 
 RSSI_PATTERN = re.compile(r"^\s*signal:\s*(-?\d+)\s+dBm\s*$", re.MULTILINE)
+
+
+class SystemBusDisconnected(RuntimeError):
+    """Tell systemd to restart after the system bus disappears."""
 
 
 def parse_iw_link(output: str) -> int | None:
@@ -160,6 +165,14 @@ def project_network_state(
 
 
 @dataclass
+class ClientDelivery:
+    """At most one not-yet-written model is retained per socket client."""
+
+    latest: bytes | None = None
+    task: asyncio.Task[None] | None = None
+
+
+@dataclass
 class RssiCache:
     interface: str = ""
     value: int | None = None
@@ -199,6 +212,7 @@ class ActiveNetworkHelper:
         self.proxies: dict[str, Any] = {}
         self.watched: set[tuple[str, str]] = set()
         self.clients: set[asyncio.StreamWriter] = set()
+        self.client_deliveries: dict[asyncio.StreamWriter, ClientDelivery] = {}
         self.refresh_task: asyncio.Task[None] | None = None
         self.rssi_task: asyncio.Task[None] | None = None
         self.rssi_cache = RssiCache()
@@ -362,16 +376,59 @@ class ActiveNetworkHelper:
         except asyncio.CancelledError:
             raise
 
+    def schedule_delivery(self, writer: asyncio.StreamWriter, line: bytes) -> None:
+        delivery = self.client_deliveries.setdefault(writer, ClientDelivery())
+        delivery.latest = line
+        if delivery.task is None or delivery.task.done():
+            delivery.task = asyncio.create_task(self.deliver_latest(writer, delivery))
+
+    async def deliver_latest(self, writer: asyncio.StreamWriter, delivery: ClientDelivery) -> None:
+        """Send one latest-state line at a time and evict slow clients.
+
+        Keeping only ``delivery.latest`` bounds helper memory to one small
+        NDJSON model per client.  ``drain`` is timed so a client that stops
+        reading cannot hold a task or transport buffer indefinitely.
+        """
+        try:
+            while delivery.latest is not None:
+                line = delivery.latest
+                delivery.latest = None
+                if writer.is_closing():
+                    return
+                writer.write(line)
+                await asyncio.wait_for(
+                    writer.drain(), timeout=CLIENT_DRAIN_TIMEOUT_SECONDS
+                )
+        except (ConnectionError, RuntimeError, asyncio.TimeoutError):
+            self.evict_client(writer, delivery)
+        finally:
+            if self.client_deliveries.get(writer) is delivery:
+                delivery.task = None
+                if delivery.latest is not None and writer in self.clients:
+                    delivery.task = asyncio.create_task(self.deliver_latest(writer, delivery))
+
+    def evict_client(
+        self,
+        writer: asyncio.StreamWriter,
+        delivery: ClientDelivery | None = None,
+    ) -> None:
+        self.clients.discard(writer)
+        existing = self.client_deliveries.pop(writer, None)
+        active_delivery = delivery or existing
+        task = active_delivery.task if active_delivery is not None else None
+        if task is not None and task is not asyncio.current_task() and not task.done():
+            task.cancel()
+        with contextlib.suppress(ConnectionError, RuntimeError):
+            writer.close()
+
+    def close_clients(self) -> None:
+        for writer in tuple(self.clients):
+            self.evict_client(writer)
+
     def broadcast(self) -> None:
         line = (json.dumps(self.model, separators=(",", ":")) + "\n").encode()
-        stale: list[asyncio.StreamWriter] = []
-        for writer in self.clients:
-            try:
-                writer.write(line)
-            except (ConnectionError, RuntimeError):
-                stale.append(writer)
-        for writer in stale:
-            self.clients.discard(writer)
+        for writer in tuple(self.clients):
+            self.schedule_delivery(writer, line)
 
     async def client_connected(self, _reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
         self.clients.add(writer)
@@ -379,7 +436,7 @@ class ActiveNetworkHelper:
         try:
             await writer.wait_closed()
         finally:
-            self.clients.discard(writer)
+            self.evict_client(writer)
 
     async def create_socket(self) -> asyncio.AbstractServer:
         self.socket_path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -391,32 +448,44 @@ class ActiveNetworkHelper:
         os.chmod(self.socket_path, 0o600)
         return server
 
+    async def close_socket_server(self, server: asyncio.AbstractServer) -> None:
+        server.close()
+        await server.wait_closed()
+        with contextlib.suppress(FileNotFoundError):
+            self.socket_path.unlink()
+
+    async def connect_system_bus(self) -> None:
+        self.bus = await MessageBus(bus_type=BusType.SYSTEM).connect()
+        dbus_proxy = self.bus.get_proxy_object(
+            "org.freedesktop.DBus",
+            "/org/freedesktop/DBus",
+            await self.bus.introspect("org.freedesktop.DBus", "/org/freedesktop/DBus"),
+        )
+
+        def on_name_owner_changed(name: str, _old_owner: str, _new_owner: str) -> None:
+            if name == NM_SERVICE:
+                self.proxies.clear()
+                self.watched.clear()
+                self.request_refresh()
+
+        dbus_proxy.get_interface(DBUS_INTERFACE).on_name_owner_changed(on_name_owner_changed)
+
     async def run(self) -> None:
         server = await self.create_socket()
         try:
-            self.bus = await MessageBus(bus_type=BusType.SYSTEM).connect()
-            dbus_proxy = self.bus.get_proxy_object(
-                "org.freedesktop.DBus",
-                "/org/freedesktop/DBus",
-                await self.bus.introspect("org.freedesktop.DBus", "/org/freedesktop/DBus"),
-            )
-            def on_name_owner_changed(name: str, _old_owner: str, _new_owner: str) -> None:
-                if name == NM_SERVICE:
-                    self.proxies.clear()
-                    self.watched.clear()
-                    self.request_refresh()
-
-            dbus_proxy.get_interface(DBUS_INTERFACE).on_name_owner_changed(on_name_owner_changed)
+            await self.connect_system_bus()
             await self.refresh()
+            assert self.bus is not None
             await self.bus.wait_for_disconnect()
+            # Returning successfully would bypass Restart=on-failure and leave
+            # the widget reconnecting to a socket that no longer has a helper.
+            raise SystemBusDisconnected("system D-Bus disconnected")
         finally:
             self.stop_rssi_refresh()
+            self.close_clients()
             if self.bus is not None:
                 self.bus.disconnect()
-            server.close()
-            await server.wait_closed()
-            with contextlib.suppress(FileNotFoundError):
-                self.socket_path.unlink()
+            await self.close_socket_server(server)
 
 
 def main() -> None:
