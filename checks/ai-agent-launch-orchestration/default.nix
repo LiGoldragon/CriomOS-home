@@ -3,14 +3,14 @@
 let
   minProfileModule = ../../modules/home/profiles/min/default.nix;
   system = pkgs.stdenv.hostPlatform.system;
+  agentIntercom = pkgs.callPackage ../../packages/agent-intercom { inherit inputs; };
   claudeCodePackage = inputs.llm-agents.packages.${system}.claude-code;
   codexCliPackage = inputs.codex-cli.packages.${system}.default;
   piPackage = pkgs.callPackage ../../packages/pi { inherit inputs; };
   agentProfilePath = pkgs.symlinkJoin {
     name = "ai-agent-profile-path";
     paths = [
-      claudeCodePackage
-      codexCliPackage
+      agentIntercom
       piPackage
     ];
   };
@@ -43,9 +43,9 @@ pkgs.runCommand "ai-agent-launch-orchestration"
       grep -F 'claudeCodePackage' ${minProfileModule}
       grep -F 'codexCliPackage' ${minProfileModule}
       grep -F 'piPackage' ${minProfileModule}
-      grep -F 'directClaude = mkDirectAgentCommand "direct-claude" claudeCodePackage "claude";' ${minProfileModule}
-      grep -F 'directCodex = mkDirectAgentCommand "direct-codex" codexCliPackage "codex";' ${minProfileModule}
-      grep -F 'directPi = mkDirectAgentCommand "direct-pi" piPackage "pi";' ${minProfileModule}
+      grep -F 'directClaude = mkRawRecoveryCommand "direct-claude" claudeCodePackage "claude";' ${minProfileModule}
+      grep -F 'directCodex = mkRawRecoveryCommand "direct-codex" codexCliPackage "codex";' ${minProfileModule}
+      grep -F 'directPi = mkRawRecoveryCommand "direct-pi" piPackage "pi";' ${minProfileModule}
       grep -F 'name = "pi-testing";' ${minProfileModule}
       grep -F 'PI_TESTING_AGENT_DIR:-$HOME/.pi-testing/agent' ${minProfileModule}
       grep -F 'PI_TESTING_SESSION_DIR:-$PI_CODING_AGENT_DIR/sessions' ${minProfileModule}
@@ -89,11 +89,19 @@ pkgs.runCommand "ai-agent-launch-orchestration"
       grep -F '".codex/agents/worker.toml".text = codexBuiltinAgentFiles.worker;' ${minProfileModule}
       grep -F '".codex/agents/explorer.toml".text = codexBuiltinAgentFiles.explorer;' ${minProfileModule}
 
-      test -x ${agentProfilePath}/bin/claude
+      test -x ${agentProfilePath}/bin/coi
       test -x ${agentProfilePath}/bin/codex
+      test -x ${agentProfilePath}/bin/codex-raw
+      test -x ${agentProfilePath}/bin/cci
+      test -x ${agentProfilePath}/bin/claude
+      test -x ${agentProfilePath}/bin/claude-raw
       test -x ${agentProfilePath}/bin/pi
-      test "$(readlink -f ${agentProfilePath}/bin/claude)" = "$(readlink -f ${claudeCodePackage}/bin/claude)"
-      test "$(readlink -f ${agentProfilePath}/bin/codex)" = "$(readlink -f ${codexCliPackage}/bin/codex)"
+      grep -F -- '--yolo' ${agentProfilePath}/bin/coi
+      grep -F ${codexCliPackage}/bin/codex ${agentProfilePath}/bin/coi
+      ! grep -F ${agentProfilePath}/bin/codex ${agentProfilePath}/bin/coi
+      grep -F -- '--dangerously-skip-permissions' ${agentProfilePath}/bin/cci
+      grep -F ${claudeCodePackage}/bin/claude ${agentProfilePath}/bin/cci
+      ! grep -F ${agentProfilePath}/bin/claude ${agentProfilePath}/bin/cci
       test "$(readlink -f ${agentProfilePath}/bin/pi)" = "$(readlink -f ${piPackage}/bin/pi)"
       test "$(${codexCliPackage}/bin/codex --version)" = "codex-cli 0.145.0"
 

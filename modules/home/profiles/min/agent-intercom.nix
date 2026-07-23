@@ -1,11 +1,10 @@
 {
-  config,
+  inputs,
   lib,
   pkgs,
-  inputs,
   horizon,
-  user,
   hexis,
+  config,
   ...
 }:
 let
@@ -21,187 +20,96 @@ let
     else
       null;
 
-  hasService = node: role: builtins.any (service: serviceName service == role) (node.services or [ ]);
+  hasCapability =
+    name: builtins.any (service: serviceName service == name) (horizon.node.services or [ ]);
 
-  clusterNodes = [ horizon.node ] ++ lib.attrValues (horizon.exNodes or { });
-  gatewayNodes = builtins.filter (node: hasService node "AgentIntercomGateway") clusterNodes;
-  peerNodes = builtins.filter (node: hasService node "AgentIntercomPeer") clusterNodes;
-  isGateway = hasService horizon.node "AgentIntercomGateway";
-  isPeer = hasService horizon.node "AgentIntercomPeer";
-  adaptersEnabled = user.size.min;
+  localEnabled = hasCapability "AgentIntercomLocal";
+  graphicalEnabled = hasCapability "AgentIntercomGraphical";
   agentIntercom = pkgs.callPackage ../../../../packages/agent-intercom { inherit inputs; };
-  codexCliPackage = inputs.codex-cli.packages.${pkgs.stdenv.hostPlatform.system}.default;
-  gatewaySshPublicKey = user.agentIntercomGatewaySshPubKey or null;
-  gatewayRemoteGatewaySocket = "${config.home.homeDirectory}/.pi/agent/intercom/remote-gateway.sock";
-  peerBrokerCompatibilitySocket = "${config.home.homeDirectory}/.pi/agent/intercom/broker.sock";
 
-  mkRemoteTunnelPreflight =
-    peer:
-    pkgs.writeShellApplication {
-      name = "agent-intercom-remote-tunnel-preflight-${peer.name}";
-      runtimeInputs = [ pkgs.openssh ];
-      text = ''
-        : "''${AGENT_INTERCOM_REMOTE_KEY:?Agent Intercom remote tunnel requires a runtime SSH private-key path}"
-        actual_public_key="$(ssh-keygen -y -f "$AGENT_INTERCOM_REMOTE_KEY" 2>/dev/null)" || {
-          echo "Agent Intercom remote tunnel cannot read its runtime SSH private key" >&2
-          exit 1
-        }
-        expected_public_key=${lib.escapeShellArg (
-          if gatewaySshPublicKey == null then "" else gatewaySshPublicKey
-        )}
-        if [ "$actual_public_key" != "$expected_public_key" ]; then
-          echo "Agent Intercom remote tunnel key does not match the projected gateway identity" >&2
-          exit 1
-        fi
-      '';
-    };
-
-  mkRemoteTunnel =
-    peer:
-    pkgs.writeShellApplication {
-      name = "agent-intercom-remote-tunnel-${peer.name}";
-      runtimeInputs = [
-        agentIntercom
-        pkgs.openssh
-      ];
-      text = ''
-        export AGENT_INTERCOM_REMOTE_SSH="${user.name}@${peer.criomeDomainName}"
-        # The upstream `-R "$REMOTE_SOCK:$LOCAL_SOCK"` transport binds this
-        # peer-side compatibility endpoint only to the gateway's authenticated
-        # remote-gateway listener. It never sources the authoritative broker.
-        export AGENT_INTERCOM_REMOTE_SOCKET=${lib.escapeShellArg peerBrokerCompatibilitySocket}
-        export AGENT_INTERCOM_LOCAL_REMOTE_GATEWAY=${lib.escapeShellArg gatewayRemoteGatewaySocket}
-        export AGENT_INTERCOM_REMOTE_HEALTH="/run/current-system/sw/bin/agent-intercom-access health"
-        exec ${agentIntercom}/share/agent-intercom/secure-remote-tunnel.sh
-      '';
-    };
-
-  remoteTunnels = builtins.listToAttrs (
-    map (peer: {
-      name = "agent-intercom-remote-${peer.name}";
-      value = {
-        Unit = {
-          Description = "Authenticated Agent Intercom gateway tunnel to ${peer.criomeDomainName}";
-          After = [ "network-online.target" ];
-          Wants = [ "network-online.target" ];
-        };
-        Service = {
-          # The environment file carries only the runtime private-key path. An
-          # ExecCondition failure skips this unit rather than silently retrying
-          # an absent or mismatched credential forever.
-          EnvironmentFile = "-%h/.config/agent-intercom/remote-tunnel.env";
-          ExecCondition = "${mkRemoteTunnelPreflight peer}/bin/agent-intercom-remote-tunnel-preflight-${peer.name}";
-          ExecStart = "${mkRemoteTunnel peer}/bin/agent-intercom-remote-tunnel-${peer.name}";
-          Restart = "always";
-          RestartSec = 5;
-        };
-        Install.WantedBy = [ "default.target" ];
-      };
-    }) peerNodes
-  );
+  # The pinned Desktop module wraps a configured cliPackage into
+  # CODEX_CLI_PATH and can independently own `codex app-server` through its
+  # remote-control service. The pinned `coi` source instead owns a raw-Codex
+  # app-server and remote TUI for one Intercom session. It is therefore not a
+  # drop-in Desktop CLI and has no supported Desktop attachment surface.
+  desktopHardGateMessage = "Agent Intercom Desktop activation is blocked: pinned ilysenko/codex-desktop-linux wraps cliPackage as CODEX_CLI_PATH and its remote-control service invokes codex app-server, while pinned coi owns a separate raw-Codex app-server and remote TUI. CODEX_CLI_PATH must remain a drop-in raw Codex CLI; setting it to coi would misinterpret Desktop app-server arguments or create competing ownership. No supported attachment exists, so keep programs.codexDesktopLinux.enable = false. Computer Use and Mobile Control stay inactive with Desktop; ordinary MCP is not a wakeable substitute.";
 in
-lib.mkIf adaptersEnabled {
-  assertions = [
-    {
-      assertion = !isGateway || gatewayNodes == [ horizon.node ];
-      message = "Agent Intercom gateway selection must resolve to the current projected gateway node";
-    }
-    {
-      assertion = !isPeer || builtins.length gatewayNodes == 1;
-      message = "Agent Intercom peers require exactly one projected gateway";
-    }
-    {
-      assertion = !isGateway || gatewaySshPublicKey != null;
-      message = "Agent Intercom gateway users require exactly one projected gateway SSH public key";
-    }
-  ];
-
-  home.packages = [ agentIntercom ] ++ lib.optionals isGateway [ pkgs.ydotool ];
-
-  home.file = {
-    ".pi/agent/packages/agent-intercom-pi" = {
-      source = "${agentIntercom}/share/agent-intercom/pi";
-      force = true;
-    };
-    ".pi/agent/packages/agent-intercom-orchestrator" = {
-      source = "${agentIntercom}/share/agent-intercom/orchestrator";
-      force = true;
-    };
-    ".pi-testing/agent/packages/agent-intercom-pi" = {
-      source = "${agentIntercom}/share/agent-intercom/pi";
-      force = true;
-    };
-    ".pi-testing/agent/packages/agent-intercom-orchestrator" = {
-      source = "${agentIntercom}/share/agent-intercom/orchestrator";
-      force = true;
-    };
-  };
-
-  home.activation.mergeAgentIntercomCodexMcp = inputs.hexis.lib.mkManagedConfig {
-    inherit lib pkgs hexis;
-    file = "$HOME/.codex/config.toml";
-    declared = {
-      mcp_servers.agent-intercom = {
-        command = "${agentIntercom}/bin/codex-intercom-mcp";
-      };
-    };
-    modes."/mcp_servers/agent-intercom" = "always";
-  };
-
-  home.activation.mergeAgentIntercomClaudeMcp = inputs.hexis.lib.mkManagedConfig {
-    inherit lib pkgs hexis;
-    file = "$HOME/.claude.json";
-    declared = {
-      mcpServers.agent-intercom = {
-        command = "${agentIntercom}/bin/claude-intercom-mcp";
-      };
-    };
-    modes."/mcpServers/agent-intercom" = "always";
-  };
-
-  home.activation.mergeAgentIntercomOpenCodeServerPlugin = inputs.hexis.lib.mkManagedConfig {
-    inherit lib pkgs hexis;
-    file = "$HOME/.config/opencode/opencode.json";
-    declared = {
-      plugin = [ "${agentIntercom}/share/agent-intercom/opencode/dist/plugin.mjs" ];
-    };
-    modes."/plugin" = "always";
-  };
-
-  home.activation.mergeAgentIntercomOpenCodeTuiPlugin = inputs.hexis.lib.mkManagedConfig {
-    inherit lib pkgs hexis;
-    file = "$HOME/.config/opencode/tui.json";
-    declared = {
-      plugin = [ "${agentIntercom}/share/agent-intercom/opencode/dist/tui.mjs" ];
-    };
-    modes."/plugin" = "always";
-  };
-
-  home.sessionVariables = lib.optionalAttrs isPeer {
-    # The enrollment command writes this owner-only runtime file. The path is
-    # declarative; no enrollment or reconnect credential enters the store.
-    AGENT_INTERCOM_ACCESS_CREDENTIAL_PATH = "${config.home.homeDirectory}/.local/state/agent-intercom/remote-credential.json";
-  };
-
-  systemd.user.services = lib.mkIf isGateway remoteTunnels;
-
-  programs.codexDesktopLinux = lib.mkIf isGateway {
-    enable = true;
-    cliPackage = codexCliPackage;
-    computerUseUi.enable = true;
-    remoteMobileControl.enable = true;
-    linuxFeatures = [
-      "appshots"
-      "directory-only-working-tree-watch"
-      "frameless-titlebar"
-      "mcp-helper-reaper"
-      "node-repl-reaper"
-      "open-target-discovery"
-      "persistent-status-panel"
+lib.mkMerge [
+  {
+    assertions = [
+      {
+        assertion = !graphicalEnabled || localEnabled;
+        message = "graphical Agent Intercom requires local Agent Intercom";
+      }
+      {
+        assertion = !config.programs.codexDesktopLinux.enable;
+        message = desktopHardGateMessage;
+      }
     ];
-    remoteControl = {
-      enable = true;
-      package = codexCliPackage;
+  }
+  (lib.mkIf localEnabled {
+    # `codex` and `claude` in this package are the normal, wakeable entry
+    # points. `codex-raw` and `claude-raw` remain explicit recovery/debug
+    # executables; no regular launcher resolves directly to the upstream CLI.
+    home.packages = [ agentIntercom ];
+
+    home.file = {
+      ".pi/agent/packages/agent-intercom-pi" = {
+        source = "${agentIntercom}/share/agent-intercom/pi";
+        force = true;
+      };
+      ".pi/agent/packages/agent-intercom-orchestrator" = {
+        source = "${agentIntercom}/share/agent-intercom/orchestrator";
+        force = true;
+      };
+      ".pi-testing/agent/packages/agent-intercom-pi" = {
+        source = "${agentIntercom}/share/agent-intercom/pi";
+        force = true;
+      };
+      ".pi-testing/agent/packages/agent-intercom-orchestrator" = {
+        source = "${agentIntercom}/share/agent-intercom/orchestrator";
+        force = true;
+      };
     };
-  };
-}
+
+    home.activation.mergeAgentIntercomCodexMcp = inputs.hexis.lib.mkManagedConfig {
+      inherit lib pkgs hexis;
+      file = "$HOME/.codex/config.toml";
+      declared = {
+        mcp_servers.agent-intercom = {
+          command = "${agentIntercom}/bin/codex-intercom-mcp";
+        };
+      };
+      modes."/mcp_servers/agent-intercom" = "always";
+    };
+
+    home.activation.mergeAgentIntercomClaudeMcp = inputs.hexis.lib.mkManagedConfig {
+      inherit lib pkgs hexis;
+      file = "$HOME/.claude.json";
+      declared = {
+        mcpServers.agent-intercom = {
+          command = "${agentIntercom}/bin/claude-intercom-mcp";
+        };
+      };
+      modes."/mcpServers/agent-intercom" = "always";
+    };
+
+    home.activation.mergeAgentIntercomOpenCodeServerPlugin = inputs.hexis.lib.mkManagedConfig {
+      inherit lib pkgs hexis;
+      file = "$HOME/.config/opencode/opencode.json";
+      declared = {
+        plugin = [ "${agentIntercom}/share/agent-intercom/opencode/dist/plugin.mjs" ];
+      };
+      modes."/plugin" = "always";
+    };
+
+    home.activation.mergeAgentIntercomOpenCodeTuiPlugin = inputs.hexis.lib.mkManagedConfig {
+      inherit lib pkgs hexis;
+      file = "$HOME/.config/opencode/tui.json";
+      declared = {
+        plugin = [ "${agentIntercom}/share/agent-intercom/opencode/dist/tui.mjs" ];
+      };
+      modes."/plugin" = "always";
+    };
+  })
+]

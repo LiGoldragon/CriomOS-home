@@ -1944,7 +1944,7 @@
         "url": "https://registry.npmjs.org/pi-continue/-/pi-continue-0.9.3.tgz"
       }
     },
-    "pi-intercom-esbuild-linux-x64-src": {
+    "agent-intercom-esbuild-linux-x64-src": {
       "flake": false,
       "locked": {
         "narHash": "sha256-E7jYAxlpkdsBMtDodAtHYvM8NLk2/2VsXcpNUkPnZe8=",
@@ -1956,7 +1956,7 @@
         "url": "https://registry.npmjs.org/@esbuild/linux-x64/-/linux-x64-0.25.0.tgz"
       }
     },
-    "pi-intercom-esbuild-src": {
+    "agent-intercom-esbuild-src": {
       "flake": false,
       "locked": {
         "narHash": "sha256-3qJWv2y1iC99w1fTdW00fC2GcQdUZf1wYGs8zLe7608=",
@@ -1968,7 +1968,7 @@
         "url": "https://registry.npmjs.org/esbuild/-/esbuild-0.25.0.tgz"
       }
     },
-    "pi-intercom-get-tsconfig-src": {
+    "agent-intercom-get-tsconfig-src": {
       "flake": false,
       "locked": {
         "narHash": "sha256-UjZrrD+jeyxEBji+YVm0Ay51X/NXtsGuu0aoXLLPt7s=",
@@ -1980,7 +1980,7 @@
         "url": "https://registry.npmjs.org/get-tsconfig/-/get-tsconfig-4.7.5.tgz"
       }
     },
-    "pi-intercom-resolve-pkg-maps-src": {
+    "agent-intercom-resolve-pkg-maps-src": {
       "flake": false,
       "locked": {
         "narHash": "sha256-RaYiDs2GiN3/BZdLwoz69w4oOhb3RmtcU9kBUnpEfKQ=",
@@ -1992,7 +1992,7 @@
         "url": "https://registry.npmjs.org/resolve-pkg-maps/-/resolve-pkg-maps-1.0.0.tgz"
       }
     },
-    "pi-intercom-tsx-src": {
+    "agent-intercom-tsx-src": {
       "flake": false,
       "locked": {
         "narHash": "sha256-ouVzRxrh+WEZWE5UsQgTfkPLtZt91sJUd5gXqegaanQ=",
@@ -2004,7 +2004,7 @@
         "url": "https://registry.npmjs.org/tsx/-/tsx-4.20.0.tgz"
       }
     },
-    "pi-intercom-typebox-src": {
+    "agent-intercom-typebox-src": {
       "flake": false,
       "locked": {
         "narHash": "sha256-rC5tVD5KCgApBcWKCOQlU2G/36vetIQGaU2JsUYUKQE=",
@@ -2495,12 +2495,12 @@
         "noctalia": "noctalia",
         "orchestrate": "orchestrate",
         "pi-continue-src": "pi-continue-src",
-        "pi-intercom-esbuild-linux-x64-src": "pi-intercom-esbuild-linux-x64-src",
-        "pi-intercom-esbuild-src": "pi-intercom-esbuild-src",
-        "pi-intercom-get-tsconfig-src": "pi-intercom-get-tsconfig-src",
-        "pi-intercom-resolve-pkg-maps-src": "pi-intercom-resolve-pkg-maps-src",
-        "pi-intercom-tsx-src": "pi-intercom-tsx-src",
-        "pi-intercom-typebox-src": "pi-intercom-typebox-src",
+        "agent-intercom-esbuild-linux-x64-src": "agent-intercom-esbuild-linux-x64-src",
+        "agent-intercom-esbuild-src": "agent-intercom-esbuild-src",
+        "agent-intercom-get-tsconfig-src": "agent-intercom-get-tsconfig-src",
+        "agent-intercom-resolve-pkg-maps-src": "agent-intercom-resolve-pkg-maps-src",
+        "agent-intercom-tsx-src": "agent-intercom-tsx-src",
+        "agent-intercom-typebox-src": "agent-intercom-typebox-src",
         "pi-linkup-src": "pi-linkup-src",
         "pi-session-namer": "pi-session-namer",
         "pi-src": "pi-src",

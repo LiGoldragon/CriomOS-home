@@ -27,13 +27,16 @@ let
           typeIs.largeAiRouter = false;
           behavesAs.largeAi = true;
           criomeDomainName = "pi-runtime-test.invalid";
+          services = [ { AgentIntercomLocal = { }; } ];
         };
         exNodes = { };
       };
       user.size.min = true;
     };
     modules = [
+      inputs.codex-desktop-linux.homeManagerModules.default
       piModelsModule
+      agentIntercomModule
       {
         home = {
           username = "pi-runtime-test";
@@ -196,12 +199,12 @@ pkgs.runCommand "pi-harness-profile"
     grep -F 'inputs.agent-intercom-opencode-src' ${agentIntercomPackage}
     grep -F 'inputs.agent-intercom-orchestrator-src' ${agentIntercomPackage}
     grep -F 'inputs.agent-intercom-core-src' ${agentIntercomPackage}
-    grep -F 'inputs.pi-intercom-tsx-src' ${agentIntercomPackage}
-    grep -F 'inputs.pi-intercom-typebox-src' ${agentIntercomPackage}
-    grep -F 'inputs.pi-intercom-esbuild-src' ${agentIntercomPackage}
-    grep -F 'inputs.pi-intercom-esbuild-linux-x64-src' ${agentIntercomPackage}
-    grep -F 'inputs.pi-intercom-get-tsconfig-src' ${agentIntercomPackage}
-    grep -F 'inputs.pi-intercom-resolve-pkg-maps-src' ${agentIntercomPackage}
+    grep -F 'inputs.agent-intercom-tsx-src' ${agentIntercomPackage}
+    grep -F 'inputs.agent-intercom-typebox-src' ${agentIntercomPackage}
+    grep -F 'inputs.agent-intercom-esbuild-src' ${agentIntercomPackage}
+    grep -F 'inputs.agent-intercom-esbuild-linux-x64-src' ${agentIntercomPackage}
+    grep -F 'inputs.agent-intercom-get-tsconfig-src' ${agentIntercomPackage}
+    grep -F 'inputs.agent-intercom-resolve-pkg-maps-src' ${agentIntercomPackage}
     grep -F 'inputs.pi-ultra-subagents-src' ${piUltraSubagentsPackage}
     grep -F 'inputs.pi-ultra-subagents-typebox-src' ${piUltraSubagentsPackage}
     grep -F 'inputs.pi-continue-src' ${piContinuePackage}
@@ -268,19 +271,49 @@ pkgs.runCommand "pi-harness-profile"
       "${piRuntimeFiles.".pi/agent/packages/pi-subagents".source}"
     link_runtime_file "$runtimeHome/.pi/agent/extensions/subagent/config.json" \
       "${piRuntimeFiles.".pi/agent/extensions/subagent/config.json".source}"
+    link_runtime_file "$runtimeHome/.pi/agent/packages/agent-intercom-pi" \
+      "${piRuntimeFiles.".pi/agent/packages/agent-intercom-pi".source}"
+    link_runtime_file "$runtimeHome/.pi/agent/packages/agent-intercom-orchestrator" \
+      "${piRuntimeFiles.".pi/agent/packages/agent-intercom-orchestrator".source}"
     link_runtime_file "$runtimeHome/.pi-testing/agent/SYSTEM.md" \
       "${piRuntimeFiles.".pi-testing/agent/SYSTEM.md".source}"
     link_runtime_file "$runtimeHome/.pi-testing/agent/packages/pi-subagents" \
       "${piRuntimeFiles.".pi-testing/agent/packages/pi-subagents".source}"
     link_runtime_file "$runtimeHome/.pi-testing/agent/extensions/subagent/config.json" \
       "${piRuntimeFiles.".pi-testing/agent/extensions/subagent/config.json".source}"
+    link_runtime_file "$runtimeHome/.pi-testing/agent/packages/agent-intercom-pi" \
+      "${piRuntimeFiles.".pi-testing/agent/packages/agent-intercom-pi".source}"
+    link_runtime_file "$runtimeHome/.pi-testing/agent/packages/agent-intercom-orchestrator" \
+      "${piRuntimeFiles.".pi-testing/agent/packages/agent-intercom-orchestrator".source}"
+    mkdir -p "$runtimeHome/.codex" "$runtimeHome/.config/opencode"
     DRY_RUN_CMD=
     run() { "$@"; }
     export HOME="$runtimeHome"
     ${piRuntimeActivations.mergePiSettings.data}
+    ${piRuntimeActivations.mergePiIntercomConfig.data}
     ${piRuntimeActivations.mergePiTestingSettings.data}
+    ${piRuntimeActivations.mergePiTestingIntercomConfig.data}
+    ${piRuntimeActivations.mergeAgentIntercomCodexMcp.data}
+    ${piRuntimeActivations.mergeAgentIntercomClaudeMcp.data}
+    ${piRuntimeActivations.mergeAgentIntercomOpenCodeServerPlugin.data}
+    ${piRuntimeActivations.mergeAgentIntercomOpenCodeTuiPlugin.data}
 
     test ! -e "$runtimeHome/.pi/agents"
+    test -L "$runtimeHome/.pi/agent/packages/agent-intercom-pi"
+    test -L "$runtimeHome/.pi/agent/packages/agent-intercom-orchestrator"
+    test -L "$runtimeHome/.pi-testing/agent/packages/agent-intercom-pi"
+    test -L "$runtimeHome/.pi-testing/agent/packages/agent-intercom-orchestrator"
+    jq -e '.enabled == true and .inboundTrigger == "always" and (.brokerArgs[0] | endswith("agent-intercom/pi/node_modules/tsx/dist/cli.mjs"))' \
+      "$runtimeHome/.pi/agent/intercom/config.json"
+    jq -e '.enabled == true and .inboundTrigger == "always"' \
+      "$runtimeHome/.pi-testing/agent/intercom/config.json"
+    grep -F '${agent-intercom}/bin/codex-intercom-mcp' "$runtimeHome/.codex/config.toml"
+    jq -e '.mcpServers."agent-intercom".command == "${agent-intercom}/bin/claude-intercom-mcp"' \
+      "$runtimeHome/.claude.json"
+    jq -e '.plugin == ["${agent-intercom}/share/agent-intercom/opencode/dist/plugin.mjs"]' \
+      "$runtimeHome/.config/opencode/opencode.json"
+    jq -e '.plugin == ["${agent-intercom}/share/agent-intercom/opencode/dist/tui.mjs"]' \
+      "$runtimeHome/.config/opencode/tui.json"
 
     cat > "$TMPDIR/check-managed-project-roles.ts" <<'EOF'
     import * as fs from "node:fs";
@@ -462,16 +495,29 @@ pkgs.runCommand "pi-harness-profile"
     grep -F 'codex-intercom-mcp' ${agentIntercomModule}
     grep -F 'claude-intercom-mcp' ${agentIntercomModule}
     grep -F 'opencode/dist/plugin.mjs' ${agentIntercomModule}
-    grep -F 'AgentIntercomGateway' ${agentIntercomModule}
-    ! grep -F 'prometheus' ${agentIntercomModule}
+    grep -F 'AgentIntercomLocal' ${agentIntercomModule}
+    grep -F 'AgentIntercomGraphical' ${agentIntercomModule}
+    ! grep -Ei 'Gateway|Peer|remote-gateway|tunnel|ssh|credential|secret|token|oauth|enroll|pair' ${agentIntercomModule}
     grep -F 'agentIntercomCore' ${agentIntercomPackage}
     grep -F 'piIntercomConfig = {' ${piModelsModule}
     grep -F 'brokerCommand = "''${pkgs.nodejs}/bin/node";' ${piModelsModule}
     grep -F 'agent-intercom/pi/node_modules/tsx/dist/cli.mjs' ${piModelsModule}
     grep -F 'home.sessionVariables.PI_INTERCOM_EXTENSION_DIR = "''${agent-intercom}/share/agent-intercom/pi";' ${piModelsModule}
+    grep -F 'lib.mkIf isAgentIntercomLocal' ${piModelsModule}
+    grep -F 'isAgentIntercomLocal' ${piModelsModule}
+    test -x ${agent-intercom}/bin/coi
+    test -x ${agent-intercom}/bin/codex
+    test -x ${agent-intercom}/bin/codex-raw
+    test -x ${agent-intercom}/bin/cci
+    test -x ${agent-intercom}/bin/claude
+    test -x ${agent-intercom}/bin/claude-raw
+    grep -F -- '--yolo' ${agent-intercom}/bin/coi
+    ! grep -F ${agent-intercom}/bin/codex ${agent-intercom}/bin/coi
+    grep -F -- '--dangerously-skip-permissions' ${agent-intercom}/bin/cci
+    ! grep -F ${agent-intercom}/bin/claude ${agent-intercom}/bin/cci
     test -x ${agent-intercom}/bin/codex-intercom-mcp
     test -x ${agent-intercom}/bin/claude-intercom-mcp
-    test -x ${agent-intercom}/bin/agent-intercom-access
+    ! test -e ${agent-intercom}/bin/agent-intercom-access
     test -f ${agent-intercom}/share/agent-intercom/opencode/dist/plugin.mjs
     test -f ${agent-intercom}/share/agent-intercom/opencode/dist/tui.mjs
     grep -F 'file = "$HOME/.pi/agent/intercom/config.json";' ${piModelsModule}

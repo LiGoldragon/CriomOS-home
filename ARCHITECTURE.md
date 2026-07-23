@@ -157,22 +157,36 @@ wholesale. Persona Pi agent-chain automation in the user profile runs
 without a manual UI approval for already-authorized work, so the agent can
 start automated work without the operator in the loop.
 
-Agent Intercom is installed as one pinned protocol-v3 family: Pi is the
-primary manager with its native adapter and orchestrator, while Codex, Claude
-Code, and OpenCode receive their supported adapters. The user profile owns
-broker state, adapters, user services, MCP registration, OpenCode plugin
-configuration, and remote-manager credential references. Cross-machine access
-uses only the upstream authenticated `remote-gateway.sock` through supported
-SSH reverse Unix-socket transport; it never forwards `broker.sock` and never
-puts enrollment, reconnect, OAuth, pairing, or private-key material in a
-profile derivation.
+Agent Intercom is installed as one pinned protocol-v3 family on every node:
+Pi is the primary manager with its native adapter and orchestrator, while
+Codex, Claude Code, and OpenCode receive their supported local adapters. The
+user profile owns only local broker state, adapters, MCP registration, and
+OpenCode plugin configuration. `broker.sock` remains host-local. No gateway,
+peer, listener, SSH tunnel, authorization key, remote identity, enrollment,
+reconnect, OAuth, pairing, or private-key configuration exists in the profile
+or its derivations.
 
-The user profile also owns the maintained unofficial Linux Codex Desktop
-module. It pins `CODEX_CLI_PATH` through the module launcher, enables its
-supported Linux Computer Use integration without weakening Electron sandboxing,
-and enables experimental Remote Mobile Control through its declarative user
-service. Linux remote hosting remains experimental and account rollout or
-pairing remains an interactive OpenAI-controlled operation.
+Normal `codex` launches enter `coi --yolo`, which gives Codex
+`danger-full-access` with approval `never`; `coi` invokes the explicitly raw
+Codex executable for its child app-server, preventing wrapper recursion.
+Normal `claude` launches enter `cci --dangerously-skip-permissions`; `cci` and
+its worker invoke the explicitly raw Claude executable. `codex-raw`,
+`claude-raw`, `direct-codex`, and `direct-claude` are recovery/debug-only.
+
+The maintained `ilysenko/codex-desktop-linux` source remains pinned at
+`2b8f610faddc576088732395df3734b1d19cd62f`, but its activation is hard-blocked.
+Its `nix/home-manager-module.nix` wraps `cliPackage` as `CODEX_CLI_PATH` and,
+when Remote Mobile Control is enabled, independently launches `codex app-server
+--remote-control`. The pinned Codex adapter
+`118c85391b525982f00f38a3e3b67278e20e2774` makes `coi` start its own explicitly
+raw Codex `app-server --listen unix://…` before opening a remote TUI. Therefore
+`coi` is not a drop-in `CODEX_CLI_PATH`: using it would misinterpret a Desktop
+app-server invocation or create competing app-server ownership. The pinned
+sources expose no Desktop attachment to the `coi` session, and ordinary MCP is
+not a wakeable substitute. Desktop, Computer Use, and Mobile Control remain
+inactive until that contract exists; the independent graphical portal,
+accessibility, capture, and virtual-input prerequisites remain capability-gated.
+Electron sandboxing is never weakened.
 
 A Nix utility fetches Hugging Face models by URL or query, mirroring
 `nix-prefetch-url`: it prefetches via the Hugging Face CLI, hashes, and

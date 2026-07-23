@@ -290,13 +290,14 @@ let
     ssh-to-age
   ];
 
-  # pi-mentci wrapper dropped 2026-04-25; pi itself returns 2026-04-29
-  # built directly from inputs.pi-src via packages/pi/default.nix.
+  # Pi is built directly from inputs.pi-src. Agent Intercom supplies the
+  # normal `codex` and `claude` entries when Horizon enables its local
+  # capability; the direct commands below remain explicit raw recovery paths.
   claudeCodePackage = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.claude-code;
   codexCliPackage = inputs.codex-cli.packages.${pkgs.stdenv.hostPlatform.system}.default;
   piPackage = pkgs.callPackage ../../../../packages/pi { inherit inputs; };
 
-  mkDirectAgentCommand =
+  mkRawRecoveryCommand =
     commandName: package: executableName:
     pkgs.writeShellApplication {
       name = commandName;
@@ -305,9 +306,9 @@ let
       '';
     };
 
-  directClaude = mkDirectAgentCommand "direct-claude" claudeCodePackage "claude";
-  directCodex = mkDirectAgentCommand "direct-codex" codexCliPackage "codex";
-  directPi = mkDirectAgentCommand "direct-pi" piPackage "pi";
+  directClaude = mkRawRecoveryCommand "direct-claude" claudeCodePackage "claude";
+  directCodex = mkRawRecoveryCommand "direct-codex" codexCliPackage "codex";
+  directPi = mkRawRecoveryCommand "direct-pi" piPackage "pi";
 
   piTesting = pkgs.writeShellApplication {
     name = "pi-testing";
@@ -324,8 +325,6 @@ let
 
   AIPackages = [
     pkgs.gemini-cli
-    claudeCodePackage
-    codexCliPackage
     piPackage
     directClaude
     directCodex

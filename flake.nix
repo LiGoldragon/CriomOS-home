@@ -239,17 +239,6 @@
       url = "github:dataforxyz/agent-intercom-core/cb5d2212912db0cd8abbb16ab08e4b539424a05d";
       flake = false;
     };
-    agent-intercom-esbuild-src = {
-      type = "file";
-      url = "https://registry.npmjs.org/esbuild/-/esbuild-0.28.1.tgz";
-      flake = false;
-    };
-    agent-intercom-esbuild-linux-x64-src = {
-      type = "file";
-      url = "https://registry.npmjs.org/@esbuild/linux-x64/-/linux-x64-0.28.1.tgz";
-      flake = false;
-    };
-
     # Maintained unofficial Linux desktop integration. The lock file pins the
     # source and its upstream DMG metadata; the Home Manager module owns its
     # package, Computer Use, and experimental Remote Mobile Control shape.
@@ -280,32 +269,32 @@
       url = "github:LiGoldragon/primary/c6bfffc226367b140cf6e13bdcd2a500803d361b";
       flake = false;
     };
-    pi-intercom-tsx-src = {
+    agent-intercom-tsx-src = {
       type = "file";
       url = "https://registry.npmjs.org/tsx/-/tsx-4.20.0.tgz";
       flake = false;
     };
-    pi-intercom-typebox-src = {
+    agent-intercom-typebox-src = {
       type = "file";
       url = "https://registry.npmjs.org/typebox/-/typebox-1.1.38.tgz";
       flake = false;
     };
-    pi-intercom-esbuild-src = {
+    agent-intercom-esbuild-src = {
       type = "file";
       url = "https://registry.npmjs.org/esbuild/-/esbuild-0.25.0.tgz";
       flake = false;
     };
-    pi-intercom-esbuild-linux-x64-src = {
+    agent-intercom-esbuild-linux-x64-src = {
       type = "file";
       url = "https://registry.npmjs.org/@esbuild/linux-x64/-/linux-x64-0.25.0.tgz";
       flake = false;
     };
-    pi-intercom-get-tsconfig-src = {
+    agent-intercom-get-tsconfig-src = {
       type = "file";
       url = "https://registry.npmjs.org/get-tsconfig/-/get-tsconfig-4.7.5.tgz";
       flake = false;
     };
-    pi-intercom-resolve-pkg-maps-src = {
+    agent-intercom-resolve-pkg-maps-src = {
       type = "file";
       url = "https://registry.npmjs.org/resolve-pkg-maps/-/resolve-pkg-maps-1.0.0.tgz";
       flake = false;

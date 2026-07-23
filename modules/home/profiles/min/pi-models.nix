@@ -14,8 +14,6 @@ let
     readFile
     toString
     ;
-  inherit (user) size;
-
   inventory = fromJSON (readFile (inputs.criomos-lib + "/data/largeAI/llm.json"));
   pi = pkgs.callPackage ../../../../packages/pi { inherit inputs; };
   pi-criomos = pkgs.callPackage ../../../../packages/pi-criomos { };
@@ -27,6 +25,20 @@ let
   pi-continue = pkgs.callPackage ../../../../packages/pi-continue { inherit inputs; };
   pi-session-namer = pkgs.callPackage ../../../../packages/pi-session-namer { inherit inputs; };
   piPackageHomePath = "$HOME/.local/share/criomos/pi/package";
+  serviceName =
+    service:
+    if builtins.isString service then
+      service
+    else if builtins.isAttrs service then
+      let
+        names = builtins.attrNames service;
+      in
+      if builtins.length names == 1 then builtins.head names else null
+    else
+      null;
+  isAgentIntercomLocal = builtins.any (service: serviceName service == "AgentIntercomLocal") (
+    horizon.node.services or [ ]
+  );
 
   clusterNodes = [ horizon.node ] ++ lib.attrValues (horizon.exNodes or { });
   routerNode = lib.findFirst (node: node.typeIs.largeAiRouter or false) null clusterNodes;
@@ -67,13 +79,13 @@ let
     maxTokens = model.maxTokens or 4096;
   };
 
-  piModelsConfig = {
+  piModelsConfig = lib.optionalAttrs (endpointNode != null) {
     providers.${providerName} = {
       api = "openai-completions";
       baseUrl = "http://${endpointNode.criomeDomainName}:${toString (inventory.serverPort or 11434)}/v1";
-      # Pi requires an apiKey field for custom providers. The actual
-      # Prometheus llama-router token is resolved at request time from
-      # the standard local gopass entry; the token bytes never enter Nix.
+      # Pi requires an apiKey field for custom providers. The actual local
+      # llama-router token is resolved at request time; token bytes never
+      # enter Nix, the store, or generated configuration.
       apiKey = localLlmApiKeyCommand;
       compat = {
         supportsStore = false;
@@ -93,11 +105,13 @@ let
     key = localLlmApiKeyCommand;
   };
 
-  piAuthConfig = builtins.listToAttrs (
-    map (name: {
-      inherit name;
-      value = localProviderAuth;
-    }) ([ providerName ] ++ legacyLocalProviderNames)
+  piAuthConfig = lib.optionalAttrs (endpointNode != null) (
+    builtins.listToAttrs (
+      map (name: {
+        inherit name;
+        value = localProviderAuth;
+      }) ([ providerName ] ++ legacyLocalProviderNames)
+    )
   );
 
   piIntercomConfig = {
@@ -125,7 +139,10 @@ let
     defaultModel = defaultOpenAiCodexModel;
     defaultThinkingLevel = "high";
     enabledModels =
-      remoteOpenAiCodexModels ++ map (model: "${providerName}/${model.modelId}") inventory.models;
+      remoteOpenAiCodexModels
+      ++ lib.optionals (endpointNode != null) (
+        map (model: "${providerName}/${model.modelId}") inventory.models
+      );
     theme = "criomos-light/criomos-dark";
     doubleEscapeAction = "tree";
     hideThinkingBlock = false;
@@ -142,7 +159,11 @@ let
 
   piTestingSettingsConfig = piSettingsConfig;
 in
-lib.mkIf (size.min && endpointNode != null) {
+# The local capability owns the complete Pi adapter family on every node.
+# A node without a projected local-model endpoint simply receives no custom
+# provider records; it still receives the broker, extension and normal package
+# set without a hostname-derived exception.
+lib.mkIf isAgentIntercomLocal {
   home.activation.preparePiPackageSymlink = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
     if [ -d "${piPackageHomePath}" ] && [ ! -L "${piPackageHomePath}" ]; then
       if ${pkgs.jq}/bin/jq -e '.name == "@earendil-works/pi-coding-agent"' \
@@ -184,7 +205,8 @@ lib.mkIf (size.min && endpointNode != null) {
   home.file.".pi/agent/extensions/subagent/config.json".source = piSubagentsConfigFile;
   home.file.".pi/agent/extensions/subagent/config.json".force = true;
 
-  # pi-subagents resolves this supported override before legacy extension paths.
+  # Pi resolves the pinned Agent Intercom adapter before historic extension
+  # locations. The broker protocol remains local at broker.sock.
   home.sessionVariables.PI_INTERCOM_EXTENSION_DIR = "${agent-intercom}/share/agent-intercom/pi";
 
   home.file.".pi/agent/packages/pi-continue".source = "${pi-continue}/share/pi-packages/pi-continue";

@@ -36,9 +36,9 @@
     ./base.nix
     ./profiles/min
     ./profiles/min/pi-models.nix
-    # Agent Intercom adapters, authenticated remote access, and the Codex
-    # desktop module are one user-session surface. The module selects roles
-    # from projected Horizon services; no node identity controls it.
+    # Agent Intercom adapters are host-local. The module selects the local
+    # and graphical capabilities from projected Horizon services; no node
+    # identity, remote transport, or credential controls it.
     ./profiles/min/agent-intercom.nix
     # Sibling .nix files in profiles/min/ are individual HM modules, not
     # imported transitively by the directory import (Nix only auto-loads
