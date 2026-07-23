@@ -451,21 +451,35 @@
       horizon = inputs.horizon.horizon;
       pkgs = inputs.pkgs.pkgs;
       lib = inputs.nixpkgs.lib;
+      agentIntercomSupported = system: system == "x86_64-linux";
+      projectPackages = builtins.mapAttrs (
+        system: packages:
+        if agentIntercomSupported system then
+          packages
+        else
+          builtins.removeAttrs packages [ "agent-intercom" ]
+      ) bp.packages;
       packageCheckNames =
         system:
         builtins.listToAttrs (
           map (packageName: {
             name = "pkgs-${packageName}";
             value = true;
-          }) (builtins.attrNames (bp.packages.${system} or { }))
+          }) (builtins.attrNames (projectPackages.${system} or { }))
         );
+      # Blueprint eagerly evaluates discovered checks. Keep that generated
+      # set on Agent Intercom's supported platform; explicit checks below retain
+      # the cross-platform check surface.
       derivationChecks = builtins.mapAttrs (
         _system: checks:
-        lib.filterAttrs (
-          name: value:
-          lib.isDerivation value
-          && (!lib.hasPrefix "pkgs-" name || builtins.hasAttr name (packageCheckNames _system))
-        ) checks
+        if agentIntercomSupported _system then
+          lib.filterAttrs (
+            name: value:
+            lib.isDerivation value
+            && (!lib.hasPrefix "pkgs-" name || builtins.hasAttr name (packageCheckNames _system))
+          ) checks
+        else
+          { }
       ) (bp.checks or { });
       projectChecks = builtins.mapAttrs (
         _system: checks:
@@ -485,10 +499,6 @@
           rust-toolchain = checkPkgs.callPackage ./checks/rust-toolchain { inherit inputs; };
           leta = checkPkgs.callPackage ./checks/leta { inherit inputs; };
           no-easyeffects = checkPkgs.callPackage ./checks/no-easyeffects { };
-          pi-harness-profile = checkPkgs.callPackage ./checks/pi-harness-profile { inherit inputs; };
-          ai-agent-launch-orchestration = checkPkgs.callPackage ./checks/ai-agent-launch-orchestration {
-            inherit inputs;
-          };
           orchestrate-service-path = checkPkgs.callPackage ./checks/orchestrate-service-path { };
           pi-criomos-package-load = checkPkgs.callPackage ./checks/pi-criomos-package-load {
             inherit inputs;
@@ -497,11 +507,17 @@
           playwright-cli = checkPkgs.callPackage ./checks/playwright-cli { };
           spirit-deployment = checkPkgs.callPackage ./checks/spirit-deployment { inherit inputs; };
           aggregator-deployment = checkPkgs.callPackage ./checks/aggregator-deployment { inherit inputs; };
-          agent-intercom = checkPkgs.callPackage ./checks/agent-intercom { inherit inputs; };
           vscodium-casual = checkPkgs.callPackage ./checks/vscodium-casual { };
           vscodium-claude-lifecycle = checkPkgs.callPackage ./checks/vscodium-claude-lifecycle {
             inherit inputs;
           };
+        }
+        // lib.optionalAttrs (agentIntercomSupported _system) {
+          pi-harness-profile = checkPkgs.callPackage ./checks/pi-harness-profile { inherit inputs; };
+          ai-agent-launch-orchestration = checkPkgs.callPackage ./checks/ai-agent-launch-orchestration {
+            inherit inputs;
+          };
+          agent-intercom = checkPkgs.callPackage ./checks/agent-intercom { inherit inputs; };
         }
       ) derivationChecks;
 
@@ -528,6 +544,7 @@
     in
     bp
     // {
+      packages = projectPackages;
       checks = projectChecks;
 
       homeConfigurations = builtins.mapAttrs mkHomeConfiguration horizon.users;
