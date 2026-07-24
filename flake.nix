@@ -459,6 +459,16 @@
         else
           builtins.removeAttrs packages [ "agent-intercom" ]
       ) bp.packages;
+      blueprintGeneratedChecks =
+        system:
+        lib.mapAttrs' (packageName: package: {
+          name = "pkgs-${packageName}";
+          value = package;
+        }) (projectPackages.${system} or { })
+        // lib.mapAttrs' (devshellName: devshell: {
+          name = "devshell-${devshellName}";
+          value = devshell;
+        }) (bp.devShells.${system} or { });
       packageCheckNames =
         system:
         builtins.listToAttrs (
@@ -467,9 +477,10 @@
             value = true;
           }) (builtins.attrNames (projectPackages.${system} or { }))
         );
-      # Blueprint eagerly evaluates discovered checks. Keep that generated
-      # set on Agent Intercom's supported platform; explicit checks below retain
-      # the cross-platform check surface.
+      # Blueprint imports every check to discover its platforms. On unsupported
+      # systems, reconstruct only its generic devshell/package checks without
+      # loading Agent Intercom's Linux-only check inputs. Explicit checks below
+      # retain the remaining cross-platform check surface.
       derivationChecks = builtins.mapAttrs (
         _system: checks:
         if agentIntercomSupported _system then
@@ -479,7 +490,7 @@
             && (!lib.hasPrefix "pkgs-" name || builtins.hasAttr name (packageCheckNames _system))
           ) checks
         else
-          { }
+          blueprintGeneratedChecks _system
       ) (bp.checks or { });
       projectChecks = builtins.mapAttrs (
         _system: checks:
