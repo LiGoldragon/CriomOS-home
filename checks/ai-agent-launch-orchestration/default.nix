@@ -48,7 +48,7 @@ pkgs.runCommand "ai-agent-launch-orchestration" { nativeBuildInputs = [ pkgs.gnu
 
   # Codex V1 is deliberate: collaboration is enabled and V2 remains off.
   grep -F 'features = {' ${minProfileModule}
-  grep -F 'collab = true;' ${minProfileModule}
+  grep -F 'multi_agent = true;' ${minProfileModule}
   grep -F 'multi_agent_v2 = false;' ${minProfileModule}
   ! grep -F 'default_subagent_model' ${minProfileModule}
   ! grep -F 'default_subagent_reasoning_effort' ${minProfileModule}

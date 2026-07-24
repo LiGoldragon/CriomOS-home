@@ -79,7 +79,7 @@ let
     plan_mode_reasoning_effort = "xhigh";
 
     features = {
-      collab = true;
+      multi_agent = true;
       multi_agent_v2 = false;
     };
 
