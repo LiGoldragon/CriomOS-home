@@ -35,12 +35,53 @@ let
 
   codexProjectTrust = trust_level: { inherit trust_level; };
 
+  codexBuiltinAgent =
+    {
+      name,
+      description,
+      model,
+      effort,
+    }:
+    ''
+      name = ${toJSON name}
+      description = ${toJSON description}
+      developer_instructions = ${toJSON codexSkillReadDeduplicationInstruction}
+      model = ${toJSON model}
+      model_reasoning_effort = ${toJSON effort}
+    '';
+
+  codexBuiltinAgentFiles = {
+    default = codexBuiltinAgent {
+      name = "default";
+      description = "Default Codex collaboration agent.";
+      model = "gpt-5.6-terra";
+      effort = "high";
+    };
+    worker = codexBuiltinAgent {
+      name = "worker";
+      description = "Codex implementation collaboration agent.";
+      model = "gpt-5.6-terra";
+      effort = "high";
+    };
+    explorer = codexBuiltinAgent {
+      name = "explorer";
+      description = "Codex exploration collaboration agent.";
+      model = "gpt-5.6-luna";
+      effort = "medium";
+    };
+  };
+
   codexConfig = {
     developer_instructions = codexSkillReadDeduplicationInstruction;
     model = "gpt-5.5";
     model_reasoning_effort = "high";
     personality = "pragmatic";
     plan_mode_reasoning_effort = "xhigh";
+
+    features = {
+      collab = true;
+      multi_agent_v2 = false;
+    };
 
     projects = {
       "/home/li/git/CriomOS" = codexProjectTrust "trusted";
@@ -670,6 +711,10 @@ mkIf size.min {
       ".codex/non-orchestrator.config.toml".text = ''
         developer_instructions = ${toJSON codexSkillReadDeduplicationInstruction}
       '';
+
+      ".codex/agents/default.toml".text = codexBuiltinAgentFiles.default;
+      ".codex/agents/worker.toml".text = codexBuiltinAgentFiles.worker;
+      ".codex/agents/explorer.toml".text = codexBuiltinAgentFiles.explorer;
     };
 
     activation.mergeCodexConfig = inputs.hexis.lib.mkManagedConfig {

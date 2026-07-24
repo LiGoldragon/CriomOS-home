@@ -46,12 +46,36 @@ pkgs.runCommand "ai-agent-launch-orchestration" { nativeBuildInputs = [ pkgs.gnu
   grep -F 'non-orchestrator.config.toml' ${minProfileModule}
   grep -F 'developer_instructions = ''${toJSON codexSkillReadDeduplicationInstruction}' ${minProfileModule}
 
+  # Codex V1 is deliberate: collaboration is enabled and V2 remains off.
+  grep -F 'features = {' ${minProfileModule}
+  grep -F 'collab = true;' ${minProfileModule}
+  grep -F 'multi_agent_v2 = false;' ${minProfileModule}
+  ! grep -F 'default_subagent_model' ${minProfileModule}
+  ! grep -F 'default_subagent_reasoning_effort' ${minProfileModule}
+
+  # User-level files override the three built-ins rather than relying on
+  # inherited global subagent defaults.
+  grep -F 'name = ''${toJSON name}' ${minProfileModule}
+  grep -F 'model = ''${toJSON model}' ${minProfileModule}
+  grep -F 'model_reasoning_effort = ''${toJSON effort}' ${minProfileModule}
+  grep -F 'default = codexBuiltinAgent {' ${minProfileModule}
+  grep -F 'worker = codexBuiltinAgent {' ${minProfileModule}
+  grep -F 'explorer = codexBuiltinAgent {' ${minProfileModule}
+  grep -F 'model = "gpt-5.6-terra";' ${minProfileModule}
+  grep -F 'model = "gpt-5.6-luna";' ${minProfileModule}
+  grep -F 'effort = "high";' ${minProfileModule}
+  grep -F 'effort = "medium";' ${minProfileModule}
+  grep -F '".codex/agents/default.toml".text = codexBuiltinAgentFiles.default;' ${minProfileModule}
+  grep -F '".codex/agents/worker.toml".text = codexBuiltinAgentFiles.worker;' ${minProfileModule}
+  grep -F '".codex/agents/explorer.toml".text = codexBuiltinAgentFiles.explorer;' ${minProfileModule}
+
   test -x ${agentProfilePath}/bin/claude
   test -x ${agentProfilePath}/bin/codex
   test -x ${agentProfilePath}/bin/pi
   test "$(readlink -f ${agentProfilePath}/bin/claude)" = "$(readlink -f ${claudeCodePackage}/bin/claude)"
   test "$(readlink -f ${agentProfilePath}/bin/codex)" = "$(readlink -f ${codexCliPackage}/bin/codex)"
   test "$(readlink -f ${agentProfilePath}/bin/pi)" = "$(readlink -f ${piPackage}/bin/pi)"
+  test "$(${codexCliPackage}/bin/codex --version)" = "codex-cli 0.145.0"
 
   grep -F 'This source map does not grant tool permission' ${piPackage}/lib/pi-monorepo/packages/coding-agent/dist/core/system-prompt.js
   grep -F 'does not override project, role, skill, system, developer, or user instructions' ${piPackage}/lib/pi-monorepo/packages/coding-agent/dist/core/system-prompt.js
