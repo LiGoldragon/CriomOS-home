@@ -201,6 +201,56 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
     "${lifecycle}" --activate >/dev/null 2>&1
     test "$(readlink -f "$ext/anthropic.claude-code-2.1.215-linux-x64")" = "$(readlink -f ${extAPath})"
     test ! -e "$ext/anthropic.claude-code-2.1.214-linux-x64"
+    # A manifest is user-controlled state.  Every malformed name must stop
+    # reconciliation before it can retarget the managed link/root or reach a
+    # cleanup path.  The traversal form below was accepted by the old glob and
+    # points both cleanup operands outside their managed directories.
+    tamper_sentinel="$home/manifest-tamper-sentinel"
+    mkdir -p "$tamper_sentinel"
+    printf preserved > "$tamper_sentinel/content"
+    traversal_base="anthropic.claude-code-2.1.214-linux-x64"
+    mkdir -p "$ext/$traversal_base" "$roots/$traversal_base"
+    ln -s ${extCPath} "$home/.vscode-oss/outside-linux-x64"
+    ln -s ${extCPath} "$home/outside-linux-x64"
+    nested_base="anthropic.claude-code-2.1.213-linux-x64"
+    mkdir -p "$ext/$nested_base" "$roots/$nested_base"
+    ln -s ${extCPath} "$ext/$nested_base/nested-linux-x64"
+    ln -s ${extCPath} "$roots/$nested_base/nested-linux-x64"
+    cr_name=$'anthropic.claude-code-2.1.212\r-linux-x64'
+    ln -s ${extCPath} "$ext/$cr_name"
+    ln -s ${extCPath} "$roots/$cr_name"
+    nul_name="anthropic.claude-code-2.1.211-linux-x64"
+    ln -s ${extCPath} "$ext/$nul_name"
+    ln -s ${extCPath} "$roots/$nul_name"
+    assert_tampered_manifest_ignored() {
+      label="$1" name="$2"
+      printf 'v1\nmanaged\t2.1.214\t%s\t%s\n' "$name" "${extCPath}" > "$state/manifest"
+      cp "$state/manifest" "$TMPDIR/manifest-$label.before"
+      { find -P "$ext" "$roots" "$tamper_sentinel" -printf '%p %y %l\n' | sort; cat "$state/manifest"; } > "$TMPDIR/tamper-$label.before"
+      "${lifecycle}" --activate
+      cmp "$TMPDIR/manifest-$label.before" "$state/manifest"
+      { find -P "$ext" "$roots" "$tamper_sentinel" -printf '%p %y %l\n' | sort; cat "$state/manifest"; } > "$TMPDIR/tamper-$label.after"
+      diff -u "$TMPDIR/tamper-$label.before" "$TMPDIR/tamper-$label.after"
+      test "$(cat "$tamper_sentinel/content")" = preserved
+    }
+    assert_tampered_manifest_ignored traversal "$traversal_base/../../outside-linux-x64"
+    test -L "$home/.vscode-oss/outside-linux-x64"
+    test -L "$home/outside-linux-x64"
+    test "$(readlink "$home/.vscode-oss/outside-linux-x64")" = "${extCPath}"
+    test "$(readlink "$home/outside-linux-x64")" = "${extCPath}"
+    assert_tampered_manifest_ignored nested "$nested_base/nested-linux-x64"
+    assert_tampered_manifest_ignored absolute "/$traversal_base"
+    assert_tampered_manifest_ignored carriage-return "$cr_name"
+    assert_tampered_manifest_ignored newline $'anthropic.claude-code-2.1.214-linux-x64\n'
+    printf 'v1\nmanaged\t2.1.211\t%s\0\t%s\n' "$nul_name" "${extCPath}" > "$state/manifest"
+    cp "$state/manifest" "$TMPDIR/manifest-nul.before"
+    { find -P "$ext" "$roots" "$tamper_sentinel" -printf '%p %y %l\n' | sort; cat "$state/manifest"; } > "$TMPDIR/tamper-nul.before"
+    "${lifecycle}" --activate
+    cmp "$TMPDIR/manifest-nul.before" "$state/manifest"
+    { find -P "$ext" "$roots" "$tamper_sentinel" -printf '%p %y %l\n' | sort; cat "$state/manifest"; } > "$TMPDIR/tamper-nul.after"
+    diff -u "$TMPDIR/tamper-nul.before" "$TMPDIR/tamper-nul.after"
+    test -L "$ext/$nul_name"
+    test -L "$roots/$nul_name"
     echo STAGE=complete
     touch "$out"
 ''

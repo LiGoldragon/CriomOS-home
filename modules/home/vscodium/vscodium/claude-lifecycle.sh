@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euf
+export LC_ALL=C
 
 ext_dir="${CRIOMOS_VSCODIUM_EXTENSIONS_DIR:-$HOME/.vscode-oss/extensions}"
 state_dir="${CRIOMOS_VSCODIUM_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/criomos/vscodium-claude}"
@@ -15,8 +16,23 @@ for arg in "$@"; do [ "$arg" = --bootstrap ] && bootstrap_only=1; done
 for arg in "$@"; do [ "$arg" = --dry-run ] && dry=1; done
 mutate() { if [ "$dry" -eq 1 ]; then printf '+ %s\n' "$*"; else "$@"; fi; }
 mkdir_state() { [ "$dry" -eq 1 ] || mkdir -p "$state_dir" "$root_dir"; }
-valid_target() { case "$1" in /nix/store/*) [ -e "$1" ];; *) return 1;; esac; }
-valid_link_name() { case "$1" in anthropic.claude-code-*-linux-x64) return 0;; *) return 1;; esac; }
+valid_target() {
+  case "$1" in /nix/store/*) ;; *) return 1;; esac
+  [ -e "$1" ] && [ "$(@READLINK@ -f "$1" 2>/dev/null || true)" = "$1" ]
+}
+# The manifest is mutable user state.  Keep its names to the exact basename
+# form owned by this lifecycle: no path separators, controls, or locale-wide
+# character classes can reach a filesystem operation.
+valid_version() {
+  [[ "$1" =~ ^[0-9]+[.][0-9]+[.][0-9]+(-[0-9A-Za-z-]+([.][0-9A-Za-z-]+)*)?([+][0-9A-Za-z-]+([.][0-9A-Za-z-]+)*)?$ ]]
+}
+valid_link_name() {
+  [[ "$1" =~ ^anthropic[.]claude-code-[0-9]+[.][0-9]+[.][0-9]+(-[0-9A-Za-z-]+([.][0-9A-Za-z-]+)*)?([+][0-9A-Za-z-]+([.][0-9A-Za-z-]+)*)?-linux-x64$ ]]
+}
+valid_manifest_entry() {
+  [ "$1" = managed ] && valid_version "$2" && valid_link_name "$3" \
+    && [ "$3" = "anthropic.claude-code-$2-linux-x64" ] && valid_target "$4"
+}
 register_root() {
   # Repair a missing automatic root even when the visible link already resolves
   # to the target (for example after an interrupted cleanup).
@@ -28,9 +44,16 @@ root_retains_target() {
   case "$2" in "$root_target"|"$root_target"/*) return 0;; *) return 1;; esac
 }
 manifest_is_valid() {
-  manifest_valid=1; seen_names=""
-  while IFS=$'	' read -r owner ver name tgt extra; do
-    [ -z "$extra" ] && [ "$owner" = managed ] && valid_link_name "$name" && valid_target "$tgt" || { manifest_valid=0; break; }
+  manifest_valid=1; seen_names=""; manifest_header="$(head -n1 "$manifest" || true)"
+  # Bash strings cannot retain NULs, so reject them before line parsing rather
+  # than allowing the shell to silently reinterpret a byte stream.
+  [ "$(wc -c < "$manifest")" = "$(tr -d '\000' < "$manifest" | wc -c)" ] || return 1
+  case "$manifest_header" in v1|v1-bootstrap|v1-ready) ;; *) return 1;; esac
+  while IFS= read -r line || [ -n "$line" ]; do
+    tabs="${line//[^$'\t']/}"
+    [ "${#tabs}" -eq 3 ] || { manifest_valid=0; break; }
+    IFS=$'\t' read -r owner ver name tgt extra <<< "$line"
+    [ -z "$extra" ] && valid_manifest_entry "$owner" "$ver" "$name" "$tgt" || { manifest_valid=0; break; }
     case " $seen_names " in *" $name "*) manifest_valid=0; break;; esac
     seen_names="$seen_names $name"
     [ -L "$ext_dir/$name" ] && [ "$(@READLINK@ -f "$ext_dir/$name" 2>/dev/null || true)" = "$tgt" ] || { manifest_valid=0; break; }
@@ -52,8 +75,10 @@ reconcile() {
   managed="$ext_dir/anthropic.claude-code"
   [ -d "$ext_dir" ] && [ -e "$managed/package.json" ] || exit 0
   version="$(@JQ@ -er '.version | strings' "$managed/package.json")" || exit 0
+  valid_version "$version" || exit 0
   target="$(@READLINK@ -f "$managed")"; valid_target "$target" || exit 0
   desired="anthropic.claude-code-$version-linux-x64"
+  valid_link_name "$desired" || exit 0
   mkdir_state
   if [ ! -e "$manifest" ]; then
     # Legacy migration is conservative: do not touch discovery while any
@@ -94,16 +119,14 @@ reconcile() {
   fi
   [ "$bootstrap_only" -eq 1 ] && exit 0
   if [ -e "$manifest" ]; then
-    header=$(head -n1 "$manifest" || true)
-    case "$header" in v1|v1-bootstrap|v1-ready) ;; *) exit 0;; esac
-    if [ "$header" = v1-bootstrap ]; then
+    # Do not create, retarget, or remove anything from an untrusted manifest.
+    manifest_is_valid || return 0
+    if [ "$manifest_header" = v1-bootstrap ]; then
       [ "$dry" -eq 1 ] && return 0
       sed '1s/.*/v1-ready/' "$manifest" > "$manifest.tmp.$$"
       mv -f "$manifest.tmp.$$" "$manifest"
       return 0
     fi
-    [ "$header" = v1-ready ] && :
-    manifest_is_valid || return 0
   fi
   link="$ext_dir/$desired"; owned_current=0
   if [ -f "$manifest" ] && head -n1 "$manifest" | grep -Eq '^(v1|v1-ready)$'; then
@@ -126,12 +149,10 @@ reconcile() {
   { printf 'v1\n'; printf '%s\n' "$old_lines" | awk -F '\t' -v d="$desired" '$3 != d && NF >= 3'; printf 'managed\t%s\t%s\t%s\n' "$version" "$desired" "$target"; } > "$tmp_manifest"
   mv -f "$tmp_manifest" "$manifest"
   manifest_is_valid || return 0
-  while IFS='	' read -r owner ver name tgt; do
-    [ "$owner" = managed ] && [ "$name" != "$desired" ] || continue
-    valid_link_name "$name" || continue
+  while IFS='	' read -r owner ver name tgt extra; do
+    [ -z "$extra" ] && valid_manifest_entry "$owner" "$ver" "$name" "$tgt" && [ "$name" != "$desired" ] || continue
     [ -L "$ext_dir/$name" ] && [ "$(@READLINK@ -f "$ext_dir/$name" 2>/dev/null || true)" = "$tgt" ] || continue
     [ -L "$root_dir/$name" ] && root_retains_target "$root_dir/$name" "$tgt" || continue
-    valid_target "$tgt" || continue
     rm -f "$ext_dir/$name" "$root_dir/$name"
   done < <(tail -n +2 "$manifest")
 }
