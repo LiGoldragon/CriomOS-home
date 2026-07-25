@@ -11,6 +11,33 @@ let
   inherit (user) size;
   codiumPackage = pkgs.callPackage ../../../../packages/vscodium-casual { };
 
+  lifecycleSource = pkgs.replaceVars ./claude-lifecycle.sh {
+    FLOCK = "${pkgs.util-linux}/bin/flock";
+    JQ = "${pkgs.jq}/bin/jq";
+    READLINK = "${pkgs.coreutils}/bin/readlink";
+  };
+  codiumClaudeLifecycle = pkgs.writeShellScriptBin "criomos-codium-claude-lifecycle" (builtins.readFile lifecycleSource);
+
+  codiumManagedPackage = pkgs.symlinkJoin {
+    name = "vscodium-casual-managed";
+    paths = [ codiumPackage ];
+    postBuild = ''
+      rm -f $out/bin/codium
+      cat > $out/bin/codium <<'EOF'
+      #!${pkgs.runtimeShell}
+      set -euo pipefail
+      lock="''${CRIOMOS_VSCODIUM_LOCK_FILE:-''${XDG_STATE_HOME:-$HOME/.local/state}/criomos/vscodium-claude}/lifecycle.lock"
+      mkdir -p "$(dirname "$lock")"
+      exec 9>"$lock"
+      ${pkgs.util-linux}/bin/flock -x 9
+      CRIOMOS_VSCODIUM_LOCK_HELD=1 ${codiumClaudeLifecycle}/bin/criomos-codium-claude-lifecycle --launch
+      ${pkgs.util-linux}/bin/flock -s 9
+      exec ${codiumPackage}/bin/codium "$@"
+      EOF
+      chmod +x $out/bin/codium
+    '';
+  };
+
   # Flake inputs of `type = "file"` always materialize as a store path
   # named `source` (no extension). nixpkgs' `unpack-vsix-setup-hook`
   # dispatches on the file extension though — `.vsix` triggers unzip.
@@ -150,7 +177,7 @@ lib.mkIf size.medium {
 
   programs.vscode = {
     enable = true;
-    package = codiumPackage;
+    package = codiumManagedPackage;
 
     profiles.default = {
       extensions = [
@@ -223,22 +250,14 @@ lib.mkIf size.medium {
   # All keys default to `ensure` mode here — declared overlays the
   # defaults, user overrides survive at sibling keys (the
   # `[python].wordWrap`-clobber case the old helper got wrong).
+  home.packages = [ codiumClaudeLifecycle ];
+
+  home.activation.bootstrapMutableClaudeCodeExtension = lib.hm.dag.entryBefore [ "linkGeneration" ] ''
+    run ${codiumClaudeLifecycle}/bin/criomos-codium-claude-lifecycle --bootstrap
+  '';
+
   home.activation.replaceMutableClaudeCodeExtension = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
-    extensions_dir="$HOME/.vscode-oss/extensions"
-    managed_extension="$extensions_dir/anthropic.claude-code"
-    if [ -d "$extensions_dir" ] && [ -e "$managed_extension/package.json" ]; then
-      version="$(${pkgs.jq}/bin/jq -r '.version' "$managed_extension/package.json")"
-      compatibility_extension="$extensions_dir/anthropic.claude-code-$version-linux-x64"
-      for extension_dir in "$extensions_dir"/anthropic.claude-code-*-linux-x64; do
-        if [ -e "$extension_dir" ] && [ "$extension_dir" != "$compatibility_extension" ]; then
-          run rm -rf "$extension_dir"
-        fi
-      done
-      if [ ! -L "$compatibility_extension" ]; then
-        run rm -rf "$compatibility_extension"
-        run ln -s "$managed_extension" "$compatibility_extension"
-      fi
-    fi
+    run ${codiumClaudeLifecycle}/bin/criomos-codium-claude-lifecycle --activate
   '';
 
   home.activation.mergeVscodiumSettings = inputs.hexis.lib.mkManagedConfig {

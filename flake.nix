@@ -461,6 +461,7 @@
           spirit-deployment = checkPkgs.callPackage ./checks/spirit-deployment { inherit inputs; };
           aggregator-deployment = checkPkgs.callPackage ./checks/aggregator-deployment { inherit inputs; };
           vscodium-casual = checkPkgs.callPackage ./checks/vscodium-casual { };
+          vscodium-claude-lifecycle = checkPkgs.callPackage ./checks/vscodium-claude-lifecycle { };
         }
       ) derivationChecks;
 
