@@ -144,7 +144,6 @@ let
 
   services = moduleConfiguration.systemd.user.services;
   homePackages = moduleConfiguration.home.packages;
-  activation = moduleConfiguration.home.activation.aggregatorState.data;
   profileWitness = pkgs.symlinkJoin {
     name = "aggregator-profile-witness";
     paths = homePackages;
@@ -158,6 +157,21 @@ let
     {
       condition = !(builtins.hasAttr "aggregator-reports-daemon" services);
       message = "legacy report scraping service names must be absent.";
+    }
+    {
+      condition = !(
+        builtins.hasAttr "activation" moduleConfiguration.home
+        && builtins.hasAttr "aggregatorState" moduleConfiguration.home.activation
+      );
+      message = "aggregator runtime state must initialize from the user service, not Home Manager activation.";
+    }
+    {
+      condition = services.aggregator-daemon.Service.RuntimeDirectory == "aggregator";
+      message = "the aggregator user service must own its runtime directory.";
+    }
+    {
+      condition = services.aggregator-daemon.Service.RuntimeDirectoryMode == "0700";
+      message = "the aggregator runtime directory must be user-only.";
     }
   ];
 
@@ -176,22 +190,19 @@ else
 
     exec_start_pre="${services.aggregator-daemon.Service.ExecStartPre}"
     exec_start="${services.aggregator-daemon.Service.ExecStart}"
-    activation_script="${pkgs.writeText "activation" activation}"
     configuration_path="${fakeStateHome}/aggregator/configuration.nota"
 
     printf '%s\n' "$exec_start_pre" > exec-start-pre
     printf '%s\n' "$exec_start" > exec-start
-    cat "$activation_script" > activation
 
     grep -q 'aggregator-startup-state' exec-start-pre
     grep -q '/bin/aggregator-daemon$' exec-start
-    grep -q 'aggregator-default-configuration' activation
     default_configuration_script=$(grep -o '[^ ]*aggregator-default-configuration' "$exec_start_pre")
     grep -q -- '--local-default' "$default_configuration_script"
     grep -q -- '--workspace ${fakeWorkspace}' "$default_configuration_script"
-    ! grep -q 'reports' activation "$default_configuration_script"
-    ! grep -q 'agent-outputs' activation "$default_configuration_script"
-    ! grep -q -- '-home-li-primary\|/home/li\|/tmp/claude-1001\|/tmp/claude-' activation "$default_configuration_script"
+    ! grep -q 'reports' "$default_configuration_script"
+    ! grep -q 'agent-outputs' "$default_configuration_script"
+    ! grep -q -- '-home-li-primary\|/home/li\|/tmp/claude-1001\|/tmp/claude-' "$default_configuration_script"
 
     mkdir -p "$PWD/runtime" "$PWD/temp-root"
     TMPDIR="$PWD/temp-root" XDG_RUNTIME_DIR="$PWD/runtime" "$exec_start_pre"

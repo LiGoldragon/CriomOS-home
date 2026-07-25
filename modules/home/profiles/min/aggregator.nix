@@ -104,10 +104,6 @@ in
   config = mkIf (size.min && config.criomosHome.aggregator.enable) {
     home.packages = [ aggregatorProfilePackage ];
 
-    home.activation.aggregatorState = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      $DRY_RUN_CMD ${writeDefaultConfiguration}
-    '';
-
     systemd.user.services.aggregator-daemon = {
       Unit = {
         Description = "Aggregator local agent recovery daemon";
