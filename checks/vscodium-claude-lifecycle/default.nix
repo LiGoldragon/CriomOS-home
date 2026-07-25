@@ -1,6 +1,35 @@
-{ pkgs, ... }:
+{ inputs, pkgs, ... }:
 
 let
+  homePkgs = import inputs.nixpkgs {
+    inherit (pkgs.stdenv.hostPlatform) system;
+    config.allowUnfree = true;
+    overlays = [ inputs.pkgs.inputs.nix-vscode-extensions.overlays.default ];
+  };
+  homeConfiguration = inputs.home-manager.lib.homeManagerConfiguration {
+    pkgs = homePkgs;
+    extraSpecialArgs = {
+      inherit inputs;
+      hexis = homePkgs.writeShellScriptBin "hexis-fixture" "exit 0";
+      textScale.codiumZoom = 0;
+      user = {
+        preferredEditor = "Emacs";
+        size.medium = true;
+      };
+    };
+    modules = [
+      ../../modules/home/vscodium/vscodium
+      {
+        home.username = "vscodium-check";
+        home.homeDirectory = "/home/vscodium-check";
+        home.stateVersion = "26.05";
+      }
+    ];
+  };
+  vscodeConfig = homeConfiguration.config.programs.vscode;
+  activation = homeConfiguration.config.home.activation;
+  extensionRefresh =
+    homeConfiguration.config.home.file.".vscode-oss/extensions/.extensions-immutable.json".onChange;
   lifecycleSource = pkgs.replaceVars ../../modules/home/vscodium/vscodium/claude-lifecycle.sh {
     FLOCK = "${pkgs.util-linux}/bin/flock";
     JQ = "${pkgs.jq}/bin/jq";
@@ -22,10 +51,22 @@ let
     printf '{"version":"2.1.214"}\n' > $out/package.json
   '';
 in
+assert vscodeConfig.package.pname == homePkgs.vscodium.pname;
+assert vscodeConfig.package.version == homePkgs.vscodium.version;
+assert vscodeConfig.package.meta.mainProgram == "codium";
+assert homePkgs.lib.getExe vscodeConfig.package == "${vscodeConfig.package}/bin/codium";
+assert vscodeConfig.nameShort == "VSCodium";
+assert vscodeConfig.dataFolderName == ".vscode-oss";
+assert homePkgs.lib.hasInfix
+  (builtins.unsafeDiscardStringContext "${vscodeConfig.package}/bin/codium --list-extensions")
+  (builtins.unsafeDiscardStringContext extensionRefresh);
+assert activation.bootstrapMutableClaudeCodeExtension.before == [ "linkGeneration" ];
+assert builtins.match ".*--bootstrap.*" activation.bootstrapMutableClaudeCodeExtension.data != null;
+assert activation.replaceMutableClaudeCodeExtension.after == [ "linkGeneration" ];
+assert builtins.match ".*--activate.*" activation.replaceMutableClaudeCodeExtension.data != null;
 pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
   set -euxo pipefail
   echo STAGE=setup
-  grep -F 'entryBefore [ "linkGeneration" ]' ${../../modules/home/vscodium/vscodium/default.nix}
   blocked_activate() {
     ${pkgs.util-linux}/bin/setsid "${lifecycle}" --activate >/dev/null 2>&1 & activation_pid=$!
     sleep 1

@@ -16,11 +16,16 @@ let
     JQ = "${pkgs.jq}/bin/jq";
     READLINK = "${pkgs.coreutils}/bin/readlink";
   };
-  codiumClaudeLifecycle = pkgs.writeShellScriptBin "criomos-codium-claude-lifecycle" (builtins.readFile lifecycleSource);
+  codiumClaudeLifecycle = pkgs.writeShellScriptBin "criomos-codium-claude-lifecycle" (
+    builtins.readFile lifecycleSource
+  );
 
   codiumManagedPackage = pkgs.symlinkJoin {
     name = "vscodium-casual-managed";
+    pname = codiumPackage.pname;
+    version = codiumPackage.version;
     paths = [ codiumPackage ];
+    meta = codiumPackage.meta;
     postBuild = ''
       rm -f $out/bin/codium
       cat > $out/bin/codium <<'EOF'
