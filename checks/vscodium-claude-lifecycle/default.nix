@@ -30,26 +30,43 @@ let
   activation = homeConfiguration.config.home.activation;
   extensionRefresh =
     homeConfiguration.config.home.file.".vscode-oss/extensions/.extensions-immutable.json".onChange;
+  nixStoreFixture = pkgs.writeShellScript "nix-store-fixture" ''
+    set -euf
+    [ "$#" -eq 4 ]
+    [ "$1" = --add-root ]
+    root="$2"
+    [ "$3" = --realise ]
+    target="$4"
+    case "$target" in /nix/store/*) ;; *) exit 1;; esac
+    store_name="''${target#/nix/store/}"
+    store_name="''${store_name%%/*}"
+    ln -s "/nix/store/$store_name" "$root.tmp.$$"
+    mv -Tf "$root.tmp.$$" "$root"
+  '';
   lifecycleSource = pkgs.replaceVars ../../modules/home/vscodium/vscodium/claude-lifecycle.sh {
     FLOCK = "${pkgs.util-linux}/bin/flock";
     JQ = "${pkgs.jq}/bin/jq";
+    NIX_STORE = "${nixStoreFixture}";
     READLINK = "${pkgs.coreutils}/bin/readlink";
   };
   lifecycle = pkgs.writeShellScript "criomos-codium-claude-lifecycle-fixture" (
     builtins.readFile lifecycleSource
   );
   extA = pkgs.runCommand "claude-extension-fixture-a" { } ''
-    mkdir -p $out
-    printf '{"version":"2.1.215"}\n' > $out/package.json
+    mkdir -p $out/extension
+    printf '{"version":"2.1.215"}\n' > $out/extension/package.json
   '';
   extB = pkgs.runCommand "claude-extension-fixture-b" { } ''
-    mkdir -p $out
-    printf '{"version":"2.1.215"}\n' > $out/package.json
+    mkdir -p $out/extension
+    printf '{"version":"2.1.215"}\n' > $out/extension/package.json
   '';
   extC = pkgs.runCommand "claude-extension-fixture-c" { } ''
-    mkdir -p $out
-    printf '{"version":"2.1.214"}\n' > $out/package.json
+    mkdir -p $out/extension
+    printf '{"version":"2.1.214"}\n' > $out/extension/package.json
   '';
+  extAPath = "${extA}/extension";
+  extBPath = "${extB}/extension";
+  extCPath = "${extC}/extension";
 in
 assert vscodeConfig.package.pname == homePkgs.vscodium.pname;
 assert vscodeConfig.package.version == homePkgs.vscodium.version;
@@ -66,6 +83,7 @@ assert activation.replaceMutableClaudeCodeExtension.after == [ "linkGeneration" 
 assert builtins.match ".*--activate.*" activation.replaceMutableClaudeCodeExtension.data != null;
 pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
   set -euxo pipefail
+  test "$(id -u)" -ne 0
   echo STAGE=setup
   blocked_activate() {
     ${pkgs.util-linux}/bin/setsid "${lifecycle}" --activate >/dev/null 2>&1 & activation_pid=$!
@@ -78,7 +96,28 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
   home="$TMPDIR/home"; ext="$home/.vscode-oss/extensions"; state="$home/state"; roots="$home/roots"
     mkdir -p "$ext" "$state" "$roots"
     export CRIOMOS_VSCODIUM_EXTENSIONS_DIR="$ext" CRIOMOS_VSCODIUM_STATE_DIR="$state" CRIOMOS_VSCODIUM_GCROOT_DIR="$roots"
-    ln -s ${extA} "$ext/anthropic.claude-code"
+    ln -s ${extAPath} "$ext/anthropic.claude-code"
+    # Exercise activation without a GC-root override. The lifecycle itself runs
+    # as this unprivileged builder and must keep its visible root in user state;
+    # the old /nix/var/nix/gcroots/per-user default would fail before the
+    # daemon-root fixture could be invoked.
+    unprivileged_home="$TMPDIR/unprivileged-home"
+    unprivileged_ext="$unprivileged_home/.vscode-oss/extensions"
+    unprivileged_state="$unprivileged_home/state"
+    mkdir -p "$unprivileged_ext" "$unprivileged_state"
+    ln -s ${extAPath} "$unprivileged_ext/anthropic.claude-code"
+    (
+      unset CRIOMOS_VSCODIUM_GCROOT_DIR
+      export HOME="$unprivileged_home" USER=vscodium-check
+      export CRIOMOS_VSCODIUM_EXTENSIONS_DIR="$unprivileged_ext"
+      export CRIOMOS_VSCODIUM_STATE_DIR="$unprivileged_state"
+      "${lifecycle}" --activate
+      test "$(head -n1 "$unprivileged_state/manifest")" = v1-bootstrap
+      "${lifecycle}" --activate
+      "${lifecycle}" --activate
+    )
+    test -L "$unprivileged_state/gcroots/anthropic.claude-code-2.1.215-linux-x64"
+    test "$(readlink -f "$unprivileged_state/gcroots/anthropic.claude-code-2.1.215-linux-x64")" = "$(readlink -f ${extA})"
     CRIOMOS_VSCODIUM_EXTENSIONS_DIR="$ext" CRIOMOS_VSCODIUM_STATE_DIR="$state" CRIOMOS_VSCODIUM_GCROOT_DIR="$roots" "${lifecycle}" --activate
     test "$(head -n1 "$state/manifest")" = v1-bootstrap
     tree_before=$(find -P "$ext" "$roots" -printf '%p %y %l\n' | sort)
@@ -86,24 +125,25 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
     test "$(head -n1 "$state/manifest")" = v1-ready
     test "$tree_before" = "$(find -P "$ext" "$roots" -printf '%p %y %l\n' | sort)"
     "${lifecycle}" --activate
-    test "$(readlink -f "$ext/anthropic.claude-code-2.1.215-linux-x64")" = "$(readlink -f ${extA})"
+    test "$(readlink -f "$ext/anthropic.claude-code-2.1.215-linux-x64")" = "$(readlink -f ${extAPath})"
     test -L "$roots/anthropic.claude-code-2.1.215-linux-x64"
     before=$(sha256sum "$state/manifest")
     CRIOMOS_VSCODIUM_EXTENSIONS_DIR="$ext" CRIOMOS_VSCODIUM_STATE_DIR="$state" CRIOMOS_VSCODIUM_GCROOT_DIR="$roots" "${lifecycle}" --dry-run >/dev/null
     test "$before" = "$(sha256sum "$state/manifest")"
-    rm "$ext/anthropic.claude-code"; ln -s ${extB} "$ext/anthropic.claude-code"
+    rm "$ext/anthropic.claude-code"; ln -s ${extBPath} "$ext/anthropic.claude-code"
     CRIOMOS_VSCODIUM_EXTENSIONS_DIR="$ext" CRIOMOS_VSCODIUM_STATE_DIR="$state" CRIOMOS_VSCODIUM_GCROOT_DIR="$roots" "${lifecycle}" --activate
-    test "$(readlink -f "$ext/anthropic.claude-code-2.1.215-linux-x64")" = "$(readlink -f ${extB})"
+    test "$(readlink -f "$ext/anthropic.claude-code-2.1.215-linux-x64")" = "$(readlink -f ${extBPath})"
     rm "$ext/anthropic.claude-code-2.1.215-linux-x64"
     mkdir "$ext/anthropic.claude-code-2.1.215-linux-x64"
     CRIOMOS_VSCODIUM_EXTENSIONS_DIR="$ext" CRIOMOS_VSCODIUM_STATE_DIR="$state" CRIOMOS_VSCODIUM_GCROOT_DIR="$roots" "${lifecycle}" --activate >/dev/null 2>&1 || true
     test -d "$ext/anthropic.claude-code-2.1.215-linux-x64"
-    rm -rf "$ext/anthropic.claude-code-2.1.215-linux-x64"; ln -s ${extB} "$ext/anthropic.claude-code-2.1.215-linux-x64"
+    rm -rf "$ext/anthropic.claude-code-2.1.215-linux-x64"; ln -s ${extBPath} "$ext/anthropic.claude-code-2.1.215-linux-x64"
     printf 'v1\nmanaged\t2.1.215\tanthropic.claude-code-2.1.215-linux-x64\t/nix/store/not-the-link\n' > "$state/manifest"
+    rm -f "$roots/anthropic.claude-code-2.1.215-linux-x64"
     "${lifecycle}" --activate >/dev/null 2>&1 || true
     test -L "$ext/anthropic.claude-code-2.1.215-linux-x64"
-    test -e "$roots/anthropic.claude-code-2.1.215-linux-x64"
-    rm "$ext/anthropic.claude-code"; ln -s ${extC} "$ext/anthropic.claude-code"; rm -f "$state/manifest"
+    test ! -e "$roots/anthropic.claude-code-2.1.215-linux-x64"
+    rm "$ext/anthropic.claude-code"; ln -s ${extCPath} "$ext/anthropic.claude-code"; rm -f "$state/manifest"
     rm -f "$ext/anthropic.claude-code-2.1.215-linux-x64" "$roots/anthropic.claude-code-2.1.215-linux-x64"
     CRIOMOS_VSCODIUM_EXTENSIONS_DIR="$ext" CRIOMOS_VSCODIUM_STATE_DIR="$state" CRIOMOS_VSCODIUM_GCROOT_DIR="$roots" "${lifecycle}" --activate
     test "$(head -n1 "$state/manifest")" = v1-bootstrap
@@ -112,6 +152,7 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
     "${lifecycle}" --activate
     test -L "$ext/anthropic.claude-code-2.1.214-linux-x64"
     test ! -e "$ext/anthropic.claude-code-2.1.215-linux-x64"
+    test ! -e "$roots/anthropic.claude-code-2.1.215-linux-x64"
     # A held shared lease blocks mutation; releasing it allows reconciliation.
     exec 9>"$state/lifecycle.lock"
     ${pkgs.util-linux}/bin/flock -s 9
@@ -125,7 +166,7 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
     # discovery tree, so an unlocked reconciler is the only possible mutation.
     managed_target="$TMPDIR/managed-target"
     rm "$ext/anthropic.claude-code"
-    ln -s ${extC} "$managed_target"
+    ln -s ${extCPath} "$managed_target"
     ln -s "$managed_target" "$ext/anthropic.claude-code"
     fake="$TMPDIR/fake-codium"; printf '#!%s\nprintf READY > %s\nsleep 30\n' "${pkgs.runtimeShell}" "$TMPDIR/codium.ready" > "$fake"; chmod +x "$fake"
     launcher="$TMPDIR/managed-launcher"; cat > "$launcher" <<EOF
@@ -144,7 +185,7 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
     find -P "$ext" -printf '%p %y %l\n' | sort > "$TMPDIR/discovery.before"
     find -P "$roots" -printf '%p %y %l\n' | sort > "$TMPDIR/roots.before"
     cp "$state/manifest" "$TMPDIR/manifest.before"
-    rm "$managed_target"; ln -s ${extA} "$managed_target"
+    rm "$managed_target"; ln -s ${extAPath} "$managed_target"
   blocked_activate
     find -P "$ext" -printf '%p %y %l\n' | sort > "$TMPDIR/discovery.after"
     find -P "$roots" -printf '%p %y %l\n' | sort > "$TMPDIR/roots.after"
@@ -158,7 +199,7 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
     kill -KILL -- "-$launcher_pid" 2>/dev/null || true
     wait "$launcher_pid" 2>/dev/null || true
     "${lifecycle}" --activate >/dev/null 2>&1
-    test "$(readlink -f "$ext/anthropic.claude-code-2.1.215-linux-x64")" = "$(readlink -f ${extA})"
+    test "$(readlink -f "$ext/anthropic.claude-code-2.1.215-linux-x64")" = "$(readlink -f ${extAPath})"
     test ! -e "$ext/anthropic.claude-code-2.1.214-linux-x64"
     echo STAGE=complete
     touch "$out"

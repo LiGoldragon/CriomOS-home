@@ -3,7 +3,10 @@ set -euf
 
 ext_dir="${CRIOMOS_VSCODIUM_EXTENSIONS_DIR:-$HOME/.vscode-oss/extensions}"
 state_dir="${CRIOMOS_VSCODIUM_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/criomos/vscodium-claude}"
-root_dir="${CRIOMOS_VSCODIUM_GCROOT_DIR:-/nix/var/nix/gcroots/per-user/$USER/criomos-vscodium-claude}"
+# Nix records an automatic GC root for each --add-root user path. Keep that
+# path in the user's state directory: activation never creates anything in
+# /nix, while the daemon retains the target through its automatic-root tree.
+root_dir="${CRIOMOS_VSCODIUM_GCROOT_DIR:-$state_dir/gcroots}"
 lock_file="${CRIOMOS_VSCODIUM_LOCK_FILE:-$state_dir/lifecycle.lock}"
 manifest="$state_dir/manifest"
 dry=0
@@ -14,6 +17,27 @@ mutate() { if [ "$dry" -eq 1 ]; then printf '+ %s\n' "$*"; else "$@"; fi; }
 mkdir_state() { [ "$dry" -eq 1 ] || mkdir -p "$state_dir" "$root_dir"; }
 valid_target() { case "$1" in /nix/store/*) [ -e "$1" ];; *) return 1;; esac; }
 valid_link_name() { case "$1" in anthropic.claude-code-*-linux-x64) return 0;; *) return 1;; esac; }
+register_root() {
+  # Repair a missing automatic root even when the visible link already resolves
+  # to the target (for example after an interrupted cleanup).
+  mutate @NIX_STORE@ --add-root "$1" --realise "$2" >/dev/null
+}
+root_retains_target() {
+  root_target="$(@READLINK@ -f "$1" 2>/dev/null || true)"
+  valid_target "$root_target" || return 1
+  case "$2" in "$root_target"|"$root_target"/*) return 0;; *) return 1;; esac
+}
+manifest_is_valid() {
+  manifest_valid=1; seen_names=""
+  while IFS=$'	' read -r owner ver name tgt extra; do
+    [ -z "$extra" ] && [ "$owner" = managed ] && valid_link_name "$name" && valid_target "$tgt" || { manifest_valid=0; break; }
+    case " $seen_names " in *" $name "*) manifest_valid=0; break;; esac
+    seen_names="$seen_names $name"
+    [ -L "$ext_dir/$name" ] && [ "$(@READLINK@ -f "$ext_dir/$name" 2>/dev/null || true)" = "$tgt" ] || { manifest_valid=0; break; }
+    [ -L "$root_dir/$name" ] && root_retains_target "$root_dir/$name" "$tgt" || { manifest_valid=0; break; }
+  done < <(tail -n +2 "$manifest")
+  [ "$manifest_valid" -eq 1 ]
+}
 
 reconcile() {
   lock_ready=0
@@ -60,7 +84,7 @@ reconcile() {
     done
     [ "$dry" -eq 1 ] && exit 0
     if [ "$found_legacy" -eq 1 ]; then
-      ln -s "$target" "$root_dir/$desired.tmp.$$"; mv -Tf "$root_dir/$desired.tmp.$$" "$root_dir/$desired"
+      register_root "$root_dir/$desired" "$target"
     fi
     tmp_manifest="$manifest.tmp.$$"
     { printf 'v1-bootstrap\n'; [ "$found_legacy" -eq 1 ] && printf 'managed\t%s\t%s\t%s\n' "$version" "$desired" "$target"; } > "$tmp_manifest"
@@ -79,6 +103,7 @@ reconcile() {
       return 0
     fi
     [ "$header" = v1-ready ] && :
+    manifest_is_valid || return 0
   fi
   link="$ext_dir/$desired"; owned_current=0
   if [ -f "$manifest" ] && head -n1 "$manifest" | grep -Eq '^(v1|v1-ready)$'; then
@@ -94,28 +119,18 @@ reconcile() {
     mutate ln -s "$target" "$link.tmp.$$"; mutate mv -Tf "$link.tmp.$$" "$link"
   fi
   root="$root_dir/$desired"
-  if [ ! -L "$root" ] || [ "$(@READLINK@ -f "$root" 2>/dev/null || true)" != "$target" ]; then
-    mutate ln -s "$target" "$root.tmp.$$"; mutate mv -Tf "$root.tmp.$$" "$root"
-  fi
+  register_root "$root" "$target"
   old_lines=""; [ -f "$manifest" ] && old_lines=$(tail -n +2 "$manifest" || true)
   if [ "$dry" -eq 1 ]; then printf '+ atomic manifest update\n'; return 0; fi
   tmp_manifest="$manifest.tmp.$$"
   { printf 'v1\n'; printf '%s\n' "$old_lines" | awk -F '\t' -v d="$desired" '$3 != d && NF >= 3'; printf 'managed\t%s\t%s\t%s\n' "$version" "$desired" "$target"; } > "$tmp_manifest"
   mv -f "$tmp_manifest" "$manifest"
-  manifest_valid=1; seen_names=""
-  while IFS=$'\t' read -r owner ver name tgt extra; do
-    [ -z "$extra" ] && [ "$owner" = managed ] && valid_link_name "$name" && valid_target "$tgt" || { manifest_valid=0; break; }
-    case " $seen_names " in *" $name "*) manifest_valid=0; break;; esac
-    seen_names="$seen_names $name"
-    [ -L "$ext_dir/$name" ] && [ "$(@READLINK@ -f "$ext_dir/$name" 2>/dev/null || true)" = "$tgt" ] || { manifest_valid=0; break; }
-    [ -L "$root_dir/$name" ] && [ "$(@READLINK@ -f "$root_dir/$name" 2>/dev/null || true)" = "$tgt" ] || { manifest_valid=0; break; }
-  done < <(tail -n +2 "$manifest")
-  [ "$manifest_valid" -eq 1 ] || return 0
+  manifest_is_valid || return 0
   while IFS='	' read -r owner ver name tgt; do
     [ "$owner" = managed ] && [ "$name" != "$desired" ] || continue
     valid_link_name "$name" || continue
     [ -L "$ext_dir/$name" ] && [ "$(@READLINK@ -f "$ext_dir/$name" 2>/dev/null || true)" = "$tgt" ] || continue
-    [ -L "$root_dir/$name" ] && [ "$(@READLINK@ -f "$root_dir/$name" 2>/dev/null || true)" = "$tgt" ] || continue
+    [ -L "$root_dir/$name" ] && root_retains_target "$root_dir/$name" "$tgt" || continue
     valid_target "$tgt" || continue
     rm -f "$ext_dir/$name" "$root_dir/$name"
   done < <(tail -n +2 "$manifest")

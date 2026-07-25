@@ -14,6 +14,7 @@ let
   lifecycleSource = pkgs.replaceVars ./claude-lifecycle.sh {
     FLOCK = "${pkgs.util-linux}/bin/flock";
     JQ = "${pkgs.jq}/bin/jq";
+    NIX_STORE = "${pkgs.nix}/bin/nix-store";
     READLINK = "${pkgs.coreutils}/bin/readlink";
   };
   codiumClaudeLifecycle = pkgs.writeShellScriptBin "criomos-codium-claude-lifecycle" (
