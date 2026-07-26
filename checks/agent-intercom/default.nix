@@ -212,7 +212,10 @@ pkgs.runCommand "agent-intercom-local-home-contract"
     shared_home="$out/shared-home"
     shared_codex_home="$shared_home/.codex"
     shared_work="$TMPDIR/shared-work"
-    mkdir -p "$shared_runtime" "$shared_codex_home" "$shared_work"
+    shared_log_directory="$out/logs"
+    shared_app_server_log="$shared_log_directory/app-server.log"
+    shared_bridge_log="$shared_log_directory/coi.log"
+    mkdir -p "$shared_runtime" "$shared_codex_home" "$shared_work" "$shared_log_directory"
     shared_server_pid=
     shared_bridge_pid=
     stop_shared_witness() {
@@ -225,11 +228,28 @@ pkgs.runCommand "agent-intercom-local-home-contract"
         wait "$shared_server_pid" 2>/dev/null || true
       fi
     }
-    trap stop_shared_witness EXIT
+    report_shared_witness_result() {
+      shared_witness_status=$?
+      trap - EXIT
+      stop_shared_witness
+      if [ "$shared_witness_status" -ne 0 ]; then
+        printf '%s\n' 'Agent Intercom shared app-server witness failed; retained logs follow:'
+        for shared_witness_log in "$shared_app_server_log" "$shared_bridge_log"; do
+          printf '%s\n' "--- $shared_witness_log ---"
+          if [ -f "$shared_witness_log" ]; then
+            cat "$shared_witness_log" || true
+          else
+            printf '%s\n' 'log was not created'
+          fi
+        done
+      fi
+      exit "$shared_witness_status"
+    }
+    trap report_shared_witness_result EXIT
     HOME="$shared_home" CODEX_HOME="$shared_codex_home" XDG_RUNTIME_DIR="$shared_runtime" \
       ${codexCliPackage}/bin/codex app-server --remote-control \
         --listen "unix://$shared_runtime/codex-intercom-app-server.sock" \
-        > "$TMPDIR/shared-app-server.log" 2>&1 &
+        > "$shared_app_server_log" 2>&1 &
     shared_server_pid=$!
     for attempt in $(${pkgs.coreutils}/bin/seq 1 100); do
       [ -S "$shared_runtime/codex-intercom-app-server.sock" ] && break
@@ -241,17 +261,17 @@ pkgs.runCommand "agent-intercom-local-home-contract"
         --intercom-id desktop-shared-app-server-witness \
         --intercom-name 'Desktop shared app-server witness' \
         --cwd "$shared_work" \
-        > "$TMPDIR/shared-coi.log" 2>&1 &
+        > "$shared_bridge_log" 2>&1 &
     shared_bridge_pid=$!
     for attempt in $(${pkgs.coreutils}/bin/seq 1 100); do
-      if ${pkgs.gnugrep}/bin/grep -F 'codex-intercom bridge running 1 virtual agent(s)' "$TMPDIR/shared-coi.log" > /dev/null \
-        && ${pkgs.gnugrep}/bin/grep -F 'coi intercom session: Desktop shared app-server witness (desktop-shared-app-server-witness)' "$TMPDIR/shared-coi.log" > /dev/null; then
+      if ${pkgs.gnugrep}/bin/grep -F 'codex-intercom bridge running 1 virtual agent(s)' "$shared_bridge_log" > /dev/null \
+        && ${pkgs.gnugrep}/bin/grep -F 'coi intercom session: Desktop shared app-server witness (desktop-shared-app-server-witness)' "$shared_bridge_log" > /dev/null; then
         break
       fi
       ${pkgs.coreutils}/bin/sleep 0.1
     done
-    ${pkgs.gnugrep}/bin/grep -F 'codex-intercom bridge running 1 virtual agent(s)' "$TMPDIR/shared-coi.log"
-    ${pkgs.gnugrep}/bin/grep -F 'coi intercom session: Desktop shared app-server witness (desktop-shared-app-server-witness)' "$TMPDIR/shared-coi.log"
+    ${pkgs.gnugrep}/bin/grep -F 'codex-intercom bridge running 1 virtual agent(s)' "$shared_bridge_log"
+    ${pkgs.gnugrep}/bin/grep -F 'coi intercom session: Desktop shared app-server witness (desktop-shared-app-server-witness)' "$shared_bridge_log"
     # A remote-control restart must close the attach-only bridge.  The user
     # service has Restart=always and BindsTo=codex-remote-control, so it will
     # attach again only after that shared owner is available.
@@ -283,5 +303,4 @@ pkgs.runCommand "agent-intercom-local-home-contract"
       .nodes."codex-desktop-linux".locked.rev == "2b8f610faddc576088732395df3734b1d19cd62f"
     ' ${flakeLock}
 
-    touch "$out"
   ''
