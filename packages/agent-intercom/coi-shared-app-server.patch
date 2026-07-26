@@ -61,7 +61,7 @@ index 0584cd6..f0d7f4b 100644
        throw new Error(`Codex app-server exited before creating ${socketPath}`);
      }
      if (existsSync(socketPath)) return;
-@@ -520,26 +538,34 @@ export async function runCoi(options: CoiOptions): Promise<number> {
+@@ -538,23 +538,26 @@ export async function runCoi(options: CoiOptions): Promise<number> {
    const name = options.name ?? identity.name;
    const intercomDir = getIntercomDirPath();
    cleanupOldCoiStateFiles(intercomDir);
@@ -97,7 +97,7 @@ index 0584cd6..f0d7f4b 100644
 -    rmSync(socketPath, { force: true });
 +    if (ownsAppServer) rmSync(socketPath, { force: true });
    };
-@@ -581,7 +607,10 @@ export async function runCoi(options: CoiOptions): Promise<number> {
+@@ -604,7 +607,10 @@ export async function runCoi(options: CoiOptions): Promise<number> {
    process.stderr.write(`coi intercom session: ${name} (${id})\n`);
  
    if (options.noTui) {
