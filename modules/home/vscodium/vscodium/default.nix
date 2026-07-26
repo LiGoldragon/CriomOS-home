@@ -31,6 +31,7 @@ let
   codiumScopeSource = pkgs.replaceVars ./codium-scope.sh {
     COREUTILS = "${pkgs.coreutils}";
     CODIUM = "${codiumPackage}/bin/codium";
+    READLINK = "${pkgs.coreutils}/bin/readlink";
   };
   codiumScopeRunner = pkgs.writeShellScriptBin "criomos-codium-scope" (
     builtins.readFile codiumScopeSource
@@ -43,6 +44,7 @@ let
     SYSTEMD_RUN = "${pkgs.systemd}/bin/systemd-run";
     SYSTEMCTL = "${pkgs.systemd}/bin/systemctl";
     DATE = "${pkgs.coreutils}/bin/date";
+    READLINK = "${pkgs.coreutils}/bin/readlink";
     SLEEP = "${pkgs.coreutils}/bin/sleep";
   };
   codiumLauncher = pkgs.writeShellScriptBin "criomos-codium-launch" (

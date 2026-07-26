@@ -2,8 +2,48 @@
 set -euf
 export LC_ALL=C
 
-state_dir="${CRIOMOS_VSCODIUM_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/criomos/vscodium-claude}"
-lock_file="${CRIOMOS_VSCODIUM_LOCK_FILE:-$state_dir/lifecycle.lock}"
+path_error() { printf 'criomos-codium: invalid %s path\n' "$1" >&2; exit 64; }
+valid_absolute_path() {
+  [ -n "$1" ] || return 1
+  case "$1" in /*) ;; *) return 1 ;; esac
+  case "$1" in *$'\n'*|*$'\r'*|*[[:cntrl:]]*|*'//'*) return 1 ;; esac
+  case "/$1/" in */./*|*/../*) return 1 ;; esac
+}
+canonical_existing_path() {
+  path_probe="$1"
+  while [ ! -e "$path_probe" ] && [ ! -L "$path_probe" ]; do
+    path_probe="${path_probe%/*}"
+  done
+  [ -n "$path_probe" ] || return 1
+  [ "$path_probe" = "$1" ] || [ -d "$path_probe" ] || return 1
+  [ "$(@READLINK@ -f "$path_probe" 2>/dev/null || true)" = "$path_probe" ]
+}
+direct_child_of() {
+  parent="$1" child="$2"
+  case "$child" in "$parent"/*) leaf="${child#"$parent"/}" ;; *) return 1 ;; esac
+  [ -n "$leaf" ] && [[ "$leaf" != */* ]]
+}
+home_dir="${HOME:-}"
+if [ "${XDG_STATE_HOME+x}" = x ]; then
+  xdg_state_home="$XDG_STATE_HOME"
+  valid_absolute_path "$xdg_state_home" || path_error XDG_STATE_HOME
+fi
+if [ "${CRIOMOS_VSCODIUM_STATE_DIR+x}" = x ]; then
+  state_dir="$CRIOMOS_VSCODIUM_STATE_DIR"
+elif [ "${XDG_STATE_HOME+x}" = x ]; then
+  state_dir="$xdg_state_home/criomos/vscodium-claude"
+else
+  valid_absolute_path "$home_dir" || path_error HOME
+  state_dir="$home_dir/.local/state/criomos/vscodium-claude"
+fi
+if [ "${CRIOMOS_VSCODIUM_LOCK_FILE+x}" = x ]; then
+  lock_file="$CRIOMOS_VSCODIUM_LOCK_FILE"
+else
+  lock_file="$state_dir/lifecycle.lock"
+fi
+valid_absolute_path "$state_dir" && canonical_existing_path "$state_dir" || path_error state
+valid_absolute_path "$lock_file" && direct_child_of "$state_dir" "$lock_file" \
+  && canonical_existing_path "$lock_file" || path_error lock
 systemctl="${CRIOMOS_VSCODIUM_SYSTEMCTL:-@SYSTEMCTL@}"
 systemd_run="${CRIOMOS_VSCODIUM_SYSTEMD_RUN:-@SYSTEMD_RUN@}"
 for runtime_command in "$systemctl" "$systemd_run"; do
@@ -13,6 +53,8 @@ for runtime_command in "$systemctl" "$systemd_run"; do
   esac
 done
 @COREUTILS@/bin/mkdir -p "$state_dir"
+[ -d "$state_dir" ] && canonical_existing_path "$state_dir" || path_error state
+canonical_existing_path "$lock_file" || path_error lock
 exec 9>"$lock_file"
 
 # Never queue a GUI launch behind a mutation. An existing shared lease is safe

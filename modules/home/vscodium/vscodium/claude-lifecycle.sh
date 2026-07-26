@@ -2,13 +2,66 @@
 set -euf
 export LC_ALL=C
 
-ext_dir="${CRIOMOS_VSCODIUM_EXTENSIONS_DIR:-$HOME/.vscode-oss/extensions}"
-state_dir="${CRIOMOS_VSCODIUM_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/criomos/vscodium-claude}"
+path_error() { printf 'criomos-codium: invalid %s path\n' "$1" >&2; exit 64; }
+valid_absolute_path() {
+  [ -n "$1" ] || return 1
+  case "$1" in /*) ;; *) return 1 ;; esac
+  case "$1" in *$'\n'*|*$'\r'*|*[[:cntrl:]]*|*'//'*) return 1 ;; esac
+  case "/$1/" in */./*|*/../*) return 1 ;; esac
+}
+canonical_existing_path() {
+  path_probe="$1"
+  while [ ! -e "$path_probe" ] && [ ! -L "$path_probe" ]; do
+    path_probe="${path_probe%/*}"
+  done
+  [ -n "$path_probe" ] || return 1
+  [ "$path_probe" = "$1" ] || [ -d "$path_probe" ] || return 1
+  [ "$(@READLINK@ -f "$path_probe" 2>/dev/null || true)" = "$path_probe" ]
+}
+direct_child_of() {
+  parent="$1" child="$2"
+  case "$child" in "$parent"/*) leaf="${child#"$parent"/}" ;; *) return 1 ;; esac
+  [ -n "$leaf" ] && [[ "$leaf" != */* ]]
+}
+home_dir="${HOME:-}"
+if [ "${XDG_STATE_HOME+x}" = x ]; then
+  xdg_state_home="$XDG_STATE_HOME"
+  valid_absolute_path "$xdg_state_home" || path_error XDG_STATE_HOME
+fi
+if [ "${CRIOMOS_VSCODIUM_EXTENSIONS_DIR+x}" = x ]; then
+  ext_dir="$CRIOMOS_VSCODIUM_EXTENSIONS_DIR"
+else
+  valid_absolute_path "$home_dir" || path_error HOME
+  ext_dir="$home_dir/.vscode-oss/extensions"
+fi
+if [ "${CRIOMOS_VSCODIUM_STATE_DIR+x}" = x ]; then
+  state_dir="$CRIOMOS_VSCODIUM_STATE_DIR"
+elif [ "${XDG_STATE_HOME+x}" = x ]; then
+  state_dir="$xdg_state_home/criomos/vscodium-claude"
+else
+  valid_absolute_path "$home_dir" || path_error HOME
+  state_dir="$home_dir/.local/state/criomos/vscodium-claude"
+fi
 # Nix records an automatic GC root for each --add-root user path. Keep that
 # path in the user's state directory: activation never creates anything in
 # /nix, while the daemon retains the target through its automatic-root tree.
-root_dir="${CRIOMOS_VSCODIUM_GCROOT_DIR:-$state_dir/gcroots}"
-lock_file="${CRIOMOS_VSCODIUM_LOCK_FILE:-$state_dir/lifecycle.lock}"
+if [ "${CRIOMOS_VSCODIUM_GCROOT_DIR+x}" = x ]; then
+  root_dir="$CRIOMOS_VSCODIUM_GCROOT_DIR"
+else
+  root_dir="$state_dir/gcroots"
+fi
+if [ "${CRIOMOS_VSCODIUM_LOCK_FILE+x}" = x ]; then
+  lock_file="$CRIOMOS_VSCODIUM_LOCK_FILE"
+else
+  lock_file="$state_dir/lifecycle.lock"
+fi
+valid_absolute_path "$ext_dir" && canonical_existing_path "$ext_dir" || path_error extensions
+[ ! -e "$ext_dir" ] || [ -d "$ext_dir" ] || path_error extensions
+valid_absolute_path "$state_dir" && canonical_existing_path "$state_dir" || path_error state
+valid_absolute_path "$root_dir" && direct_child_of "$state_dir" "$root_dir" \
+  && canonical_existing_path "$root_dir" || path_error gcroot
+valid_absolute_path "$lock_file" && direct_child_of "$state_dir" "$lock_file" \
+  && canonical_existing_path "$lock_file" || path_error "lock ($lock_file)"
 manifest="$state_dir/manifest"
 registry="$ext_dir/extensions.json"
 dry=0
@@ -25,7 +78,16 @@ done
 for arg in "$@"; do [ "$arg" = --bootstrap ] && bootstrap_only=1; done
 for arg in "$@"; do [ "$arg" = --dry-run ] && dry=1; done
 mutate() { if [ "$dry" -eq 1 ]; then printf '+ %s\n' "$*"; else "$@"; fi; }
-mkdir_state() { [ "$dry" -eq 1 ] || @COREUTILS@/bin/mkdir -p "$state_dir" "$root_dir"; }
+validate_mutation_paths() {
+  canonical_existing_path "$state_dir" && [ -d "$state_dir" ] || path_error state
+  canonical_existing_path "$root_dir" && [ -d "$root_dir" ] || path_error gcroot
+  canonical_existing_path "$lock_file" || path_error "lock ($lock_file)"
+}
+mkdir_state() {
+  [ "$dry" -eq 1 ] && return 0
+  @COREUTILS@/bin/mkdir -p "$state_dir" "$root_dir"
+  validate_mutation_paths
+}
 valid_target() {
   case "$1" in /nix/store/*) ;; *) return 1;; esac
   [ -e "$1" ] && [ "$(@READLINK@ -f "$1" 2>/dev/null || true)" = "$1" ]
@@ -154,7 +216,9 @@ valid_session_ready() {
   candidate_parent="${candidate%/*}"
   candidate_leaf="${candidate##*/}"
   candidate_name="${candidate_parent##*/}"
-  [ "$candidate_leaf" = ready ] \
+  valid_absolute_path "$candidate" \
+    && canonical_existing_path "$candidate" \
+    && [ "$candidate_leaf" = ready ] \
     && [ "$candidate" = "$candidate_parent/ready" ] \
     && [[ "$candidate_name" =~ ^session[.][A-Za-z0-9]{8}$ ]] \
     && [ "$candidate_parent" = "$state_dir/$candidate_name" ] \
@@ -178,6 +242,7 @@ watch_scope() {
     @COREUTILS@/bin/rm -f "$session_dir/ready" "$session_dir/consumed" "$session_dir/started" "$session_dir/completed"
     @COREUTILS@/bin/rmdir "$session_dir" 2>/dev/null || true
   }
+  validate_mutation_paths
   exec 9>"$lock_file"
   @FLOCK@ -s 9
   # A fresh directory is created by the launcher; remove no caller-selected

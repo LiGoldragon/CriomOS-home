@@ -72,17 +72,21 @@ let
       show)
         unit="''${3:-}"
         child="$dir/$unit.child"
-        active=0
+        state=inactive
         if [ -s "$child" ]; then
           while IFS= read -r pid; do
-            kill -0 "$pid" 2>/dev/null && active=1
+            kill -0 "$pid" 2>/dev/null && state=active
           done < "$child"
+        elif [ -s "$dir/$unit.session" ]; then
+          IFS= read -r session < "$dir/$unit.session"
+          if [ ! -e "$session/started" ]; then
+            ${pkgs.coreutils}/bin/touch "$dir/$unit.pending"
+            state=activating
+          elif [ ! -e "$session/completed" ]; then
+            state=active
+          fi
         fi
-        if [ "$active" -eq 1 ]; then
-          printf '%s\n' active
-        else
-          printf '%s\n' inactive
-        fi
+        printf '%s\n' "$state"
         ;;
       stop)
         shift 2
@@ -110,7 +114,15 @@ let
     done
     [ -n "$unit" ] && [ "$#" -gt 0 ]
     if [ "$scope" -eq 1 ]; then
-      FAKE_SCOPE="$unit" "$@" >/dev/null 2>&1 &
+      printf '%s\n' "$2" > "$FAKE_SYSTEMD_DIR/$unit.session"
+      # Keep the queued state observable: the first status probe accepts the
+      # scope, publishes `activating`, then lets its command begin.
+      (
+        while [ ! -e "$FAKE_SYSTEMD_DIR/$unit.pending" ]; do
+          ${pkgs.coreutils}/bin/sleep 0.01
+        done
+        FAKE_SCOPE="$unit" "$@"
+      ) >/dev/null 2>&1 &
     else
       # The parent launcher already holds SH after its atomic EX→SH
       # conversion. An EX probe here witnesses that there was no handoff gap.
@@ -142,6 +154,7 @@ let
   scopeSource = pkgs.replaceVars ../../modules/home/vscodium/vscodium/codium-scope.sh {
     COREUTILS = "${pkgs.coreutils}";
     CODIUM = "${homePkgs.vscodium}/bin/codium";
+    READLINK = "${pkgs.coreutils}/bin/readlink";
   };
   scopeRunner = pkgs.writeShellScript "criomos-codium-scope-fixture" (builtins.readFile scopeSource);
   launcherSource = pkgs.replaceVars ../../modules/home/vscodium/vscodium/codium-launch.sh {
@@ -152,6 +165,7 @@ let
     SYSTEMD_RUN = "${pkgs.systemd}/bin/systemd-run";
     SYSTEMCTL = "${pkgs.systemd}/bin/systemctl";
     DATE = "${pkgs.coreutils}/bin/date";
+    READLINK = "${pkgs.coreutils}/bin/readlink";
     SLEEP = "${pkgs.coreutils}/bin/sleep";
   };
   launcher = pkgs.writeShellScript "criomos-codium-launch-fixture" (builtins.readFile launcherSource);
@@ -206,9 +220,9 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
     kill -KILL -- "-$activation_pid" 2>/dev/null || true
     wait "$activation_pid" 2>/dev/null || true
   }
-  home="$TMPDIR/home"; ext="$home/.vscode-oss/extensions"; state="$home/state"; roots="$home/roots"
+  home="$TMPDIR/home"; ext="$home/.vscode-oss/extensions"; state="$home/state"; roots="$state/gcroots"
     mkdir -p "$ext" "$state" "$roots"
-    export CRIOMOS_VSCODIUM_EXTENSIONS_DIR="$ext" CRIOMOS_VSCODIUM_STATE_DIR="$state" CRIOMOS_VSCODIUM_GCROOT_DIR="$roots"
+    export CRIOMOS_VSCODIUM_EXTENSIONS_DIR="$ext" CRIOMOS_VSCODIUM_STATE_DIR="$state" CRIOMOS_VSCODIUM_GCROOT_DIR="$roots" CRIOMOS_VSCODIUM_LOCK_FILE="$state/lifecycle.lock"
     # Runtime defaults are store paths. Fakes cross only the three external
     # boundaries; the lifecycle, launcher, scope runner, and their filesystem
     # tools must remain runnable when activation supplies no useful PATH.
@@ -216,6 +230,42 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
     export CRIOMOS_VSCODIUM_CODIUM="${fakeCodium}"
     export CRIOMOS_VSCODIUM_SYSTEMCTL="${fakeSystemctl}"
     export CRIOMOS_VSCODIUM_SYSTEMD_RUN="${fakeSystemdRun}"
+    path_guard_cwd="$TMPDIR/path-guard-cwd"
+    path_guard_sentinel="$TMPDIR/path-guard-sentinel"
+    mkdir -p "$path_guard_cwd" "$path_guard_sentinel"
+    printf preserved > "$path_guard_sentinel/content"
+    assert_path_rejected() {
+      label="$1"
+      shift
+      rm -rf "$path_guard_cwd/state" "$path_guard_cwd/.local" "$path_guard_cwd/.vscode-oss"
+      if (cd "$path_guard_cwd" && env "$@" PATH=/nonexistent "${lifecycle}" --activate); then false; fi
+      test "$(cat "$path_guard_sentinel/content")" = preserved
+      test ! -e "$path_guard_cwd/state"
+      test ! -e "$path_guard_cwd/.local"
+      test ! -e "$path_guard_cwd/.vscode-oss"
+    }
+    # Every path boundary must fail before the lifecycle can create relative
+    # state in its cwd or alter an external sentinel.
+    assert_path_rejected home-relative \
+      -u CRIOMOS_VSCODIUM_EXTENSIONS_DIR -u CRIOMOS_VSCODIUM_STATE_DIR \
+      -u CRIOMOS_VSCODIUM_GCROOT_DIR -u CRIOMOS_VSCODIUM_LOCK_FILE \
+      -u XDG_STATE_HOME HOME=relative
+    assert_path_rejected home-empty \
+      -u CRIOMOS_VSCODIUM_EXTENSIONS_DIR -u CRIOMOS_VSCODIUM_STATE_DIR \
+      -u CRIOMOS_VSCODIUM_GCROOT_DIR -u CRIOMOS_VSCODIUM_LOCK_FILE \
+      -u XDG_STATE_HOME HOME=
+    assert_path_rejected xdg-relative -u CRIOMOS_VSCODIUM_STATE_DIR HOME="$home" XDG_STATE_HOME=relative
+    assert_path_rejected xdg-empty -u CRIOMOS_VSCODIUM_STATE_DIR HOME="$home" XDG_STATE_HOME=
+    assert_path_rejected extensions-relative CRIOMOS_VSCODIUM_EXTENSIONS_DIR=relative
+    assert_path_rejected extensions-empty CRIOMOS_VSCODIUM_EXTENSIONS_DIR=
+    assert_path_rejected state-relative CRIOMOS_VSCODIUM_STATE_DIR=relative
+    assert_path_rejected state-empty CRIOMOS_VSCODIUM_STATE_DIR=
+    assert_path_rejected root-relative CRIOMOS_VSCODIUM_GCROOT_DIR=relative
+    assert_path_rejected root-empty CRIOMOS_VSCODIUM_GCROOT_DIR=
+    assert_path_rejected lock-relative CRIOMOS_VSCODIUM_LOCK_FILE=relative
+    assert_path_rejected lock-empty CRIOMOS_VSCODIUM_LOCK_FILE=
+    assert_path_rejected state-control CRIOMOS_VSCODIUM_STATE_DIR=$'bad\nstate'
+    test "$(cat "$path_guard_sentinel/content")" = preserved
     ln -s ${extAPath} "$ext/anthropic.claude-code"
     # Exercise activation without a GC-root override. The lifecycle itself runs
     # as this unprivileged builder and must keep its visible root in user state;
@@ -227,10 +277,11 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
     mkdir -p "$unprivileged_ext" "$unprivileged_state"
     ln -s ${extAPath} "$unprivileged_ext/anthropic.claude-code"
     (
-      unset CRIOMOS_VSCODIUM_GCROOT_DIR
+      unset CRIOMOS_VSCODIUM_GCROOT_DIR CRIOMOS_VSCODIUM_LOCK_FILE
       export HOME="$unprivileged_home" USER=vscodium-check
       export CRIOMOS_VSCODIUM_EXTENSIONS_DIR="$unprivileged_ext"
       export CRIOMOS_VSCODIUM_STATE_DIR="$unprivileged_state"
+      export CRIOMOS_VSCODIUM_LOCK_FILE="$unprivileged_state/lifecycle.lock"
       "${lifecycle}" --activate
       test "$(head -n1 "$unprivileged_state/manifest")" = v1-bootstrap
       "${lifecycle}" --activate
@@ -366,6 +417,8 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
     env PATH=/nonexistent "${launcher}"
     for _ in 1 2 3 4 5 6 7 8 9 10; do [ -e "$fake_systemd/app.started" ] && break; sleep 0.1; done
     test -e "$fake_systemd/app.started"
+    pending_scopes=("$fake_systemd"/criomos-vscodium-*.scope.pending)
+    test -e "''${pending_scopes[0]}"
     test ! -e "$fake_systemd/handoff-gap"
     cmp "$TMPDIR/immutable.before" "$immutable"
     ${pkgs.jq}/bin/jq -e --arg path "$ext/anthropic.claude-code-2.1.215-linux-x64" \
