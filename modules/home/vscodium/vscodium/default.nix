@@ -16,9 +16,30 @@ let
     JQ = "${pkgs.jq}/bin/jq";
     NIX_STORE = "${pkgs.nix}/bin/nix-store";
     READLINK = "${pkgs.coreutils}/bin/readlink";
+    CODIUM = "${codiumPackage}/bin/codium";
+    SYSTEMCTL = "${pkgs.systemd}/bin/systemctl";
+    SLEEP = "${pkgs.coreutils}/bin/sleep";
   };
   codiumClaudeLifecycle = pkgs.writeShellScriptBin "criomos-codium-claude-lifecycle" (
     builtins.readFile lifecycleSource
+  );
+  codiumScopeSource = pkgs.replaceVars ./codium-scope.sh {
+    CODIUM = "${codiumPackage}/bin/codium";
+  };
+  codiumScopeRunner = pkgs.writeShellScriptBin "criomos-codium-scope" (
+    builtins.readFile codiumScopeSource
+  );
+  codiumLauncherSource = pkgs.replaceVars ./codium-launch.sh {
+    FLOCK = "${pkgs.util-linux}/bin/flock";
+    LIFECYCLE = "${codiumClaudeLifecycle}/bin/criomos-codium-claude-lifecycle";
+    SCOPE_RUNNER = "${codiumScopeRunner}/bin/criomos-codium-scope";
+    SYSTEMD_RUN = "${pkgs.systemd}/bin/systemd-run";
+    SYSTEMCTL = "${pkgs.systemd}/bin/systemctl";
+    DATE = "${pkgs.coreutils}/bin/date";
+    SLEEP = "${pkgs.coreutils}/bin/sleep";
+  };
+  codiumLauncher = pkgs.writeShellScriptBin "criomos-codium-launch" (
+    builtins.readFile codiumLauncherSource
   );
 
   codiumManagedPackage = pkgs.symlinkJoin {
@@ -32,13 +53,7 @@ let
       cat > $out/bin/codium <<'EOF'
       #!${pkgs.runtimeShell}
       set -euo pipefail
-      lock="''${CRIOMOS_VSCODIUM_LOCK_FILE:-''${XDG_STATE_HOME:-$HOME/.local/state}/criomos/vscodium-claude}/lifecycle.lock"
-      mkdir -p "$(dirname "$lock")"
-      exec 9>"$lock"
-      ${pkgs.util-linux}/bin/flock -x 9
-      CRIOMOS_VSCODIUM_LOCK_HELD=1 ${codiumClaudeLifecycle}/bin/criomos-codium-claude-lifecycle --launch
-      ${pkgs.util-linux}/bin/flock -s 9
-      exec ${codiumPackage}/bin/codium "$@"
+      exec ${codiumLauncher}/bin/criomos-codium-launch "$@"
       EOF
       chmod +x $out/bin/codium
     '';
@@ -203,6 +218,15 @@ lib.mkIf size.medium {
       ];
     };
   };
+
+  # Home Manager's vscode module normally invokes `package/bin/codium` here.
+  # Our package deliberately wraps that command, so activation reaches the
+  # lifecycle's truthful underlying Codium CLI without recursively creating a
+  # GUI lease. The lifecycle takes one nonblocking EX lock around the supported
+  # refresh, and defers if a GUI session currently has SH.
+  home.file.".vscode-oss/extensions/.extensions-immutable.json".onChange = lib.mkForce ''
+    run ${codiumClaudeLifecycle}/bin/criomos-codium-claude-lifecycle --activation-refresh
+  '';
 
   # VSCodium is installed in the medium profile, but it only owns
   # EDITOR/VISUAL and text/source MIME defaults when Horizon projects
