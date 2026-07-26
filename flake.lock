@@ -79,25 +79,37 @@
     "agent-intercom-esbuild-linux-x64-src": {
       "flake": false,
       "locked": {
-        "narHash": "sha256-AU4lTkKsSNHah6+iBtsRSpKYL2N80QciuALe9SXKLX0=",
+        "narHash": "sha256-E7jYAxlpkdsBMtDodAtHYvM8NLk2/2VsXcpNUkPnZe8=",
         "type": "file",
-        "url": "https://registry.npmjs.org/@esbuild/linux-x64/-/linux-x64-0.28.1.tgz"
+        "url": "https://registry.npmjs.org/@esbuild/linux-x64/-/linux-x64-0.25.0.tgz"
       },
       "original": {
         "type": "file",
-        "url": "https://registry.npmjs.org/@esbuild/linux-x64/-/linux-x64-0.28.1.tgz"
+        "url": "https://registry.npmjs.org/@esbuild/linux-x64/-/linux-x64-0.25.0.tgz"
       }
     },
     "agent-intercom-esbuild-src": {
       "flake": false,
       "locked": {
-        "narHash": "sha256-DCNt27+X31Si1/yaK58KkzanBV5kIs1cAyY2VTXO/9U=",
+        "narHash": "sha256-3qJWv2y1iC99w1fTdW00fC2GcQdUZf1wYGs8zLe7608=",
         "type": "file",
-        "url": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.1.tgz"
+        "url": "https://registry.npmjs.org/esbuild/-/esbuild-0.25.0.tgz"
       },
       "original": {
         "type": "file",
-        "url": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.1.tgz"
+        "url": "https://registry.npmjs.org/esbuild/-/esbuild-0.25.0.tgz"
+      }
+    },
+    "agent-intercom-get-tsconfig-src": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-UjZrrD+jeyxEBji+YVm0Ay51X/NXtsGuu0aoXLLPt7s=",
+        "type": "file",
+        "url": "https://registry.npmjs.org/get-tsconfig/-/get-tsconfig-4.7.5.tgz"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://registry.npmjs.org/get-tsconfig/-/get-tsconfig-4.7.5.tgz"
       }
     },
     "agent-intercom-opencode-src": {
@@ -149,6 +161,42 @@
         "repo": "agent-intercom-pi",
         "rev": "d539a5476c26679f558d74b894b902d6366770a4",
         "type": "github"
+      }
+    },
+    "agent-intercom-resolve-pkg-maps-src": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-RaYiDs2GiN3/BZdLwoz69w4oOhb3RmtcU9kBUnpEfKQ=",
+        "type": "file",
+        "url": "https://registry.npmjs.org/resolve-pkg-maps/-/resolve-pkg-maps-1.0.0.tgz"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://registry.npmjs.org/resolve-pkg-maps/-/resolve-pkg-maps-1.0.0.tgz"
+      }
+    },
+    "agent-intercom-tsx-src": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-ouVzRxrh+WEZWE5UsQgTfkPLtZt91sJUd5gXqegaanQ=",
+        "type": "file",
+        "url": "https://registry.npmjs.org/tsx/-/tsx-4.20.0.tgz"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://registry.npmjs.org/tsx/-/tsx-4.20.0.tgz"
+      }
+    },
+    "agent-intercom-typebox-src": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-rC5tVD5KCgApBcWKCOQlU2G/36vetIQGaU2JsUYUKQE=",
+        "type": "file",
+        "url": "https://registry.npmjs.org/typebox/-/typebox-1.1.38.tgz"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://registry.npmjs.org/typebox/-/typebox-1.1.38.tgz"
       }
     },
     "agent-source": {
@@ -1507,17 +1555,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1784544957,
-        "narHash": "sha256-Z8IYRNkwwr/ywRfIMc70HFOnjF6y+tJQJPCPdDN9cwE=",
+        "lastModified": 1784843334,
+        "narHash": "sha256-iR0aXYXFOQLeocU6koC7AbPV/uzl5kBVzWCjzIkq+n0=",
         "owner": "LiGoldragon",
         "repo": "lojix",
-        "rev": "118a025ec44c72db5948a1f0cebe10ffdbd7f277",
+        "rev": "784cadef83e6ef8eb936728748eda2694e8d53ef",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "lojix",
-        "rev": "118a025ec44c72db5948a1f0cebe10ffdbd7f277",
+        "rev": "784cadef83e6ef8eb936728748eda2694e8d53ef",
         "type": "github"
       }
     },
@@ -1942,78 +1990,6 @@
       "original": {
         "type": "file",
         "url": "https://registry.npmjs.org/pi-continue/-/pi-continue-0.9.3.tgz"
-      }
-    },
-    "agent-intercom-esbuild-linux-x64-src": {
-      "flake": false,
-      "locked": {
-        "narHash": "sha256-E7jYAxlpkdsBMtDodAtHYvM8NLk2/2VsXcpNUkPnZe8=",
-        "type": "file",
-        "url": "https://registry.npmjs.org/@esbuild/linux-x64/-/linux-x64-0.25.0.tgz"
-      },
-      "original": {
-        "type": "file",
-        "url": "https://registry.npmjs.org/@esbuild/linux-x64/-/linux-x64-0.25.0.tgz"
-      }
-    },
-    "agent-intercom-esbuild-src": {
-      "flake": false,
-      "locked": {
-        "narHash": "sha256-3qJWv2y1iC99w1fTdW00fC2GcQdUZf1wYGs8zLe7608=",
-        "type": "file",
-        "url": "https://registry.npmjs.org/esbuild/-/esbuild-0.25.0.tgz"
-      },
-      "original": {
-        "type": "file",
-        "url": "https://registry.npmjs.org/esbuild/-/esbuild-0.25.0.tgz"
-      }
-    },
-    "agent-intercom-get-tsconfig-src": {
-      "flake": false,
-      "locked": {
-        "narHash": "sha256-UjZrrD+jeyxEBji+YVm0Ay51X/NXtsGuu0aoXLLPt7s=",
-        "type": "file",
-        "url": "https://registry.npmjs.org/get-tsconfig/-/get-tsconfig-4.7.5.tgz"
-      },
-      "original": {
-        "type": "file",
-        "url": "https://registry.npmjs.org/get-tsconfig/-/get-tsconfig-4.7.5.tgz"
-      }
-    },
-    "agent-intercom-resolve-pkg-maps-src": {
-      "flake": false,
-      "locked": {
-        "narHash": "sha256-RaYiDs2GiN3/BZdLwoz69w4oOhb3RmtcU9kBUnpEfKQ=",
-        "type": "file",
-        "url": "https://registry.npmjs.org/resolve-pkg-maps/-/resolve-pkg-maps-1.0.0.tgz"
-      },
-      "original": {
-        "type": "file",
-        "url": "https://registry.npmjs.org/resolve-pkg-maps/-/resolve-pkg-maps-1.0.0.tgz"
-      }
-    },
-    "agent-intercom-tsx-src": {
-      "flake": false,
-      "locked": {
-        "narHash": "sha256-ouVzRxrh+WEZWE5UsQgTfkPLtZt91sJUd5gXqegaanQ=",
-        "type": "file",
-        "url": "https://registry.npmjs.org/tsx/-/tsx-4.20.0.tgz"
-      },
-      "original": {
-        "type": "file",
-        "url": "https://registry.npmjs.org/tsx/-/tsx-4.20.0.tgz"
-      }
-    },
-    "agent-intercom-typebox-src": {
-      "flake": false,
-      "locked": {
-        "narHash": "sha256-rC5tVD5KCgApBcWKCOQlU2G/36vetIQGaU2JsUYUKQE=",
-        "type": "file",
-        "url": "https://registry.npmjs.org/typebox/-/typebox-1.1.38.tgz"
-      },
-      "original": {
-        "type": "file",
-        "url": "https://registry.npmjs.org/typebox/-/typebox-1.1.38.tgz"
       }
     },
     "pi-linkup-src": {
@@ -2467,9 +2443,13 @@
         "agent-intercom-core-src": "agent-intercom-core-src",
         "agent-intercom-esbuild-linux-x64-src": "agent-intercom-esbuild-linux-x64-src",
         "agent-intercom-esbuild-src": "agent-intercom-esbuild-src",
+        "agent-intercom-get-tsconfig-src": "agent-intercom-get-tsconfig-src",
         "agent-intercom-opencode-src": "agent-intercom-opencode-src",
         "agent-intercom-orchestrator-src": "agent-intercom-orchestrator-src",
         "agent-intercom-pi-src": "agent-intercom-pi-src",
+        "agent-intercom-resolve-pkg-maps-src": "agent-intercom-resolve-pkg-maps-src",
+        "agent-intercom-tsx-src": "agent-intercom-tsx-src",
+        "agent-intercom-typebox-src": "agent-intercom-typebox-src",
         "aggregator": "aggregator",
         "annas-mcp": "annas-mcp",
         "blueprint": "blueprint",
@@ -2495,12 +2475,6 @@
         "noctalia": "noctalia",
         "orchestrate": "orchestrate",
         "pi-continue-src": "pi-continue-src",
-        "agent-intercom-esbuild-linux-x64-src": "agent-intercom-esbuild-linux-x64-src",
-        "agent-intercom-esbuild-src": "agent-intercom-esbuild-src",
-        "agent-intercom-get-tsconfig-src": "agent-intercom-get-tsconfig-src",
-        "agent-intercom-resolve-pkg-maps-src": "agent-intercom-resolve-pkg-maps-src",
-        "agent-intercom-tsx-src": "agent-intercom-tsx-src",
-        "agent-intercom-typebox-src": "agent-intercom-typebox-src",
         "pi-linkup-src": "pi-linkup-src",
         "pi-session-namer": "pi-session-namer",
         "pi-src": "pi-src",
