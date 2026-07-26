@@ -206,9 +206,13 @@ pkgs.runCommand "agent-intercom-local-home-contract"
     # must attach to the established service socket and register its virtual
     # Intercom agent there.
     shared_runtime="$TMPDIR/shared-runtime"
-    shared_home="$TMPDIR/shared-home"
+    # Codex intentionally refuses to create its helper aliases under the
+    # system temporary directory. $out is writable for this check, isolated
+    # from the user, and not a temporary directory from Codex's perspective.
+    shared_home="$out/shared-home"
+    shared_codex_home="$shared_home/.codex"
     shared_work="$TMPDIR/shared-work"
-    mkdir -p "$shared_runtime" "$shared_home" "$shared_work"
+    mkdir -p "$shared_runtime" "$shared_codex_home" "$shared_work"
     shared_server_pid=
     shared_bridge_pid=
     stop_shared_witness() {
@@ -222,7 +226,7 @@ pkgs.runCommand "agent-intercom-local-home-contract"
       fi
     }
     trap stop_shared_witness EXIT
-    HOME="$shared_home" XDG_RUNTIME_DIR="$shared_runtime" \
+    HOME="$shared_home" CODEX_HOME="$shared_codex_home" XDG_RUNTIME_DIR="$shared_runtime" \
       ${codexCliPackage}/bin/codex app-server --remote-control \
         --listen "unix://$shared_runtime/codex-intercom-app-server.sock" \
         > "$TMPDIR/shared-app-server.log" 2>&1 &
@@ -232,7 +236,7 @@ pkgs.runCommand "agent-intercom-local-home-contract"
       ${pkgs.coreutils}/bin/sleep 0.1
     done
     test -S "$shared_runtime/codex-intercom-app-server.sock"
-    HOME="$shared_home" XDG_RUNTIME_DIR="$shared_runtime" \
+    HOME="$shared_home" CODEX_HOME="$shared_codex_home" XDG_RUNTIME_DIR="$shared_runtime" \
       ${graphicalAgentIntercom}/bin/coi --no-tui \
         --intercom-id desktop-shared-app-server-witness \
         --intercom-name 'Desktop shared app-server witness' \
