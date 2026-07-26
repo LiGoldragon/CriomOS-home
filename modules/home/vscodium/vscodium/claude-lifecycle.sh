@@ -13,10 +13,19 @@ manifest="$state_dir/manifest"
 registry="$ext_dir/extensions.json"
 dry=0
 bootstrap_only=0
+nix_store="${CRIOMOS_VSCODIUM_NIX_STORE:-@NIX_STORE@}"
+codium="${CRIOMOS_VSCODIUM_CODIUM:-@CODIUM@}"
+systemctl="${CRIOMOS_VSCODIUM_SYSTEMCTL:-@SYSTEMCTL@}"
+for runtime_command in "$nix_store" "$codium" "$systemctl"; do
+  case "$runtime_command" in
+    /*) [ -x "$runtime_command" ] || exit 127 ;;
+    *) exit 127 ;;
+  esac
+done
 for arg in "$@"; do [ "$arg" = --bootstrap ] && bootstrap_only=1; done
 for arg in "$@"; do [ "$arg" = --dry-run ] && dry=1; done
 mutate() { if [ "$dry" -eq 1 ]; then printf '+ %s\n' "$*"; else "$@"; fi; }
-mkdir_state() { [ "$dry" -eq 1 ] || mkdir -p "$state_dir" "$root_dir"; }
+mkdir_state() { [ "$dry" -eq 1 ] || @COREUTILS@/bin/mkdir -p "$state_dir" "$root_dir"; }
 valid_target() {
   case "$1" in /nix/store/*) ;; *) return 1;; esac
   [ -e "$1" ] && [ "$(@READLINK@ -f "$1" 2>/dev/null || true)" = "$1" ]
@@ -37,7 +46,7 @@ valid_manifest_entry() {
 register_root() {
   # Repair a missing automatic root even when the visible link already resolves
   # to the target (for example after an interrupted cleanup).
-  mutate @NIX_STORE@ --add-root "$1" --realise "$2" >/dev/null
+  mutate "$nix_store" --add-root "$1" --realise "$2" >/dev/null
 }
 root_retains_target() {
   root_target="$(@READLINK@ -f "$1" 2>/dev/null || true)"
@@ -45,10 +54,10 @@ root_retains_target() {
   case "$2" in "$root_target"|"$root_target"/*) return 0;; *) return 1;; esac
 }
 manifest_is_valid() {
-  manifest_valid=1; seen_names=""; manifest_header="$(head -n1 "$manifest" || true)"
+  manifest_valid=1; seen_names=""; manifest_header="$(@COREUTILS@/bin/head -n1 "$manifest" || true)"
   # Bash strings cannot retain NULs, so reject them before line parsing rather
   # than allowing the shell to silently reinterpret a byte stream.
-  [ "$(wc -c < "$manifest")" = "$(tr -d '\000' < "$manifest" | wc -c)" ] || return 1
+  [ "$(@COREUTILS@/bin/wc -c < "$manifest")" = "$(@COREUTILS@/bin/tr -d '\000' < "$manifest" | @COREUTILS@/bin/wc -c)" ] || return 1
   case "$manifest_header" in v1|v1-bootstrap|v1-ready) ;; *) return 1;; esac
   while IFS= read -r line || [ -n "$line" ]; do
     tabs="${line//[^$'\t']/}"
@@ -59,7 +68,7 @@ manifest_is_valid() {
     seen_names="$seen_names $name"
     [ -L "$ext_dir/$name" ] && [ "$(@READLINK@ -f "$ext_dir/$name" 2>/dev/null || true)" = "$tgt" ] || { manifest_valid=0; break; }
     [ -L "$root_dir/$name" ] && root_retains_target "$root_dir/$name" "$tgt" || { manifest_valid=0; break; }
-  done < <(tail -n +2 "$manifest")
+  done < <(@COREUTILS@/bin/tail -n +2 "$manifest")
   [ "$manifest_valid" -eq 1 ]
 }
 
@@ -91,16 +100,16 @@ refresh_registry() {
   registry_is_current && return 0
   backup="$registry.criomos-backup.$$"
   if [ -e "$registry" ]; then
-    cp -p "$registry" "$backup" || return 1
+    @COREUTILS@/bin/cp -p "$registry" "$backup" || return 1
   fi
-  rm -f "$registry" "$ext_dir/.init-default-profile-extensions"
-  if CRIOMOS_VSCODIUM_REGISTRY_BACKUP="$backup" @CODIUM@ --list-extensions >/dev/null 2>&1 && registry_is_current; then
-    rm -f "$backup"
+  @COREUTILS@/bin/rm -f "$registry" "$ext_dir/.init-default-profile-extensions"
+  if CRIOMOS_VSCODIUM_REGISTRY_BACKUP="$backup" "$codium" --list-extensions >/dev/null 2>&1 && registry_is_current; then
+    @COREUTILS@/bin/rm -f "$backup"
     return 0
   fi
   # A failed refresh must not discard mutable registry state. Restoring the
   # whole prior registry is deliberately the only JSON operation here.
-  [ ! -e "$backup" ] || mv -f "$backup" "$registry"
+  [ ! -e "$backup" ] || @COREUTILS@/bin/mv -f "$backup" "$registry"
   return 1
 }
 
@@ -109,7 +118,7 @@ launch_ready() {
     && [ -L "$ext_dir/$desired" ] \
     && [ "$(@READLINK@ -f "$ext_dir/$desired" 2>/dev/null || true)" = "$target" ] \
     && [ -f "$manifest" ] \
-    && [ "$(head -n1 "$manifest")" = v1 ]
+    && [ "$(@COREUTILS@/bin/head -n1 "$manifest")" = v1 ]
 }
 
 prepare_launch() {
@@ -166,8 +175,8 @@ watch_scope() {
     # Revalidate before every destructive operation: a hostile same-user
     # replacement becomes a harmless retained directory, never an unlink.
     valid_session_ready "$ready" || return 0
-    rm -f "$session_dir/ready" "$session_dir/consumed" "$session_dir/started" "$session_dir/completed"
-    rmdir "$session_dir" 2>/dev/null || true
+    @COREUTILS@/bin/rm -f "$session_dir/ready" "$session_dir/consumed" "$session_dir/started" "$session_dir/completed"
+    @COREUTILS@/bin/rmdir "$session_dir" 2>/dev/null || true
   }
   exec 9>"$lock_file"
   @FLOCK@ -s 9
@@ -175,8 +184,8 @@ watch_scope() {
   # path and only publish readiness after this exact scope exists.
   attempts=0
   while :; do
-    active="$(@SYSTEMCTL@ --user show "$scope" --property=ActiveState --value 2>/dev/null || true)"
-    completed="$(cat "$session_dir/completed" 2>/dev/null || true)"
+    active="$("$systemctl" --user show "$scope" --property=ActiveState --value 2>/dev/null || true)"
+    completed="$(@COREUTILS@/bin/cat "$session_dir/completed" 2>/dev/null || true)"
     [ -z "$completed" ] || [ "$completed" = 0 ] || { cleanup_session_dir; return 1; }
     if [ "$completed" = 0 ]; then
       break
@@ -197,9 +206,9 @@ watch_scope() {
   done
   ready_tmp="$ready.tmp.$$"
   printf 'ready\n' > "$ready_tmp"
-  mv -f "$ready_tmp" "$ready"
+  @COREUTILS@/bin/mv -f "$ready_tmp" "$ready"
   while :; do
-    active="$(@SYSTEMCTL@ --user show "$scope" --property=ActiveState --value 2>/dev/null || true)"
+    active="$("$systemctl" --user show "$scope" --property=ActiveState --value 2>/dev/null || true)"
     case "$active" in
       active|activating|reloading) @SLEEP@ 0.2 ;;
       inactive|failed|deactivating|*) break ;;
@@ -240,13 +249,13 @@ reconcile() {
   if [ ! -e "$manifest" ]; then
     # Legacy migration is conservative: do not touch discovery while any
     # Codium process may have the old extension loaded.
-    if command -v pgrep >/dev/null 2>&1 && pgrep -u "$USER" -f '(^|/)(codium|codium-server|VSCodium)( |$)' >/dev/null 2>&1; then
+    if [ -n "${USER:-}" ] && @PGREP@ -u "$USER" -f '(^|/)(codium|codium-server|VSCodium)( |$)' >/dev/null 2>&1; then
       exit 0
     fi
     found_legacy=0; exact_count=0; exact_name=""
     for candidate in "$ext_dir"/anthropic.claude-code-*-linux-x64; do
       [ -L "$candidate" ] || continue
-      raw=$(readlink "$candidate" 2>/dev/null || true)
+      raw=$(@READLINK@ "$candidate" 2>/dev/null || true)
       resolved=$(@READLINK@ -f "$candidate" 2>/dev/null || true)
       [ "$raw" = "$managed" ] && [ "$resolved" = "$target" ] || continue
       exact_count=$((exact_count + 1)); exact_name="$candidate"
@@ -254,12 +263,12 @@ reconcile() {
     [ "$exact_count" -le 1 ] || { exit 0; }
     for candidate in "$ext_dir"/anthropic.claude-code-*-linux-x64; do
       [ -L "$candidate" ] || continue
-      raw=$(readlink "$candidate" 2>/dev/null || true)
+      raw=$(@READLINK@ "$candidate" 2>/dev/null || true)
       resolved=$(@READLINK@ -f "$candidate" 2>/dev/null || true)
       if [ "$raw" = "$managed" ] && [ "$resolved" = "$target" ] && [ "$candidate" = "$exact_name" ]; then
         found_legacy=1
         name=${candidate##*/}
-        [ "$dry" -eq 1 ] || { ln -s "$target" "$candidate.tmp.$$"; mv -Tf "$candidate.tmp.$$" "$candidate"; }
+        [ "$dry" -eq 1 ] || { @COREUTILS@/bin/ln -s "$target" "$candidate.tmp.$$"; @COREUTILS@/bin/mv -Tf "$candidate.tmp.$$" "$candidate"; }
       else
         exit 0
       fi
@@ -270,7 +279,7 @@ reconcile() {
     fi
     tmp_manifest="$manifest.tmp.$$"
     { printf 'v1-bootstrap\n'; [ "$found_legacy" -eq 1 ] && printf 'managed\t%s\t%s\t%s\n' "$version" "$desired" "$target"; } > "$tmp_manifest"
-    mv -f "$tmp_manifest" "$manifest"
+    @COREUTILS@/bin/mv -f "$tmp_manifest" "$manifest"
     [ "$found_legacy" -eq 1 ] || exit 0
     exit 0
   fi
@@ -280,38 +289,38 @@ reconcile() {
     manifest_is_valid || return 0
     if [ "$manifest_header" = v1-bootstrap ]; then
       [ "$dry" -eq 1 ] && return 0
-      sed '1s/.*/v1-ready/' "$manifest" > "$manifest.tmp.$$"
-      mv -f "$manifest.tmp.$$" "$manifest"
+      @SED@ '1s/.*/v1-ready/' "$manifest" > "$manifest.tmp.$$"
+      @COREUTILS@/bin/mv -f "$manifest.tmp.$$" "$manifest"
       return 0
     fi
   fi
   link="$ext_dir/$desired"; owned_current=0
-  if [ -f "$manifest" ] && head -n1 "$manifest" | grep -Eq '^(v1|v1-ready)$'; then
-    grep -Fq "	$desired	" "$manifest" && owned_current=1
+  if [ -f "$manifest" ] && @COREUTILS@/bin/head -n1 "$manifest" | @GREP@ -Eq '^(v1|v1-ready)$'; then
+    @GREP@ -Fq "	$desired	" "$manifest" && owned_current=1
   fi
   if [ -e "$link" ] || [ -L "$link" ]; then
     if [ "$owned_current" -eq 1 ] && [ -L "$link" ] && [ "$dry" -eq 0 ]; then
-      [ "$(@READLINK@ -f "$link" 2>/dev/null || true)" = "$target" ] || { ln -s "$target" "$link.tmp.$$"; mv -Tf "$link.tmp.$$" "$link"; }
+      [ "$(@READLINK@ -f "$link" 2>/dev/null || true)" = "$target" ] || { @COREUTILS@/bin/ln -s "$target" "$link.tmp.$$"; @COREUTILS@/bin/mv -Tf "$link.tmp.$$" "$link"; }
     elif [ ! -L "$link" ] || [ "$(@READLINK@ -f "$link" 2>/dev/null || true)" != "$target" ]; then
       printf 'criomos-codium: preserving unmanaged collision %s\n' "$link" >&2; return 0
     fi
   else
-    mutate ln -s "$target" "$link.tmp.$$"; mutate mv -Tf "$link.tmp.$$" "$link"
+    mutate @COREUTILS@/bin/ln -s "$target" "$link.tmp.$$"; mutate @COREUTILS@/bin/mv -Tf "$link.tmp.$$" "$link"
   fi
   root="$root_dir/$desired"
   register_root "$root" "$target"
-  old_lines=""; [ -f "$manifest" ] && old_lines=$(tail -n +2 "$manifest" || true)
+  old_lines=""; [ -f "$manifest" ] && old_lines=$(@COREUTILS@/bin/tail -n +2 "$manifest" || true)
   if [ "$dry" -eq 1 ]; then printf '+ atomic manifest update\n'; return 0; fi
   tmp_manifest="$manifest.tmp.$$"
-  { printf 'v1\n'; printf '%s\n' "$old_lines" | awk -F '\t' -v d="$desired" '$3 != d && NF >= 3'; printf 'managed\t%s\t%s\t%s\n' "$version" "$desired" "$target"; } > "$tmp_manifest"
-  mv -f "$tmp_manifest" "$manifest"
+  { printf 'v1\n'; printf '%s\n' "$old_lines" | @AWK@ -F '\t' -v d="$desired" '$3 != d && NF >= 3'; printf 'managed\t%s\t%s\t%s\n' "$version" "$desired" "$target"; } > "$tmp_manifest"
+  @COREUTILS@/bin/mv -f "$tmp_manifest" "$manifest"
   manifest_is_valid || return 0
   while IFS='	' read -r owner ver name tgt extra; do
     [ -z "$extra" ] && valid_manifest_entry "$owner" "$ver" "$name" "$tgt" && [ "$name" != "$desired" ] || continue
     [ -L "$ext_dir/$name" ] && [ "$(@READLINK@ -f "$ext_dir/$name" 2>/dev/null || true)" = "$tgt" ] || continue
     [ -L "$root_dir/$name" ] && root_retains_target "$root_dir/$name" "$tgt" || continue
-    rm -f "$ext_dir/$name" "$root_dir/$name"
-  done < <(tail -n +2 "$manifest")
+    @COREUTILS@/bin/rm -f "$ext_dir/$name" "$root_dir/$name"
+  done < <(@COREUTILS@/bin/tail -n +2 "$manifest")
 }
 
 case "${1:-}" in

@@ -12,10 +12,15 @@ let
   codiumPackage = pkgs.callPackage ../../../../packages/vscodium-casual { };
 
   lifecycleSource = pkgs.replaceVars ./claude-lifecycle.sh {
+    COREUTILS = "${pkgs.coreutils}";
     FLOCK = "${pkgs.util-linux}/bin/flock";
+    AWK = "${pkgs.gawk}/bin/awk";
+    GREP = "${pkgs.gnugrep}/bin/grep";
     JQ = "${pkgs.jq}/bin/jq";
     NIX_STORE = "${pkgs.nix}/bin/nix-store";
+    PGREP = "${pkgs.procps}/bin/pgrep";
     READLINK = "${pkgs.coreutils}/bin/readlink";
+    SED = "${pkgs.gnused}/bin/sed";
     CODIUM = "${codiumPackage}/bin/codium";
     SYSTEMCTL = "${pkgs.systemd}/bin/systemctl";
     SLEEP = "${pkgs.coreutils}/bin/sleep";
@@ -24,12 +29,14 @@ let
     builtins.readFile lifecycleSource
   );
   codiumScopeSource = pkgs.replaceVars ./codium-scope.sh {
+    COREUTILS = "${pkgs.coreutils}";
     CODIUM = "${codiumPackage}/bin/codium";
   };
   codiumScopeRunner = pkgs.writeShellScriptBin "criomos-codium-scope" (
     builtins.readFile codiumScopeSource
   );
   codiumLauncherSource = pkgs.replaceVars ./codium-launch.sh {
+    COREUTILS = "${pkgs.coreutils}";
     FLOCK = "${pkgs.util-linux}/bin/flock";
     LIFECYCLE = "${codiumClaudeLifecycle}/bin/criomos-codium-claude-lifecycle";
     SCOPE_RUNNER = "${codiumScopeRunner}/bin/criomos-codium-scope";

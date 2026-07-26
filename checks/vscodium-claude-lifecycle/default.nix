@@ -40,15 +40,15 @@ let
     case "$target" in /nix/store/*) ;; *) exit 1;; esac
     store_name="''${target#/nix/store/}"
     store_name="''${store_name%%/*}"
-    ln -s "/nix/store/$store_name" "$root.tmp.$$"
-    mv -Tf "$root.tmp.$$" "$root"
+    ${pkgs.coreutils}/bin/ln -s "/nix/store/$store_name" "$root.tmp.$$"
+    ${pkgs.coreutils}/bin/mv -Tf "$root.tmp.$$" "$root"
   '';
   fakeCodium = pkgs.writeShellScript "codium-registry-and-daemon-fixture" ''
     set -euf
     if [ "''${1:-}" = --list-extensions ]; then
       [ "''${FAKE_CODIUM_FAIL:-0}" != 1 ] || exit 1
       if ${pkgs.util-linux}/bin/flock -xn "$FAKE_LOCK" true; then
-        touch "$FAKE_SYSTEMD_DIR/refresh-gap"
+        ${pkgs.coreutils}/bin/touch "$FAKE_SYSTEMD_DIR/refresh-gap"
       fi
       registry="$CRIOMOS_VSCODIUM_EXTENSIONS_DIR/extensions.json"
       ${pkgs.jq}/bin/jq --arg path "$CRIOMOS_VSCODIUM_EXTENSIONS_DIR/anthropic.claude-code-2.1.215-linux-x64" \
@@ -57,13 +57,13 @@ let
       exit 0
     fi
     if [ "''${1:-}" = --version ]; then
-      touch "$FAKE_SYSTEMD_DIR/version.called"
+      ${pkgs.coreutils}/bin/touch "$FAKE_SYSTEMD_DIR/version.called"
       exit 0
     fi
-    (sleep "''${FAKE_APP_SECONDS:-2}") & child_a=$!
-    (sleep "''${FAKE_APP_SECONDS:-2}") & child_b=$!
+    (${pkgs.coreutils}/bin/sleep "''${FAKE_APP_SECONDS:-2}") & child_a=$!
+    (${pkgs.coreutils}/bin/sleep "''${FAKE_APP_SECONDS:-2}") & child_b=$!
     printf '%s\n%s\n' "$child_a" "$child_b" > "$FAKE_SYSTEMD_DIR/$FAKE_SCOPE.child"
-    touch "$FAKE_SYSTEMD_DIR/app.started"
+    ${pkgs.coreutils}/bin/touch "$FAKE_SYSTEMD_DIR/app.started"
   '';
   fakeSystemctl = pkgs.writeShellScript "systemctl-user-scope-fixture" ''
     set -euf
@@ -116,34 +116,41 @@ let
       # conversion. An EX probe here witnesses that there was no handoff gap.
       ${pkgs.util-linux}/bin/flock -xn "$FAKE_LOCK" true || true
       if ${pkgs.util-linux}/bin/flock -xn "$FAKE_LOCK" true; then
-        touch "$FAKE_SYSTEMD_DIR/handoff-gap"
+        ${pkgs.coreutils}/bin/touch "$FAKE_SYSTEMD_DIR/handoff-gap"
       fi
       "$@" >/dev/null 2>&1 &
       printf '%s\n' "$!" > "$FAKE_SYSTEMD_DIR/$unit.pid"
     fi
   '';
   lifecycleSource = pkgs.replaceVars ../../modules/home/vscodium/vscodium/claude-lifecycle.sh {
+    COREUTILS = "${pkgs.coreutils}";
     FLOCK = "${pkgs.util-linux}/bin/flock";
+    AWK = "${pkgs.gawk}/bin/awk";
+    GREP = "${pkgs.gnugrep}/bin/grep";
     JQ = "${pkgs.jq}/bin/jq";
-    NIX_STORE = "${nixStoreFixture}";
+    NIX_STORE = "${pkgs.nix}/bin/nix-store";
+    PGREP = "${pkgs.procps}/bin/pgrep";
     READLINK = "${pkgs.coreutils}/bin/readlink";
-    CODIUM = "${fakeCodium}";
-    SYSTEMCTL = "${fakeSystemctl}";
+    SED = "${pkgs.gnused}/bin/sed";
+    CODIUM = "${homePkgs.vscodium}/bin/codium";
+    SYSTEMCTL = "${pkgs.systemd}/bin/systemctl";
     SLEEP = "${pkgs.coreutils}/bin/sleep";
   };
   lifecycle = pkgs.writeShellScript "criomos-codium-claude-lifecycle-fixture" (
     builtins.readFile lifecycleSource
   );
   scopeSource = pkgs.replaceVars ../../modules/home/vscodium/vscodium/codium-scope.sh {
-    CODIUM = "${fakeCodium}";
+    COREUTILS = "${pkgs.coreutils}";
+    CODIUM = "${homePkgs.vscodium}/bin/codium";
   };
   scopeRunner = pkgs.writeShellScript "criomos-codium-scope-fixture" (builtins.readFile scopeSource);
   launcherSource = pkgs.replaceVars ../../modules/home/vscodium/vscodium/codium-launch.sh {
+    COREUTILS = "${pkgs.coreutils}";
     FLOCK = "${pkgs.util-linux}/bin/flock";
     LIFECYCLE = "${lifecycle}";
     SCOPE_RUNNER = "${scopeRunner}";
-    SYSTEMD_RUN = "${fakeSystemdRun}";
-    SYSTEMCTL = "${fakeSystemctl}";
+    SYSTEMD_RUN = "${pkgs.systemd}/bin/systemd-run";
+    SYSTEMCTL = "${pkgs.systemd}/bin/systemctl";
     DATE = "${pkgs.coreutils}/bin/date";
     SLEEP = "${pkgs.coreutils}/bin/sleep";
   };
@@ -184,6 +191,12 @@ assert builtins.match ".*--activate.*" activation.replaceMutableClaudeCodeExtens
 pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
   set -euxo pipefail
   test "$(id -u)" -ne 0
+  for runtime_script in "${lifecycleSource}" "${scopeSource}" "${launcherSource}"; do
+    ${pkgs.bash}/bin/bash -n "$runtime_script"
+    ! ${pkgs.gnugrep}/bin/grep -E \
+      '(^|[;|&[:space:]])(awk|flock|readlink|realpath|mkdir|mktemp|mv|rm|ln|rmdir|cp|sed|grep|cut|tr|stat|systemd-run|systemctl|sleep|date|nix-store|codium|cat|head|tail|wc|pgrep)([;|&[:space:]]|$)' \
+      "$runtime_script"
+  done
   echo STAGE=setup
   blocked_activate() {
     ${pkgs.util-linux}/bin/setsid "${lifecycle}" --activate >/dev/null 2>&1 & activation_pid=$!
@@ -196,6 +209,13 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
   home="$TMPDIR/home"; ext="$home/.vscode-oss/extensions"; state="$home/state"; roots="$home/roots"
     mkdir -p "$ext" "$state" "$roots"
     export CRIOMOS_VSCODIUM_EXTENSIONS_DIR="$ext" CRIOMOS_VSCODIUM_STATE_DIR="$state" CRIOMOS_VSCODIUM_GCROOT_DIR="$roots"
+    # Runtime defaults are store paths. Fakes cross only the three external
+    # boundaries; the lifecycle, launcher, scope runner, and their filesystem
+    # tools must remain runnable when activation supplies no useful PATH.
+    export CRIOMOS_VSCODIUM_NIX_STORE="${nixStoreFixture}"
+    export CRIOMOS_VSCODIUM_CODIUM="${fakeCodium}"
+    export CRIOMOS_VSCODIUM_SYSTEMCTL="${fakeSystemctl}"
+    export CRIOMOS_VSCODIUM_SYSTEMD_RUN="${fakeSystemdRun}"
     ln -s ${extAPath} "$ext/anthropic.claude-code"
     # Exercise activation without a GC-root override. The lifecycle itself runs
     # as this unprivileged builder and must keep its visible root in user state;
@@ -261,7 +281,7 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
     # than block for the session's whole lifetime.
     activation_started=$(${pkgs.coreutils}/bin/date +%s%N)
     "${lifecycle}" --activate
-    "${lifecycle}" --activation-refresh
+    env PATH=/nonexistent "${lifecycle}" --activation-refresh
     activation_elapsed=$(($(${pkgs.coreutils}/bin/date +%s%N) - activation_started))
     test "$activation_elapsed" -lt 1000000000
   blocked_activate
@@ -343,7 +363,7 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
       "$ext/extensions.json" > "$ext/extensions.json.tmp"
     mv "$ext/extensions.json.tmp" "$ext/extensions.json"
     unmanaged_before=$(${pkgs.jq}/bin/jq -c '[.[] | select(.identifier.id == "unmanaged.fixture")]' "$ext/extensions.json" | sha256sum)
-    "${launcher}"
+    env PATH=/nonexistent "${launcher}"
     for _ in 1 2 3 4 5 6 7 8 9 10; do [ -e "$fake_systemd/app.started" ] && break; sleep 0.1; done
     test -e "$fake_systemd/app.started"
     test ! -e "$fake_systemd/handoff-gap"

@@ -4,7 +4,15 @@ export LC_ALL=C
 
 state_dir="${CRIOMOS_VSCODIUM_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/criomos/vscodium-claude}"
 lock_file="${CRIOMOS_VSCODIUM_LOCK_FILE:-$state_dir/lifecycle.lock}"
-mkdir -p "$state_dir"
+systemctl="${CRIOMOS_VSCODIUM_SYSTEMCTL:-@SYSTEMCTL@}"
+systemd_run="${CRIOMOS_VSCODIUM_SYSTEMD_RUN:-@SYSTEMD_RUN@}"
+for runtime_command in "$systemctl" "$systemd_run"; do
+  case "$runtime_command" in
+    /*) [ -x "$runtime_command" ] || exit 127 ;;
+    *) exit 127 ;;
+  esac
+done
+@COREUTILS@/bin/mkdir -p "$state_dir"
 exec 9>"$lock_file"
 
 # Never queue a GUI launch behind a mutation. An existing shared lease is safe
@@ -21,24 +29,24 @@ fi
 unit_id="$(@DATE@ +%s%N)-$$"
 scope="criomos-vscodium-$unit_id.scope"
 watcher="criomos-vscodium-lease-$unit_id.service"
-session_dir="$(mktemp -d "$state_dir/session.XXXXXXXX")"
+session_dir="$(@COREUTILS@/bin/mktemp -d "$state_dir/session.XXXXXXXX")"
 ready="$session_dir/ready"
 cleanup() {
-  @SYSTEMCTL@ --user stop "$watcher" "$scope" >/dev/null 2>&1 || true
-  rm -f "$session_dir/ready" "$session_dir/consumed" "$session_dir/started" "$session_dir/completed"
-  rmdir "$session_dir" 2>/dev/null || true
+  "$systemctl" --user stop "$watcher" "$scope" >/dev/null 2>&1 || true
+  @COREUTILS@/bin/rm -f "$session_dir/ready" "$session_dir/consumed" "$session_dir/started" "$session_dir/completed"
+  @COREUTILS@/bin/rmdir "$session_dir" 2>/dev/null || true
 }
 trap cleanup ERR INT TERM
 
-@SYSTEMD_RUN@ --user --scope --collect --quiet --no-block --unit="$scope" @SCOPE_RUNNER@ "$session_dir" "$@"
+"$systemd_run" --user --scope --collect --quiet --no-block --unit="$scope" @SCOPE_RUNNER@ "$session_dir" "$@"
 
 # `--no-block` confirms the user manager accepted the unit but not that its
 # command survived startup. Verify this exact scope before giving up EX.
 attempts=0
 while :; do
-  active="$(@SYSTEMCTL@ --user show "$scope" --property=ActiveState --value 2>/dev/null || true)"
-  completed="$(cat "$session_dir/completed" 2>/dev/null || true)"
-  if [ -f "$session_dir/started" ] && [ "$(cat "$session_dir/started" 2>/dev/null || true)" = started ]; then
+  active="$("$systemctl" --user show "$scope" --property=ActiveState --value 2>/dev/null || true)"
+  completed="$(@COREUTILS@/bin/cat "$session_dir/completed" 2>/dev/null || true)"
+  if [ -f "$session_dir/started" ] && [ "$(@COREUTILS@/bin/cat "$session_dir/started" 2>/dev/null || true)" = started ]; then
     if [ -n "$completed" ] && [ "$completed" != 0 ]; then
       printf '%s\n' 'criomos-codium: GUI command failed to start' >&2
       exit 1
@@ -72,12 +80,12 @@ done
 # This is an atomic lock conversion on the same descriptor. The wrapper
 # retains SH until the watcher independently holds SH and has published READY.
 @FLOCK@ -s 9
-@SYSTEMD_RUN@ --user --collect --quiet --no-block --unit="$watcher" \
+"$systemd_run" --user --collect --quiet --no-block --unit="$watcher" \
   --property=Restart=on-failure --property=RestartSec=100ms \
   @LIFECYCLE@ --watch-scope "$scope" "$ready"
 
 attempts=0
-while [ ! -f "$ready" ] || [ "$(cat "$ready" 2>/dev/null || true)" != ready ]; do
+while [ ! -f "$ready" ] || [ "$(@COREUTILS@/bin/cat "$ready" 2>/dev/null || true)" != ready ]; do
   attempts=$((attempts + 1))
   if [ "$attempts" -ge 100 ]; then
     printf '%s\n' 'criomos-codium: session lease watcher did not become ready' >&2
