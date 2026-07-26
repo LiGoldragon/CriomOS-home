@@ -1752,17 +1752,17 @@
         "rust-build": "rust-build_4"
       },
       "locked": {
-        "lastModified": 1784469026,
-        "narHash": "sha256-KEjainW0aFB+u8zVpUZ8JSvfNdXRxGH20X1+bNZ03jY=",
+        "lastModified": 1785075957,
+        "narHash": "sha256-fKyF6+q0wwlOeE73mDnCjUKpU3LWlYm92JaY72cncT8=",
         "owner": "LiGoldragon",
         "repo": "orchestrate",
-        "rev": "be202b51060d098f3c71489859d8e03319ca2f97",
+        "rev": "83e09a1316340a17ca23ef5cd2a3dd2a47874281",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "orchestrate",
-        "rev": "be202b51060d098f3c71489859d8e03319ca2f97",
+        "rev": "83e09a1316340a17ca23ef5cd2a3dd2a47874281",
         "type": "github"
       }
     },

@@ -168,7 +168,14 @@
     # MVP (typed repository-main contention answers, lane-named feature
     # worktrees, tracked auto-rebase landing), and the orchestrator identity
     # mint.
-    orchestrate.url = "github:LiGoldragon/orchestrate/be202b51060d098f3c71489859d8e03319ca2f97";
+    # This pin additionally retires the idle-lane reaper
+    # (ACTIVE_LANE_IDLE_LIMIT_NANOS, ACTIVE_ORCHESTRATOR_AGENT_IDLE_LIMIT_NANOS),
+    # which deleted idle lanes, dropped their claims, and flipped worktrees to
+    # Abandoned on a 24-hour timer; and drops the worktrees.nota mirror write
+    # (src/worktree_projection.rs), so the registry is no longer projected to
+    # that file. Also carries elapsed-time rendering on ordinary time-bearing
+    # replies and colocated Jujutsu metadata bootstrap for Git worktrees.
+    orchestrate.url = "github:LiGoldragon/orchestrate/83e09a1316340a17ca23ef5cd2a3dd2a47874281";
     orchestrate.inputs.nixpkgs.follows = "nixpkgs";
 
     # Message — the messenger: stateful local messaging daemon owning the
