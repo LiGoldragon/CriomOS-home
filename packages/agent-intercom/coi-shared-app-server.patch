@@ -211,10 +211,10 @@ index 989dd47..ef38021 100644
  test("threadSandboxMode maps bridge sandbox policies to codex thread modes", () => {
   assert.equal(threadSandboxMode({ type: "readOnly" }), "read-only");
   assert.equal(threadSandboxMode({ type: "workspaceWrite" }), "workspace-write");
-diff --git a/codex/broker/spawn.ts b/codex/broker/spawn.ts
+diff --git a/broker/spawn.ts b/broker/spawn.ts
 index 12ddf55..79afbd8 100644
---- a/codex/broker/spawn.ts
-+++ b/codex/broker/spawn.ts
+--- a/broker/spawn.ts
++++ b/broker/spawn.ts
 @@ -175,14 +175,14 @@ export function getBrokerSpawnOptions(
  ): {
    detached: true;
