@@ -5,14 +5,31 @@
   ...
 }:
 # Blueprint evaluates package outputs for every exposed system. Avoid resolving
-# this Linux x86_64 package's inputs on unsupported systems.
-if pkgs.stdenv.hostPlatform.system != "x86_64-linux" then
+# the local Agent Intercom family's Linux inputs on unsupported systems.
+if
+  !(builtins.elem pkgs.stdenv.hostPlatform.system [
+    "x86_64-linux"
+    "aarch64-linux"
+  ])
+then
   null
 else
   let
     system = pkgs.stdenv.hostPlatform.system;
     codexCliPackage = inputs.codex-cli.packages.${system}.default;
     claudeCodePackage = inputs.llm-agents.packages.${system}.claude-code;
+    esbuildCompanion =
+      {
+        x86_64-linux = {
+          packageName = "linux-x64";
+          src = inputs.agent-intercom-esbuild-linux-x64-src;
+        };
+        aarch64-linux = {
+          packageName = "linux-arm64";
+          src = inputs.agent-intercom-esbuild-linux-arm64-src;
+        };
+      }
+      .${system};
 
     agentIntercomCore = pkgs.buildNpmPackage {
       pname = "agent-intercom-core";
@@ -35,7 +52,7 @@ else
         "${packageRoot}/.pi-deps/tsx" \
         "${packageRoot}/.pi-deps/typebox" \
         "${packageRoot}/.pi-deps/esbuild" \
-        "${packageRoot}/.pi-deps/esbuild-linux-x64" \
+        "${packageRoot}/.pi-deps/esbuild-${esbuildCompanion.packageName}" \
         "${packageRoot}/.pi-deps/get-tsconfig" \
         "${packageRoot}/.pi-deps/resolve-pkg-maps" \
         "${packageRoot}/node_modules/@dataforxyz" \
@@ -44,7 +61,7 @@ else
       tar -xzf ${inputs.agent-intercom-tsx-src} -C "${packageRoot}/.pi-deps/tsx" --strip-components=1
       tar -xzf ${inputs.agent-intercom-typebox-src} -C "${packageRoot}/.pi-deps/typebox" --strip-components=1
       tar -xzf ${inputs.agent-intercom-esbuild-src} -C "${packageRoot}/.pi-deps/esbuild" --strip-components=1
-      tar -xzf ${inputs.agent-intercom-esbuild-linux-x64-src} -C "${packageRoot}/.pi-deps/esbuild-linux-x64" --strip-components=1
+      tar -xzf ${esbuildCompanion.src} -C "${packageRoot}/.pi-deps/esbuild-${esbuildCompanion.packageName}" --strip-components=1
       tar -xzf ${inputs.agent-intercom-get-tsconfig-src} -C "${packageRoot}/.pi-deps/get-tsconfig" --strip-components=1
       tar -xzf ${inputs.agent-intercom-resolve-pkg-maps-src} -C "${packageRoot}/.pi-deps/resolve-pkg-maps" --strip-components=1
 
@@ -53,7 +70,7 @@ else
       ln -s ../.pi-deps/esbuild "${packageRoot}/node_modules/esbuild"
       ln -s ../.pi-deps/get-tsconfig "${packageRoot}/node_modules/get-tsconfig"
       ln -s ../.pi-deps/resolve-pkg-maps "${packageRoot}/node_modules/resolve-pkg-maps"
-      ln -s ../../.pi-deps/esbuild-linux-x64 "${packageRoot}/node_modules/@esbuild/linux-x64"
+      ln -s ../../.pi-deps/esbuild-${esbuildCompanion.packageName} "${packageRoot}/node_modules/@esbuild/${esbuildCompanion.packageName}"
       cp -R ${agentIntercomCore}/. "${packageRoot}/node_modules/@dataforxyz/agent-intercom-core"
     '';
 
@@ -100,11 +117,11 @@ else
       chmod -R u+w "$claudeBuild"
       mkdir -p \
         "$claudeBuild/node_modules/@dataforxyz" \
-        "$claudeBuild/node_modules/@esbuild/linux-x64" \
+        "$claudeBuild/node_modules/@esbuild/${esbuildCompanion.packageName}" \
         "$claudeBuild/node_modules/esbuild"
       cp -R ${agentIntercomCore}/. "$claudeBuild/node_modules/@dataforxyz/agent-intercom-core"
       tar -xzf ${inputs.agent-intercom-esbuild-src} -C "$claudeBuild/node_modules/esbuild" --strip-components=1
-      tar -xzf ${inputs.agent-intercom-esbuild-linux-x64-src} -C "$claudeBuild/node_modules/@esbuild/linux-x64" --strip-components=1
+      tar -xzf ${esbuildCompanion.src} -C "$claudeBuild/node_modules/@esbuild/${esbuildCompanion.packageName}" --strip-components=1
       (cd "$claudeBuild" && ${pkgs.nodejs}/bin/node scripts/build.mjs)
       cp -R "$claudeBuild/dist" "$root/claude"
 
@@ -152,6 +169,9 @@ else
       description = "Pinned local-only Agent Intercom adapters and orchestrator";
       homepage = "https://github.com/dataforxyz/agent-intercom-pi";
       license = pkgs.lib.licenses.agpl3Plus;
-      platforms = [ "x86_64-linux" ];
+      platforms = [
+        "x86_64-linux"
+        "aarch64-linux"
+      ];
     };
   }

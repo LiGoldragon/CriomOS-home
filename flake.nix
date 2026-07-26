@@ -289,6 +289,11 @@
       url = "https://registry.npmjs.org/@esbuild/linux-x64/-/linux-x64-0.25.0.tgz";
       flake = false;
     };
+    agent-intercom-esbuild-linux-arm64-src = {
+      type = "file";
+      url = "https://registry.npmjs.org/@esbuild/linux-arm64/-/linux-arm64-0.25.0.tgz";
+      flake = false;
+    };
     agent-intercom-get-tsconfig-src = {
       type = "file";
       url = "https://registry.npmjs.org/get-tsconfig/-/get-tsconfig-4.7.5.tgz";
@@ -451,7 +456,12 @@
       horizon = inputs.horizon.horizon;
       pkgs = inputs.pkgs.pkgs;
       lib = inputs.nixpkgs.lib;
-      agentIntercomSupported = system: system == "x86_64-linux";
+      agentIntercomSystems = [
+        "x86_64-linux"
+        "aarch64-linux"
+      ];
+      agentIntercomSupported = system: lib.elem system agentIntercomSystems;
+      agentIntercomGraphicalSupported = system: system == "x86_64-linux";
       projectPackages = builtins.mapAttrs (
         system: packages:
         if agentIntercomSupported system then
@@ -477,13 +487,12 @@
             value = true;
           }) (builtins.attrNames (projectPackages.${system} or { }))
         );
-      # Blueprint imports every check to discover its platforms. On unsupported
-      # systems, reconstruct only its generic devshell/package checks without
-      # loading Agent Intercom's Linux-only check inputs. Explicit checks below
-      # retain the remaining cross-platform check surface.
+      # Blueprint imports every check before it can inspect platforms. Keep the
+      # Desktop witness out of Arm evaluation, then add the Arm-safe Local
+      # witness explicitly below alongside the generic check surface.
       derivationChecks = builtins.mapAttrs (
         _system: checks:
-        if agentIntercomSupported _system then
+        if agentIntercomGraphicalSupported _system then
           lib.filterAttrs (
             name: value:
             lib.isDerivation value
@@ -524,6 +533,9 @@
           };
         }
         // lib.optionalAttrs (agentIntercomSupported _system) {
+          agent-intercom-local = checkPkgs.callPackage ./checks/agent-intercom-local { inherit inputs; };
+        }
+        // lib.optionalAttrs (agentIntercomGraphicalSupported _system) {
           pi-harness-profile = checkPkgs.callPackage ./checks/pi-harness-profile { inherit inputs; };
           ai-agent-launch-orchestration = checkPkgs.callPackage ./checks/ai-agent-launch-orchestration {
             inherit inputs;

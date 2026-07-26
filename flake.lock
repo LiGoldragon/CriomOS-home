@@ -76,6 +76,18 @@
         "type": "github"
       }
     },
+    "agent-intercom-esbuild-linux-arm64-src": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-JN0XCEMkQ7aOve9wMBbI4tdHihKst6z7m1DSqBR45kc=",
+        "type": "file",
+        "url": "https://registry.npmjs.org/@esbuild/linux-arm64/-/linux-arm64-0.25.0.tgz"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://registry.npmjs.org/@esbuild/linux-arm64/-/linux-arm64-0.25.0.tgz"
+      }
+    },
     "agent-intercom-esbuild-linux-x64-src": {
       "flake": false,
       "locked": {
@@ -2441,6 +2453,7 @@
         "agent-intercom-claude-src": "agent-intercom-claude-src",
         "agent-intercom-codex-src": "agent-intercom-codex-src",
         "agent-intercom-core-src": "agent-intercom-core-src",
+        "agent-intercom-esbuild-linux-arm64-src": "agent-intercom-esbuild-linux-arm64-src",
         "agent-intercom-esbuild-linux-x64-src": "agent-intercom-esbuild-linux-x64-src",
         "agent-intercom-esbuild-src": "agent-intercom-esbuild-src",
         "agent-intercom-get-tsconfig-src": "agent-intercom-get-tsconfig-src",

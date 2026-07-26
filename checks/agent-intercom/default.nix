@@ -37,7 +37,7 @@ let
     (inputs.home-manager.lib.homeManagerConfiguration {
       inherit pkgs;
       extraSpecialArgs = {
-        inherit inputs horizon;
+        inherit inputs horizon pkgs;
         user = {
           name = "test-user";
           size.min = true;
