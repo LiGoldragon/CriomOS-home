@@ -158,3 +158,56 @@ index 995dbd9..86bf19d 100644
 +  }
  
    async ensureThreadForAgent(agentId: string): Promise<string> {
+diff --git a/codex/bridge-daemon.test.ts b/codex/bridge-daemon.test.ts
+index 989dd47..ef38021 100644
+--- a/codex/bridge-daemon.test.ts
++++ b/codex/bridge-daemon.test.ts
+@@ -149,6 +149,48 @@ test("persistent Codex bridge reconnects its stable Intercom identity after bro
+  await agent.stop();
+ });
+ 
++test("an Intercom message wakes a virtual Codex agent on its attached app-server", async () => {
++  const client = new FakeIntercomClient();
++  const acknowledged: string[] = [];
++  (client as unknown as { acknowledgeMessage: (deliveryId: string) => void }).acknowledgeMessage = (deliveryId) => {
++    acknowledged.push(deliveryId);
++  };
++  const app = {
++    requests: [] as Array<{ method: string; params: Record<string, unknown> }>,
++    async request(method: string, params: Record<string, unknown>): Promise<unknown> {
++      this.requests.push({ method, params });
++      if (method === "thread/start") return { thread: { id: "desktop-thread" } };
++      if (method === "turn/start") return { turn: { id: "desktop-turn" } };
++      return {};
++    },
++  };
++  const agent = new VirtualCodexAgent(
++    { id: "codex-desktop", name: "Codex Desktop", cwd: process.cwd() } as any,
++    app as any,
++    { agents: {} },
++    "/tmp/codex-desktop-wake-state.json",
++    {},
++    { client: client as unknown as IntercomClient, prepareConnection: async () => {} },
++  );
++
++  await agent.start();
++  assert.deepEqual(app.requests, []);
++  client.emit(
++    "message",
++    { id: "manager", name: "manager" } as any,
++    { id: "wake-1", content: { text: "wake desktop" }, expectsReply: false } as any,
++    "delivery-1",
++  );
++  for (let attempt = 0; attempt < 50 && app.requests.length < 3; attempt += 1) {
++    await new Promise((resolve) => setTimeout(resolve, 1));
++  }
++  assert.deepEqual(app.requests.map(({ method }) => method), ["thread/start", "thread/name/set", "turn/start"]);
++  assert.match(String((app.requests[2]?.params.input as Array<{ text: string }>)[0]?.text), /wake desktop/);
++  assert.deepEqual(acknowledged, ["delivery-1"]);
++  agent.onNotification({ method: "turn/completed", params: { threadId: "desktop-thread", turnId: "desktop-turn" } });
++  await agent.stop();
++});
++
+ test("threadSandboxMode maps bridge sandbox policies to codex thread modes", () => {
+   assert.equal(threadSandboxMode({ type: "readOnly" }), "read-only");
+   assert.equal(threadSandboxMode({ type: "workspaceWrite" }), "workspace-write");

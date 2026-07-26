@@ -198,7 +198,7 @@ pkgs.runCommand "agent-intercom-local-home-contract"
     ! grep -F 'CODEX_INTERCOM_APP_SERVER_SOCKET' ${agentIntercom}/bin/coi
     (
       cd ${graphicalAgentIntercom}/share/agent-intercom/codex
-      ${pkgs.nodejs}/bin/node node_modules/tsx/dist/cli.mjs --test codex/coi.test.ts
+      ${pkgs.nodejs}/bin/node node_modules/tsx/dist/cli.mjs --test codex/coi.test.ts codex/bridge-daemon.test.ts
     )
 
     # This starts the raw CLI app-server in remote-control mode without a
