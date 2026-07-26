@@ -25,14 +25,12 @@ let
 
   localEnabled = hasCapability "AgentIntercomLocal";
   graphicalEnabled = hasCapability "AgentIntercomGraphical";
-  agentIntercom = pkgs.callPackage ../../../../packages/agent-intercom { inherit inputs; };
-
-  # The pinned Desktop module wraps a configured cliPackage into
-  # CODEX_CLI_PATH and can independently own `codex app-server` through its
-  # remote-control service. The pinned `coi` source instead owns a raw-Codex
-  # app-server and remote TUI for one Intercom session. It is therefore not a
-  # drop-in Desktop CLI and has no supported Desktop attachment surface.
-  desktopHardGateMessage = "Agent Intercom Desktop activation is blocked: pinned ilysenko/codex-desktop-linux wraps cliPackage as CODEX_CLI_PATH and its remote-control service invokes codex app-server, while pinned coi owns a separate raw-Codex app-server and remote TUI. CODEX_CLI_PATH must remain a drop-in raw Codex CLI; setting it to coi would misinterpret Desktop app-server arguments or create competing ownership. No supported attachment exists, so keep programs.codexDesktopLinux.enable = false. Computer Use and Mobile Control stay inactive with Desktop; ordinary MCP is not a wakeable substitute.";
+  sharedAppServerSocket = "unix://\${XDG_RUNTIME_DIR}/codex-intercom-app-server.sock";
+  codexCliPackage = inputs.codex-cli.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  agentIntercom = pkgs.callPackage ../../../../packages/agent-intercom {
+    inherit inputs;
+    sharedAppServerSocket = if graphicalEnabled then sharedAppServerSocket else null;
+  };
 in
 lib.mkMerge [
   {
@@ -40,10 +38,6 @@ lib.mkMerge [
       {
         assertion = !graphicalEnabled || localEnabled;
         message = "graphical Agent Intercom requires local Agent Intercom";
-      }
-      {
-        assertion = !config.programs.codexDesktopLinux.enable;
-        message = desktopHardGateMessage;
       }
     ];
   }
@@ -110,6 +104,43 @@ lib.mkMerge [
         plugin = [ "${agentIntercom}/share/agent-intercom/opencode/dist/tui.mjs" ];
       };
       modes."/plugin" = "always";
+    };
+  })
+  (lib.mkIf graphicalEnabled {
+    programs.codexDesktopLinux = {
+      enable = true;
+      cliPackage = codexCliPackage;
+      computerUseUi.enable = true;
+      remoteMobileControl.enable = true;
+      remoteControl = {
+        enable = true;
+        package = codexCliPackage;
+        listen = sharedAppServerSocket;
+      };
+    };
+
+    systemd.user.services.agent-intercom-codex-bridge = {
+      Unit = {
+        Description = "Agent Intercom bridge for the Desktop-owned Codex app-server";
+        Requires = [ "codex-remote-control.service" ];
+        BindsTo = [ "codex-remote-control.service" ];
+        PartOf = [ "codex-remote-control.service" ];
+        After = [ "codex-remote-control.service" ];
+      };
+      Service = {
+        WorkingDirectory = config.home.homeDirectory;
+        ExecStart = lib.escapeShellArgs [
+          "${agentIntercom}/bin/coi"
+          "--no-tui"
+          "--intercom-id"
+          "codex-desktop"
+          "--intercom-name"
+          "Codex Desktop"
+        ];
+        Restart = "always";
+        RestartSec = "2s";
+      };
+      Install.WantedBy = [ "default.target" ];
     };
   })
 ]

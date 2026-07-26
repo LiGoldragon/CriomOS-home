@@ -1,6 +1,10 @@
 { inputs, pkgs, ... }:
 let
   agentIntercom = pkgs.callPackage ../../packages/agent-intercom { inherit inputs; };
+  graphicalAgentIntercom = pkgs.callPackage ../../packages/agent-intercom {
+    inherit inputs;
+    sharedAppServerSocket = "unix://\${XDG_RUNTIME_DIR}/codex-intercom-app-server.sock";
+  };
   pi = inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.pi;
   agentIntercomModule = ../../modules/home/profiles/min/agent-intercom.nix;
   agentIntercomPackage = ../../packages/agent-intercom/default.nix;
@@ -58,36 +62,11 @@ let
   graphicalWithoutLocalRejected = builtins.tryEval (
     (mkHomeConfiguration graphicalWithoutLocalHorizon).activationPackage
   );
-  desktopEnabledRejected = builtins.tryEval (
-    (inputs.home-manager.lib.homeManagerConfiguration {
-      inherit pkgs;
-      extraSpecialArgs = {
-        horizon = localHorizon true;
-        user = {
-          name = "test-user";
-          size.min = true;
-        };
-        hexis = inputs.hexis.packages.${pkgs.stdenv.hostPlatform.system}.default;
-        inherit inputs;
-      };
-      modules = [
-        inputs.codex-desktop-linux.homeManagerModules.default
-        agentIntercomModule
-        {
-          home = {
-            username = "test-user";
-            homeDirectory = "/home/test-user";
-            stateVersion = "26.05";
-          };
-          programs.codexDesktopLinux.enable = true;
-        }
-      ];
-    }).activationPackage
-  );
   flakeFile = ../../flake.nix;
   flakeLock = ../../flake.lock;
   desktopModuleSource = "${inputs.codex-desktop-linux}/nix/home-manager-module.nix";
   coiSource = "${inputs.agent-intercom-codex-src}/codex/coi.ts";
+  coiSharedAppServerPatch = ../../packages/agent-intercom/coi-shared-app-server.patch;
   codexCliPackage = inputs.codex-cli.packages.${pkgs.stdenv.hostPlatform.system}.default;
   claudeCodePackage = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.claude-code;
 in
@@ -95,20 +74,33 @@ assert localHomeConfiguration.home.file ? ".pi/agent/packages/agent-intercom-pi"
 assert localHomeConfiguration.home.file ? ".pi/agent/packages/agent-intercom-orchestrator";
 assert builtins.elem agentIntercom localHomeConfiguration.home.packages;
 assert graphicalHomeConfiguration.home.file ? ".pi/agent/packages/agent-intercom-pi";
-assert builtins.elem agentIntercom graphicalHomeConfiguration.home.packages;
+assert builtins.elem graphicalAgentIntercom graphicalHomeConfiguration.home.packages;
 assert !(noLocalHomeConfiguration.home.file ? ".pi/agent/packages/agent-intercom-pi");
 assert !(builtins.elem agentIntercom noLocalHomeConfiguration.home.packages);
 assert !graphicalWithoutLocalRejected.success;
-assert !graphicalHomeConfiguration.programs.codexDesktopLinux.enable;
-assert !graphicalHomeConfiguration.programs.codexDesktopLinux.computerUseUi.enable;
-assert !graphicalHomeConfiguration.programs.codexDesktopLinux.remoteMobileControl.enable;
-assert pkgs.lib.any (
-  assertion:
-  assertion.message
-  == "Agent Intercom Desktop activation is blocked: pinned ilysenko/codex-desktop-linux wraps cliPackage as CODEX_CLI_PATH and its remote-control service invokes codex app-server, while pinned coi owns a separate raw-Codex app-server and remote TUI. CODEX_CLI_PATH must remain a drop-in raw Codex CLI; setting it to coi would misinterpret Desktop app-server arguments or create competing ownership. No supported attachment exists, so keep programs.codexDesktopLinux.enable = false. Computer Use and Mobile Control stay inactive with Desktop; ordinary MCP is not a wakeable substitute."
-  && assertion.assertion
-) graphicalHomeConfiguration.assertions;
-assert !desktopEnabledRejected.success;
+assert graphicalHomeConfiguration.programs.codexDesktopLinux.enable;
+assert graphicalHomeConfiguration.programs.codexDesktopLinux.computerUseUi.enable;
+assert graphicalHomeConfiguration.programs.codexDesktopLinux.remoteMobileControl.enable;
+assert graphicalHomeConfiguration.programs.codexDesktopLinux.remoteControl.enable;
+assert
+  graphicalHomeConfiguration.programs.codexDesktopLinux.remoteControl.listen
+  == "unix://\${XDG_RUNTIME_DIR}/codex-intercom-app-server.sock";
+assert graphicalHomeConfiguration.programs.codexDesktopLinux.cliPackage == codexCliPackage;
+assert
+  graphicalHomeConfiguration.programs.codexDesktopLinux.remoteControl.package == codexCliPackage;
+assert graphicalHomeConfiguration.systemd.user.services ? agent-intercom-codex-bridge;
+assert
+  graphicalHomeConfiguration.systemd.user.services.agent-intercom-codex-bridge.Unit.Requires
+  == [ "codex-remote-control.service" ];
+assert
+  graphicalHomeConfiguration.systemd.user.services.agent-intercom-codex-bridge.Unit.BindsTo
+  == [ "codex-remote-control.service" ];
+assert
+  graphicalHomeConfiguration.systemd.user.services.agent-intercom-codex-bridge.Unit.PartOf
+  == [ "codex-remote-control.service" ];
+assert
+  graphicalHomeConfiguration.systemd.user.services.agent-intercom-codex-bridge.Service.Restart
+  == "always";
 pkgs.runCommand "agent-intercom-local-home-contract"
   {
     nativeBuildInputs = [
@@ -122,6 +114,7 @@ pkgs.runCommand "agent-intercom-local-home-contract"
     set -eu
 
     test -x ${agentIntercom}/bin/coi
+    test -x ${graphicalAgentIntercom}/bin/coi
     test -x ${agentIntercom}/bin/codex
     test -x ${agentIntercom}/bin/codex-raw
     test -x ${agentIntercom}/bin/cci
@@ -181,17 +174,93 @@ pkgs.runCommand "agent-intercom-local-home-contract"
     grep -F -- 'cci.mjs --dangerously-skip-permissions' ${agentIntercomPackage}
     ! grep -Ei 'remote-gateway|secure-remote|agent-intercom-access|ssh|credential|secret|token|oauth|enroll|pair' ${agentIntercomPackage}
 
-    # The Desktop hard gate is anchored in the pinned local sources. The
-    # Desktop module turns cliPackage into CODEX_CLI_PATH and offers a separate
-    # remote-control app-server; coi itself owns a raw child app-server and
-    # remote TUI, so no drop-in/wakeable attachment contract exists.
+    # Desktop keeps CODEX_CLI_PATH raw while its remote-control service owns
+    # the only graphical app-server. The patched coi bridge attaches to that
+    # service instead of spawning another server, so Desktop, Computer Use,
+    # and Mobile Control share the wakeable Intercom thread authority.
     grep -F -- '--set-default CODEX_CLI_PATH' ${desktopModuleSource}
     grep -F '"app-server"' ${desktopModuleSource}
     grep -F '"--remote-control"' ${desktopModuleSource}
     grep -F 'CODEX_INTERCOM_CODEX_COMMAND || "codex"' ${coiSource}
     grep -F 'return ["app-server", ...appServerArgs, "--listen", `unix://''${socketPath}`];' ${coiSource}
     grep -F 'const appServer = spawn(options.codexCommand' ${coiSource}
-    ! grep -F 'case "app-server"' ${coiSource}
+    grep -F 'sharedAppServerSocketPath' ${coiSharedAppServerPatch}
+    grep -F 'CODEX_INTERCOM_APP_SERVER_SOCKET' ${coiSharedAppServerPatch}
+    grep -F -- '--intercom-shared-app-server' ${coiSharedAppServerPatch}
+    grep -F 'patch --directory "$root/codex"' ${agentIntercomPackage}
+    grep -F 'sharedAppServerSocket' ${agentIntercomPackage}
+    grep -F 'agent-intercom-codex-bridge' ${agentIntercomModule}
+    grep -F 'codex-intercom-app-server.sock' ${agentIntercomModule}
+    grep -F 'computerUseUi.enable = true;' ${agentIntercomModule}
+    grep -F 'remoteMobileControl.enable = true;' ${agentIntercomModule}
+    grep -F 'remoteControl = {' ${agentIntercomModule}
+    grep -F 'CODEX_INTERCOM_APP_SERVER_SOCKET' ${graphicalAgentIntercom}/bin/coi
+    ! grep -F 'CODEX_INTERCOM_APP_SERVER_SOCKET' ${agentIntercom}/bin/coi
+    (
+      cd ${graphicalAgentIntercom}/share/agent-intercom/codex
+      ${pkgs.nodejs}/bin/node node_modules/tsx/dist/cli.mjs --test codex/coi.test.ts
+    )
+
+    # This starts the raw CLI app-server in remote-control mode without a
+    # Desktop process. The graphical coi wrapper has no app-server child: it
+    # must attach to the established service socket and register its virtual
+    # Intercom agent there.
+    shared_runtime="$TMPDIR/shared-runtime"
+    shared_home="$TMPDIR/shared-home"
+    shared_work="$TMPDIR/shared-work"
+    mkdir -p "$shared_runtime" "$shared_home" "$shared_work"
+    shared_server_pid=
+    shared_bridge_pid=
+    stop_shared_witness() {
+      if [ -n "$shared_bridge_pid" ]; then
+        kill -TERM "$shared_bridge_pid" 2>/dev/null || true
+        wait "$shared_bridge_pid" 2>/dev/null || true
+      fi
+      if [ -n "$shared_server_pid" ]; then
+        kill -TERM "$shared_server_pid" 2>/dev/null || true
+        wait "$shared_server_pid" 2>/dev/null || true
+      fi
+    }
+    trap stop_shared_witness EXIT
+    HOME="$shared_home" XDG_RUNTIME_DIR="$shared_runtime" \
+      ${codexCliPackage}/bin/codex app-server --remote-control \
+        --listen "unix://$shared_runtime/codex-intercom-app-server.sock" \
+        > "$TMPDIR/shared-app-server.log" 2>&1 &
+    shared_server_pid=$!
+    for attempt in $(${pkgs.coreutils}/bin/seq 1 100); do
+      [ -S "$shared_runtime/codex-intercom-app-server.sock" ] && break
+      ${pkgs.coreutils}/bin/sleep 0.1
+    done
+    test -S "$shared_runtime/codex-intercom-app-server.sock"
+    HOME="$shared_home" XDG_RUNTIME_DIR="$shared_runtime" \
+      ${graphicalAgentIntercom}/bin/coi --no-tui \
+        --intercom-id desktop-shared-app-server-witness \
+        --intercom-name 'Desktop shared app-server witness' \
+        --cwd "$shared_work" \
+        > "$TMPDIR/shared-coi.log" 2>&1 &
+    shared_bridge_pid=$!
+    for attempt in $(${pkgs.coreutils}/bin/seq 1 100); do
+      if ${pkgs.gnugrep}/bin/grep -F 'codex-intercom bridge running 1 virtual agent(s)' "$TMPDIR/shared-coi.log" > /dev/null \
+        && ${pkgs.gnugrep}/bin/grep -F 'coi intercom session: Desktop shared app-server witness (desktop-shared-app-server-witness)' "$TMPDIR/shared-coi.log" > /dev/null; then
+        break
+      fi
+      ${pkgs.coreutils}/bin/sleep 0.1
+    done
+    ${pkgs.gnugrep}/bin/grep -F 'codex-intercom bridge running 1 virtual agent(s)' "$TMPDIR/shared-coi.log"
+    ${pkgs.gnugrep}/bin/grep -F 'coi intercom session: Desktop shared app-server witness (desktop-shared-app-server-witness)' "$TMPDIR/shared-coi.log"
+    # A remote-control restart must close the attach-only bridge.  The user
+    # service has Restart=always and BindsTo=codex-remote-control, so it will
+    # attach again only after that shared owner is available.
+    kill -TERM "$shared_server_pid"
+    wait "$shared_server_pid" || true
+    shared_server_pid=
+    for attempt in $(${pkgs.coreutils}/bin/seq 1 100); do
+      ! kill -0 "$shared_bridge_pid" 2>/dev/null && break
+      ${pkgs.coreutils}/bin/sleep 0.1
+    done
+    ! kill -0 "$shared_bridge_pid" 2>/dev/null
+    wait "$shared_bridge_pid"
+    shared_bridge_pid=
 
     grep -F 'github:dataforxyz/agent-intercom-pi/d539a5476c26679f558d74b894b902d6366770a4' ${flakeFile}
     grep -F 'github:dataforxyz/agent-intercom-codex/118c85391b525982f00f38a3e3b67278e20e2774' ${flakeFile}

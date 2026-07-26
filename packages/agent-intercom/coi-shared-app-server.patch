@@ -1,0 +1,160 @@
+diff --git a/codex/coi.ts b/codex/coi.ts
+index 0584cd6..f0d7f4b 100644
+--- a/codex/coi.ts
++++ b/codex/coi.ts
+@@ -16,6 +16,7 @@ export interface CoiOptions {
+   instructions?: string;
+   socketPath?: string;
+   statePath?: string;
++  sharedAppServerSocketPath?: string;
+   noTui: boolean;
+   copyShortcut: boolean;
+   codexCommand: string;
+@@ -91,6 +92,19 @@ function readValue(args: string[], index: number, option: string): string {
+   return value;
+ }
+ 
++export function resolveSharedAppServerSocketPath(value: string | undefined): string | undefined {
++  if (!value) return undefined;
++  const unixPrefix = "unix://";
++  if (value.startsWith(unixPrefix)) {
++    const socketPath = value.slice(unixPrefix.length);
++    if (!socketPath.startsWith("/")) {
++      throw new Error("shared app-server socket must be an absolute path or unix:// URI");
++    }
++    return socketPath;
++  }
++  return resolve(value);
++}
++
+ function envFlagEnabled(value: string | undefined, defaultValue: boolean): boolean {
+   if (value === undefined) return defaultValue;
+   const normalized = value.trim().toLowerCase();
+@@ -246,5 +259,9 @@ export function parseCoiArgs(argv: string[], env: NodeJS.ProcessEnv = process.e
+         options.statePath = resolve(value ?? readValue(argv, index++, key));
+         break;
++      case "--intercom-shared-app-server":
++      case "--intercom-shared-app-server-socket":
++        options.sharedAppServerSocketPath = resolveSharedAppServerSocketPath(value ?? readValue(argv, index++, key));
++        break;
+       case "--no-tui":
+       case "--intercom-no-tui":
+         options.noTui = true;
+@@ -267,6 +284,7 @@ export function parseCoiArgs(argv: string[], env: NodeJS.ProcessEnv = process.e
+     instructions: options.instructions ?? env.CODEX_INTERCOM_INSTRUCTIONS,
+     socketPath: options.socketPath,
+     statePath: options.statePath,
++    sharedAppServerSocketPath: options.sharedAppServerSocketPath ?? resolveSharedAppServerSocketPath(env.CODEX_INTERCOM_APP_SERVER_SOCKET),
+     noTui: options.noTui ?? false,
+     copyShortcut: options.copyShortcut ?? envFlagEnabled(env.CODEX_INTERCOM_SHORTCUT, true),
+     codexCommand: env.CODEX_INTERCOM_CODEX_COMMAND || "codex",
+@@ -345,9 +363,9 @@ export function buildCodexAppServerArgs(
+   return ["app-server", ...appServerArgs, "--listen", `unix://${socketPath}`];
+ }
+ 
+-async function waitForSocket(socketPath: string, proc: ChildProcess, timeoutMs = 10000): Promise<void> {
++async function waitForSocket(socketPath: string, proc: ChildProcess | null, timeoutMs = 10000): Promise<void> {
+   const deadline = Date.now() + timeoutMs;
+   while (Date.now() < deadline) {
+-    if (proc.exitCode !== null) {
++    if (proc?.exitCode !== null) {
+       throw new Error(`Codex app-server exited before creating ${socketPath}`);
+     }
+     if (existsSync(socketPath)) return;
+@@ -520,26 +538,34 @@ export async function runCoi(options: CoiOptions): Promise<number> {
+   const name = options.name ?? identity.name;
+   const intercomDir = getIntercomDirPath();
+   cleanupOldCoiStateFiles(intercomDir);
+-  const socketPath = options.socketPath ?? join(intercomDir, `coi-${process.pid}.sock`);
++  const ownsAppServer = options.sharedAppServerSocketPath === undefined;
++  const socketPath = options.sharedAppServerSocketPath ?? options.socketPath ?? join(intercomDir, `coi-${process.pid}.sock`);
+   const statePath = options.statePath ?? join(intercomDir, `coi-${sanitizeSegment(id)}-state.json`);
+   const fresh = process.env.AGENT_INTERCOM_FRESH === "1";
+   resetCoiStateForFreshStart(statePath, fresh);
+-  rmSync(socketPath, { force: true });
++  if (ownsAppServer) rmSync(socketPath, { force: true });
+ 
+-  const appServer = spawn(options.codexCommand, buildCodexAppServerArgs(options.codexArgs, socketPath), {
+-    cwd: options.cwd,
+-    env: process.env,
+-    stdio: ["ignore", "ignore", "pipe"],
+-  });
+-  appServer.stderr?.on("data", (chunk) => {
++  const appServer = ownsAppServer
++    ? spawn(options.codexCommand, buildCodexAppServerArgs(options.codexArgs, socketPath), {
++      cwd: options.cwd,
++      env: process.env,
++      stdio: ["ignore", "ignore", "pipe"],
++    })
++    : null;
++  appServer?.stderr?.on("data", (chunk) => {
+     if (process.env.CODEX_INTERCOM_DEBUG) process.stderr.write(String(chunk));
+   });
+ 
+   const cleanup = async () => {
+     await daemon?.stop().catch(() => undefined);
+     await stopChild(appServer);
+-    rmSync(socketPath, { force: true });
++    if (ownsAppServer) rmSync(socketPath, { force: true });
+   };
+@@ -581,7 +607,10 @@ export async function runCoi(options: CoiOptions): Promise<number> {
+   process.stderr.write(`coi intercom session: ${name} (${id})\n`);
+ 
+   if (options.noTui) {
+-    await Promise.race([once(process, "SIGINT"), once(process, "SIGTERM"), once(appServer, "exit")]);
++    await Promise.race([
++      once(process, "SIGINT"),
++      once(process, "SIGTERM"),
++      daemon.waitForAppServerExit(),
++      ...(appServer ? [once(appServer, "exit")] : []),
++    ]);
+     await cleanupOnce();
+     return 0;
+   }
+diff --git a/codex/coi.test.ts b/codex/coi.test.ts
+index 449a21f..371b49c 100644
+--- a/codex/coi.test.ts
++++ b/codex/coi.test.ts
+@@ -3,5 +3,5 @@ import assert from "node:assert/strict";
+ import { existsSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from "node:fs";
+ import { tmpdir } from "node:os";
+ import { join } from "node:path";
+-import { buildCodexAppServerArgs, buildCoiTuiArgs, cleanupOldCoiStateFiles, createDefaultIdentity, deriveBridgeAgentRuntimeConfig, hasCodexHelpOrVersion, parseCoiArgs, resetCoiStateForFreshStart, resolveCoiResumeRequest, sanitizeSegment, splitCodexResumeArgs } from "./coi.ts";
++import { buildCodexAppServerArgs, buildCoiTuiArgs, cleanupOldCoiStateFiles, createDefaultIdentity, deriveBridgeAgentRuntimeConfig, hasCodexHelpOrVersion, parseCoiArgs, resetCoiStateForFreshStart, resolveCoiResumeRequest, resolveSharedAppServerSocketPath, sanitizeSegment, splitCodexResumeArgs } from "./coi.ts";
+ import { filterAltIInput, TuiInputDecoder } from "./tui-input.ts";
+@@ -54,5 +54,20 @@ test("parseCoiArgs supports disabling the Alt+I terminal shortcut", () => {
+   assert.equal(parseCoiArgs(["--intercom-shortcut"], { CODEX_INTERCOM_SHORTCUT: "off" }).copyShortcut, true);
+ });
+ 
++test("parseCoiArgs attaches to an explicitly shared app-server socket", () => {
++  const parsed = parseCoiArgs(["--intercom-shared-app-server", "unix:///tmp/codex-remote.sock"], {});
++  assert.equal(parsed.sharedAppServerSocketPath, "/tmp/codex-remote.sock");
++  assert.deepEqual(parsed.codexArgs, []);
++});
++
++test("parseCoiArgs reads the shared app-server socket from the environment", () => {
++  assert.equal(
++    parseCoiArgs([], { CODEX_INTERCOM_APP_SERVER_SOCKET: "unix:///tmp/codex-remote.sock" }).sharedAppServerSocketPath,
++    "/tmp/codex-remote.sock",
++  );
++  assert.equal(resolveSharedAppServerSocketPath("relative.sock"), resolveSharedAppServerSocketPath("./relative.sock"));
++  assert.throws(() => resolveSharedAppServerSocketPath("unix://relative.sock"), /absolute path/);
++});
++
+ test("splitCodexResumeArgs keeps options before the resumed thread id", () => {
+   assert.deepEqual(splitCodexResumeArgs(["--profile", "cliproxy", "-m", "gpt-test", "hello there"]), {
+diff --git a/codex/bridge-daemon.ts b/codex/bridge-daemon.ts
+index 995dbd9..86bf19d 100644
+--- a/codex/bridge-daemon.ts
++++ b/codex/bridge-daemon.ts
+@@ -764,6 +764,10 @@ export class CodexBridgeDaemon {
+   async stop(): Promise<void> {
+     for (const agent of this.agents) await agent.stop().catch(() => undefined);
+     await this.app.disconnect();
+   }
++
++  waitForAppServerExit(): Promise<void> {
++    return new Promise((resolve) => this.app.once("exit", resolve));
++  }
+ 
+   async ensureThreadForAgent(agentId: string): Promise<string> {

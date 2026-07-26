@@ -1,4 +1,9 @@
-{ inputs, pkgs, ... }:
+{
+  inputs,
+  pkgs,
+  sharedAppServerSocket ? null,
+  ...
+}:
 # Blueprint evaluates package outputs for every exposed system. Avoid resolving
 # this Linux x86_64 package's inputs on unsupported systems.
 if pkgs.stdenv.hostPlatform.system != "x86_64-linux" then
@@ -51,6 +56,14 @@ else
       ln -s ../../.pi-deps/esbuild-linux-x64 "${packageRoot}/node_modules/@esbuild/linux-x64"
       cp -R ${agentIntercomCore}/. "${packageRoot}/node_modules/@dataforxyz/agent-intercom-core"
     '';
+
+    sharedAppServerWrapperHook =
+      if sharedAppServerSocket == null then
+        ""
+      else
+        ''
+          --run 'export CODEX_INTERCOM_APP_SERVER_SOCKET="${sharedAppServerSocket}"'
+        '';
   in
   pkgs.stdenvNoCC.mkDerivation {
     pname = "agent-intercom";
@@ -61,6 +74,7 @@ else
       pkgs.gnutar
       pkgs.makeWrapper
       pkgs.nodejs
+      pkgs.patch
     ];
 
     installPhase = ''
@@ -77,6 +91,9 @@ else
 
       ${installTsxRuntime "$root/pi"}
       ${installTsxRuntime "$root/orchestrator"}
+      ${installTsxRuntime "$root/codex"}
+      patch --directory "$root/codex" --strip=1 --input ${./coi-shared-app-server.patch}
+      (cd "$root/codex" && ${pkgs.nodejs}/bin/node scripts/build.mjs)
 
       claudeBuild="$TMPDIR/claude"
       cp -R ${inputs.agent-intercom-claude-src}/. "$claudeBuild"
@@ -96,12 +113,14 @@ else
         --add-flags "$root/codex/dist/codex-server.mjs"
       makeWrapper ${pkgs.nodejs}/bin/node "$out/bin/codex-intercom-bridge" \
         --add-flags "$root/codex/dist/bridge-daemon.mjs"
-      # `coi` owns the local app-server bridge. Keep its child command pinned
-      # to the upstream CLI, never this package's normal `codex` alias, so an
-      # app-server spawn cannot recurse through the sidecar.
+      # `coi` starts a local server on non-graphical profiles. A graphical
+      # profile supplies a shared Desktop-owned socket, so the bridge attaches
+      # instead. Its child command always remains the upstream raw CLI, never
+      # this package's normal `codex` alias.
       makeWrapper ${pkgs.nodejs}/bin/node "$out/bin/coi" \
         --add-flags "$root/codex/dist/coi.mjs --yolo" \
-        --set CODEX_INTERCOM_CODEX_COMMAND ${codexCliPackage}/bin/codex
+        --set CODEX_INTERCOM_CODEX_COMMAND ${codexCliPackage}/bin/codex \
+        ${sharedAppServerWrapperHook}
       makeWrapper "$out/bin/coi" "$out/bin/codex"
       makeWrapper ${codexCliPackage}/bin/codex "$out/bin/codex-raw"
 
