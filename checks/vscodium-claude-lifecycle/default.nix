@@ -43,12 +43,12 @@ let
     ${pkgs.coreutils}/bin/ln -s "/nix/store/$store_name" "$root.tmp.$$"
     ${pkgs.coreutils}/bin/mv -Tf "$root.tmp.$$" "$root"
   '';
-  fakeCodium = pkgs.writeShellScript "codium-registry-and-daemon-fixture" ''
+  fakeCodium = pkgs.writeShellScript "codium-registry-and-supervisor-fixture" ''
     set -euf
     if [ "''${1:-}" = --list-extensions ]; then
       [ "''${FAKE_CODIUM_FAIL:-0}" != 1 ] || exit 1
       if ${pkgs.util-linux}/bin/flock -xn "$FAKE_LOCK" true; then
-        ${pkgs.coreutils}/bin/touch "$FAKE_SYSTEMD_DIR/refresh-gap"
+        ${pkgs.coreutils}/bin/touch "$FAKE_LAUNCH_DIR/refresh-gap"
       fi
       registry="$CRIOMOS_VSCODIUM_EXTENSIONS_DIR/extensions.json"
       ${pkgs.jq}/bin/jq --arg path "$CRIOMOS_VSCODIUM_EXTENSIONS_DIR/anthropic.claude-code-2.1.215-linux-x64" \
@@ -57,82 +57,31 @@ let
       exit 0
     fi
     if [ "''${1:-}" = --version ]; then
-      ${pkgs.coreutils}/bin/touch "$FAKE_SYSTEMD_DIR/version.called"
-      exit 0
+      printf '%s\n' "''${FAKE_CODIUM_CLI_OUTPUT:-fixture-version}"
+      ${pkgs.coreutils}/bin/touch "$FAKE_LAUNCH_DIR/version.called"
+      exit "''${FAKE_CODIUM_CLI_STATUS:-0}"
     fi
+    if [ "''${1:-}" = --status ]; then
+      printf '%s\n' "''${FAKE_CODIUM_CLI_OUTPUT:-fixture-status}"
+      exit "''${FAKE_CODIUM_CLI_STATUS:-0}"
+    fi
+    [ "''${FAKE_CODIUM_CLOSE_FD9:-0}" != 1 ] || exec 9>&-
+    printf '%s\n' "$$" > "$FAKE_LAUNCH_DIR/codium.pid"
+    printf '%s\n' "$PPID" > "$FAKE_LAUNCH_DIR/supervisor.pid"
+    test "$(<"/proc/$$/cgroup")" = "$(<"/proc/$PPID/cgroup")"
+    test "$(<"/proc/$$/cgroup")" = "$FAKE_CALLER_CGROUP"
+    ! ${pkgs.gnugrep}/bin/grep -q criomos-vscodium "/proc/$$/cgroup"
     (${pkgs.coreutils}/bin/sleep "''${FAKE_APP_SECONDS:-2}") & child_a=$!
     (${pkgs.coreutils}/bin/sleep "''${FAKE_APP_SECONDS:-2}") & child_b=$!
-    printf '%s\n%s\n' "$child_a" "$child_b" > "$FAKE_SYSTEMD_DIR/$FAKE_SCOPE.child"
-    ${pkgs.coreutils}/bin/touch "$FAKE_SYSTEMD_DIR/app.started"
-  '';
-  fakeSystemctl = pkgs.writeShellScript "systemctl-user-scope-fixture" ''
-    set -euf
-    dir="$FAKE_SYSTEMD_DIR"
-    case "''${2:-}" in
-      show)
-        unit="''${3:-}"
-        child="$dir/$unit.child"
-        state=inactive
-        if [ -s "$child" ]; then
-          while IFS= read -r pid; do
-            kill -0 "$pid" 2>/dev/null && state=active
-          done < "$child"
-        elif [ -s "$dir/$unit.session" ]; then
-          IFS= read -r session < "$dir/$unit.session"
-          if [ ! -e "$session/started" ]; then
-            ${pkgs.coreutils}/bin/touch "$dir/$unit.pending"
-            state=activating
-          elif [ ! -e "$session/completed" ]; then
-            state=active
-          fi
-        fi
-        printf '%s\n' "$state"
-        ;;
-      stop)
-        shift 2
-        for unit in "$@"; do
-          for pid_file in "$dir/$unit.child" "$dir/$unit.pid"; do
-            if [ -s "$pid_file" ]; then
-              while IFS= read -r pid; do kill "$pid" 2>/dev/null || true; done < "$pid_file"
-            fi
-          done
-        done
-        ;;
-    esac
-  '';
-  fakeSystemdRun = pkgs.writeShellScript "systemd-run-user-scope-fixture" ''
-    set -euf
-    scope=0 unit=""
-    while [ "$#" -gt 0 ]; do
-      case "$1" in
-        --scope) scope=1; shift ;;
-        --unit=*) unit="''${1#--unit=}"; shift ;;
-        --property=*) shift ;;
-        --user|--collect|--quiet|--no-block) shift ;;
-        *) break ;;
-      esac
-    done
-    [ -n "$unit" ] && [ "$#" -gt 0 ]
-    if [ "$scope" -eq 1 ]; then
-      printf '%s\n' "$2" > "$FAKE_SYSTEMD_DIR/$unit.session"
-      # Keep the queued state observable: the first status probe accepts the
-      # scope, publishes `activating`, then lets its command begin.
-      (
-        while [ ! -e "$FAKE_SYSTEMD_DIR/$unit.pending" ]; do
-          ${pkgs.coreutils}/bin/sleep 0.01
-        done
-        FAKE_SCOPE="$unit" "$@"
-      ) >/dev/null 2>&1 &
-    else
-      # The parent launcher already holds SH after its atomic EX→SH
-      # conversion. An EX probe here witnesses that there was no handoff gap.
-      ${pkgs.util-linux}/bin/flock -xn "$FAKE_LOCK" true || true
-      if ${pkgs.util-linux}/bin/flock -xn "$FAKE_LOCK" true; then
-        ${pkgs.coreutils}/bin/touch "$FAKE_SYSTEMD_DIR/handoff-gap"
-      fi
-      "$@" >/dev/null 2>&1 &
-      printf '%s\n' "$!" > "$FAKE_SYSTEMD_DIR/$unit.pid"
-    fi
+    printf '%s\n%s\n' "$child_a" "$child_b" > "$FAKE_LAUNCH_DIR/children"
+    terminate() {
+      kill "$child_a" "$child_b" 2>/dev/null || true
+      wait "$child_a" "$child_b" 2>/dev/null || true
+      exit 143
+    }
+    trap terminate INT TERM HUP
+    ${pkgs.coreutils}/bin/touch "$FAKE_LAUNCH_DIR/app.started"
+    wait "$child_a" "$child_b"
   '';
   lifecycleSource = pkgs.replaceVars ../../modules/home/vscodium/vscodium/claude-lifecycle.sh {
     COREUTILS = "${pkgs.coreutils}";
@@ -145,26 +94,25 @@ let
     READLINK = "${pkgs.coreutils}/bin/readlink";
     SED = "${pkgs.gnused}/bin/sed";
     CODIUM = "${homePkgs.vscodium}/bin/codium";
-    SYSTEMCTL = "${pkgs.systemd}/bin/systemctl";
-    SLEEP = "${pkgs.coreutils}/bin/sleep";
   };
   lifecycle = pkgs.writeShellScript "criomos-codium-claude-lifecycle-fixture" (
     builtins.readFile lifecycleSource
   );
-  scopeSource = pkgs.replaceVars ../../modules/home/vscodium/vscodium/codium-scope.sh {
+  supervisorSource = pkgs.replaceVars ../../modules/home/vscodium/vscodium/codium-supervisor.sh {
     COREUTILS = "${pkgs.coreutils}";
     CODIUM = "${homePkgs.vscodium}/bin/codium";
     READLINK = "${pkgs.coreutils}/bin/readlink";
+    SLEEP = "${pkgs.coreutils}/bin/sleep";
   };
-  scopeRunner = pkgs.writeShellScript "criomos-codium-scope-fixture" (builtins.readFile scopeSource);
+  supervisor = pkgs.writeShellScript "criomos-codium-supervisor-fixture" (
+    builtins.readFile supervisorSource
+  );
   launcherSource = pkgs.replaceVars ../../modules/home/vscodium/vscodium/codium-launch.sh {
     COREUTILS = "${pkgs.coreutils}";
+    CODIUM = "${homePkgs.vscodium}/bin/codium";
     FLOCK = "${pkgs.util-linux}/bin/flock";
     LIFECYCLE = "${lifecycle}";
-    SCOPE_RUNNER = "${scopeRunner}";
-    SYSTEMD_RUN = "${pkgs.systemd}/bin/systemd-run";
-    SYSTEMCTL = "${pkgs.systemd}/bin/systemctl";
-    DATE = "${pkgs.coreutils}/bin/date";
+    SUPERVISOR = "${supervisor}";
     READLINK = "${pkgs.coreutils}/bin/readlink";
     SLEEP = "${pkgs.coreutils}/bin/sleep";
   };
@@ -205,11 +153,12 @@ assert builtins.match ".*--activate.*" activation.replaceMutableClaudeCodeExtens
 pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
   set -euxo pipefail
   test "$(id -u)" -ne 0
-  for runtime_script in "${lifecycleSource}" "${scopeSource}" "${launcherSource}"; do
+  for runtime_script in "${lifecycleSource}" "${supervisorSource}" "${launcherSource}"; do
     ${pkgs.bash}/bin/bash -n "$runtime_script"
     ! ${pkgs.gnugrep}/bin/grep -E \
-      '(^|[;|&[:space:]])(awk|flock|readlink|realpath|mkdir|mktemp|mv|rm|ln|rmdir|cp|sed|grep|cut|tr|stat|systemd-run|systemctl|sleep|date|nix-store|codium|cat|head|tail|wc|pgrep)([;|&[:space:]]|$)' \
+      '(^|[;|&[:space:]])(awk|flock|readlink|realpath|mkdir|mktemp|mv|rm|ln|rmdir|cp|sed|grep|cut|tr|stat|sleep|date|nix-store|codium|cat|head|tail|wc|pgrep)([;|&[:space:]]|$)' \
       "$runtime_script"
+    ! ${pkgs.gnugrep}/bin/grep -q systemd-run "$runtime_script"
   done
   echo STAGE=setup
   blocked_activate() {
@@ -223,13 +172,11 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
   home="$TMPDIR/home"; ext="$home/.vscode-oss/extensions"; state="$home/state"; roots="$state/gcroots"
     mkdir -p "$ext" "$state" "$roots"
     export CRIOMOS_VSCODIUM_EXTENSIONS_DIR="$ext" CRIOMOS_VSCODIUM_STATE_DIR="$state" CRIOMOS_VSCODIUM_GCROOT_DIR="$roots" CRIOMOS_VSCODIUM_LOCK_FILE="$state/lifecycle.lock"
-    # Runtime defaults are store paths. Fakes cross only the three external
-    # boundaries; the lifecycle, launcher, scope runner, and their filesystem
+    # Runtime defaults are store paths. Fakes cross only the external
+    # boundaries; the lifecycle, launcher, supervisor, and their filesystem
     # tools must remain runnable when activation supplies no useful PATH.
     export CRIOMOS_VSCODIUM_NIX_STORE="${nixStoreFixture}"
     export CRIOMOS_VSCODIUM_CODIUM="${fakeCodium}"
-    export CRIOMOS_VSCODIUM_SYSTEMCTL="${fakeSystemctl}"
-    export CRIOMOS_VSCODIUM_SYSTEMD_RUN="${fakeSystemdRun}"
     path_guard_cwd="$TMPDIR/path-guard-cwd"
     path_guard_sentinel="$TMPDIR/path-guard-sentinel"
     mkdir -p "$path_guard_cwd" "$path_guard_sentinel"
@@ -266,6 +213,19 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
     assert_path_rejected lock-empty CRIOMOS_VSCODIUM_LOCK_FILE=
     assert_path_rejected state-control CRIOMOS_VSCODIUM_STATE_DIR=$'bad\nstate'
     test "$(cat "$path_guard_sentinel/content")" = preserved
+    # The direct launcher retains the same path boundary before it can create
+    # a session or hand any descriptor to a child.
+    if (cd "$path_guard_cwd" && env CRIOMOS_VSCODIUM_STATE_DIR=relative PATH=/nonexistent "${launcher}"); then false; fi
+    test "$(cat "$path_guard_sentinel/content")" = preserved
+    test ! -e "$path_guard_cwd/relative"
+    # A caller cannot point the supervisor at a foreign session and make its
+    # strict nonrecursive cleanup touch it.
+    foreign_session="$TMPDIR/foreign/session.ABCDEFGH"
+    mkdir -p "$foreign_session"
+    printf preserved > "$foreign_session/sentinel"
+    if env PATH=/nonexistent "${supervisor}" "$foreign_session" session.ABCDEFGH; then false; fi
+    test "$(cat "$foreign_session/sentinel")" = preserved
+    rm -rf "$TMPDIR/foreign"
     ln -s ${extAPath} "$ext/anthropic.claude-code"
     # Exercise activation without a GC-root override. The lifecycle itself runs
     # as this unprivileged builder and must keep its visible root in user state;
@@ -380,84 +340,87 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
     test "$(readlink -f "$ext/anthropic.claude-code-2.1.215-linux-x64")" = "$(readlink -f ${extAPath})"
     test ! -e "$ext/anthropic.claude-code-2.1.214-linux-x64"
     # The immutable extension declaration remains unchanged when only Codium's
-    # mutable registry has a stale same-version location.  Launch must use the
-    # supported underlying Codium refresh, retain unmanaged entries, and hand
-    # off its shared lease without a window for an exclusive reconciler.
-    fake_systemd="$TMPDIR/fake-systemd"
-    mkdir -p "$fake_systemd"
-    export FAKE_SYSTEMD_DIR="$fake_systemd" FAKE_LOCK="$state/lifecycle.lock" FAKE_APP_SECONDS=5
-    watch_sentinel="$TMPDIR/watch-sentinel"
-    mkdir -p "$watch_sentinel"
-    printf preserved > "$watch_sentinel/content"
-    mkdir -p "$state/session.12345678/nested" "$TMPDIR/foreign/session.12345678"
-    ln -s "$watch_sentinel" "$state/session.ABCDEFGH"
-    assert_watch_scope_path_rejected() {
-      if "${lifecycle}" --watch-scope criomos-vscodium-1-1.scope "$1"; then false; fi
-      test "$(cat "$watch_sentinel/content")" = preserved
-    }
-    assert_watch_scope_path_rejected "$state/session.12345678/../watch-sentinel/ready"
-    assert_watch_scope_path_rejected "$state/session.12345678/nested/ready"
-    assert_watch_scope_path_rejected "$TMPDIR/foreign/session.12345678/ready"
-    assert_watch_scope_path_rejected "$state/session.ABCDEFGH/ready"
-    assert_watch_scope_path_rejected "$state/session.abc$'\n'1234/ready"
-    test "$(cat "$watch_sentinel/content")" = preserved
-    rm -rf "$state/session.12345678" "$state/session.ABCDEFGH" "$TMPDIR/foreign"
+    # mutable registry has a stale same-version location. Launch refreshes via
+    # the supported underlying CLI, then hands its SH lease to a same-cgroup
+    # direct supervisor. A forbidden runtime command detects any regression.
+    launch_dir="$TMPDIR/direct-launch"
+    mkdir -p "$launch_dir"
+    export FAKE_LAUNCH_DIR="$launch_dir" FAKE_LOCK="$state/lifecycle.lock" FAKE_APP_SECONDS=5
+    forbidden_systemd_run="$launch_dir/forbidden-systemd-run"
+    printf '#!%s\ntouch %s\nexit 97\n' "${pkgs.runtimeShell}" "$launch_dir/systemd-run.called" > "$forbidden_systemd_run"
+    chmod +x "$forbidden_systemd_run"
+    export CRIOMOS_VSCODIUM_SYSTEMD_RUN="$forbidden_systemd_run"
     immutable="$ext/.extensions-immutable.json"
     printf '{"managed":"unchanged"}\n' > "$immutable"
     cp "$immutable" "$TMPDIR/immutable.before"
     printf '%s\n' "[{\"identifier\":{\"id\":\"anthropic.claude-code\"},\"location\":{\"path\":\"$ext/anthropic.claude-code-2.1.198-linux-x64\"}},{\"identifier\":{\"id\":\"unmanaged.fixture\"},\"location\":{\"path\":\"$ext/unmanaged.fixture\"}}]" > "$ext/extensions.json"
     "${lifecycle}" --activation-refresh
-    test ! -e "$fake_systemd/refresh-gap"
+    test ! -e "$launch_dir/refresh-gap"
     ${pkgs.jq}/bin/jq -e --arg path "$ext/anthropic.claude-code-2.1.215-linux-x64" \
       'any(.[]; .identifier.id == "anthropic.claude-code" and .location.path == $path)' "$ext/extensions.json"
     ${pkgs.jq}/bin/jq 'map(if .identifier.id == "anthropic.claude-code" then .location.path = "'$ext'/anthropic.claude-code-2.1.198-linux-x64" else . end)' \
       "$ext/extensions.json" > "$ext/extensions.json.tmp"
     mv "$ext/extensions.json.tmp" "$ext/extensions.json"
     unmanaged_before=$(${pkgs.jq}/bin/jq -c '[.[] | select(.identifier.id == "unmanaged.fixture")]' "$ext/extensions.json" | sha256sum)
-    env PATH=/nonexistent "${launcher}"
-    for _ in 1 2 3 4 5 6 7 8 9 10; do [ -e "$fake_systemd/app.started" ] && break; sleep 0.1; done
-    test -e "$fake_systemd/app.started"
-    pending_scopes=("$fake_systemd"/criomos-vscodium-*.scope.pending)
-    test -e "''${pending_scopes[0]}"
-    test ! -e "$fake_systemd/handoff-gap"
+    caller_cgroup="$(<"/proc/$$/cgroup")"
+    env PATH=/nonexistent FAKE_CALLER_CGROUP="$caller_cgroup" FAKE_CODIUM_CLOSE_FD9=1 "${launcher}"
+    for _ in 1 2 3 4 5 6 7 8 9 10; do [ -e "$launch_dir/app.started" ] && break; sleep 0.1; done
+    test -e "$launch_dir/app.started"
+    test ! -e "$launch_dir/systemd-run.called"
+    # The Codium fixture closes inherited FD 9. Its parent supervisor still
+    # owns SH, so an exclusive activation must defer after the launcher exits.
+    ! ${pkgs.util-linux}/bin/flock -xn "$state/lifecycle.lock" true
+    "${lifecycle}" --activation-refresh
+    ! ${pkgs.util-linux}/bin/flock -xn "$state/lifecycle.lock" true
     cmp "$TMPDIR/immutable.before" "$immutable"
     ${pkgs.jq}/bin/jq -e --arg path "$ext/anthropic.claude-code-2.1.215-linux-x64" \
       'any(.[]; .identifier.id == "anthropic.claude-code" and .location.path == $path)' "$ext/extensions.json"
     unmanaged_after=$(${pkgs.jq}/bin/jq -c '[.[] | select(.identifier.id == "unmanaged.fixture")]' "$ext/extensions.json" | sha256sum)
     test "$unmanaged_before" = "$unmanaged_after"
-    ! ${pkgs.util-linux}/bin/flock -xn "$state/lifecycle.lock" true
-    child_file=$(find "$fake_systemd" -name 'criomos-vscodium-*.scope.child')
-    child_a=$(sed -n '1p' "$child_file")
-    child_b=$(sed -n '2p' "$child_file")
-    kill "$child_a"
-    sleep 0.3
-    ! ${pkgs.util-linux}/bin/flock -xn "$state/lifecycle.lock" true
-    kill "$child_b"
+    codium_pid=$(cat "$launch_dir/codium.pid")
+    supervisor_pid=$(cat "$launch_dir/supervisor.pid")
+    child_a=$(sed -n '1p' "$launch_dir/children")
+    child_b=$(sed -n '2p' "$launch_dir/children")
+    # Interrupting the supervisor targets only its exact foreground Codium
+    # child. The fixture's Codium trap reaps its own children, so no child,
+    # supervisor, session, or SH lease can outlive the interrupted launch.
+    kill -TERM "$supervisor_pid"
     for _ in 1 2 3 4 5 6 7 8 9 10; do ${pkgs.util-linux}/bin/flock -xn "$state/lifecycle.lock" true && break; sleep 0.1; done
     ${pkgs.util-linux}/bin/flock -xn "$state/lifecycle.lock" true
+    ! kill -0 "$codium_pid" 2>/dev/null
+    ! kill -0 "$supervisor_pid" 2>/dev/null
+    ! kill -0 "$child_a" 2>/dev/null
+    ! kill -0 "$child_b" 2>/dev/null
     ! find "$state" -maxdepth 1 -type d -name 'session.*' | grep -q .
-    # A CLI-like Codium command may exit before the watcher's first probe. Its
-    # scope runner's durable started/completed acknowledgement must still let
-    # the wrapper return promptly, then reclaim its one-shot session state.
-    rm -f "$fake_systemd/version.called"
+    # A CLI-like Codium command may exit before the launcher's next probe. The
+    # authenticated started/ready/status handshake must return promptly and
+    # reclaim its one-shot session state without a false timeout.
+    rm -f "$launch_dir/version.called"
     cli_started=$(${pkgs.coreutils}/bin/date +%s%N)
-    "${launcher}" --version
+    cli_output="$("${launcher}" --version)"
     cli_elapsed=$(($(${pkgs.coreutils}/bin/date +%s%N) - cli_started))
     test "$cli_elapsed" -lt 1000000000
-    test -e "$fake_systemd/version.called"
+    test "$cli_output" = fixture-version
+    test -e "$launch_dir/version.called"
     for _ in 1 2 3 4 5 6 7 8 9 10; do ! find "$state" -maxdepth 1 -type d -name 'session.*' | grep -q . && break; sleep 0.1; done
     ! find "$state" -maxdepth 1 -type d -name 'session.*' | grep -q .
+    set +e
+    cli_output=$(FAKE_CODIUM_CLI_OUTPUT=fixture-status-failure FAKE_CODIUM_CLI_STATUS=37 "${launcher}" --status)
+    cli_status=$?
+    set -e
+    test "$cli_status" -eq 37
+    test "$cli_output" = fixture-status-failure
     # A failed supported refresh restores the original registry and no GUI
-    # scope survives: launch is fail-closed rather than running with drift.
+    # session survives: launch is fail-closed rather than running with drift.
     cp "$ext/extensions.json" "$TMPDIR/registry.before-failure"
     ${pkgs.jq}/bin/jq 'map(if .identifier.id == "anthropic.claude-code" then .location.path = "'$ext'/anthropic.claude-code-2.1.198-linux-x64" else . end)' \
       "$ext/extensions.json" > "$ext/extensions.json.tmp"
     mv "$ext/extensions.json.tmp" "$ext/extensions.json"
     cp "$ext/extensions.json" "$TMPDIR/registry.stale-before-failure"
-    rm -f "$fake_systemd/app.started"
+    rm -f "$launch_dir/app.started"
     if FAKE_CODIUM_FAIL=1 "${launcher}"; then false; fi
     cmp "$TMPDIR/registry.stale-before-failure" "$ext/extensions.json"
-    test ! -e "$fake_systemd/app.started"
+    test ! -e "$launch_dir/app.started"
     # A manifest is user-controlled state.  Every malformed name must stop
     # reconciliation before it can retarget the managed link/root or reach a
     # cleanup path.  The traversal form below was accepted by the old glob and

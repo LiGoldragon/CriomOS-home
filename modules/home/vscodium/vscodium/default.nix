@@ -22,28 +22,25 @@ let
     READLINK = "${pkgs.coreutils}/bin/readlink";
     SED = "${pkgs.gnused}/bin/sed";
     CODIUM = "${codiumPackage}/bin/codium";
-    SYSTEMCTL = "${pkgs.systemd}/bin/systemctl";
-    SLEEP = "${pkgs.coreutils}/bin/sleep";
   };
   codiumClaudeLifecycle = pkgs.writeShellScriptBin "criomos-codium-claude-lifecycle" (
     builtins.readFile lifecycleSource
   );
-  codiumScopeSource = pkgs.replaceVars ./codium-scope.sh {
+  codiumSupervisorSource = pkgs.replaceVars ./codium-supervisor.sh {
     COREUTILS = "${pkgs.coreutils}";
     CODIUM = "${codiumPackage}/bin/codium";
     READLINK = "${pkgs.coreutils}/bin/readlink";
+    SLEEP = "${pkgs.coreutils}/bin/sleep";
   };
-  codiumScopeRunner = pkgs.writeShellScriptBin "criomos-codium-scope" (
-    builtins.readFile codiumScopeSource
+  codiumSupervisor = pkgs.writeShellScriptBin "criomos-codium-supervisor" (
+    builtins.readFile codiumSupervisorSource
   );
   codiumLauncherSource = pkgs.replaceVars ./codium-launch.sh {
     COREUTILS = "${pkgs.coreutils}";
+    CODIUM = "${codiumPackage}/bin/codium";
     FLOCK = "${pkgs.util-linux}/bin/flock";
     LIFECYCLE = "${codiumClaudeLifecycle}/bin/criomos-codium-claude-lifecycle";
-    SCOPE_RUNNER = "${codiumScopeRunner}/bin/criomos-codium-scope";
-    SYSTEMD_RUN = "${pkgs.systemd}/bin/systemd-run";
-    SYSTEMCTL = "${pkgs.systemd}/bin/systemctl";
-    DATE = "${pkgs.coreutils}/bin/date";
+    SUPERVISOR = "${codiumSupervisor}/bin/criomos-codium-supervisor";
     READLINK = "${pkgs.coreutils}/bin/readlink";
     SLEEP = "${pkgs.coreutils}/bin/sleep";
   };

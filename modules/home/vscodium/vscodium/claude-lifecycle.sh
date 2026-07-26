@@ -68,8 +68,7 @@ dry=0
 bootstrap_only=0
 nix_store="${CRIOMOS_VSCODIUM_NIX_STORE:-@NIX_STORE@}"
 codium="${CRIOMOS_VSCODIUM_CODIUM:-@CODIUM@}"
-systemctl="${CRIOMOS_VSCODIUM_SYSTEMCTL:-@SYSTEMCTL@}"
-for runtime_command in "$nix_store" "$codium" "$systemctl"; do
+for runtime_command in "$nix_store" "$codium"; do
   case "$runtime_command" in
     /*) [ -x "$runtime_command" ] || exit 127 ;;
     *) exit 127 ;;
@@ -207,90 +206,6 @@ activation_refresh() {
   refresh_registry
 }
 
-valid_scope_unit() {
-  [[ "$1" =~ ^criomos-vscodium-[0-9]+-[0-9]+[.]scope$ ]]
-}
-
-valid_session_ready() {
-  candidate="$1"
-  candidate_parent="${candidate%/*}"
-  candidate_leaf="${candidate##*/}"
-  candidate_name="${candidate_parent##*/}"
-  valid_absolute_path "$candidate" \
-    && canonical_existing_path "$candidate" \
-    && [ "$candidate_leaf" = ready ] \
-    && [ "$candidate" = "$candidate_parent/ready" ] \
-    && [[ "$candidate_name" =~ ^session[.][A-Za-z0-9]{8}$ ]] \
-    && [ "$candidate_parent" = "$state_dir/$candidate_name" ] \
-    && [ -d "$candidate_parent" ] \
-    && [ ! -L "$candidate_parent" ] || return 1
-  canonical_state="$(@READLINK@ -f "$state_dir" 2>/dev/null || true)"
-  canonical_parent="$(@READLINK@ -f "$candidate_parent" 2>/dev/null || true)"
-  [ -n "$canonical_state" ] \
-    && [ "$canonical_parent" = "$canonical_state/$candidate_name" ] || return 1
-  session_dir="$candidate_parent"
-}
-
-watch_scope() {
-  scope="$1" ready="$2"
-  valid_scope_unit "$scope" || return 1
-  valid_session_ready "$ready" || return 1
-  cleanup_session_dir() {
-    # Revalidate before every destructive operation: a hostile same-user
-    # replacement becomes a harmless retained directory, never an unlink.
-    valid_session_ready "$ready" || return 0
-    @COREUTILS@/bin/rm -f "$session_dir/ready" "$session_dir/consumed" "$session_dir/started" "$session_dir/completed"
-    @COREUTILS@/bin/rmdir "$session_dir" 2>/dev/null || true
-  }
-  validate_mutation_paths
-  exec 9>"$lock_file"
-  @FLOCK@ -s 9
-  # A fresh directory is created by the launcher; remove no caller-selected
-  # path and only publish readiness after this exact scope exists.
-  attempts=0
-  while :; do
-    active="$("$systemctl" --user show "$scope" --property=ActiveState --value 2>/dev/null || true)"
-    completed="$(@COREUTILS@/bin/cat "$session_dir/completed" 2>/dev/null || true)"
-    [ -z "$completed" ] || [ "$completed" = 0 ] || { cleanup_session_dir; return 1; }
-    if [ "$completed" = 0 ]; then
-      break
-    fi
-    case "$active" in
-      active|activating|reloading) break ;;
-      inactive|failed|deactivating)
-        attempts=$((attempts + 1))
-        [ "$attempts" -lt 100 ] || { cleanup_session_dir; return 1; }
-        @SLEEP@ 0.05
-        ;;
-      *)
-        attempts=$((attempts + 1))
-        [ "$attempts" -lt 100 ] || { cleanup_session_dir; return 1; }
-        @SLEEP@ 0.05
-        ;;
-    esac
-  done
-  ready_tmp="$ready.tmp.$$"
-  printf 'ready\n' > "$ready_tmp"
-  @COREUTILS@/bin/mv -f "$ready_tmp" "$ready"
-  while :; do
-    active="$("$systemctl" --user show "$scope" --property=ActiveState --value 2>/dev/null || true)"
-    case "$active" in
-      active|activating|reloading) @SLEEP@ 0.2 ;;
-      inactive|failed|deactivating|*) break ;;
-    esac
-  done
-  # READY must survive a fast CLI/single-instance exit until the launching
-  # wrapper acknowledges it. Otherwise a scope that terminates between the
-  # write and the wrapper's next probe causes a false five-second failure.
-  attempts=0
-  while [ ! -e "$session_dir/consumed" ]; do
-    attempts=$((attempts + 1))
-    [ "$attempts" -lt 100 ] || { cleanup_session_dir; return 0; }
-    @SLEEP@ 0.05
-  done
-  cleanup_session_dir
-}
-
 reconcile() {
   lock_ready=0
   if [ "${CRIOMOS_VSCODIUM_LOCK_HELD:-0}" = 1 ]; then
@@ -392,6 +307,5 @@ case "${1:-}" in
   --activation-refresh) activation_refresh ;;
   --prepare-launch) prepare_launch ;;
   --refresh-registry) refresh_registry ;;
-  --watch-scope) watch_scope "${2:-}" "${3:-}" ;;
   --dry-run|--activate|--launch|*) reconcile "$@" ;;
 esac
