@@ -48,7 +48,7 @@ index 0584cd6..f0d7f4b 100644
      noTui: options.noTui ?? false,
      copyShortcut: options.copyShortcut ?? envFlagEnabled(env.CODEX_INTERCOM_SHORTCUT, true),
      codexCommand: env.CODEX_INTERCOM_CODEX_COMMAND || "codex",
-@@ -345,9 +363,9 @@ export function buildCodexAppServerArgs(
+@@ -357,10 +375,10 @@ export function buildCodexAppServerArgs(
    return ["app-server", ...appServerArgs, "--listen", `unix://${socketPath}`];
  }
  
@@ -61,7 +61,7 @@ index 0584cd6..f0d7f4b 100644
        throw new Error(`Codex app-server exited before creating ${socketPath}`);
      }
      if (existsSync(socketPath)) return;
-@@ -538,23 +538,26 @@ export async function runCoi(options: CoiOptions): Promise<number> {
+@@ -538,23 +556,26 @@ export async function runCoi(options: CoiOptions): Promise<number> {
    const name = options.name ?? identity.name;
    const intercomDir = getIntercomDirPath();
    cleanupOldCoiStateFiles(intercomDir);
@@ -97,7 +97,7 @@ index 0584cd6..f0d7f4b 100644
 -    rmSync(socketPath, { force: true });
 +    if (ownsAppServer) rmSync(socketPath, { force: true });
    };
-@@ -604,7 +607,10 @@ export async function runCoi(options: CoiOptions): Promise<number> {
+@@ -604,7 +625,10 @@ export async function runCoi(options: CoiOptions): Promise<number> {
    process.stderr.write(`coi intercom session: ${name} (${id})\n`);
  
    if (options.noTui) {
