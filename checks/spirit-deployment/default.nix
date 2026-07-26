@@ -223,14 +223,15 @@ else
     grep -q '/spirit-judge.sock' spirit-judge-startup-state
 
     cat "$judge_exec_start" > spirit-judge-daemon-service
-    grep -q -- '--provider openai-codex' spirit-judge-daemon-service
-    grep -q -- '--model gpt-5.6-terra' spirit-judge-daemon-service
-    grep -q -- '--reasoning-effort medium' spirit-judge-daemon-service
-    grep -q -- '--external-authorization-source codex-login' spirit-judge-daemon-service
-    grep -q -- '--session-launcher ' spirit-judge-daemon-service
-    grep -q -- '--codex-command ' spirit-judge-daemon-service
+    # spirit-judge takes exactly one argument: a NOTA payload, not argv flags.
+    ! grep -q -- ' --' spirit-judge-daemon-service
+    grep -q -- 'OpenAiCodex' spirit-judge-daemon-service
+    grep -q -- 'gpt-5.6-terra' spirit-judge-daemon-service
+    grep -q -- '(Some Medium)' spirit-judge-daemon-service
+    grep -q -- '(Some codex-login)' spirit-judge-daemon-service
+    grep -q -- '/bin/setsid' spirit-judge-daemon-service
+    grep -q -- '/bin/codex' spirit-judge-daemon-service
     ! grep -q 'gopass show' spirit-judge-daemon-service
-    ! grep -q 'bearer-secret-source' spirit-judge-daemon-service
     ! grep -q 'deepseek-v4-pro' spirit-judge-daemon-service
 
     grep -q '/bin/spirit-daemon ' exec-start

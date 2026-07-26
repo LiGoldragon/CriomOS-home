@@ -128,20 +128,20 @@ let
     ${pkgs.coreutils}/bin/rm -f ${lib.escapeShellArg spiritJudgeSocketPath}
   '';
 
+  # spirit-judge takes exactly one argument: a NOTA payload carrying its
+  # fully typed `serve` configuration (the workspace single-argument
+  # executable rule; see standards/standard-component-architecture.md). This
+  # mirrors how `spirit-write-configuration` above is invoked: one binary name,
+  # one double-quoted NOTA record as a single shell argument.
+  spiritJudgeServeRequest = "(Serve (${spiritJudgeSocketPath} ${spiritJudgeConfig} OpenAiCodex gpt-5.6-terra (Some Medium) 180000 None None (Some codex-login) (Some ${pkgs.util-linux}/bin/setsid) (Some ${codexCliPackage}/bin/codex) None))";
+
   spiritJudgeServiceWrapper = pkgs.writeShellScriptBin "spirit-judge-daemon-service" ''
     set -eu
 
     # OpenAI Codex owns the authenticated session and receives no copied token.
     # The reference is policy data only; the executable resolves it at runtime.
-    exec ${spiritJudgePackage}/bin/spirit-judge serve \
-      --socket ${lib.escapeShellArg spiritJudgeSocketPath} \
-      --config-root ${lib.escapeShellArg spiritJudgeConfig} \
-      --provider openai-codex \
-      --model gpt-5.6-terra \
-      --reasoning-effort medium \
-      --external-authorization-source codex-login \
-      --session-launcher ${pkgs.util-linux}/bin/setsid \
-      --codex-command ${codexCliPackage}/bin/codex
+    exec ${spiritJudgePackage}/bin/spirit-judge \
+      ${lib.escapeShellArg spiritJudgeServeRequest}
   '';
 
   commandLineWrapper = pkgs.writeShellScriptBin "spirit" ''
