@@ -212,12 +212,14 @@ pkgs.runCommand "agent-intercom-local-home-contract"
     shared_home="$out/shared-home"
     shared_codex_home="$shared_home/.codex"
     shared_work="$TMPDIR/shared-work"
+    shared_agent_dir="$shared_runtime/agent"
     shared_log_directory="$out/logs"
     shared_app_server_log="$shared_log_directory/app-server.log"
     shared_bridge_log="$shared_log_directory/coi.log"
-    mkdir -p "$shared_runtime" "$shared_codex_home" "$shared_work" "$shared_log_directory"
+    mkdir -p "$shared_agent_dir" "$shared_codex_home" "$shared_work" "$shared_log_directory"
     shared_server_pid=
     shared_bridge_pid=
+    shared_broker_pid=
     stop_shared_witness() {
       if [ -n "$shared_bridge_pid" ]; then
         kill -TERM "$shared_bridge_pid" 2>/dev/null || true
@@ -226,6 +228,10 @@ pkgs.runCommand "agent-intercom-local-home-contract"
       if [ -n "$shared_server_pid" ]; then
         kill -TERM "$shared_server_pid" 2>/dev/null || true
         wait "$shared_server_pid" 2>/dev/null || true
+      fi
+      if [ -n "$shared_broker_pid" ]; then
+        kill -TERM "$shared_broker_pid" 2>/dev/null || true
+        wait "$shared_broker_pid" 2>/dev/null || true
       fi
     }
     report_shared_witness_result() {
@@ -256,7 +262,7 @@ pkgs.runCommand "agent-intercom-local-home-contract"
       ${pkgs.coreutils}/bin/sleep 0.1
     done
     test -S "$shared_runtime/codex-intercom-app-server.sock"
-    HOME="$shared_home" CODEX_HOME="$shared_codex_home" CODEX_INTERCOM_DEBUG=1 XDG_RUNTIME_DIR="$shared_runtime" \
+    HOME="$shared_home" CODEX_HOME="$shared_codex_home" CODEX_INTERCOM_DEBUG=1 PI_CODING_AGENT_DIR="$shared_agent_dir" XDG_RUNTIME_DIR="$shared_runtime" \
       ${graphicalAgentIntercom}/bin/coi --no-tui \
         --intercom-shared-app-server "unix://$shared_runtime/codex-intercom-app-server.sock" \
         --intercom-id desktop-shared-app-server-witness \
@@ -273,6 +279,8 @@ pkgs.runCommand "agent-intercom-local-home-contract"
     done
     ${pkgs.gnugrep}/bin/grep -F 'codex-intercom bridge running 1 virtual agent(s)' "$shared_bridge_log"
     ${pkgs.gnugrep}/bin/grep -F 'coi intercom session: Desktop shared app-server witness (desktop-shared-app-server-witness)' "$shared_bridge_log"
+    test -s "$shared_agent_dir/intercom/broker.pid"
+    shared_broker_pid=$(cat "$shared_agent_dir/intercom/broker.pid")
     # A remote-control restart must close the attach-only bridge.  The user
     # service has Restart=always and BindsTo=codex-remote-control, so it will
     # attach again only after that shared owner is available.
