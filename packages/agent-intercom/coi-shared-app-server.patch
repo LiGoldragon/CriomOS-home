@@ -57,7 +57,7 @@ index 0584cd6..f0d7f4b 100644
    const deadline = Date.now() + timeoutMs;
    while (Date.now() < deadline) {
 -    if (proc.exitCode !== null) {
-+    if (proc?.exitCode !== null) {
++    if (proc !== null && proc.exitCode !== null) {
        throw new Error(`Codex app-server exited before creating ${socketPath}`);
      }
      if (existsSync(socketPath)) return;

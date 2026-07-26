@@ -258,6 +258,7 @@ pkgs.runCommand "agent-intercom-local-home-contract"
     test -S "$shared_runtime/codex-intercom-app-server.sock"
     HOME="$shared_home" CODEX_HOME="$shared_codex_home" XDG_RUNTIME_DIR="$shared_runtime" \
       ${graphicalAgentIntercom}/bin/coi --no-tui \
+        --intercom-shared-app-server "unix://$shared_runtime/codex-intercom-app-server.sock" \
         --intercom-id desktop-shared-app-server-witness \
         --intercom-name 'Desktop shared app-server witness' \
         --cwd "$shared_work" \
