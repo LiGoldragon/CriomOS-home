@@ -208,6 +208,34 @@ index 989dd47..ef38021 100644
 +  await agent.stop();
 +});
 +
- test("threadSandboxMode maps bridge sandbox policies to codex thread modes", () => {
-   assert.equal(threadSandboxMode({ type: "readOnly" }), "read-only");
-   assert.equal(threadSandboxMode({ type: "workspaceWrite" }), "workspace-write");
+test("threadSandboxMode maps bridge sandbox policies to codex thread modes", () => {
+  assert.equal(threadSandboxMode({ type: "readOnly" }), "read-only");
+  assert.equal(threadSandboxMode({ type: "workspaceWrite" }), "workspace-write");
+diff --git a/codex/broker/spawn.ts b/codex/broker/spawn.ts
+index 12ddf55..79afbd8 100644
+--- a/codex/broker/spawn.ts
++++ b/codex/broker/spawn.ts
+@@ -172,18 +172,18 @@ export function getBrokerSpawnOptions(
+ ): {
+   detached: true;
+-  stdio: "ignore";
++  stdio: "ignore" | ["ignore", "ignore", "pipe"];
+   cwd: string;
+   env: NodeJS.ProcessEnv;
+   windowsHide: true;
+ } {
+   return {
+     detached: true,
+-    stdio: "ignore",
++    stdio: process.env.CODEX_INTERCOM_DEBUG ? ["ignore", "ignore", "pipe"] : "ignore",
+     cwd: extensionDir,
+     env: { ...env, PI_CODING_AGENT_DIR: getAgentDirPath(env), NODE_NO_WARNINGS: "1" },
+     windowsHide: true,
+   };
+@@ -220,3 +220,6 @@ export async function spawnBrokerIfNeeded(brokerCommand: string, brokerArgs: str
+     }
+     const child = spawn(launch.command, launch.args, getBrokerSpawnOptions());
++    child.stderr?.on("data", (chunk) => {
++      if (process.env.CODEX_INTERCOM_DEBUG) process.stderr.write(String(chunk));
++    });
+     child.unref();
