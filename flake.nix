@@ -70,6 +70,20 @@
       flake = false;
     };
 
+    # Codex sidebar VSIX — keep the editor surface on its own versioned
+    # input, alongside the independently pinned Codex CLI below.  The
+    # Open VSX catalogue is deliberately not the update authority here:
+    # Codium marketplace checks are disabled, and its catalogue cadence can
+    # otherwise leave the sidebar behind the TUI.  For a coordinated Codex
+    # refresh, bump this URL with `codex-cli`, run
+    # `nix flake update codex-chatgpt-vsix`, and run the VSCodium lifecycle
+    # check before deploying.
+    codex-chatgpt-vsix = {
+      type = "file";
+      url = "https://open-vsx.org/api/openai/chatgpt/linux-x64/26.5721.30844/file/openai.chatgpt-26.5721.30844@linux-x64.vsix";
+      flake = false;
+    };
+
     # `substack` CLI — its own flake, exposes packages.<system>.default.
     substack-cli.url = "github:LiGoldragon/substack-cli";
     substack-cli.inputs.nixpkgs.follows = "nixpkgs";
@@ -103,8 +117,10 @@
     hexis.url = "github:LiGoldragon/hexis";
     hexis.inputs.nixpkgs.follows = "nixpkgs";
 
-    # AI coding agents (daily auto-updates) — Li uses claude-code +
-    # codex 12h/day, regression dropped them in the 2026-04-25 trim.
+    # AI coding agents (daily refreshes) — Li uses claude-code + Codex
+    # 12h/day, regression dropped them in the 2026-04-25 trim.  Codex's
+    # sidebar companion is the versioned `codex-chatgpt-vsix` input above;
+    # update the two inputs together.
     # llm-agents keeps its own nixpkgs: its package set follows fast
     # tool packaging and currently needs newer pnpm attributes than the
     # profile-wide nixpkgs pin provides.

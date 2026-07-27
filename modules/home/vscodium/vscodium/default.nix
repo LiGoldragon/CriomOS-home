@@ -138,6 +138,20 @@ let
     '';
   };
 
+  # The ChatGPT/Codex sidebar must be versioned with the Codex CLI rather
+  # than inherited from `pkgs.open-vsx`: VSCodium's marketplace updates are
+  # intentionally disabled, and the catalogue pin moves independently.  A
+  # raw, locked VSIX makes the deployed sidebar deterministic and lets the
+  # coordinated Codex refresh advance both surfaces deliberately.
+  codex-chatgpt-codium = pkgs.vscode-utils.buildVscodeMarketplaceExtension {
+    mktplcRef = {
+      name = "chatgpt";
+      publisher = "openai";
+      version = "26.5721.30844";
+    };
+    vsix = vsixFromInput "openai.chatgpt-26.5721.30844-linux-x64.vsix" inputs.codex-chatgpt-vsix;
+  };
+
   # All aski-related code dropped per Li 2026-04-25.
 
   nixSettings = {
@@ -209,7 +223,7 @@ lib.mkIf size.medium {
       extensions = [
         visualjj
         claude-code-codium
-        ovsx.openai.chatgpt
+        codex-chatgpt-codium
         ovsx.cdervis.vscode-pi
         pkgs.vscode-extensions.mkhl.direnv
         pkgs.vscode-extensions.jnoortheen.nix-ide

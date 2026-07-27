@@ -139,6 +139,7 @@ assert vscodeConfig.package.meta.mainProgram == "codium";
 assert homePkgs.lib.getExe vscodeConfig.package == "${vscodeConfig.package}/bin/codium";
 assert vscodeConfig.nameShort == "VSCodium";
 assert vscodeConfig.dataFolderName == ".vscode-oss";
+assert builtins.any (extension: extension.version == "26.5721.30844") vscodeConfig.profiles.default.extensions;
 assert homePkgs.lib.hasInfix (builtins.unsafeDiscardStringContext "--activation-refresh") (
   builtins.unsafeDiscardStringContext extensionRefresh
 );
