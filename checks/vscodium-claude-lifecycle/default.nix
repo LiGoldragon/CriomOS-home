@@ -51,9 +51,26 @@ let
         ${pkgs.coreutils}/bin/touch "$FAKE_LAUNCH_DIR/refresh-gap"
       fi
       registry="$CRIOMOS_VSCODIUM_EXTENSIONS_DIR/extensions.json"
-      ${pkgs.jq}/bin/jq --arg path "$CRIOMOS_VSCODIUM_EXTENSIONS_DIR/anthropic.claude-code-2.1.215-linux-x64" \
-        '[.[] | select(.identifier.id? != "anthropic.claude-code")] + [{identifier:{id:"anthropic.claude-code"},location:{path:$path}}]' \
-        "$CRIOMOS_VSCODIUM_REGISTRY_BACKUP" > "$registry"
+      immutable="$CRIOMOS_VSCODIUM_EXTENSIONS_DIR/.extensions-immutable.json"
+      ${pkgs.jq}/bin/jq \
+        --arg claude_path "$CRIOMOS_VSCODIUM_EXTENSIONS_DIR/anthropic.claude-code-2.1.215-linux-x64" \
+        --arg ext_dir "$CRIOMOS_VSCODIUM_EXTENSIONS_DIR" \
+        '. as $registry
+         | input as $immutable
+         | [$registry[] | . as $entry
+            | select($immutable | all(.[];
+                .identifier.id? != $entry.identifier.id?
+              ))]
+           + [$immutable[]
+              | .identifier.id as $id
+              | (if $id == "anthropic.claude-code"
+                 then $claude_path
+                 else $ext_dir + "/" + .relativeLocation
+                 end) as $path
+              | .location.path = $path
+              | .location.fsPath = $path
+              | .relativeLocation = ($path | split("/") | last)]' \
+        "$CRIOMOS_VSCODIUM_REGISTRY_BACKUP" "$immutable" > "$registry"
       exit 0
     fi
     if [ "''${1:-}" = --version ]; then
@@ -139,7 +156,9 @@ assert vscodeConfig.package.meta.mainProgram == "codium";
 assert homePkgs.lib.getExe vscodeConfig.package == "${vscodeConfig.package}/bin/codium";
 assert vscodeConfig.nameShort == "VSCodium";
 assert vscodeConfig.dataFolderName == ".vscode-oss";
-assert builtins.any (extension: extension.version == "26.5721.30844") vscodeConfig.profiles.default.extensions;
+assert builtins.any (
+  extension: extension.version == "26.5721.30844"
+) vscodeConfig.profiles.default.extensions;
 assert homePkgs.lib.hasInfix (builtins.unsafeDiscardStringContext "--activation-refresh") (
   builtins.unsafeDiscardStringContext extensionRefresh
 );
@@ -352,13 +371,29 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
     chmod +x "$forbidden_systemd_run"
     export CRIOMOS_VSCODIUM_SYSTEMD_RUN="$forbidden_systemd_run"
     immutable="$ext/.extensions-immutable.json"
-    printf '{"managed":"unchanged"}\n' > "$immutable"
+    cat > "$immutable" <<'EOF'
+    [
+      {
+        "identifier": {"id": "anthropic.claude-code"},
+        "version": "2.1.215",
+        "relativeLocation": "anthropic.claude-code"
+      },
+      {
+        "identifier": {"id": "openai.chatgpt"},
+        "version": "26.5721.30844",
+        "relativeLocation": "openai.chatgpt"
+      }
+    ]
+    EOF
     cp "$immutable" "$TMPDIR/immutable.before"
-    printf '%s\n' "[{\"identifier\":{\"id\":\"anthropic.claude-code\"},\"location\":{\"path\":\"$ext/anthropic.claude-code-2.1.198-linux-x64\"}},{\"identifier\":{\"id\":\"unmanaged.fixture\"},\"location\":{\"path\":\"$ext/unmanaged.fixture\"}}]" > "$ext/extensions.json"
+    printf '%s\n' "[{\"identifier\":{\"id\":\"anthropic.claude-code\"},\"version\":\"2.1.198\",\"relativeLocation\":\"anthropic.claude-code-2.1.198-linux-x64\",\"location\":{\"path\":\"$ext/anthropic.claude-code-2.1.198-linux-x64\"}},{\"identifier\":{\"id\":\"openai.chatgpt\"},\"version\":\"26.5422.30944\",\"relativeLocation\":\"openai.chatgpt\",\"location\":{\"path\":\"$ext/openai.chatgpt\"}},{\"identifier\":{\"id\":\"unmanaged.fixture\"},\"location\":{\"path\":\"$ext/unmanaged.fixture\"}}]" > "$ext/extensions.json"
     "${lifecycle}" --activation-refresh
     test ! -e "$launch_dir/refresh-gap"
     ${pkgs.jq}/bin/jq -e --arg path "$ext/anthropic.claude-code-2.1.215-linux-x64" \
       'any(.[]; .identifier.id == "anthropic.claude-code" and .location.path == $path)' "$ext/extensions.json"
+    ${pkgs.jq}/bin/jq -e \
+      'any(.[]; .identifier.id == "openai.chatgpt" and .version == "26.5721.30844")' \
+      "$ext/extensions.json"
     ${pkgs.jq}/bin/jq 'map(if .identifier.id == "anthropic.claude-code" then .location.path = "'$ext'/anthropic.claude-code-2.1.198-linux-x64" else . end)' \
       "$ext/extensions.json" > "$ext/extensions.json.tmp"
     mv "$ext/extensions.json.tmp" "$ext/extensions.json"
@@ -378,6 +413,17 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
       'any(.[]; .identifier.id == "anthropic.claude-code" and .location.path == $path)' "$ext/extensions.json"
     unmanaged_after=$(${pkgs.jq}/bin/jq -c '[.[] | select(.identifier.id == "unmanaged.fixture")]' "$ext/extensions.json" | sha256sum)
     test "$unmanaged_before" = "$unmanaged_after"
+    ${pkgs.jq}/bin/jq \
+      'map(if .identifier.id == "openai.chatgpt" then .version = "26.6000.0" else . end)' \
+      "$immutable" > "$immutable.tmp"
+    mv "$immutable.tmp" "$immutable"
+    cp "$immutable" "$TMPDIR/immutable.deferred"
+    "${lifecycle}" --activation-refresh
+    ! ${pkgs.util-linux}/bin/flock -xn "$state/lifecycle.lock" true
+    cmp "$TMPDIR/immutable.deferred" "$immutable"
+    ${pkgs.jq}/bin/jq -e \
+      'any(.[]; .identifier.id == "openai.chatgpt" and .version == "26.5721.30844")' \
+      "$ext/extensions.json"
     codium_pid=$(cat "$launch_dir/codium.pid")
     supervisor_pid=$(cat "$launch_dir/supervisor.pid")
     child_a=$(sed -n '1p' "$launch_dir/children")
@@ -393,6 +439,11 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
     ! kill -0 "$child_a" 2>/dev/null
     ! kill -0 "$child_b" 2>/dev/null
     ! find "$state" -maxdepth 1 -type d -name 'session.*' | grep -q .
+    "${lifecycle}" --prepare-launch
+    ${pkgs.jq}/bin/jq -e \
+      'any(.[]; .identifier.id == "openai.chatgpt" and .version == "26.6000.0")' \
+      "$ext/extensions.json"
+    cmp "$immutable" "$state/extensions-immutable.registry.json"
     # A CLI-like Codium command may exit before the launcher's next probe. The
     # authenticated started/ready/status handshake must return promptly and
     # reclaim its one-shot session state without a false timeout.

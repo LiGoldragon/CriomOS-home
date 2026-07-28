@@ -64,6 +64,8 @@ valid_absolute_path "$lock_file" && direct_child_of "$state_dir" "$lock_file" \
   && canonical_existing_path "$lock_file" || path_error "lock ($lock_file)"
 manifest="$state_dir/manifest"
 registry="$ext_dir/extensions.json"
+immutable="$ext_dir/.extensions-immutable.json"
+registry_state="$state_dir/extensions-immutable.registry.json"
 dry=0
 bootstrap_only=0
 nix_store="${CRIOMOS_VSCODIUM_NIX_STORE:-@NIX_STORE@}"
@@ -146,12 +148,50 @@ managed_extension() {
 # The Home Manager vscode module uses this exact supported refresh sequence.
 # Never edit extensions.json ourselves: it is Codium's mutable registry and
 # may contain entries that Home Manager does not own.
+registry_matches_immutable() {
+  [ -f "$registry" ] && [ -f "$immutable" ] && @JQ@ -e \
+    --arg claude_id anthropic.claude-code \
+    --arg claude_path "$ext_dir/$desired" \
+    --arg claude_relative "$desired" \
+    --arg ext_dir "$ext_dir" \
+    '. as $registry
+     | input as $immutable
+     | ($registry | type == "array")
+       and ($immutable | type == "array")
+       and ($immutable | all(.[];
+         .identifier.id? as $id
+         | .version? as $version
+         | .relativeLocation? as $relative
+         | ($id | type == "string")
+           and ($version | type == "string")
+           and ($relative | type == "string")
+           and ($registry | any(.[];
+             .identifier.id? == $id
+             and .version? == $version
+             and .relativeLocation? == (
+               if $id == $claude_id then $claude_relative else $relative end
+             )
+             and .location.path? == (
+               if $id == $claude_id then $claude_path else $ext_dir + "/" + $relative end
+             )
+           ))
+       ))' \
+    "$registry" "$immutable" >/dev/null 2>&1
+}
+
 registry_is_current() {
-  [ -f "$registry" ] && @JQ@ -e \
-    --arg id anthropic.claude-code \
-    --arg path "$ext_dir/$desired" \
-    'type == "array" and any(.[]; .identifier.id? == $id and .location.path? == $path)' \
-    "$registry" >/dev/null 2>&1
+  [ -f "$registry_state" ] && [ ! -L "$registry_state" ] \
+    && @COREUTILS@/bin/cmp -s "$immutable" "$registry_state" \
+    && registry_matches_immutable
+}
+
+record_registry_state() {
+  registry_state_tmp="$registry_state.tmp.$$"
+  @COREUTILS@/bin/cp "$immutable" "$registry_state_tmp" || {
+    @COREUTILS@/bin/rm -f "$registry_state_tmp"
+    return 1
+  }
+  @COREUTILS@/bin/mv -f "$registry_state_tmp" "$registry_state"
 }
 
 refresh_registry() {
@@ -164,7 +204,8 @@ refresh_registry() {
     @COREUTILS@/bin/cp -p "$registry" "$backup" || return 1
   fi
   @COREUTILS@/bin/rm -f "$registry" "$ext_dir/.init-default-profile-extensions"
-  if CRIOMOS_VSCODIUM_REGISTRY_BACKUP="$backup" "$codium" --list-extensions >/dev/null 2>&1 && registry_is_current; then
+  if CRIOMOS_VSCODIUM_REGISTRY_BACKUP="$backup" "$codium" --list-extensions >/dev/null 2>&1 \
+    && registry_matches_immutable && record_registry_state; then
     @COREUTILS@/bin/rm -f "$backup"
     return 0
   fi
