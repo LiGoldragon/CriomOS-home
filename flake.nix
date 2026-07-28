@@ -171,27 +171,12 @@
     aggregator.inputs.nixpkgs.follows = "nixpkgs";
     aggregator.inputs.crane.follows = "crane";
 
-    # Orchestrate — multi-agent claim/coordination daemon that supervises the
-    # `primary` workspace's claim fabric. Consumed in
-    # modules/home/profiles/min/orchestrate.nix, which gives it a systemd
-    # --user supervisor. Pinned to v0.12.0: the configuration writer takes
-    # labeled downstream-socket optionals (router=<path>, messenger=<path>) so
-    # any subset is expressible — the module configures the messenger leg only,
-    # activating identity/endpoint push to the co-resident message daemon while
-    # no router is deployed. Carries the 0.11.x line beneath it: activity-read
-    # liveness (a live command child is positive liveness), the sema-engine
-    # family-evolution primitive replacing raw catalog surgery, contention-flow
-    # MVP (typed repository-main contention answers, lane-named feature
-    # worktrees, tracked auto-rebase landing), and the orchestrator identity
-    # mint.
-    # This pin additionally retires the idle-lane reaper
-    # (ACTIVE_LANE_IDLE_LIMIT_NANOS, ACTIVE_ORCHESTRATOR_AGENT_IDLE_LIMIT_NANOS),
-    # which deleted idle lanes, dropped their claims, and flipped worktrees to
-    # Abandoned on a 24-hour timer; and drops the worktrees.nota mirror write
-    # (src/worktree_projection.rs), so the registry is no longer projected to
-    # that file. Also carries elapsed-time rendering on ordinary time-bearing
-    # replies and colocated Jujutsu metadata bootstrap for Git worktrees.
-    orchestrate.url = "github:LiGoldragon/orchestrate/83e09a1316340a17ca23ef5cd2a3dd2a47874281";
+    # Orchestrate — multi-agent claim/coordination daemon for the `primary`
+    # workspace. The 0.18.3 state-only boundary takes its Sema store and three
+    # Unix sockets as direct argv, refuses host worktree scaffolding, and keeps
+    # Observe/Query as pure store projections. The Home service supplies the
+    # co-resident messenger socket only; no router is deployed.
+    orchestrate.url = "github:LiGoldragon/orchestrate/e8d7e473ca029acba74dbdb05b536792461eac5c";
     orchestrate.inputs.nixpkgs.follows = "nixpkgs";
 
     # Message — the messenger: stateful local messaging daemon owning the
@@ -537,7 +522,7 @@
           no-easyeffects = checkPkgs.callPackage ./checks/no-easyeffects { };
           bird-home-isolation = checkPkgs.callPackage ./checks/bird-home-isolation { inherit inputs; };
           nix-profile-compatibility = checkPkgs.callPackage ./checks/nix-profile-compatibility { };
-          orchestrate-service-path = checkPkgs.callPackage ./checks/orchestrate-service-path { };
+          orchestrate-service-path = checkPkgs.callPackage ./checks/orchestrate-service-path { inherit inputs; };
           pi-criomos-package-load = checkPkgs.callPackage ./checks/pi-criomos-package-load {
             inherit inputs;
           };

@@ -1990,17 +1990,17 @@
         "rust-build": "rust-build_4"
       },
       "locked": {
-        "lastModified": 1785075957,
-        "narHash": "sha256-fKyF6+q0wwlOeE73mDnCjUKpU3LWlYm92JaY72cncT8=",
+        "lastModified": 1785271806,
+        "narHash": "sha256-SO1IZAKE+saeoMVvVWjsYJMQmar1uz8gQUxFfb4HOK8=",
         "owner": "LiGoldragon",
         "repo": "orchestrate",
-        "rev": "83e09a1316340a17ca23ef5cd2a3dd2a47874281",
+        "rev": "e8d7e473ca029acba74dbdb05b536792461eac5c",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "orchestrate",
-        "rev": "83e09a1316340a17ca23ef5cd2a3dd2a47874281",
+        "rev": "e8d7e473ca029acba74dbdb05b536792461eac5c",
         "type": "github"
       }
     },

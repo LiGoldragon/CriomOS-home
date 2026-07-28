@@ -45,11 +45,10 @@ let
 
   # The orchestrate daemon supervises the multi-agent claim/coordination
   # fabric for the `primary` workspace under this user's home. Runtime state is
-  # intentionally outside the workspace: the sema store and binary daemon
-  # signal live under XDG state, while sockets live under the user runtime
-  # directory so stale process endpoints disappear with the login session.
+  # intentionally outside the workspace: the Sema store lives under XDG state,
+  # while sockets live under the user runtime directory so stale process
+  # endpoints disappear with the login session.
   stateDirectory = "${config.xdg.stateHome}/orchestrate";
-  signalPath = "${stateDirectory}/orchestrate-daemon.signal";
   storePath = "${stateDirectory}/orchestrate.sema";
   runtimeDirectory = "%t/orchestrate";
   ordinarySocketPath = "${runtimeDirectory}/orchestrate.sock";
@@ -60,8 +59,10 @@ let
   # The co-resident messenger's working socket (the message module's unit
   # binds it): the orchestrator pushes minted identities and discovered
   # endpoints there. The router label stays absent — no router is deployed,
-  # and the labeled writer arguments make messenger-without-router a
-  # truthful configuration.
+  # and the direct labeled daemon argument makes messenger-without-router a
+  # truthful configuration. The required workspace and Git-index paths remain
+  # typed daemon state inputs; the pinned source does not inspect or manage
+  # either host path.
   messengerSocketPath = "%t/message/message.sock";
 in
 {
@@ -86,20 +87,13 @@ in
       };
 
       Service = {
-        # Worktree rejection salvages through `jj git push`; Jujutsu delegates
-        # that leg to the standalone Git executable, so both must be present in
-        # the daemon's hermetic runtime PATH rather than inherited from login.
-        Environment = "PATH=${
-          lib.makeBinPath [
-            pkgs.gnupg
-            pkgs.jujutsu
-            pkgs.git
-          ]
-        }";
+        # The direct startup contract has no configuration writer. Systemd owns
+        # the store and socket parents; Orchestrate owns only its Sema state and
+        # configured Unix sockets beneath them.
+        StateDirectory = "orchestrate";
         RuntimeDirectory = "orchestrate";
         RuntimeDirectoryMode = "0700";
-        ExecStartPre = "${orchestratePackage}/bin/orchestrate-write-configuration ${signalPath} ${storePath} ${ordinarySocketPath} ${metaSocketPath} ${upgradeSocketPath} ${workspaceRoot} ${gitIndexRoot} messenger=${messengerSocketPath}";
-        ExecStart = "${orchestratePackage}/bin/orchestrate-daemon ${signalPath}";
+        ExecStart = "${orchestratePackage}/bin/orchestrate-daemon ${storePath} ${ordinarySocketPath} ${metaSocketPath} ${upgradeSocketPath} ${workspaceRoot} ${gitIndexRoot} messenger=${messengerSocketPath}";
         Restart = "on-failure";
         RestartSec = "2s";
       };
