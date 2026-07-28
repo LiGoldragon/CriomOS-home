@@ -1,4 +1,4 @@
-{ pkgs }:
+{ pkgs, ... }:
 let
   compatibility = pkgs.callPackage ../../packages/nix-profile-compatibility { };
   baseModule = builtins.readFile ../../modules/home/base.nix;
