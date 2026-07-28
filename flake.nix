@@ -535,6 +535,7 @@
           rust-toolchain = checkPkgs.callPackage ./checks/rust-toolchain { inherit inputs; };
           leta = checkPkgs.callPackage ./checks/leta { inherit inputs; };
           no-easyeffects = checkPkgs.callPackage ./checks/no-easyeffects { };
+          nix-profile-compatibility = checkPkgs.callPackage ./checks/nix-profile-compatibility { };
           orchestrate-service-path = checkPkgs.callPackage ./checks/orchestrate-service-path { };
           pi-criomos-package-load = checkPkgs.callPackage ./checks/pi-criomos-package-load {
             inherit inputs;

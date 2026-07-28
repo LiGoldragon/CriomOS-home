@@ -113,6 +113,8 @@ let
     exec ${pkgs.gnused}/bin/sed -E "s#/nix/store/[a-z0-9]{32}-[^[:space:]\"'<>)]*#/nix/store/<redacted>#g"
   '';
 
+  nixProfileCompatibility = pkgs.callPackage ../../packages/nix-profile-compatibility { };
+
   /*
     Shell hook: new shells source Chroma's fzf state. Terminal
     colours are owned by terminal-native config paths, not by
@@ -156,6 +158,10 @@ in
       activation.ensureHomeDirectories = lib.hm.dag.entryAfter [
         "writeBoundary"
       ] ensuredHomeDirectoryCommands;
+
+      activation.ensureNixProfileCompatibility = lib.hm.dag.entryBefore [ "installPackages" ] ''
+        run ${nixProfileCompatibility}/bin/criomos-ensure-nix-profile-link
+      '';
 
       activation.mergeCargoConfig = inputs.hexis.lib.mkManagedConfig {
         inherit lib pkgs hexis;
