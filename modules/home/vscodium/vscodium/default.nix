@@ -236,15 +236,6 @@ lib.mkIf size.medium {
     };
   };
 
-  # Home Manager's vscode module normally invokes `package/bin/codium` here.
-  # Our package deliberately wraps that command, so activation reaches the
-  # lifecycle's truthful underlying Codium CLI without recursively creating a
-  # GUI lease. The lifecycle takes one nonblocking EX lock around the supported
-  # refresh, and defers if a GUI session currently has SH.
-  home.file.".vscode-oss/extensions/.extensions-immutable.json".onChange = lib.mkForce ''
-    run ${codiumClaudeLifecycle}/bin/criomos-codium-claude-lifecycle --activation-refresh
-  '';
-
   # VSCodium is installed in the medium profile, but it only owns
   # EDITOR/VISUAL and text/source MIME defaults when Horizon projects
   # Codium as this user's preferred editor. A user preference for Emacs
@@ -306,6 +297,15 @@ lib.mkIf size.medium {
   home.activation.replaceMutableClaudeCodeExtension = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
     run ${codiumClaudeLifecycle}/bin/criomos-codium-claude-lifecycle --activate
   '';
+
+  # The immutable declaration can change before the mutable versioned link and
+  # manifest are reconciled. Refresh only after that reconciliation so Codium
+  # sees one coherent extension graph and can record the immutable registry.
+  home.activation.refreshMutableClaudeCodeRegistry =
+    lib.hm.dag.entryAfter [ "replaceMutableClaudeCodeExtension" ]
+      ''
+        run ${codiumClaudeLifecycle}/bin/criomos-codium-claude-lifecycle --activation-refresh
+      '';
 
   home.activation.mergeVscodiumSettings = inputs.hexis.lib.mkManagedConfig {
     inherit lib pkgs hexis;

@@ -28,8 +28,6 @@ let
   };
   vscodeConfig = homeConfiguration.config.programs.vscode;
   activation = homeConfiguration.config.home.activation;
-  extensionRefresh =
-    homeConfiguration.config.home.file.".vscode-oss/extensions/.extensions-immutable.json".onChange;
   nixStoreFixture = pkgs.writeShellScript "nix-store-fixture" ''
     set -euf
     [ "$#" -eq 4 ]
@@ -165,17 +163,13 @@ assert builtins.any (
 assert builtins.any (
   extension: extension.version == "2.1.219"
 ) vscodeConfig.profiles.default.extensions;
-assert homePkgs.lib.hasInfix (builtins.unsafeDiscardStringContext "--activation-refresh") (
-  builtins.unsafeDiscardStringContext extensionRefresh
-);
-assert
-  !(homePkgs.lib.hasInfix (builtins.unsafeDiscardStringContext "${vscodeConfig.package}/bin/codium --list-extensions") (
-    builtins.unsafeDiscardStringContext extensionRefresh
-  ));
 assert activation.bootstrapMutableClaudeCodeExtension.before == [ "linkGeneration" ];
 assert builtins.match ".*--bootstrap.*" activation.bootstrapMutableClaudeCodeExtension.data != null;
 assert activation.replaceMutableClaudeCodeExtension.after == [ "linkGeneration" ];
 assert builtins.match ".*--activate.*" activation.replaceMutableClaudeCodeExtension.data != null;
+assert activation.refreshMutableClaudeCodeRegistry.after == [ "replaceMutableClaudeCodeExtension" ];
+assert
+  builtins.match ".*--activation-refresh.*" activation.refreshMutableClaudeCodeRegistry.data != null;
 pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
   set -euxo pipefail
   test "$(id -u)" -ne 0
@@ -331,6 +325,70 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
     cmp "$migration_ext/.extensions-immutable.json" "$migration_state/extensions-immutable.registry.json"
     test ! -e "$migration_launch/refresh-gap"
     test ! -e "$migration_launch/codium.pid"
+    # A direct old v1 entry can safely repair a missing root, then migrate to
+    # the newer direct link before activation refreshes the immutable registry.
+    missing_root_home="$TMPDIR/missing-root-migration"
+    missing_root_ext="$missing_root_home/.vscode-oss/extensions"
+    missing_root_state="$missing_root_home/state"
+    missing_root_roots="$missing_root_state/gcroots"
+    missing_root_launch="$TMPDIR/missing-root-migration-launch"
+    mkdir -p "$missing_root_ext" "$missing_root_roots" "$missing_root_launch"
+    ln -s ${extAPath} "$missing_root_ext/anthropic.claude-code"
+    ln -s ${extAPath} "$missing_root_ext/anthropic.claude-code-2.1.215-linux-x64"
+    printf 'v1\nmanaged\t2.1.215\tanthropic.claude-code-2.1.215-linux-x64\t%s\n' ${extAPath} > "$missing_root_state/manifest"
+    rm "$missing_root_ext/anthropic.claude-code"
+    ln -s ${extDPath} "$missing_root_ext/anthropic.claude-code"
+    cp "$migration_ext/.extensions-immutable.json" "$missing_root_ext/.extensions-immutable.json"
+    printf '%s\n' "[{\"identifier\":{\"id\":\"anthropic.claude-code\"},\"version\":\"2.1.215\",\"relativeLocation\":\"anthropic.claude-code-2.1.215-linux-x64\",\"location\":{\"path\":\"$missing_root_ext/anthropic.claude-code-2.1.215-linux-x64\"}},{\"identifier\":{\"id\":\"openai.chatgpt\"},\"version\":\"26.5602.71036\",\"relativeLocation\":\"openai.chatgpt\",\"location\":{\"path\":\"$missing_root_ext/openai.chatgpt\"}}]" > "$missing_root_ext/extensions.json"
+    export FAKE_LAUNCH_DIR="$missing_root_launch" FAKE_LOCK="$missing_root_state/lifecycle.lock"
+    env \
+      CRIOMOS_VSCODIUM_EXTENSIONS_DIR="$missing_root_ext" \
+      CRIOMOS_VSCODIUM_STATE_DIR="$missing_root_state" \
+      CRIOMOS_VSCODIUM_GCROOT_DIR="$missing_root_roots" \
+      CRIOMOS_VSCODIUM_LOCK_FILE="$missing_root_state/lifecycle.lock" \
+      "${lifecycle}" --activation-refresh
+    test -L "$missing_root_ext/anthropic.claude-code-2.1.219-linux-x64"
+    test "$(readlink -f "$missing_root_ext/anthropic.claude-code-2.1.219-linux-x64")" = "$(readlink -f ${extDPath})"
+    test -L "$missing_root_roots/anthropic.claude-code-2.1.219-linux-x64"
+    test "$(readlink -f "$missing_root_roots/anthropic.claude-code-2.1.219-linux-x64")" = "$(readlink -f ${extD})"
+    test ! -e "$missing_root_ext/anthropic.claude-code-2.1.215-linux-x64"
+    test ! -e "$missing_root_roots/anthropic.claude-code-2.1.215-linux-x64"
+    test "$(head -n1 "$missing_root_state/manifest")" = v1
+    ! ${pkgs.gnugrep}/bin/grep -q 2.1.215 "$missing_root_state/manifest"
+    ${pkgs.jq}/bin/jq -e \
+      'any(.[]; .identifier.id == "anthropic.claude-code" and .version == "2.1.219" and .relativeLocation == "anthropic.claude-code-2.1.219-linux-x64")
+       and any(.[]; .identifier.id == "openai.chatgpt" and .version == "26.5721.30844")' \
+      "$missing_root_ext/extensions.json"
+    cmp "$missing_root_ext/.extensions-immutable.json" "$missing_root_state/extensions-immutable.registry.json"
+    test ! -e "$missing_root_launch/refresh-gap"
+    test ! -e "$missing_root_launch/codium.pid"
+    # A root that exists but does not retain the declared target is tampering:
+    # neither it nor the stale registry/state may be changed or refreshed.
+    wrong_root_home="$TMPDIR/wrong-root"
+    wrong_root_ext="$wrong_root_home/.vscode-oss/extensions"
+    wrong_root_state="$wrong_root_home/state"
+    wrong_root_roots="$wrong_root_state/gcroots"
+    wrong_root_launch="$TMPDIR/wrong-root-launch"
+    mkdir -p "$wrong_root_ext" "$wrong_root_roots" "$wrong_root_launch"
+    ln -s ${extDPath} "$wrong_root_ext/anthropic.claude-code"
+    ln -s ${extDPath} "$wrong_root_ext/anthropic.claude-code-2.1.219-linux-x64"
+    ln -s ${extA} "$wrong_root_roots/anthropic.claude-code-2.1.219-linux-x64"
+    printf 'v1\nmanaged\t2.1.219\tanthropic.claude-code-2.1.219-linux-x64\t%s\n' ${extDPath} > "$wrong_root_state/manifest"
+    cp "$migration_ext/.extensions-immutable.json" "$wrong_root_ext/.extensions-immutable.json"
+    printf '%s\n' "[{\"identifier\":{\"id\":\"anthropic.claude-code\"},\"version\":\"2.1.215\",\"relativeLocation\":\"anthropic.claude-code-2.1.215-linux-x64\",\"location\":{\"path\":\"$wrong_root_ext/anthropic.claude-code-2.1.215-linux-x64\"}},{\"identifier\":{\"id\":\"openai.chatgpt\"},\"version\":\"26.5602.71036\",\"relativeLocation\":\"openai.chatgpt\",\"location\":{\"path\":\"$wrong_root_ext/openai.chatgpt\"}}]" > "$wrong_root_ext/extensions.json"
+    { find -P "$wrong_root_ext" "$wrong_root_roots" -printf '%p %y %l\n' | sort; cat "$wrong_root_state/manifest"; cat "$wrong_root_ext/extensions.json"; } > "$TMPDIR/wrong-root.before"
+    export FAKE_LAUNCH_DIR="$wrong_root_launch" FAKE_LOCK="$wrong_root_state/lifecycle.lock"
+    env \
+      CRIOMOS_VSCODIUM_EXTENSIONS_DIR="$wrong_root_ext" \
+      CRIOMOS_VSCODIUM_STATE_DIR="$wrong_root_state" \
+      CRIOMOS_VSCODIUM_GCROOT_DIR="$wrong_root_roots" \
+      CRIOMOS_VSCODIUM_LOCK_FILE="$wrong_root_state/lifecycle.lock" \
+      "${lifecycle}" --activation-refresh
+    { find -P "$wrong_root_ext" "$wrong_root_roots" -printf '%p %y %l\n' | sort; cat "$wrong_root_state/manifest"; cat "$wrong_root_ext/extensions.json"; } > "$TMPDIR/wrong-root.after"
+    cmp "$TMPDIR/wrong-root.before" "$TMPDIR/wrong-root.after"
+    test ! -e "$wrong_root_state/extensions-immutable.registry.json"
+    test ! -e "$wrong_root_launch/refresh-gap"
+    test ! -e "$wrong_root_launch/codium.pid"
     CRIOMOS_VSCODIUM_EXTENSIONS_DIR="$ext" CRIOMOS_VSCODIUM_STATE_DIR="$state" CRIOMOS_VSCODIUM_GCROOT_DIR="$roots" "${lifecycle}" --activate
     test "$(head -n1 "$state/manifest")" = v1-bootstrap
     tree_before=$(find -P "$ext" "$roots" -printf '%p %y %l\n' | sort)

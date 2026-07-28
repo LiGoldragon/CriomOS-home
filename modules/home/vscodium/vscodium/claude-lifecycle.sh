@@ -107,14 +107,24 @@ valid_manifest_entry() {
     && [ "$3" = "anthropic.claude-code-$2-linux-x64" ] && valid_target "$4"
 }
 register_root() {
-  # Repair a missing automatic root even when the visible link already resolves
-  # to the target (for example after an interrupted cleanup).
-  mutate "$nix_store" --add-root "$1" --realise "$2" >/dev/null
+  root="$1" root_target="$2"
+  # Nix roots the containing store output when the extension itself is a
+  # subdirectory. Accept that output root only when it retains the declared
+  # extension target. Never retarget an existing, unrecognised root.
+  if [ -e "$root" ] || [ -L "$root" ]; then
+    [ -L "$root" ] && root_retains_target "$root" "$root_target" || return 1
+  fi
+  mutate "$nix_store" --add-root "$root" --realise "$root_target" >/dev/null || return 1
+  [ "$dry" -eq 1 ] && return 0
+  [ -L "$root" ] && root_retains_target "$root" "$root_target"
 }
 root_retains_target() {
   root_target="$(@READLINK@ -f "$1" 2>/dev/null || true)"
   valid_target "$root_target" || return 1
   case "$2" in "$root_target"|"$root_target"/*) return 0;; *) return 1;; esac
+}
+root_missing() {
+  [ ! -e "$1" ] && [ ! -L "$1" ]
 }
 # Older lifecycle releases wrote versioned aliases through the stable managed
 # link. Preserve that narrowly owned shape long enough to migrate it after Home
@@ -153,6 +163,41 @@ manifest_is_valid() {
     [ "$name" = "$desired" ] || manifest_prior_entries="$manifest_prior_entries$line"$'\n'
   done < <(@COREUTILS@/bin/tail -n +2 "$manifest")
   [ "$manifest_valid" -eq 1 ]
+}
+
+repair_missing_manifest_roots() {
+  # Validate the complete manifest before mutation. Only a missing root next
+  # to a direct, target-matching owned link is repairable; an existing wrong
+  # root is indistinguishable from tampering and remains untouched.
+  manifest_repair_entries=""; seen_names=""; manifest_header="$(@COREUTILS@/bin/head -n1 "$manifest" || true)"
+  [ "$(@COREUTILS@/bin/wc -c < "$manifest")" = "$(@COREUTILS@/bin/tr -d '\000' < "$manifest" | @COREUTILS@/bin/wc -c)" ] || return 1
+  case "$manifest_header" in v1|v1-bootstrap|v1-ready) ;; *) return 1;; esac
+  while IFS= read -r line || [ -n "$line" ]; do
+    tabs="${line//[^$'\t']/}"
+    [ "${#tabs}" -eq 3 ] || return 1
+    IFS=$'\t' read -r owner ver name tgt extra <<< "$line"
+    [ -z "$extra" ] && valid_manifest_entry "$owner" "$ver" "$name" "$tgt" || return 1
+    case " $seen_names " in *" $name "*) return 1;; esac
+    seen_names="$seen_names $name"
+    root="$root_dir/$name"
+    if [ -L "$ext_dir/$name" ] && [ "$(@READLINK@ -f "$ext_dir/$name" 2>/dev/null || true)" = "$tgt" ]; then
+      if [ -L "$root" ] && root_retains_target "$root" "$tgt"; then
+        :
+      elif root_missing "$root"; then
+        manifest_repair_entries="$manifest_repair_entries$name"$'\t'"$tgt"$'\n'
+      else
+        return 1
+      fi
+    elif manifest_entry_is_owned_indirection "$name" "$tgt"; then
+      :
+    else
+      return 1
+    fi
+  done < <(@COREUTILS@/bin/tail -n +2 "$manifest")
+  while IFS=$'\t' read -r name tgt || [ -n "$name" ]; do
+    [ -n "$name" ] || continue
+    register_root "$root_dir/$name" "$tgt" || return 1
+  done <<< "$manifest_repair_entries"
 }
 
 cleanup_prior_manifest_entries() {
@@ -262,6 +307,7 @@ launch_ready() {
     && [ -L "$ext_dir/$desired" ] \
     && [ "$(@READLINK@ -f "$ext_dir/$desired" 2>/dev/null || true)" = "$target" ] \
     && [ -f "$manifest" ] \
+    && manifest_is_valid \
     && [ "$(@COREUTILS@/bin/head -n1 "$manifest")" = v1 ]
 }
 
@@ -338,7 +384,7 @@ reconcile() {
     done
     [ "$dry" -eq 1 ] && exit 0
     if [ "$found_legacy" -eq 1 ]; then
-      register_root "$root_dir/$desired" "$target"
+      register_root "$root_dir/$desired" "$target" || exit 0
     fi
     tmp_manifest="$manifest.tmp.$$"
     { printf 'v1-bootstrap\n'; [ "$found_legacy" -eq 1 ] && printf 'managed\t%s\t%s\t%s\n' "$version" "$desired" "$target"; } > "$tmp_manifest"
@@ -349,6 +395,7 @@ reconcile() {
   [ "$bootstrap_only" -eq 1 ] && exit 0
   if [ -e "$manifest" ]; then
     # Do not create, retarget, or remove anything from an untrusted manifest.
+    repair_missing_manifest_roots || return 0
     manifest_is_valid || return 0
     if [ "$manifest_header" = v1-bootstrap ] && [ -z "$manifest_prior_entries" ]; then
       [ "$dry" -eq 1 ] && return 0
@@ -371,7 +418,7 @@ reconcile() {
     mutate @COREUTILS@/bin/ln -s "$target" "$link.tmp.$$"; mutate @COREUTILS@/bin/mv -Tf "$link.tmp.$$" "$link"
   fi
   root="$root_dir/$desired"
-  register_root "$root" "$target"
+  register_root "$root" "$target" || return 0
   prior_entries="$manifest_prior_entries"
   if [ "$dry" -eq 1 ]; then printf '+ atomic manifest update\n'; return 0; fi
   tmp_manifest="$manifest.tmp.$$"
