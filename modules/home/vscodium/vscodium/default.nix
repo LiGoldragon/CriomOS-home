@@ -15,7 +15,6 @@ let
   lifecycleSource = pkgs.replaceVars ./claude-lifecycle.sh {
     COREUTILS = "${pkgs.coreutils}";
     FLOCK = "${pkgs.util-linux}/bin/flock";
-    AWK = "${pkgs.gawk}/bin/awk";
     GREP = "${pkgs.gnugrep}/bin/grep";
     JQ = "${pkgs.jq}/bin/jq";
     NIX_STORE = "${pkgs.nix}/bin/nix-store";

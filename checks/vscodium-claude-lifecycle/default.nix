@@ -53,7 +53,6 @@ let
       registry="$CRIOMOS_VSCODIUM_EXTENSIONS_DIR/extensions.json"
       immutable="$CRIOMOS_VSCODIUM_EXTENSIONS_DIR/.extensions-immutable.json"
       ${pkgs.jq}/bin/jq \
-        --arg claude_path "$CRIOMOS_VSCODIUM_EXTENSIONS_DIR/anthropic.claude-code-2.1.215-linux-x64" \
         --arg ext_dir "$CRIOMOS_VSCODIUM_EXTENSIONS_DIR" \
         '. as $registry
          | input as $immutable
@@ -64,7 +63,7 @@ let
            + [$immutable[]
               | .identifier.id as $id
               | (if $id == "anthropic.claude-code"
-                 then $claude_path
+                 then $ext_dir + "/anthropic.claude-code-" + .version + "-linux-x64"
                  else $ext_dir + "/" + .relativeLocation
                  end) as $path
               | .location.path = $path
@@ -103,7 +102,6 @@ let
   lifecycleSource = pkgs.replaceVars ../../modules/home/vscodium/vscodium/claude-lifecycle.sh {
     COREUTILS = "${pkgs.coreutils}";
     FLOCK = "${pkgs.util-linux}/bin/flock";
-    AWK = "${pkgs.gawk}/bin/awk";
     GREP = "${pkgs.gnugrep}/bin/grep";
     JQ = "${pkgs.jq}/bin/jq";
     NIX_STORE = "${pkgs.nix}/bin/nix-store";
@@ -146,9 +144,14 @@ let
     mkdir -p $out/extension
     printf '{"version":"2.1.214"}\n' > $out/extension/package.json
   '';
+  extD = pkgs.runCommand "claude-extension-fixture-d" { } ''
+    mkdir -p $out/extension
+    printf '{"version":"2.1.219"}\n' > $out/extension/package.json
+  '';
   extAPath = "${extA}/extension";
   extBPath = "${extB}/extension";
   extCPath = "${extC}/extension";
+  extDPath = "${extD}/extension";
 in
 assert vscodeConfig.package.pname == homePkgs.vscodium.pname;
 assert vscodeConfig.package.version == homePkgs.vscodium.version;
@@ -272,6 +275,62 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
     )
     test -L "$unprivileged_state/gcroots/anthropic.claude-code-2.1.215-linux-x64"
     test "$(readlink -f "$unprivileged_state/gcroots/anthropic.claude-code-2.1.215-linux-x64")" = "$(readlink -f ${extA})"
+    # A previous lifecycle release made versioned links indirect through the
+    # stable extension name. After Home Manager moves that name to a new
+    # version, the old manifest must remain recognizably owned long enough to
+    # install the new link/root and refresh Codium's registry.
+    migration_home="$TMPDIR/version-migration"
+    migration_ext="$migration_home/.vscode-oss/extensions"
+    migration_state="$migration_home/state"
+    migration_roots="$migration_state/gcroots"
+    migration_launch="$TMPDIR/version-migration-launch"
+    mkdir -p "$migration_ext" "$migration_roots" "$migration_launch"
+    ln -s ${extAPath} "$migration_ext/anthropic.claude-code"
+    ln -s "$migration_ext/anthropic.claude-code" "$migration_ext/anthropic.claude-code-2.1.215-linux-x64"
+    ln -s ${extAPath} "$migration_roots/anthropic.claude-code-2.1.215-linux-x64"
+    printf 'v1\nmanaged\t2.1.215\tanthropic.claude-code-2.1.215-linux-x64\t%s\n' ${extAPath} > "$migration_state/manifest"
+    rm "$migration_ext/anthropic.claude-code"
+    ln -s ${extDPath} "$migration_ext/anthropic.claude-code"
+    ${pkgs.jq}/bin/jq -n \
+      '[{
+         identifier: {id: "anthropic.claude-code"},
+         version: "2.1.219",
+         relativeLocation: "anthropic.claude-code"
+       }, {
+         identifier: {id: "openai.chatgpt"},
+         version: "26.5721.30844",
+         relativeLocation: "openai.chatgpt"
+       }]' > "$migration_ext/.extensions-immutable.json"
+    printf '%s\n' "[{\"identifier\":{\"id\":\"anthropic.claude-code\"},\"version\":\"2.1.215\",\"relativeLocation\":\"anthropic.claude-code-2.1.215-linux-x64\",\"location\":{\"path\":\"$migration_ext/anthropic.claude-code-2.1.215-linux-x64\"}},{\"identifier\":{\"id\":\"openai.chatgpt\"},\"version\":\"26.5602.71036\",\"relativeLocation\":\"openai.chatgpt\",\"location\":{\"path\":\"$migration_ext/openai.chatgpt\"}}]" > "$migration_ext/extensions.json"
+    export FAKE_LAUNCH_DIR="$migration_launch" FAKE_LOCK="$migration_state/lifecycle.lock"
+    env \
+      CRIOMOS_VSCODIUM_EXTENSIONS_DIR="$migration_ext" \
+      CRIOMOS_VSCODIUM_STATE_DIR="$migration_state" \
+      CRIOMOS_VSCODIUM_GCROOT_DIR="$migration_roots" \
+      CRIOMOS_VSCODIUM_LOCK_FILE="$migration_state/lifecycle.lock" \
+      "${lifecycle}" --activation-refresh
+    env \
+      CRIOMOS_VSCODIUM_EXTENSIONS_DIR="$migration_ext" \
+      CRIOMOS_VSCODIUM_STATE_DIR="$migration_state" \
+      CRIOMOS_VSCODIUM_GCROOT_DIR="$migration_roots" \
+      CRIOMOS_VSCODIUM_LOCK_FILE="$migration_state/lifecycle.lock" \
+      "${lifecycle}" --prepare-launch
+    test -L "$migration_ext/anthropic.claude-code-2.1.219-linux-x64"
+    test "$(readlink -f "$migration_ext/anthropic.claude-code-2.1.219-linux-x64")" = "$(readlink -f ${extDPath})"
+    test -L "$migration_roots/anthropic.claude-code-2.1.219-linux-x64"
+    test "$(readlink -f "$migration_roots/anthropic.claude-code-2.1.219-linux-x64")" = "$(readlink -f ${extD})"
+    test ! -e "$migration_ext/anthropic.claude-code-2.1.215-linux-x64"
+    test ! -e "$migration_roots/anthropic.claude-code-2.1.215-linux-x64"
+    test "$(head -n1 "$migration_state/manifest")" = v1
+    ${pkgs.gnugrep}/bin/grep -Fq $'managed\t2.1.219\tanthropic.claude-code-2.1.219-linux-x64\t' "$migration_state/manifest"
+    ! ${pkgs.gnugrep}/bin/grep -q 2.1.215 "$migration_state/manifest"
+    ${pkgs.jq}/bin/jq -e \
+      'any(.[]; .identifier.id == "anthropic.claude-code" and .version == "2.1.219" and .relativeLocation == "anthropic.claude-code-2.1.219-linux-x64")
+       and any(.[]; .identifier.id == "openai.chatgpt" and .version == "26.5721.30844")' \
+      "$migration_ext/extensions.json"
+    cmp "$migration_ext/.extensions-immutable.json" "$migration_state/extensions-immutable.registry.json"
+    test ! -e "$migration_launch/refresh-gap"
+    test ! -e "$migration_launch/codium.pid"
     CRIOMOS_VSCODIUM_EXTENSIONS_DIR="$ext" CRIOMOS_VSCODIUM_STATE_DIR="$state" CRIOMOS_VSCODIUM_GCROOT_DIR="$roots" "${lifecycle}" --activate
     test "$(head -n1 "$state/manifest")" = v1-bootstrap
     tree_before=$(find -P "$ext" "$roots" -printf '%p %y %l\n' | sort)

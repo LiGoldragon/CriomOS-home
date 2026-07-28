@@ -116,8 +116,19 @@ root_retains_target() {
   valid_target "$root_target" || return 1
   case "$2" in "$root_target"|"$root_target"/*) return 0;; *) return 1;; esac
 }
+# Older lifecycle releases wrote versioned aliases through the stable managed
+# link. Preserve that narrowly owned shape long enough to migrate it after Home
+# Manager moves the stable link to a newer extension target.
+manifest_entry_is_owned_indirection() {
+  entry_name="$1" entry_target="$2"
+  [ -L "$ext_dir/$entry_name" ] \
+    && [ "$(@READLINK@ "$ext_dir/$entry_name" 2>/dev/null || true)" = "$managed" ] \
+    && [ "$(@READLINK@ -f "$ext_dir/$entry_name" 2>/dev/null || true)" = "$target" ] \
+    && [ -L "$root_dir/$entry_name" ] \
+    && root_retains_target "$root_dir/$entry_name" "$entry_target"
+}
 manifest_is_valid() {
-  manifest_valid=1; seen_names=""; manifest_header="$(@COREUTILS@/bin/head -n1 "$manifest" || true)"
+  manifest_valid=1; seen_names=""; manifest_prior_entries=""; manifest_header="$(@COREUTILS@/bin/head -n1 "$manifest" || true)"
   # Bash strings cannot retain NULs, so reject them before line parsing rather
   # than allowing the shell to silently reinterpret a byte stream.
   [ "$(@COREUTILS@/bin/wc -c < "$manifest")" = "$(@COREUTILS@/bin/tr -d '\000' < "$manifest" | @COREUTILS@/bin/wc -c)" ] || return 1
@@ -129,10 +140,41 @@ manifest_is_valid() {
     [ -z "$extra" ] && valid_manifest_entry "$owner" "$ver" "$name" "$tgt" || { manifest_valid=0; break; }
     case " $seen_names " in *" $name "*) manifest_valid=0; break;; esac
     seen_names="$seen_names $name"
-    [ -L "$ext_dir/$name" ] && [ "$(@READLINK@ -f "$ext_dir/$name" 2>/dev/null || true)" = "$tgt" ] || { manifest_valid=0; break; }
-    [ -L "$root_dir/$name" ] && root_retains_target "$root_dir/$name" "$tgt" || { manifest_valid=0; break; }
+    if [ -L "$ext_dir/$name" ] \
+      && [ "$(@READLINK@ -f "$ext_dir/$name" 2>/dev/null || true)" = "$tgt" ] \
+      && [ -L "$root_dir/$name" ] \
+      && root_retains_target "$root_dir/$name" "$tgt"; then
+      :
+    elif manifest_entry_is_owned_indirection "$name" "$tgt"; then
+      :
+    else
+      manifest_valid=0; break
+    fi
+    [ "$name" = "$desired" ] || manifest_prior_entries="$manifest_prior_entries$line"$'\n'
   done < <(@COREUTILS@/bin/tail -n +2 "$manifest")
   [ "$manifest_valid" -eq 1 ]
+}
+
+cleanup_prior_manifest_entries() {
+  prior_entries="$1"
+  while IFS= read -r line || [ -n "$line" ]; do
+    tabs="${line//[^$'\t']/}"
+    [ "${#tabs}" -eq 3 ] || continue
+    IFS=$'\t' read -r owner ver name tgt extra <<< "$line"
+    [ -z "$extra" ] && valid_manifest_entry "$owner" "$ver" "$name" "$tgt" || continue
+    [ "$name" = "$desired" ] && continue
+    if [ -L "$ext_dir/$name" ] \
+      && [ "$(@READLINK@ -f "$ext_dir/$name" 2>/dev/null || true)" = "$tgt" ] \
+      && [ -L "$root_dir/$name" ] \
+      && root_retains_target "$root_dir/$name" "$tgt"; then
+      :
+    elif manifest_entry_is_owned_indirection "$name" "$tgt"; then
+      :
+    else
+      continue
+    fi
+    @COREUTILS@/bin/rm -f "$ext_dir/$name" "$root_dir/$name"
+  done <<< "$prior_entries"
 }
 
 managed_extension() {
@@ -308,7 +350,7 @@ reconcile() {
   if [ -e "$manifest" ]; then
     # Do not create, retarget, or remove anything from an untrusted manifest.
     manifest_is_valid || return 0
-    if [ "$manifest_header" = v1-bootstrap ]; then
+    if [ "$manifest_header" = v1-bootstrap ] && [ -z "$manifest_prior_entries" ]; then
       [ "$dry" -eq 1 ] && return 0
       @SED@ '1s/.*/v1-ready/' "$manifest" > "$manifest.tmp.$$"
       @COREUTILS@/bin/mv -f "$manifest.tmp.$$" "$manifest"
@@ -330,18 +372,13 @@ reconcile() {
   fi
   root="$root_dir/$desired"
   register_root "$root" "$target"
-  old_lines=""; [ -f "$manifest" ] && old_lines=$(@COREUTILS@/bin/tail -n +2 "$manifest" || true)
+  prior_entries="$manifest_prior_entries"
   if [ "$dry" -eq 1 ]; then printf '+ atomic manifest update\n'; return 0; fi
   tmp_manifest="$manifest.tmp.$$"
-  { printf 'v1\n'; printf '%s\n' "$old_lines" | @AWK@ -F '\t' -v d="$desired" '$3 != d && NF >= 3'; printf 'managed\t%s\t%s\t%s\n' "$version" "$desired" "$target"; } > "$tmp_manifest"
+  { printf 'v1\n'; printf 'managed\t%s\t%s\t%s\n' "$version" "$desired" "$target"; } > "$tmp_manifest"
   @COREUTILS@/bin/mv -f "$tmp_manifest" "$manifest"
   manifest_is_valid || return 0
-  while IFS='	' read -r owner ver name tgt extra; do
-    [ -z "$extra" ] && valid_manifest_entry "$owner" "$ver" "$name" "$tgt" && [ "$name" != "$desired" ] || continue
-    [ -L "$ext_dir/$name" ] && [ "$(@READLINK@ -f "$ext_dir/$name" 2>/dev/null || true)" = "$tgt" ] || continue
-    [ -L "$root_dir/$name" ] && root_retains_target "$root_dir/$name" "$tgt" || continue
-    @COREUTILS@/bin/rm -f "$ext_dir/$name" "$root_dir/$name"
-  done < <(@COREUTILS@/bin/tail -n +2 "$manifest")
+  cleanup_prior_manifest_entries "$prior_entries"
 }
 
 case "${1:-}" in
