@@ -39,7 +39,6 @@ let
     packages.${system}.default = pkgs.writeShellScriptBin "codex" "exit 0";
   };
 
-
   fakeSpirit = {
     packages.${system}.default = pkgs.runCommand "fake-spirit" { } ''
       mkdir -p "$out/bin"
@@ -120,6 +119,13 @@ let
     };
     horizon = {
       node = {
+        services = [
+          {
+            PersonaDevelopment = {
+              capabilities = [ ];
+            };
+          }
+        ];
         typeIs.largeAiRouter = false;
         behavesAs.largeAi = true;
         criomeDomainName = "prometheus.goldragon.criome";

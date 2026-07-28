@@ -25,20 +25,6 @@ let
   pi-continue = pkgs.callPackage ../../../../packages/pi-continue { inherit inputs; };
   pi-session-namer = pkgs.callPackage ../../../../packages/pi-session-namer { inherit inputs; };
   piPackageHomePath = "$HOME/.local/share/criomos/pi/package";
-  serviceName =
-    service:
-    if builtins.isString service then
-      service
-    else if builtins.isAttrs service then
-      let
-        names = builtins.attrNames service;
-      in
-      if builtins.length names == 1 then builtins.head names else null
-    else
-      null;
-  isAgentIntercomLocal = builtins.any (service: serviceName service == "AgentIntercomLocal") (
-    horizon.node.services or [ ]
-  );
 
   clusterNodes = [ horizon.node ] ++ lib.attrValues (horizon.exNodes or { });
   routerNode = lib.findFirst (node: node.typeIs.largeAiRouter or false) null clusterNodes;
@@ -159,11 +145,11 @@ let
 
   piTestingSettingsConfig = piSettingsConfig;
 in
-# The local capability owns the complete Pi adapter family on every node.
-# A node without a projected local-model endpoint simply receives no custom
-# provider records; it still receives the broker, extension and normal package
-# set without a hostname-derived exception.
-lib.mkIf isAgentIntercomLocal {
+# Pi is a user-profile surface, not a host service capability.  In particular,
+# an edge user environment must retain its .pi and .pi-testing state even when
+# the host does not run Agent Intercom locally.  The projected node roles still
+# determine whether a local provider record is available above.
+lib.mkIf user.size.min {
   home.activation.preparePiPackageSymlink = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
     if [ -d "${piPackageHomePath}" ] && [ ! -L "${piPackageHomePath}" ]; then
       if ${pkgs.jq}/bin/jq -e '.name == "@earendil-works/pi-coding-agent"' \

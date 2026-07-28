@@ -66,7 +66,7 @@
     # gate entirely.
     claude-code-vsix = {
       type = "file";
-      url = "https://open-vsx.org/api/Anthropic/claude-code/linux-x64/2.1.215/file/Anthropic.claude-code-2.1.215@linux-x64.vsix";
+      url = "https://open-vsx.org/api/Anthropic/claude-code/linux-x64/2.1.219/file/Anthropic.claude-code-2.1.219@linux-x64.vsix";
       flake = false;
     };
 
@@ -535,6 +535,7 @@
           rust-toolchain = checkPkgs.callPackage ./checks/rust-toolchain { inherit inputs; };
           leta = checkPkgs.callPackage ./checks/leta { inherit inputs; };
           no-easyeffects = checkPkgs.callPackage ./checks/no-easyeffects { };
+          bird-home-isolation = checkPkgs.callPackage ./checks/bird-home-isolation { inherit inputs; };
           nix-profile-compatibility = checkPkgs.callPackage ./checks/nix-profile-compatibility { };
           orchestrate-service-path = checkPkgs.callPackage ./checks/orchestrate-service-path { };
           pi-criomos-package-load = checkPkgs.callPackage ./checks/pi-criomos-package-load {

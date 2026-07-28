@@ -462,13 +462,13 @@
     "claude-code-vsix": {
       "flake": false,
       "locked": {
-        "narHash": "sha256-Agg+oK2DZE1ymn7smd8T2ujHHSiP1STN1YC01RvhV7k=",
+        "narHash": "sha256-56pl3x88FRZPnNerXzlijKc65sooUlyAZBJtbSu6V5g=",
         "type": "file",
-        "url": "https://open-vsx.org/api/Anthropic/claude-code/linux-x64/2.1.215/file/Anthropic.claude-code-2.1.215@linux-x64.vsix"
+        "url": "https://open-vsx.org/api/Anthropic/claude-code/linux-x64/2.1.219/file/Anthropic.claude-code-2.1.219@linux-x64.vsix"
       },
       "original": {
         "type": "file",
-        "url": "https://open-vsx.org/api/Anthropic/claude-code/linux-x64/2.1.215/file/Anthropic.claude-code-2.1.215@linux-x64.vsix"
+        "url": "https://open-vsx.org/api/Anthropic/claude-code/linux-x64/2.1.219/file/Anthropic.claude-code-2.1.219@linux-x64.vsix"
       }
     },
     "codex-chatgpt-vsix": {

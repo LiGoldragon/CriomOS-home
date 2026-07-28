@@ -21,6 +21,20 @@ let
   spiritJudgePackage = inputs.spirit-judge.packages.${system}.default;
   spiritJudgeConfig = inputs.spirit-judge-config;
   codexCliPackage = inputs.codex-cli.packages.${system}.default;
+  serviceName =
+    service:
+    if builtins.isString service then
+      service
+    else if builtins.isAttrs service then
+      let
+        names = builtins.attrNames service;
+      in
+      if builtins.length names == 1 then builtins.head names else null
+    else
+      null;
+  isPersonaDevelopment = builtins.any (service: serviceName service == "PersonaDevelopment") (
+    horizon.node.services or [ ]
+  );
 
   # These values configure the retained agent daemon only. Spirit judgment is
   # served by the separate OpenAI Codex adapter below.
@@ -169,12 +183,12 @@ in
   options.criomosHome.spirit = {
     enable = mkOption {
       type = bool;
-      default = true;
-      description = "Deploy the schema-derived Spirit CLI and user-session daemon.";
+      default = isPersonaDevelopment;
+      description = "Deploy the schema-derived Spirit CLI and user-session daemons only on a Horizon PersonaDevelopment node.";
     };
   };
 
-  config = mkIf (size.min && config.criomosHome.spirit.enable) {
+  config = mkIf (size.min && isPersonaDevelopment && config.criomosHome.spirit.enable) {
     home.packages = [
       commandLineWrapper
       metaSpiritCommandLineWrapper

@@ -10,7 +10,7 @@
 let
   inherit (user) size;
   codiumPackage = pkgs.callPackage ../../../../packages/vscodium-casual { };
-  agentIntercom = pkgs.callPackage ../../../../packages/agent-intercom { inherit inputs; };
+  claudeCodePackage = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.claude-code;
 
   lifecycleSource = pkgs.replaceVars ./claude-lifecycle.sh {
     COREUTILS = "${pkgs.coreutils}";
@@ -119,21 +119,20 @@ let
   # which fails on NixOS with 'Could not start dynamically linked
   # executable ... NixOS cannot run dynamically linked executables
   # intended for generic linux environments out of the box'. Replace it
-  # with the local Agent Intercom `claude` wrapper. This keeps extension
-  # launches wakeable and defaults them to Claude's explicit unrestricted
-  # permission mode without recursive raw-CLI invocation.
+  # with the directly pinned Claude Code executable.  The editor must not
+  # acquire Agent Intercom's local-only broker role merely to launch Claude.
   claude-code-codium = pkgs.vscode-utils.buildVscodeMarketplaceExtension {
     mktplcRef = {
       name = "claude-code";
       publisher = "anthropic";
-      version = "2.1.215";
+      version = "2.1.219";
     };
-    vsix = vsixFromInput "claude-code-2.1.215.vsix" inputs.claude-code-vsix;
+    vsix = vsixFromInput "claude-code-2.1.219.vsix" inputs.claude-code-vsix;
     postInstall = ''
       bin_dir=$out/share/vscode/extensions/anthropic.claude-code/resources/native-binary
       if [ -d "$bin_dir" ]; then
         rm -f "$bin_dir/claude"
-        ln -s "${agentIntercom}/bin/claude" "$bin_dir/claude"
+        ln -s "${claudeCodePackage}/bin/claude" "$bin_dir/claude"
       fi
     '';
   };

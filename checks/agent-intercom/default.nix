@@ -164,7 +164,8 @@ pkgs.runCommand "agent-intercom-local-home-contract"
     grep -F 'opencode/dist/plugin.mjs' ${agentIntercomModule}
     ! grep -Ei 'Gateway|Peer|remote-gateway|tunnel|ssh|credential|secret|token|oauth|enroll|pair' ${agentIntercomModule}
     ! grep -Ei 'no-sandbox|disable.*sandbox|sandbox.*disable' ${agentIntercomModule}
-    grep -F 'ln -s "''${agentIntercom}/bin/claude" "$bin_dir/claude"' ${vscodiumModule}
+    grep -F 'ln -s "''${claudeCodePackage}/bin/claude" "$bin_dir/claude"' ${vscodiumModule}
+    ! grep -F 'agentIntercom}/bin/claude' ${vscodiumModule}
 
     grep -F 'CODEX_INTERCOM_CODEX_COMMAND' ${agentIntercomPackage}
     grep -F 'CLAUDE_INTERCOM_CLAUDE_COMMAND' ${agentIntercomPackage}
