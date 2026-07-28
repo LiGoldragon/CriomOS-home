@@ -371,20 +371,16 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
     chmod +x "$forbidden_systemd_run"
     export CRIOMOS_VSCODIUM_SYSTEMD_RUN="$forbidden_systemd_run"
     immutable="$ext/.extensions-immutable.json"
-    cat > "$immutable" <<'EOF'
-    [
-      {
-        "identifier": {"id": "anthropic.claude-code"},
-        "version": "2.1.215",
-        "relativeLocation": "anthropic.claude-code"
-      },
-      {
-        "identifier": {"id": "openai.chatgpt"},
-        "version": "26.5721.30844",
-        "relativeLocation": "openai.chatgpt"
-      }
-    ]
-    EOF
+    ${pkgs.jq}/bin/jq -n \
+      '[{
+         identifier: {id: "anthropic.claude-code"},
+         version: "2.1.215",
+         relativeLocation: "anthropic.claude-code"
+       }, {
+         identifier: {id: "openai.chatgpt"},
+         version: "26.5721.30844",
+         relativeLocation: "openai.chatgpt"
+       }]' > "$immutable"
     cp "$immutable" "$TMPDIR/immutable.before"
     printf '%s\n' "[{\"identifier\":{\"id\":\"anthropic.claude-code\"},\"version\":\"2.1.198\",\"relativeLocation\":\"anthropic.claude-code-2.1.198-linux-x64\",\"location\":{\"path\":\"$ext/anthropic.claude-code-2.1.198-linux-x64\"}},{\"identifier\":{\"id\":\"openai.chatgpt\"},\"version\":\"26.5422.30944\",\"relativeLocation\":\"openai.chatgpt\",\"location\":{\"path\":\"$ext/openai.chatgpt\"}},{\"identifier\":{\"id\":\"unmanaged.fixture\"},\"location\":{\"path\":\"$ext/unmanaged.fixture\"}}]" > "$ext/extensions.json"
     "${lifecycle}" --activation-refresh
