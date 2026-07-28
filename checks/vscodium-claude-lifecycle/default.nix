@@ -159,6 +159,9 @@ assert vscodeConfig.dataFolderName == ".vscode-oss";
 assert builtins.any (
   extension: extension.version == "26.5721.30844"
 ) vscodeConfig.profiles.default.extensions;
+assert builtins.any (
+  extension: extension.version == "2.1.219"
+) vscodeConfig.profiles.default.extensions;
 assert homePkgs.lib.hasInfix (builtins.unsafeDiscardStringContext "--activation-refresh") (
   builtins.unsafeDiscardStringContext extensionRefresh
 );
