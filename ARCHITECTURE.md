@@ -174,7 +174,7 @@ its worker invoke the explicitly raw Claude executable. `codex-raw`,
 `claude-raw`, `direct-codex`, and `direct-claude` are recovery/debug-only.
 
 The maintained `ilysenko/codex-desktop-linux` source remains pinned at
-`2b8f610faddc576088732395df3734b1d19cd62f`, but its activation is hard-blocked.
+`c6d76231f0623c3ef0b18c7e9158697c96bdcf9f`, but its activation is hard-blocked.
 Its `nix/home-manager-module.nix` wraps `cliPackage` as `CODEX_CLI_PATH` and,
 when Remote Mobile Control is enabled, independently launches `codex app-server
 --remote-control`. The pinned Codex adapter

@@ -310,7 +310,7 @@ pkgs.runCommand "agent-intercom-local-home-contract"
       .nodes."agent-intercom-opencode-src".locked.rev == "5aea7545e00af04f2dd14a05bff69436917a4f46" and
       .nodes."agent-intercom-orchestrator-src".locked.rev == "fb3a74c9bf96373c82d8be31da7bae97d6ac0119" and
       .nodes."agent-intercom-core-src".locked.rev == "cb5d2212912db0cd8abbb16ab08e4b539424a05d" and
-      .nodes."codex-desktop-linux".locked.rev == "2b8f610faddc576088732395df3734b1d19cd62f"
+      .nodes."codex-desktop-linux".locked.rev == "c6d76231f0623c3ef0b18c7e9158697c96bdcf9f"
     ' ${flakeLock}
 
   ''
