@@ -34,18 +34,25 @@ let
     SED = "${pkgs.gnused}/bin/sed";
     CODIUM = "${codiumPackage}/bin/codium";
   };
-  codiumClaudeLifecycle = pkgs.writeShellApplication {
+  lifecycleRuntimeInputs = [
+    pkgs.coreutils
+    pkgs.gnugrep
+    pkgs.gnused
+    pkgs.jq
+    pkgs.nix
+    pkgs.procps
+    pkgs.util-linux
+  ];
+  # `writeShellScriptBin` does not retain the command packages substituted
+  # into this script.  Keep the existing script semantics, but form its
+  # runtime closure explicitly so activation cannot lose `cmp` (or another
+  # absolute helper) to garbage collection.
+  codiumClaudeLifecycle = pkgs.symlinkJoin {
     name = "criomos-codium-claude-lifecycle";
-    runtimeInputs = [
-      pkgs.coreutils
-      pkgs.gnugrep
-      pkgs.gnused
-      pkgs.jq
-      pkgs.nix
-      pkgs.procps
-      pkgs.util-linux
-    ];
-    text = builtins.readFile lifecycleSource;
+    paths = [
+      (pkgs.writeShellScriptBin "criomos-codium-claude-lifecycle" (builtins.readFile lifecycleSource))
+    ]
+    ++ lifecycleRuntimeInputs;
   };
   codiumSupervisorSource = pkgs.replaceVars ./codium-supervisor.sh {
     COREUTILS = "${pkgs.coreutils}";
