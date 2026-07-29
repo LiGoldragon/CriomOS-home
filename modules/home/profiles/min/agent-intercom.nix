@@ -25,7 +25,11 @@ let
 
   localEnabled = hasCapability "AgentIntercomLocal";
   graphicalEnabled = hasCapability "AgentIntercomGraphical";
-  graphicalSupported = pkgs.stdenv.hostPlatform.system == "x86_64-linux";
+  # This guard is evaluated while Home Manager merges imports, before its
+  # lazily supplied `pkgs` module argument is available.  The flake evaluator
+  # already fixes the target platform, so use that pure evaluator fact here
+  # and leave package selection below on `pkgs` once option values are forced.
+  graphicalSupported = builtins.currentSystem == "x86_64-linux";
   sharedAppServerSocket = "unix://\${XDG_RUNTIME_DIR}/codex-intercom-app-server.sock";
   codexCliPackage = inputs.codex-cli.packages.${pkgs.stdenv.hostPlatform.system}.default;
   agentIntercom = pkgs.callPackage ../../../../packages/agent-intercom {
