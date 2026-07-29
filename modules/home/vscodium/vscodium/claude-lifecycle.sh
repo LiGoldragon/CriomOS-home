@@ -232,37 +232,50 @@ managed_extension() {
   valid_link_name "$desired" || return 1
 }
 
-# The Home Manager vscode module uses this exact supported refresh sequence.
-# Never edit extensions.json ourselves: it is Codium's mutable registry and
-# may contain entries that Home Manager does not own.
+# The immutable declaration names the two extensions this lifecycle owns. The
+# mutable registry may contain user-managed entries as well, so validate the
+# two declared records and leave every other record structurally untouched.
 registry_matches_immutable() {
   [ -f "$registry" ] && [ -f "$immutable" ] && @JQ@ -e \
     --arg claude_id anthropic.claude-code \
+    --arg claude_version "$version" \
     --arg claude_path "$ext_dir/$desired" \
     --arg claude_relative "$desired" \
+    --arg openai_id openai.chatgpt \
     --arg ext_dir "$ext_dir" \
     '. as $registry
      | input as $immutable
-     | ($registry | type == "array")
-       and ($immutable | type == "array")
-       and ($immutable | all(.[];
-         .identifier.id? as $id
-         | .version? as $version
-         | .relativeLocation? as $relative
-         | ($id | type == "string")
-           and ($version | type == "string")
-           and ($relative | type == "string")
-           and ($registry | any(.[];
-             .identifier.id? == $id
-             and .version? == $version
-             and .relativeLocation? == (
-               if $id == $claude_id then $claude_relative else $relative end
-             )
-             and .location.path? == (
-               if $id == $claude_id then $claude_path else $ext_dir + "/" + $relative end
-             )
-           ))
-       ))' \
+     | def records($items; $id): [$items[] | select(.identifier.id? == $id)];
+     | if ($registry | type == "array") and ($immutable | type == "array") then
+         (records($registry; $claude_id)) as $registry_claude
+         | (records($registry; $openai_id)) as $registry_openai
+         | (records($immutable; $claude_id)) as $immutable_claude
+         | (records($immutable; $openai_id)) as $immutable_openai
+         | if ($registry_claude | length == 1)
+              and ($registry_openai | length == 1)
+              and ($immutable_claude | length == 1)
+              and ($immutable_openai | length == 1)
+            then
+              $registry_claude[0] as $claude_current
+              | $registry_openai[0] as $openai_current
+              | $immutable_claude[0] as $claude
+              | $immutable_openai[0] as $openai
+              | ($claude.version? == $claude_version)
+              and ($openai.version? | type == "string")
+              and ($openai.relativeLocation? | type == "string")
+              and ($openai.relativeLocation | test("^[A-Za-z0-9][A-Za-z0-9._-]*$"))
+              and ($claude_current.version? == $claude_version)
+              and ($claude_current.relativeLocation? == $claude_relative)
+              and ($claude_current.location.path? == $claude_path)
+              and ($claude_current.location.fsPath? == $claude_path)
+              and ($openai_current.version? == $openai.version)
+              and ($openai_current.relativeLocation? == $openai.relativeLocation)
+              and ($openai_current.location.path? == ($ext_dir + "/" + $openai.relativeLocation))
+              and ($openai_current.location.fsPath? == ($ext_dir + "/" + $openai.relativeLocation))
+            else false
+           end
+       else false
+       end' \
     "$registry" "$immutable" >/dev/null 2>&1
 }
 
@@ -278,7 +291,63 @@ record_registry_state() {
     @COREUTILS@/bin/rm -f "$registry_state_tmp"
     return 1
   }
+  @COREUTILS@/bin/sync -f "$registry_state_tmp"
   @COREUTILS@/bin/mv -f "$registry_state_tmp" "$registry_state"
+  @COREUTILS@/bin/sync -f "$registry_state"
+  @COREUTILS@/bin/sync -f "$state_dir"
+}
+
+transform_registry() {
+  registry_tmp="$registry.tmp.$$"
+  @JQ@ -e \
+    --arg claude_id anthropic.claude-code \
+    --arg claude_version "$version" \
+    --arg claude_path "$ext_dir/$desired" \
+    --arg claude_relative "$desired" \
+    --arg openai_id openai.chatgpt \
+    --arg ext_dir "$ext_dir" \
+    '. as $registry
+     | input as $immutable
+     | def records($items; $id): [$items[] | select(.identifier.id? == $id)];
+     | if ($registry | type == "array")
+          and ($immutable | type == "array")
+          and (records($registry; $claude_id) | length == 1)
+          and (records($registry; $openai_id) | length == 1)
+          and (records($immutable; $claude_id) | length == 1)
+          and (records($immutable; $openai_id) | length == 1)
+        then
+          (records($immutable; $claude_id)[0]) as $claude
+          | (records($immutable; $openai_id)[0]) as $openai
+          | if ($claude.version? == $claude_version)
+               and ($openai.version? | type == "string")
+               and ($openai.relativeLocation? | type == "string")
+               and ($openai.relativeLocation | test("^[A-Za-z0-9][A-Za-z0-9._-]*$"))
+            then map(
+              if .identifier.id? == $claude_id then
+                .version = $claude_version
+                | .relativeLocation = $claude_relative
+                | .location = ((if (.location | type == "object") then .location else {} end)
+                    | .path = $claude_path | .fsPath = $claude_path)
+              elif .identifier.id? == $openai_id then
+                .version = $openai.version
+                | .relativeLocation = $openai.relativeLocation
+                | .location = ((if (.location | type == "object") then .location else {} end)
+                    | .path = ($ext_dir + "/" + $openai.relativeLocation)
+                    | .fsPath = ($ext_dir + "/" + $openai.relativeLocation))
+              else . end
+            )
+            else error("invalid immutable registry target")
+          end
+        else error("registry targets are not unique")
+       end' \
+    "$registry" "$immutable" > "$registry_tmp" || {
+      @COREUTILS@/bin/rm -f "$registry_tmp"
+      return 1
+    }
+  @COREUTILS@/bin/sync -f "$registry_tmp"
+  @COREUTILS@/bin/mv -f "$registry_tmp" "$registry"
+  @COREUTILS@/bin/sync -f "$registry"
+  @COREUTILS@/bin/sync -f "$ext_dir"
 }
 
 refresh_registry() {
@@ -286,20 +355,7 @@ refresh_registry() {
   [ -L "$ext_dir/$desired" ] \
     && [ "$(@READLINK@ -f "$ext_dir/$desired" 2>/dev/null || true)" = "$target" ] || return 1
   registry_is_current && return 0
-  backup="$registry.criomos-backup.$$"
-  if [ -e "$registry" ]; then
-    @COREUTILS@/bin/cp -p "$registry" "$backup" || return 1
-  fi
-  @COREUTILS@/bin/rm -f "$registry" "$ext_dir/.init-default-profile-extensions"
-  if CRIOMOS_VSCODIUM_REGISTRY_BACKUP="$backup" "$codium" --list-extensions >/dev/null 2>&1 \
-    && registry_matches_immutable && record_registry_state; then
-    @COREUTILS@/bin/rm -f "$backup"
-    return 0
-  fi
-  # A failed refresh must not discard mutable registry state. Restoring the
-  # whole prior registry is deliberately the only JSON operation here.
-  [ ! -e "$backup" ] || @COREUTILS@/bin/mv -f "$backup" "$registry"
-  return 1
+  transform_registry && registry_matches_immutable && record_registry_state
 }
 
 launch_ready() {

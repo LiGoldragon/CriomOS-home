@@ -3,6 +3,9 @@
   lib,
   user,
   inputs,
+  horizon ? {
+    node.services = [ ];
+  },
   hexis,
   textScale,
   ...
@@ -11,6 +14,14 @@ let
   inherit (user) size;
   codiumPackage = pkgs.callPackage ../../../../packages/vscodium-casual { };
   claudeCodePackage = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.claude-code;
+  codexCliPackage = inputs.codex-cli.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  agentIntercomLocal = builtins.any (
+    service:
+    if builtins.isString service then
+      service == "AgentIntercomLocal"
+    else
+      builtins.isAttrs service && builtins.hasAttr "AgentIntercomLocal" service
+  ) (horizon.node.services or [ ]);
 
   lifecycleSource = pkgs.replaceVars ./claude-lifecycle.sh {
     COREUTILS = "${pkgs.coreutils}";
@@ -21,20 +32,31 @@ let
     PGREP = "${pkgs.procps}/bin/pgrep";
     READLINK = "${pkgs.coreutils}/bin/readlink";
     SED = "${pkgs.gnused}/bin/sed";
-    CODIUM = "${codiumPackage}/bin/codium";
   };
-  codiumClaudeLifecycle = pkgs.writeShellScriptBin "criomos-codium-claude-lifecycle" (
-    builtins.readFile lifecycleSource
-  );
+  codiumClaudeLifecycle = pkgs.writeShellApplication {
+    name = "criomos-codium-claude-lifecycle";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.gnugrep
+      pkgs.gnused
+      pkgs.jq
+      pkgs.nix
+      pkgs.procps
+      pkgs.util-linux
+    ];
+    text = builtins.readFile lifecycleSource;
+  };
   codiumSupervisorSource = pkgs.replaceVars ./codium-supervisor.sh {
     COREUTILS = "${pkgs.coreutils}";
     CODIUM = "${codiumPackage}/bin/codium";
     READLINK = "${pkgs.coreutils}/bin/readlink";
     SLEEP = "${pkgs.coreutils}/bin/sleep";
   };
-  codiumSupervisor = pkgs.writeShellScriptBin "criomos-codium-supervisor" (
-    builtins.readFile codiumSupervisorSource
-  );
+  codiumSupervisor = pkgs.writeShellApplication {
+    name = "criomos-codium-supervisor";
+    runtimeInputs = [ pkgs.coreutils ];
+    text = builtins.readFile codiumSupervisorSource;
+  };
   codiumLauncherSource = pkgs.replaceVars ./codium-launch.sh {
     COREUTILS = "${pkgs.coreutils}";
     CODIUM = "${codiumPackage}/bin/codium";
@@ -44,9 +66,14 @@ let
     READLINK = "${pkgs.coreutils}/bin/readlink";
     SLEEP = "${pkgs.coreutils}/bin/sleep";
   };
-  codiumLauncher = pkgs.writeShellScriptBin "criomos-codium-launch" (
-    builtins.readFile codiumLauncherSource
-  );
+  codiumLauncher = pkgs.writeShellApplication {
+    name = "criomos-codium-launch";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.util-linux
+    ];
+    text = builtins.readFile codiumLauncherSource;
+  };
 
   codiumManagedPackage = pkgs.symlinkJoin {
     name = "vscodium-casual-managed";
@@ -288,7 +315,16 @@ lib.mkIf size.medium {
   # All keys default to `ensure` mode here — declared overlays the
   # defaults, user overrides survive at sibling keys (the
   # `[python].wordWrap`-clobber case the old helper got wrong).
-  home.packages = [ codiumClaudeLifecycle ];
+  # Without the opt-in local Agent Intercom capability, the ordinary command
+  # names must be the upstream CLIs.  Agent Intercom owns its wrappers only
+  # when Horizon explicitly projects that capability.
+  home.packages = [
+    codiumClaudeLifecycle
+  ]
+  ++ lib.optionals (!agentIntercomLocal) [
+    claudeCodePackage
+    codexCliPackage
+  ];
 
   home.activation.bootstrapMutableClaudeCodeExtension = lib.hm.dag.entryBefore [ "linkGeneration" ] ''
     run ${codiumClaudeLifecycle}/bin/criomos-codium-claude-lifecycle --bootstrap

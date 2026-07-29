@@ -295,7 +295,27 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
          version: "26.5721.30844",
          relativeLocation: "openai.chatgpt"
        }]' > "$migration_ext/.extensions-immutable.json"
-    printf '%s\n' "[{\"identifier\":{\"id\":\"anthropic.claude-code\"},\"version\":\"2.1.215\",\"relativeLocation\":\"anthropic.claude-code-2.1.215-linux-x64\",\"location\":{\"path\":\"$migration_ext/anthropic.claude-code-2.1.215-linux-x64\"}},{\"identifier\":{\"id\":\"openai.chatgpt\"},\"version\":\"26.5602.71036\",\"relativeLocation\":\"openai.chatgpt\",\"location\":{\"path\":\"$migration_ext/openai.chatgpt\"}}]" > "$migration_ext/extensions.json"
+    ${pkgs.jq}/bin/jq -n --arg ext "$migration_ext" \
+      '[{
+         identifier: {id: "anthropic.claude-code"},
+         version: "2.1.215",
+         relativeLocation: "anthropic.claude-code-2.1.215-linux-x64",
+         location: {path: ($ext + "/anthropic.claude-code-2.1.215-linux-x64")}
+       }, {
+         identifier: {id: "openai.chatgpt"},
+         version: "26.5602.71036",
+         relativeLocation: "openai.chatgpt",
+         location: {path: ($ext + "/openai.chatgpt")}
+       }, {
+         identifier: {id: "fixture.unmanaged"},
+         version: "7.4.2",
+         relativeLocation: "fixture.unmanaged",
+         location: {path: ($ext + "/fixture.unmanaged"), fsPath: ($ext + "/fixture.unmanaged")},
+         metadata: {preserve: true, nested: ["one", "two"]}
+       }]' > "$migration_ext/extensions.json"
+    ${pkgs.jq}/bin/jq -S \
+      '[.[] | select(.identifier.id != "anthropic.claude-code" and .identifier.id != "openai.chatgpt")]' \
+      "$migration_ext/extensions.json" > "$migration_launch/unmanaged-before.json"
     export FAKE_LAUNCH_DIR="$migration_launch" FAKE_LOCK="$migration_state/lifecycle.lock"
     env \
       CRIOMOS_VSCODIUM_EXTENSIONS_DIR="$migration_ext" \
@@ -318,10 +338,26 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
     test "$(head -n1 "$migration_state/manifest")" = v1
     ${pkgs.gnugrep}/bin/grep -Fq $'managed\t2.1.220\tanthropic.claude-code-2.1.220-linux-x64\t' "$migration_state/manifest"
     ! ${pkgs.gnugrep}/bin/grep -q 2.1.215 "$migration_state/manifest"
-    ${pkgs.jq}/bin/jq -e \
-      'any(.[]; .identifier.id == "anthropic.claude-code" and .version == "2.1.220" and .relativeLocation == "anthropic.claude-code-2.1.220-linux-x64")
-       and any(.[]; .identifier.id == "openai.chatgpt" and .version == "26.5721.30844")' \
+    ${pkgs.jq}/bin/jq -e --arg ext "$migration_ext" \
+      'any(.[];
+          .identifier.id == "anthropic.claude-code"
+          and .version == "2.1.220"
+          and .relativeLocation == "anthropic.claude-code-2.1.220-linux-x64"
+          and .location.path == ($ext + "/anthropic.claude-code-2.1.220-linux-x64")
+          and .location.fsPath == ($ext + "/anthropic.claude-code-2.1.220-linux-x64")
+        )
+       and any(.[];
+          .identifier.id == "openai.chatgpt"
+          and .version == "26.5721.30844"
+          and .relativeLocation == "openai.chatgpt"
+          and .location.path == ($ext + "/openai.chatgpt")
+          and .location.fsPath == ($ext + "/openai.chatgpt")
+        )' \
       "$migration_ext/extensions.json"
+    ${pkgs.jq}/bin/jq -S \
+      '[.[] | select(.identifier.id != "anthropic.claude-code" and .identifier.id != "openai.chatgpt")]' \
+      "$migration_ext/extensions.json" > "$migration_launch/unmanaged-after.json"
+    cmp "$migration_launch/unmanaged-before.json" "$migration_launch/unmanaged-after.json"
     cmp "$migration_ext/.extensions-immutable.json" "$migration_state/extensions-immutable.registry.json"
     test ! -e "$migration_launch/refresh-gap"
     test ! -e "$migration_launch/codium.pid"
