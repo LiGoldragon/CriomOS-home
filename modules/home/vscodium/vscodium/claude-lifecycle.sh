@@ -246,7 +246,7 @@ registry_matches_immutable() {
     '. as $registry
      | input as $immutable
      | def records($items; $id): [$items[] | select(.identifier.id? == $id)];
-     | if ($registry | type == "array") and ($immutable | type == "array") then
+       if ($registry | type == "array") and ($immutable | type == "array") then
          (records($registry; $claude_id)) as $registry_claude
          | (records($registry; $openai_id)) as $registry_openai
          | (records($immutable; $claude_id)) as $immutable_claude
@@ -309,7 +309,7 @@ transform_registry() {
     '. as $registry
      | input as $immutable
      | def records($items; $id): [$items[] | select(.identifier.id? == $id)];
-     | if ($registry | type == "array")
+       if ($registry | type == "array")
           and ($immutable | type == "array")
           and (records($registry; $claude_id) | length == 1)
           and (records($registry; $openai_id) | length == 1)
