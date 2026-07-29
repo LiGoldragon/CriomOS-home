@@ -32,11 +32,35 @@ let
   # selection below on `pkgs` once option values are forced.
   graphicalSupported = homeSystem == "x86_64-linux";
   sharedAppServerSocket = "unix://\${XDG_RUNTIME_DIR}/codex-intercom-app-server.sock";
-  codexCliPackage = inputs.codex-cli.packages.${homeSystem}.default;
+  upstreamCodexCliPackage = inputs.codex-cli.packages.${homeSystem}.default;
+  # The upstream Nix package wraps its native executable with an identity that
+  # points at an unmanaged $HOME/.local/bin path.  Preserve its closure and
+  # official pinned binary, but expose `codex` as the raw Nix-owned executable
+  # so ordinary invocations have no mutable-user-path identity.
+  codexCliPackage = pkgs.symlinkJoin {
+    name = "criomos-codex-direct";
+    paths = [ upstreamCodexCliPackage ];
+    postBuild = ''
+      rm "$out/bin/codex"
+      ln -s ${upstreamCodexCliPackage}/bin/codex-raw "$out/bin/codex"
+    '';
+  };
   agentIntercom = pkgs.callPackage ../../../../packages/agent-intercom {
-    inherit inputs;
+    inherit inputs codexCliPackage;
     sharedAppServerSocket =
       if graphicalEnabled && graphicalSupported then sharedAppServerSocket else null;
+  };
+  # Agent Intercom owns its operational entry points (`coi`, `cci`, MCP
+  # servers, and fleet tools), but normal shell commands must remain the
+  # pinned upstream CLIs.  In a graphical profile the Desktop module also
+  # supplies `codex`; publishing Intercom's wake alias under that same name
+  # makes Home Manager's package union fail before activation.
+  agentIntercomRuntime = pkgs.symlinkJoin {
+    name = "agent-intercom-runtime";
+    paths = [ agentIntercom ];
+    postBuild = ''
+      rm "$out/bin/codex" "$out/bin/claude"
+    '';
   };
 in
 lib.mkMerge (
@@ -54,10 +78,16 @@ lib.mkMerge (
       ];
     }
     (lib.mkIf localEnabled {
-      # `codex` and `claude` in this package are the normal, wakeable entry
-      # points. `codex-raw` and `claude-raw` remain explicit recovery/debug
-      # executables; no regular launcher resolves directly to the upstream CLI.
-      home.packages = [ agentIntercom ];
+      # The direct, pinned CLIs are the ordinary user commands.  Keep the
+      # Intercom-specific operational entry points without letting its aliases
+      # shadow either CLI.  Graphical profiles receive Codex from the Desktop
+      # module below; non-graphical profiles receive it here.
+      home.packages =
+        [
+          agentIntercomRuntime
+          claudeCodePackage
+        ]
+        ++ lib.optional (!graphicalEnabled) codexCliPackage;
 
       home.file = {
         ".pi/agent/packages/agent-intercom-pi" = {

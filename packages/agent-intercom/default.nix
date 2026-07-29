@@ -1,6 +1,7 @@
 {
   inputs,
   pkgs,
+  codexCliPackage ? inputs.codex-cli.packages.${pkgs.stdenv.hostPlatform.system}.default,
   sharedAppServerSocket ? null,
   ...
 }:
@@ -16,7 +17,6 @@ then
 else
   let
     system = pkgs.stdenv.hostPlatform.system;
-    codexCliPackage = inputs.codex-cli.packages.${system}.default;
     claudeCodePackage = inputs.llm-agents.packages.${system}.claude-code;
     esbuildCompanion =
       {

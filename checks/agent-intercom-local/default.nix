@@ -37,7 +37,8 @@ let
     (inputs.home-manager.lib.homeManagerConfiguration {
       inherit pkgs;
       extraSpecialArgs = {
-        inherit inputs horizon pkgs;
+        inherit inputs horizon pkgs system;
+        homeSystem = system;
         user = {
           name = "test-user";
           size.min = true;
@@ -67,7 +68,11 @@ let
 in
 assert localHomeConfiguration.home.file ? ".pi/agent/packages/agent-intercom-pi";
 assert localHomeConfiguration.home.file ? ".pi/agent/packages/agent-intercom-orchestrator";
-assert builtins.elem agentIntercom localHomeConfiguration.home.packages;
+assert builtins.any (
+  package: pkgs.lib.hasInfix "criomos-codex-direct" (toString package)
+) localHomeConfiguration.home.packages;
+assert builtins.elem claudeCodePackage localHomeConfiguration.home.packages;
+assert !(builtins.elem agentIntercom localHomeConfiguration.home.packages);
 assert !(noLocalHomeConfiguration.home.file ? ".pi/agent/packages/agent-intercom-pi");
 assert !(builtins.elem agentIntercom noLocalHomeConfiguration.home.packages);
 assert system != "aarch64-linux" || !graphicalOnArmRejected.success;
@@ -141,6 +146,10 @@ pkgs.runCommand "agent-intercom-local-family-contract"
     grep -F 'linux-arm64' ${agentIntercomPackage}
     grep -F 'esbuildCompanion' ${agentIntercomPackage}
     grep -F 'AgentIntercomLocal' ${agentIntercomModule}
+    grep -F 'agentIntercomRuntime' ${agentIntercomModule}
+    grep -F 'rm "$out/bin/codex" "$out/bin/claude"' ${agentIntercomModule}
+    grep -F 'codex-raw' ${agentIntercomModule}
+    ! grep -F '$HOME/.local/bin/codex' ${agentIntercomModule}
     grep -F 'codex-intercom-mcp' ${agentIntercomModule}
     grep -F 'claude-intercom-mcp' ${agentIntercomModule}
     grep -F 'opencode/dist/plugin.mjs' ${agentIntercomModule}
