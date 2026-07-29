@@ -85,7 +85,8 @@ pkgs.writeShellApplication {
     esac
 
     response_body="$(mktemp)"
-    trap 'rm -f "$response_body"' EXIT HUP INT TERM
+    status_file="$(mktemp)"
+    trap 'rm -f "$response_body" "$status_file"' EXIT HUP INT TERM
 
     status=""
     set +e
@@ -97,10 +98,10 @@ pkgs.writeShellApplication {
         --expand-header 'Authorization: token {{token:trim}}' \
         --output "$response_body" \
         --write-out '%{http_code}\n' \
-        https://www.dolthub.com/api/v1alpha1/database \
-      | IFS= read -r status
+        https://www.dolthub.com/api/v1alpha1/database > "$status_file"
     pipeline_status=("''${PIPESTATUS[@]}")
     set -e
+    status="$(< "$status_file")"
 
     gopass_status="''${pipeline_status[0]}"
     curl_status="''${pipeline_status[1]}"
