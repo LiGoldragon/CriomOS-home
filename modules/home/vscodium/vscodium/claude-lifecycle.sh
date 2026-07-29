@@ -357,67 +357,16 @@ transform_registry() {
 # user record when the existing registry is a valid array.
 reconcile_registry_from_immutable() {
   registry_tmp="$registry.tmp.$$"
-  registry_filter='
-    def owner($id): .identifier.id? == $id;
-    def rendered($immutable):
-      [$immutable[]
-       | select(owner($claude_id) or owner($openai_id))
-       | if .identifier.id == $claude_id then
-           .version = $claude_version
-           | .relativeLocation = $claude_relative
-           | .location = ((if (.location | type == "object") then .location else {} end)
-               | .path = $claude_path | .fsPath = $claude_path)
-         else
-           .location = ((if (.location | type == "object") then .location else {} end)
-               | .path = ($ext_dir + "/" + .relativeLocation)
-               | .fsPath = ($ext_dir + "/" + .relativeLocation))
-         end];
-    (. as $registry | input as $immutable
-     | ($registry | if type == "array" then . else [] end
-        | map(select(owner($claude_id) or owner($openai_id) | not)))
-       + rendered($immutable))'
-  if [ -f "$registry" ] && @JQ@ -e 'type == "array"' "$registry" >/dev/null 2>&1; then
-    @JQ@ -e \
-      --arg claude_id anthropic.claude-code \
-      --arg claude_version "$version" \
-      --arg claude_path "$ext_dir/$desired" \
-      --arg claude_relative "$desired" \
-      --arg openai_id openai.chatgpt \
-      --arg ext_dir "$ext_dir" \
-      "$registry_filter" "$registry" "$immutable" > "$registry_tmp" || {
-        @COREUTILS@/bin/rm -f "$registry_tmp"
-        return 1
-      }
-  else
-    @JQ@ -n -e \
-      --arg claude_id anthropic.claude-code \
-      --arg claude_version "$version" \
-      --arg claude_path "$ext_dir/$desired" \
-      --arg claude_relative "$desired" \
-      --arg openai_id openai.chatgpt \
-      --arg ext_dir "$ext_dir" \
-      'input as $immutable
-       | def owner($id): .identifier.id? == $id;
-         [$immutable[]
-          | select(owner($claude_id) or owner($openai_id))
-          | if .identifier.id == $claude_id then
-              .version = $claude_version
-              | .relativeLocation = $claude_relative
-              | .location = ((if (.location | type == "object") then .location else {} end)
-                  | .path = $claude_path | .fsPath = $claude_path)
-            else
-              .location = ((if (.location | type == "object") then .location else {} end)
-                  | .path = ($ext_dir + "/" + .relativeLocation)
-                  | .fsPath = ($ext_dir + "/" + .relativeLocation))
-            end]' "$immutable" > "$registry_tmp" || {
-        @COREUTILS@/bin/rm -f "$registry_tmp"
-        return 1
-      }
-  fi
+  [ ! -e "$registry" ] && [ ! -L "$registry" ] || return 1
+  # Seed the absent mutable registry from Home Manager's declaration, then
+  # pass through the existing structured transform below to install the
+  # mutable location fields atomically.
+  @COREUTILS@/bin/cp "$immutable" "$registry_tmp" || return 1
   @COREUTILS@/bin/sync -f "$registry_tmp"
   @COREUTILS@/bin/mv -f "$registry_tmp" "$registry"
   @COREUTILS@/bin/sync -f "$registry"
   @COREUTILS@/bin/sync -f "$ext_dir"
+  transform_registry
 }
 
 refresh_registry() {
@@ -425,8 +374,37 @@ refresh_registry() {
   [ -L "$ext_dir/$desired" ] \
     && [ "$(@READLINK@ -f "$ext_dir/$desired" 2>/dev/null || true)" = "$target" ] || return 1
   registry_is_current && return 0
-  (transform_registry || reconcile_registry_from_immutable) \
-    && registry_matches_immutable && record_registry_state
+
+  # The declaration is authoritative.  A registry which already agrees with
+  # it only needs its owner-state witness restored; a missing registry can be
+  # rebuilt directly from that declaration without asking an absent prior
+  # manifest to admit it.
+  registry_matches_immutable && record_registry_state && return 0
+  if [ ! -e "$registry" ] && [ ! -L "$registry" ]; then
+    reconcile_registry_from_immutable \
+      && registry_matches_immutable && record_registry_state
+    return
+  fi
+
+  # Existing mutable state is potentially user-controlled.  Preserve it until
+  # the supported Codium refresh and our validation both succeed, then retain
+  # the resulting declaration witness.  A failed refresh is fail-closed: the
+  # registry is restored unchanged and the GUI launcher will not start.
+  [ -f "$registry" ] && [ ! -L "$registry" ] || return 1
+  registry_backup="$(@COREUTILS@/bin/mktemp "$state_dir/registry-backup.XXXXXXXX")" || return 1
+  @COREUTILS@/bin/cp "$registry" "$registry_backup" || {
+    @COREUTILS@/bin/rm -f "$registry_backup"
+    return 1
+  }
+  if CRIOMOS_VSCODIUM_REGISTRY_BACKUP="$registry_backup" "$codium" --list-extensions >/dev/null 2>&1 \
+    && transform_registry && registry_matches_immutable && record_registry_state; then
+    @COREUTILS@/bin/rm -f "$registry_backup"
+    return 0
+  fi
+  @COREUTILS@/bin/cp "$registry_backup" "$registry.tmp.$$" \
+    && @COREUTILS@/bin/mv -f "$registry.tmp.$$" "$registry"
+  @COREUTILS@/bin/rm -f "$registry_backup" "$registry.tmp.$$"
+  return 1
 }
 
 launch_ready() {
@@ -460,9 +438,10 @@ activation_refresh() {
   # A missing manifest needs the same bounded bootstrap/ready progression as
   # a launch.  Keep it in activation so a fresh owner generation is usable
   # before any GUI process is started.
-  CRIOMOS_VSCODIUM_LOCK_HELD=1 reconcile --activate
-  launch_ready || CRIOMOS_VSCODIUM_LOCK_HELD=1 reconcile --activate
-  launch_ready || CRIOMOS_VSCODIUM_LOCK_HELD=1 reconcile --activate
+  CRIOMOS_VSCODIUM_LOCK_HELD=1
+  reconcile --activation-recovery
+  launch_ready || reconcile --activation-recovery
+  launch_ready || reconcile --activation-recovery
   launch_ready || return 0
   refresh_registry
 }
@@ -507,7 +486,8 @@ reconcile() {
       [ -L "$candidate" ] || continue
       raw=$(@READLINK@ "$candidate" 2>/dev/null || true)
       resolved=$(@READLINK@ -f "$candidate" 2>/dev/null || true)
-      if [ "$raw" = "$managed" ] && [ "$resolved" = "$target" ] && [ "$candidate" = "$exact_name" ]; then
+      if [ "$resolved" = "$target" ] && [ "$candidate" = "$exact_name" ] \
+        && { [ "$raw" = "$managed" ] || [ "$candidate" = "$ext_dir/$desired" ]; }; then
         found_legacy=1
         name=${candidate##*/}
         [ "$dry" -eq 1 ] || { @COREUTILS@/bin/ln -s "$target" "$candidate.tmp.$$"; @COREUTILS@/bin/mv -Tf "$candidate.tmp.$$" "$candidate"; }
@@ -522,7 +502,7 @@ reconcile() {
     tmp_manifest="$manifest.tmp.$$"
     { printf 'v1-bootstrap\n'; [ "$found_legacy" -eq 1 ] && printf 'managed\t%s\t%s\t%s\n' "$version" "$desired" "$target"; } > "$tmp_manifest"
     @COREUTILS@/bin/mv -f "$tmp_manifest" "$manifest"
-    [ "$found_legacy" -eq 1 ] || exit 0
+    [ "$found_legacy" -eq 1 ] || { exit 0; }
     exit 0
   fi
   [ "$bootstrap_only" -eq 1 ] && exit 0

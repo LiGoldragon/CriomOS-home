@@ -342,6 +342,8 @@ lib.mkIf size.medium {
     lib.hm.dag.entryAfter [ "replaceMutableClaudeCodeExtension" ]
       ''
         run ${codiumClaudeLifecycle}/bin/criomos-codium-claude-lifecycle --activation-refresh
+        run ${codiumClaudeLifecycle}/bin/criomos-codium-claude-lifecycle --activation-refresh
+        run ${codiumClaudeLifecycle}/bin/criomos-codium-claude-lifecycle --activation-refresh
       '';
 
   home.activation.mergeVscodiumSettings = inputs.hexis.lib.mkManagedConfig {

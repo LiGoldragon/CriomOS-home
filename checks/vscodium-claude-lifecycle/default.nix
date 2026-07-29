@@ -302,6 +302,8 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
       export CRIOMOS_VSCODIUM_LOCK_FILE="$activation_missing_state/lifecycle.lock"
       export FAKE_LAUNCH_DIR="$activation_missing_launch" FAKE_LOCK="$activation_missing_state/lifecycle.lock"
       "${lifecycle}" --activation-refresh
+      "${lifecycle}" --activation-refresh
+      "${lifecycle}" --activation-refresh
     )
     test "$(head -n1 "$activation_missing_state/manifest")" = v1
     ${pkgs.gnugrep}/bin/grep -Fq $'managed\t2.1.220\tanthropic.claude-code-2.1.220-linux-x64\t' "$activation_missing_state/manifest"
