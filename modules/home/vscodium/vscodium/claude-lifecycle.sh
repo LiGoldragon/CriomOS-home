@@ -350,12 +350,83 @@ transform_registry() {
   @COREUTILS@/bin/sync -f "$ext_dir"
 }
 
+# Home Manager owns the immutable declaration while VSCodium owns its mutable
+# discovery registry.  A first activation after a disrupted or legacy state
+# may have the declaration and extension links but no mutable registry yet.
+# Rebuild just the two owner records atomically, preserving every unrelated
+# user record when the existing registry is a valid array.
+reconcile_registry_from_immutable() {
+  registry_tmp="$registry.tmp.$$"
+  registry_filter='
+    def owner($id): .identifier.id? == $id;
+    def rendered($immutable):
+      [$immutable[]
+       | select(owner($claude_id) or owner($openai_id))
+       | if .identifier.id == $claude_id then
+           .version = $claude_version
+           | .relativeLocation = $claude_relative
+           | .location = ((if (.location | type == "object") then .location else {} end)
+               | .path = $claude_path | .fsPath = $claude_path)
+         else
+           .location = ((if (.location | type == "object") then .location else {} end)
+               | .path = ($ext_dir + "/" + .relativeLocation)
+               | .fsPath = ($ext_dir + "/" + .relativeLocation))
+         end];
+    (. as $registry | input as $immutable
+     | ($registry | if type == "array" then . else [] end
+        | map(select(owner($claude_id) or owner($openai_id) | not)))
+       + rendered($immutable))'
+  if [ -f "$registry" ] && @JQ@ -e 'type == "array"' "$registry" >/dev/null 2>&1; then
+    @JQ@ -e \
+      --arg claude_id anthropic.claude-code \
+      --arg claude_version "$version" \
+      --arg claude_path "$ext_dir/$desired" \
+      --arg claude_relative "$desired" \
+      --arg openai_id openai.chatgpt \
+      --arg ext_dir "$ext_dir" \
+      "$registry_filter" "$registry" "$immutable" > "$registry_tmp" || {
+        @COREUTILS@/bin/rm -f "$registry_tmp"
+        return 1
+      }
+  else
+    @JQ@ -n -e \
+      --arg claude_id anthropic.claude-code \
+      --arg claude_version "$version" \
+      --arg claude_path "$ext_dir/$desired" \
+      --arg claude_relative "$desired" \
+      --arg openai_id openai.chatgpt \
+      --arg ext_dir "$ext_dir" \
+      'input as $immutable
+       | def owner($id): .identifier.id? == $id;
+         [$immutable[]
+          | select(owner($claude_id) or owner($openai_id))
+          | if .identifier.id == $claude_id then
+              .version = $claude_version
+              | .relativeLocation = $claude_relative
+              | .location = ((if (.location | type == "object") then .location else {} end)
+                  | .path = $claude_path | .fsPath = $claude_path)
+            else
+              .location = ((if (.location | type == "object") then .location else {} end)
+                  | .path = ($ext_dir + "/" + .relativeLocation)
+                  | .fsPath = ($ext_dir + "/" + .relativeLocation))
+            end]' "$immutable" > "$registry_tmp" || {
+        @COREUTILS@/bin/rm -f "$registry_tmp"
+        return 1
+      }
+  fi
+  @COREUTILS@/bin/sync -f "$registry_tmp"
+  @COREUTILS@/bin/mv -f "$registry_tmp" "$registry"
+  @COREUTILS@/bin/sync -f "$registry"
+  @COREUTILS@/bin/sync -f "$ext_dir"
+}
+
 refresh_registry() {
   managed_extension || return 1
   [ -L "$ext_dir/$desired" ] \
     && [ "$(@READLINK@ -f "$ext_dir/$desired" 2>/dev/null || true)" = "$target" ] || return 1
   registry_is_current && return 0
-  transform_registry && registry_matches_immutable && record_registry_state
+  (transform_registry || reconcile_registry_from_immutable) \
+    && registry_matches_immutable && record_registry_state
 }
 
 launch_ready() {
@@ -386,7 +457,12 @@ activation_refresh() {
   mkdir_state
   exec 9>"$lock_file"
   @FLOCK@ -xn 9 || return 0
+  # A missing manifest needs the same bounded bootstrap/ready progression as
+  # a launch.  Keep it in activation so a fresh owner generation is usable
+  # before any GUI process is started.
   CRIOMOS_VSCODIUM_LOCK_HELD=1 reconcile --activate
+  launch_ready || CRIOMOS_VSCODIUM_LOCK_HELD=1 reconcile --activate
+  launch_ready || CRIOMOS_VSCODIUM_LOCK_HELD=1 reconcile --activate
   launch_ready || return 0
   refresh_registry
 }
@@ -422,7 +498,8 @@ reconcile() {
       [ -L "$candidate" ] || continue
       raw=$(@READLINK@ "$candidate" 2>/dev/null || true)
       resolved=$(@READLINK@ -f "$candidate" 2>/dev/null || true)
-      [ "$raw" = "$managed" ] && [ "$resolved" = "$target" ] || continue
+      [ "$resolved" = "$target" ] || continue
+      [ "$raw" = "$managed" ] || [ "$candidate" = "$ext_dir/$desired" ] || continue
       exact_count=$((exact_count + 1)); exact_name="$candidate"
     done
     [ "$exact_count" -le 1 ] || { exit 0; }

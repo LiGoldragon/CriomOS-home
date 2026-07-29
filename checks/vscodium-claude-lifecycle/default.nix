@@ -280,6 +280,37 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
     )
     test -L "$unprivileged_state/gcroots/anthropic.claude-code-2.1.215-linux-x64"
     test "$(readlink -f "$unprivileged_state/gcroots/anthropic.claude-code-2.1.215-linux-x64")" = "$(readlink -f ${extA})"
+    # The standard activation hook must recover a fresh owner state before a
+    # GUI process exists: Home Manager already owns the direct stable link,
+    # while both lifecycle manifest and mutable discovery registry are absent.
+    activation_missing_home="$TMPDIR/activation-missing"
+    activation_missing_ext="$activation_missing_home/.vscode-oss/extensions"
+    activation_missing_state="$activation_missing_home/state"
+    activation_missing_roots="$activation_missing_state/gcroots"
+    activation_missing_launch="$TMPDIR/activation-missing-launch"
+    mkdir -p "$activation_missing_ext" "$activation_missing_roots" "$activation_missing_launch"
+    ln -s ${extDPath} "$activation_missing_ext/anthropic.claude-code"
+    ln -s ${extDPath} "$activation_missing_ext/anthropic.claude-code-2.1.220-linux-x64"
+    ${pkgs.jq}/bin/jq -n \
+      '[{identifier: {id: "anthropic.claude-code"}, version: "2.1.220", relativeLocation: "anthropic.claude-code"},
+        {identifier: {id: "openai.chatgpt"}, version: "26.5721.30844", relativeLocation: "openai.chatgpt"}]' \
+      > "$activation_missing_ext/.extensions-immutable.json"
+    (
+      export CRIOMOS_VSCODIUM_EXTENSIONS_DIR="$activation_missing_ext"
+      export CRIOMOS_VSCODIUM_STATE_DIR="$activation_missing_state"
+      export CRIOMOS_VSCODIUM_GCROOT_DIR="$activation_missing_roots"
+      export CRIOMOS_VSCODIUM_LOCK_FILE="$activation_missing_state/lifecycle.lock"
+      export FAKE_LAUNCH_DIR="$activation_missing_launch" FAKE_LOCK="$activation_missing_state/lifecycle.lock"
+      "${lifecycle}" --activation-refresh
+    )
+    test "$(head -n1 "$activation_missing_state/manifest")" = v1
+    ${pkgs.gnugrep}/bin/grep -Fq $'managed\t2.1.220\tanthropic.claude-code-2.1.220-linux-x64\t' "$activation_missing_state/manifest"
+    ${pkgs.jq}/bin/jq -e --arg ext "$activation_missing_ext" \
+      '([.[] | select(.identifier.id == "anthropic.claude-code" or .identifier.id == "openai.chatgpt")] | length == 2)
+       and any(.[]; .identifier.id == "anthropic.claude-code" and .location.path == ($ext + "/anthropic.claude-code-2.1.220-linux-x64"))
+       and any(.[]; .identifier.id == "openai.chatgpt" and .location.path == ($ext + "/openai.chatgpt"))' \
+      "$activation_missing_ext/extensions.json" >/dev/null
+    test ! -e "$activation_missing_launch/app.started"
     # A previous lifecycle release made versioned links indirect through the
     # stable extension name. After Home Manager moves that name to a new
     # version, the old manifest must remain recognizably owned long enough to
