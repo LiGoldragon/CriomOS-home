@@ -45,6 +45,7 @@ let
       rm "$out/bin/codex"
       ln -s ${upstreamCodexCliPackage}/bin/codex-raw "$out/bin/codex"
     '';
+    meta.mainProgram = "codex";
   };
   agentIntercom = pkgs.callPackage ../../../../packages/agent-intercom {
     inherit inputs codexCliPackage;
