@@ -85,6 +85,7 @@
     # browser-use, wired to the local Gemma 4 vision model. Large-tier,
     # alongside Chrome — a sibling module, not imported by ./profiles/max.
     ./profiles/max/browser-use.nix
+    ./profiles/max/capture-card-virtual-camera.nix
     ./neovim/neovim
     ./vscodium/vscodium
   ];

@@ -522,7 +522,12 @@
           no-easyeffects = checkPkgs.callPackage ./checks/no-easyeffects { };
           bird-home-isolation = checkPkgs.callPackage ./checks/bird-home-isolation { inherit inputs; };
           nix-profile-compatibility = checkPkgs.callPackage ./checks/nix-profile-compatibility { };
-          orchestrate-service-path = checkPkgs.callPackage ./checks/orchestrate-service-path { inherit inputs; };
+          capture-card-virtual-camera = checkPkgs.callPackage ./checks/capture-card-virtual-camera {
+            inherit inputs;
+          };
+          orchestrate-service-path = checkPkgs.callPackage ./checks/orchestrate-service-path {
+            inherit inputs;
+          };
           pi-criomos-package-load = checkPkgs.callPackage ./checks/pi-criomos-package-load {
             inherit inputs;
           };

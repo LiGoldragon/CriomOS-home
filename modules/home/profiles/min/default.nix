@@ -310,6 +310,8 @@ let
   directCodex = mkRawRecoveryCommand "direct-codex" codexCliPackage "codex";
   directPi = mkRawRecoveryCommand "direct-pi" piPackage "pi";
 
+  dolthubCreateDatabase = pkgs.callPackage ../../../../packages/dolthub-create-database { };
+
   piTesting = pkgs.writeShellApplication {
     name = "pi-testing";
     text = ''
@@ -356,6 +358,7 @@ let
       fuse
       cryptsetup
       # Network
+      dolthubCreateDatabase
       sshfs-fuse
       ifmetric
       curl
