@@ -144,7 +144,7 @@ let
   '';
   extD = pkgs.runCommand "claude-extension-fixture-d" { } ''
     mkdir -p $out/extension
-    printf '{"version":"2.1.219"}\n' > $out/extension/package.json
+    printf '{"version":"2.1.220"}\n' > $out/extension/package.json
   '';
   extAPath = "${extA}/extension";
   extBPath = "${extB}/extension";
@@ -161,7 +161,7 @@ assert builtins.any (
   extension: extension.version == "26.5721.30844"
 ) vscodeConfig.profiles.default.extensions;
 assert builtins.any (
-  extension: extension.version == "2.1.219"
+  extension: extension.version == "2.1.220"
 ) vscodeConfig.profiles.default.extensions;
 assert activation.bootstrapMutableClaudeCodeExtension.before == [ "linkGeneration" ];
 assert builtins.match ".*--bootstrap.*" activation.bootstrapMutableClaudeCodeExtension.data != null;
@@ -288,7 +288,7 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
     ${pkgs.jq}/bin/jq -n \
       '[{
          identifier: {id: "anthropic.claude-code"},
-         version: "2.1.219",
+         version: "2.1.220",
          relativeLocation: "anthropic.claude-code"
        }, {
          identifier: {id: "openai.chatgpt"},
@@ -309,17 +309,17 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
       CRIOMOS_VSCODIUM_GCROOT_DIR="$migration_roots" \
       CRIOMOS_VSCODIUM_LOCK_FILE="$migration_state/lifecycle.lock" \
       "${lifecycle}" --prepare-launch
-    test -L "$migration_ext/anthropic.claude-code-2.1.219-linux-x64"
-    test "$(readlink -f "$migration_ext/anthropic.claude-code-2.1.219-linux-x64")" = "$(readlink -f ${extDPath})"
-    test -L "$migration_roots/anthropic.claude-code-2.1.219-linux-x64"
-    test "$(readlink -f "$migration_roots/anthropic.claude-code-2.1.219-linux-x64")" = "$(readlink -f ${extD})"
+    test -L "$migration_ext/anthropic.claude-code-2.1.220-linux-x64"
+    test "$(readlink -f "$migration_ext/anthropic.claude-code-2.1.220-linux-x64")" = "$(readlink -f ${extDPath})"
+    test -L "$migration_roots/anthropic.claude-code-2.1.220-linux-x64"
+    test "$(readlink -f "$migration_roots/anthropic.claude-code-2.1.220-linux-x64")" = "$(readlink -f ${extD})"
     test ! -e "$migration_ext/anthropic.claude-code-2.1.215-linux-x64"
     test ! -e "$migration_roots/anthropic.claude-code-2.1.215-linux-x64"
     test "$(head -n1 "$migration_state/manifest")" = v1
-    ${pkgs.gnugrep}/bin/grep -Fq $'managed\t2.1.219\tanthropic.claude-code-2.1.219-linux-x64\t' "$migration_state/manifest"
+    ${pkgs.gnugrep}/bin/grep -Fq $'managed\t2.1.220\tanthropic.claude-code-2.1.220-linux-x64\t' "$migration_state/manifest"
     ! ${pkgs.gnugrep}/bin/grep -q 2.1.215 "$migration_state/manifest"
     ${pkgs.jq}/bin/jq -e \
-      'any(.[]; .identifier.id == "anthropic.claude-code" and .version == "2.1.219" and .relativeLocation == "anthropic.claude-code-2.1.219-linux-x64")
+      'any(.[]; .identifier.id == "anthropic.claude-code" and .version == "2.1.220" and .relativeLocation == "anthropic.claude-code-2.1.220-linux-x64")
        and any(.[]; .identifier.id == "openai.chatgpt" and .version == "26.5721.30844")' \
       "$migration_ext/extensions.json"
     cmp "$migration_ext/.extensions-immutable.json" "$migration_state/extensions-immutable.registry.json"
@@ -347,16 +347,16 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
       CRIOMOS_VSCODIUM_GCROOT_DIR="$missing_root_roots" \
       CRIOMOS_VSCODIUM_LOCK_FILE="$missing_root_state/lifecycle.lock" \
       "${lifecycle}" --activation-refresh
-    test -L "$missing_root_ext/anthropic.claude-code-2.1.219-linux-x64"
-    test "$(readlink -f "$missing_root_ext/anthropic.claude-code-2.1.219-linux-x64")" = "$(readlink -f ${extDPath})"
-    test -L "$missing_root_roots/anthropic.claude-code-2.1.219-linux-x64"
-    test "$(readlink -f "$missing_root_roots/anthropic.claude-code-2.1.219-linux-x64")" = "$(readlink -f ${extD})"
+    test -L "$missing_root_ext/anthropic.claude-code-2.1.220-linux-x64"
+    test "$(readlink -f "$missing_root_ext/anthropic.claude-code-2.1.220-linux-x64")" = "$(readlink -f ${extDPath})"
+    test -L "$missing_root_roots/anthropic.claude-code-2.1.220-linux-x64"
+    test "$(readlink -f "$missing_root_roots/anthropic.claude-code-2.1.220-linux-x64")" = "$(readlink -f ${extD})"
     test ! -e "$missing_root_ext/anthropic.claude-code-2.1.215-linux-x64"
     test ! -e "$missing_root_roots/anthropic.claude-code-2.1.215-linux-x64"
     test "$(head -n1 "$missing_root_state/manifest")" = v1
     ! ${pkgs.gnugrep}/bin/grep -q 2.1.215 "$missing_root_state/manifest"
     ${pkgs.jq}/bin/jq -e \
-      'any(.[]; .identifier.id == "anthropic.claude-code" and .version == "2.1.219" and .relativeLocation == "anthropic.claude-code-2.1.219-linux-x64")
+      'any(.[]; .identifier.id == "anthropic.claude-code" and .version == "2.1.220" and .relativeLocation == "anthropic.claude-code-2.1.220-linux-x64")
        and any(.[]; .identifier.id == "openai.chatgpt" and .version == "26.5721.30844")' \
       "$missing_root_ext/extensions.json"
     cmp "$missing_root_ext/.extensions-immutable.json" "$missing_root_state/extensions-immutable.registry.json"
@@ -371,9 +371,9 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
     wrong_root_launch="$TMPDIR/wrong-root-launch"
     mkdir -p "$wrong_root_ext" "$wrong_root_roots" "$wrong_root_launch"
     ln -s ${extDPath} "$wrong_root_ext/anthropic.claude-code"
-    ln -s ${extDPath} "$wrong_root_ext/anthropic.claude-code-2.1.219-linux-x64"
-    ln -s ${extA} "$wrong_root_roots/anthropic.claude-code-2.1.219-linux-x64"
-    printf 'v1\nmanaged\t2.1.219\tanthropic.claude-code-2.1.219-linux-x64\t%s\n' ${extDPath} > "$wrong_root_state/manifest"
+    ln -s ${extDPath} "$wrong_root_ext/anthropic.claude-code-2.1.220-linux-x64"
+    ln -s ${extA} "$wrong_root_roots/anthropic.claude-code-2.1.220-linux-x64"
+    printf 'v1\nmanaged\t2.1.220\tanthropic.claude-code-2.1.220-linux-x64\t%s\n' ${extDPath} > "$wrong_root_state/manifest"
     cp "$migration_ext/.extensions-immutable.json" "$wrong_root_ext/.extensions-immutable.json"
     printf '%s\n' "[{\"identifier\":{\"id\":\"anthropic.claude-code\"},\"version\":\"2.1.215\",\"relativeLocation\":\"anthropic.claude-code-2.1.215-linux-x64\",\"location\":{\"path\":\"$wrong_root_ext/anthropic.claude-code-2.1.215-linux-x64\"}},{\"identifier\":{\"id\":\"openai.chatgpt\"},\"version\":\"26.5602.71036\",\"relativeLocation\":\"openai.chatgpt\",\"location\":{\"path\":\"$wrong_root_ext/openai.chatgpt\"}}]" > "$wrong_root_ext/extensions.json"
     { find -P "$wrong_root_ext" "$wrong_root_roots" -printf '%p %y %l\n' | sort; cat "$wrong_root_state/manifest"; cat "$wrong_root_ext/extensions.json"; } > "$TMPDIR/wrong-root.before"

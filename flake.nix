@@ -66,7 +66,7 @@
     # gate entirely.
     claude-code-vsix = {
       type = "file";
-      url = "https://open-vsx.org/api/Anthropic/claude-code/linux-x64/2.1.219/file/Anthropic.claude-code-2.1.219@linux-x64.vsix";
+      url = "https://anthropic.gallerycdn.vsassets.io/extensions/anthropic/claude-code/2.1.220/1784943423092/Microsoft.VisualStudio.Services.VSIXPackage";
       flake = false;
     };
 
@@ -80,7 +80,7 @@
     # check before deploying.
     codex-chatgpt-vsix = {
       type = "file";
-      url = "https://open-vsx.org/api/openai/chatgpt/linux-x64/26.5721.30844/file/openai.chatgpt-26.5721.30844@linux-x64.vsix";
+      url = "https://openai.gallerycdn.vsassets.io/extensions/openai/chatgpt/26.5721.30844/1784862552174/Microsoft.VisualStudio.Services.VSIXPackage";
       flake = false;
     };
 
