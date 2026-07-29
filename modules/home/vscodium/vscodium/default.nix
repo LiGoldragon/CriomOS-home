@@ -53,11 +53,9 @@ let
     READLINK = "${pkgs.coreutils}/bin/readlink";
     SLEEP = "${pkgs.coreutils}/bin/sleep";
   };
-  codiumSupervisor = pkgs.writeShellApplication {
-    name = "criomos-codium-supervisor";
-    runtimeInputs = [ pkgs.coreutils ];
-    text = builtins.readFile codiumSupervisorSource;
-  };
+  codiumSupervisor = pkgs.writeShellScriptBin "criomos-codium-supervisor" (
+    builtins.readFile codiumSupervisorSource
+  );
   codiumLauncherSource = pkgs.replaceVars ./codium-launch.sh {
     COREUTILS = "${pkgs.coreutils}";
     CODIUM = "${codiumPackage}/bin/codium";
@@ -67,14 +65,9 @@ let
     READLINK = "${pkgs.coreutils}/bin/readlink";
     SLEEP = "${pkgs.coreutils}/bin/sleep";
   };
-  codiumLauncher = pkgs.writeShellApplication {
-    name = "criomos-codium-launch";
-    runtimeInputs = [
-      pkgs.coreutils
-      pkgs.util-linux
-    ];
-    text = builtins.readFile codiumLauncherSource;
-  };
+  codiumLauncher = pkgs.writeShellScriptBin "criomos-codium-launch" (
+    builtins.readFile codiumLauncherSource
+  );
 
   codiumManagedPackage = pkgs.symlinkJoin {
     name = "vscodium-casual-managed";
