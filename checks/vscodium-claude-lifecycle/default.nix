@@ -108,9 +108,20 @@ let
     SED = "${pkgs.gnused}/bin/sed";
     CODIUM = "${homePkgs.vscodium}/bin/codium";
   };
-  lifecycle = pkgs.writeShellScript "criomos-codium-claude-lifecycle-fixture" (
-    builtins.readFile lifecycleSource
-  );
+  lifecycleClosure = pkgs.symlinkJoin {
+    name = "criomos-codium-claude-lifecycle-fixture";
+    paths = [
+      (pkgs.writeShellScriptBin "criomos-codium-claude-lifecycle" (builtins.readFile lifecycleSource))
+      pkgs.coreutils
+      pkgs.gnugrep
+      pkgs.gnused
+      pkgs.jq
+      pkgs.nix
+      pkgs.procps
+      pkgs.util-linux
+    ];
+  };
+  lifecycle = "${lifecycleClosure}/bin/criomos-codium-claude-lifecycle";
   supervisorSource = pkgs.replaceVars ../../modules/home/vscodium/vscodium/codium-supervisor.sh {
     COREUTILS = "${pkgs.coreutils}";
     CODIUM = "${homePkgs.vscodium}/bin/codium";
