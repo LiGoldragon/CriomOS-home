@@ -564,6 +564,7 @@
           inherit pkgs;
           extraSpecialArgs = {
             inherit horizon user;
+            homeSystem = pkgs.stdenv.hostPlatform.system;
           };
           modules = [
             inputs.self.homeModules.default
