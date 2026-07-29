@@ -32,6 +32,7 @@ let
     if moduleResult.config ? content then moduleResult.config.content else moduleResult.config;
   service = moduleConfiguration.systemd.user.services.orchestrate-daemon.Service;
   orchestratePackage = inputs.orchestrate.packages.${system}.default;
+  legacyOrchestratePackage = inputs.orchestrate-legacy.packages.${system}.default;
   expectedExecStart = "${orchestratePackage}/bin/orchestrate-daemon ${stateDirectory}/orchestrate.sema %t/orchestrate/orchestrate.sock %t/orchestrate/orchestrate-owner.sock %t/orchestrate/orchestrate-upgrade.sock ${workspaceRoot} ${gitIndexRoot} messenger=${messengerSocketPath}";
   daemonExecStart = lib.replaceStrings [ "%t" ] [ runtimeDirectory ] service.ExecStart;
 
@@ -71,6 +72,7 @@ else
 
     test -x "${orchestratePackage}/bin/orchestrate-daemon"
     test ! -e "${orchestratePackage}/bin/orchestrate-write-configuration"
+    test -x "${legacyOrchestratePackage}/bin/orchestrate-write-configuration"
 
     state_directory=${lib.escapeShellArg stateDirectory}
     runtime_directory=${lib.escapeShellArg runtimeDirectory}

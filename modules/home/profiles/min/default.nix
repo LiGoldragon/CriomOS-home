@@ -329,6 +329,7 @@ let
     pkgs.gemini-cli
     piPackage
     directClaude
+    codexCliPackage
     directCodex
     directPi
     piTesting

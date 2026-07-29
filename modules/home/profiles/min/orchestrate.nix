@@ -14,6 +14,7 @@ let
 
   system = pkgs.stdenv.hostPlatform.system;
   orchestratePackage = inputs.orchestrate.packages.${system}.default;
+  legacyOrchestratePackage = inputs.orchestrate-legacy.packages.${system}.default;
   serviceName =
     service:
     if builtins.isString service then
@@ -36,6 +37,8 @@ let
         for binary in ${orchestratePackage}/bin/*; do
           ln -s "$binary" "$out/bin/$(basename "$binary")"
         done
+        ln -s ${legacyOrchestratePackage}/bin/orchestrate-write-configuration \
+          $out/bin/orchestrate-write-configuration
         rm $out/bin/orchestrate $out/bin/meta-orchestrate
         makeWrapper ${orchestratePackage}/bin/orchestrate $out/bin/orchestrate \
           --run 'export PERSONA_ORCHESTRATE_SOCKET="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/orchestrate/orchestrate.sock"'
