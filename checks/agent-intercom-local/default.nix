@@ -147,7 +147,8 @@ pkgs.runCommand "agent-intercom-local-family-contract"
     grep -F 'esbuildCompanion' ${agentIntercomPackage}
     grep -F 'AgentIntercomLocal' ${agentIntercomModule}
     grep -F 'agentIntercomRuntime' ${agentIntercomModule}
-    grep -F 'rm "$out/bin/codex" "$out/bin/claude"' ${agentIntercomModule}
+    grep -F '"$out/bin/codex-raw"' ${agentIntercomModule}
+    grep -F '"$out/bin/claude-raw"' ${agentIntercomModule}
     grep -F 'codex-raw' ${agentIntercomModule}
     ! grep -F '$HOME/.local/bin/codex' ${agentIntercomModule}
     grep -F 'codex-intercom-mcp' ${agentIntercomModule}

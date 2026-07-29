@@ -61,7 +61,11 @@ let
     name = "agent-intercom-runtime";
     paths = [ agentIntercom ];
     postBuild = ''
-      rm "$out/bin/codex" "$out/bin/claude"
+      rm \
+        "$out/bin/codex" \
+        "$out/bin/codex-raw" \
+        "$out/bin/claude" \
+        "$out/bin/claude-raw"
     '';
   };
 in
