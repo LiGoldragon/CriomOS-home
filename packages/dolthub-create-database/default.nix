@@ -1,7 +1,18 @@
-{ pkgs }:
+{
+  pkgs,
+  curl ? pkgs.curl,
+  gopass ? pkgs.gopass,
+  coreutils ? pkgs.coreutils,
+  gnugrep ? pkgs.gnugrep,
+}:
 pkgs.writeShellApplication {
   name = "dolthub-create-database";
-  runtimeInputs = [ pkgs.curl pkgs.gopass ];
+  runtimeInputs = [
+    curl
+    gopass
+    coreutils
+    gnugrep
+  ];
   text = ''
     set -o pipefail
 
@@ -73,6 +84,9 @@ pkgs.writeShellApplication {
       *) usage_error "visibility must be public or private" ;;
     esac
 
+    response_body="$(mktemp)"
+    trap 'rm -f "$response_body"' EXIT HUP INT TERM
+
     status=""
     set +e
     gopass show -o "$gopass_entry" 2>/dev/null \
@@ -80,9 +94,9 @@ pkgs.writeShellApplication {
         --header 'Content-Type: application/json' \
         --data-binary "{\"ownerName\":\"$owner\",\"repoName\":\"$database\",\"visibility\":\"$visibility\"}" \
         --variable token@- \
-        --expand-header 'Authorization: token {{token}}' \
-        --output /dev/null \
-        --write-out '%{stderr}%{http_code}\n' 2>&1 \
+        --expand-header 'Authorization: token {{token:trim}}' \
+        --output "$response_body" \
+        --write-out '%{http_code}\n' \
         https://www.dolthub.com/api/v1alpha1/database \
       | IFS= read -r status
     pipeline_status=("''${PIPESTATUS[@]}")
@@ -100,9 +114,18 @@ pkgs.writeShellApplication {
       exit 0
     fi
 
-    if [ "$status" = 409 ]; then
+    if [ "$curl_status" -eq 0 ] \
+      && [ "$status" = 409 ] \
+      && grep -Fq -- "$owner" "$response_body" \
+      && grep -Fq -- "$database" "$response_body" \
+      && grep -Eqi -- 'already[[:space:]]+exists' "$response_body"; then
       printf 'DoltHub database %s/%s already exists (%s)\n' "$owner" "$database" "$visibility"
       exit 0
+    fi
+
+    if [ "$status" = 409 ]; then
+      printf 'dolthub-create-database: DoltHub conflict did not confirm that %s/%s already exists\n' "$owner" "$database" >&2
+      exit 1
     fi
 
     printf 'dolthub-create-database: DoltHub request failed (HTTP %s)\n' "''${status:-unknown}" >&2

@@ -530,6 +530,7 @@
           capture-card-virtual-camera = checkPkgs.callPackage ./checks/capture-card-virtual-camera {
             inherit inputs;
           };
+          dolthub-create-database = checkPkgs.callPackage ./checks/dolthub-create-database { };
           orchestrate-service-path = checkPkgs.callPackage ./checks/orchestrate-service-path {
             inherit inputs;
           };
