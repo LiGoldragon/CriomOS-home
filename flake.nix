@@ -527,7 +527,7 @@
           no-easyeffects = checkPkgs.callPackage ./checks/no-easyeffects { };
           bird-home-isolation = checkPkgs.callPackage ./checks/bird-home-isolation { inherit inputs; };
           nix-profile-compatibility = checkPkgs.callPackage ./checks/nix-profile-compatibility { };
-          capture-card-virtual-camera = checkPkgs.callPackage ./checks/capture-card-virtual-camera {
+          home-profile-absence = checkPkgs.callPackage ./checks/home-profile-absence {
             inherit inputs;
           };
           dolthub-create-database = checkPkgs.callPackage ./checks/dolthub-create-database { };
