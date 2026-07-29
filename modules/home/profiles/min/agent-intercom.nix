@@ -2,7 +2,7 @@
   inputs,
   lib,
   pkgs,
-  homeSystem ? pkgs.stdenv.hostPlatform.system,
+  homeSystem,
   horizon,
   hexis,
   config,
@@ -27,10 +27,9 @@ let
   localEnabled = hasCapability "AgentIntercomLocal";
   graphicalEnabled = hasCapability "AgentIntercomGraphical";
   # This guard is evaluated while Home Manager merges imports, before its
-  # lazily supplied `pkgs` module argument is available.  The standalone
-  # flake supplies its already-resolved target platform as `homeSystem`; the
-  # NixOS-embedded Home Manager path already supplies `pkgs`, so its default
-  # is safe there.  Package selection below remains deferred.
+  # lazily supplied `pkgs` module argument is available.  Both the standalone
+  # flake and the NixOS Home Manager integration supply their already-resolved
+  # target platform as `homeSystem`; package selection below remains deferred.
   graphicalSupported = homeSystem == "x86_64-linux";
   sharedAppServerSocket = "unix://\${XDG_RUNTIME_DIR}/codex-intercom-app-server.sock";
   upstreamCodexCliPackage = inputs.codex-cli.packages.${homeSystem}.default;
