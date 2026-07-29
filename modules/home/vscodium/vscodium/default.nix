@@ -32,6 +32,7 @@ let
     PGREP = "${pkgs.procps}/bin/pgrep";
     READLINK = "${pkgs.coreutils}/bin/readlink";
     SED = "${pkgs.gnused}/bin/sed";
+    CODIUM = "${codiumPackage}/bin/codium";
   };
   codiumClaudeLifecycle = pkgs.writeShellApplication {
     name = "criomos-codium-claude-lifecycle";
