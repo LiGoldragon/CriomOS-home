@@ -472,29 +472,21 @@ reconcile() {
     if [ -n "${USER:-}" ] && @PGREP@ -u "$USER" -f '(^|/)(codium|codium-server|VSCodium)( |$)' >/dev/null 2>&1; then
       exit 0
     fi
-    found_legacy=0; exact_count=0; exact_name=""
-    for candidate in "$ext_dir"/anthropic.claude-code-*-linux-x64; do
-      [ -L "$candidate" ] || continue
+    # Home Manager's current declared versioned link and the stable package
+    # link are sufficient authority to reconstruct a lost manifest.  Leave
+    # other versioned links alone: without the missing manifest they are not
+    # evidence against the declared current target, nor authority to clean up.
+    found_legacy=0
+    candidate="$ext_dir/$desired"
+    if [ -e "$candidate" ] || [ -L "$candidate" ]; then
+      [ -L "$candidate" ] || exit 0
       raw=$(@READLINK@ "$candidate" 2>/dev/null || true)
       resolved=$(@READLINK@ -f "$candidate" 2>/dev/null || true)
-      [ "$resolved" = "$target" ] || continue
-      [ "$raw" = "$managed" ] || [ "$candidate" = "$ext_dir/$desired" ] || continue
-      exact_count=$((exact_count + 1)); exact_name="$candidate"
-    done
-    [ "$exact_count" -le 1 ] || { exit 0; }
-    for candidate in "$ext_dir"/anthropic.claude-code-*-linux-x64; do
-      [ -L "$candidate" ] || continue
-      raw=$(@READLINK@ "$candidate" 2>/dev/null || true)
-      resolved=$(@READLINK@ -f "$candidate" 2>/dev/null || true)
-      if [ "$resolved" = "$target" ] && [ "$candidate" = "$exact_name" ] \
-        && { [ "$raw" = "$managed" ] || [ "$candidate" = "$ext_dir/$desired" ]; }; then
-        found_legacy=1
-        name=${candidate##*/}
-        [ "$dry" -eq 1 ] || { @COREUTILS@/bin/ln -s "$target" "$candidate.tmp.$$"; @COREUTILS@/bin/mv -Tf "$candidate.tmp.$$" "$candidate"; }
-      else
-        exit 0
-      fi
-    done
+      [ "$resolved" = "$target" ] || exit 0
+      [ "$raw" = "$managed" ] || [ "$raw" = "$target" ] || exit 0
+      found_legacy=1
+      [ "$dry" -eq 1 ] || { @COREUTILS@/bin/ln -s "$target" "$candidate.tmp.$$"; @COREUTILS@/bin/mv -Tf "$candidate.tmp.$$" "$candidate"; }
+    fi
     [ "$dry" -eq 1 ] && exit 0
     if [ "$found_legacy" -eq 1 ]; then
       register_root "$root_dir/$desired" "$target" || exit 0
