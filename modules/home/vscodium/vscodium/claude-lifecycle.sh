@@ -281,7 +281,7 @@ registry_matches_immutable() {
 
 registry_is_current() {
   [ -f "$registry_state" ] && [ ! -L "$registry_state" ] \
-    && @COREUTILS@/bin/cmp -s "$immutable" "$registry_state" \
+    && @DIFFUTILS@/bin/cmp -s "$immutable" "$registry_state" \
     && registry_matches_immutable
 }
 

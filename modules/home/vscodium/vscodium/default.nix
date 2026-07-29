@@ -25,6 +25,7 @@ let
 
   lifecycleSource = pkgs.replaceVars ./claude-lifecycle.sh {
     COREUTILS = "${pkgs.coreutils}";
+    DIFFUTILS = "${pkgs.diffutils}";
     FLOCK = "${pkgs.util-linux}/bin/flock";
     GREP = "${pkgs.gnugrep}/bin/grep";
     JQ = "${pkgs.jq}/bin/jq";
@@ -36,6 +37,7 @@ let
   };
   lifecycleRuntimeInputs = [
     pkgs.coreutils
+    pkgs.diffutils
     pkgs.gnugrep
     pkgs.gnused
     pkgs.jq
