@@ -37,7 +37,7 @@ let
     (inputs.home-manager.lib.homeManagerConfiguration {
       inherit pkgs;
       extraSpecialArgs = {
-        inherit inputs horizon pkgs;
+        inherit inputs horizon;
         user = {
           name = "test-user";
           size.min = true;
@@ -69,14 +69,19 @@ let
   coiSharedAppServerPatch = ../../packages/agent-intercom/coi-shared-app-server.patch;
   codexCliPackage = inputs.codex-cli.packages.${pkgs.stdenv.hostPlatform.system}.default;
   claudeCodePackage = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.claude-code;
+  directCodexCliPackage = graphicalHomeConfiguration.programs.codexDesktopLinux.cliPackage;
+  packageName = package: package.pname or (package.name or "");
+  hasAgentIntercomRuntime =
+    configuration:
+    builtins.any (package: packageName package == "agent-intercom-runtime") configuration.home.packages;
 in
 assert localHomeConfiguration.home.file ? ".pi/agent/packages/agent-intercom-pi";
 assert localHomeConfiguration.home.file ? ".pi/agent/packages/agent-intercom-orchestrator";
-assert builtins.elem agentIntercom localHomeConfiguration.home.packages;
+assert hasAgentIntercomRuntime localHomeConfiguration;
 assert graphicalHomeConfiguration.home.file ? ".pi/agent/packages/agent-intercom-pi";
-assert builtins.elem graphicalAgentIntercom graphicalHomeConfiguration.home.packages;
+assert hasAgentIntercomRuntime graphicalHomeConfiguration;
 assert !(noLocalHomeConfiguration.home.file ? ".pi/agent/packages/agent-intercom-pi");
-assert !(builtins.elem agentIntercom noLocalHomeConfiguration.home.packages);
+assert !(hasAgentIntercomRuntime noLocalHomeConfiguration);
 assert !graphicalWithoutLocalRejected.success;
 assert graphicalHomeConfiguration.programs.codexDesktopLinux.enable;
 assert graphicalHomeConfiguration.programs.codexDesktopLinux.computerUseUi.enable;
@@ -85,9 +90,11 @@ assert graphicalHomeConfiguration.programs.codexDesktopLinux.remoteControl.enabl
 assert
   graphicalHomeConfiguration.programs.codexDesktopLinux.remoteControl.listen
   == "unix://\${XDG_RUNTIME_DIR}/codex-intercom-app-server.sock";
-assert graphicalHomeConfiguration.programs.codexDesktopLinux.cliPackage == codexCliPackage;
+assert packageName directCodexCliPackage == "criomos-codex-direct";
+assert directCodexCliPackage != codexCliPackage;
 assert
-  graphicalHomeConfiguration.programs.codexDesktopLinux.remoteControl.package == codexCliPackage;
+  graphicalHomeConfiguration.programs.codexDesktopLinux.remoteControl.package
+  == directCodexCliPackage;
 assert graphicalHomeConfiguration.systemd.user.services ? agent-intercom-codex-bridge;
 assert
   graphicalHomeConfiguration.systemd.user.services.agent-intercom-codex-bridge.Unit.Requires
@@ -115,6 +122,8 @@ pkgs.runCommand "agent-intercom-local-home-contract"
 
     test -x ${agentIntercom}/bin/coi
     test -x ${graphicalAgentIntercom}/bin/coi
+    test -x ${directCodexCliPackage}/bin/codex
+    test "$(readlink -f ${directCodexCliPackage}/bin/codex)" = "$(readlink -f ${codexCliPackage}/bin/codex-raw)"
     test -x ${agentIntercom}/bin/codex
     test -x ${agentIntercom}/bin/codex-raw
     test -x ${agentIntercom}/bin/cci

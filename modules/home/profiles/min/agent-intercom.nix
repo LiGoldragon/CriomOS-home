@@ -2,7 +2,6 @@
   inputs,
   lib,
   pkgs,
-  homeSystem,
   horizon,
   hexis,
   config,
@@ -26,10 +25,11 @@ let
 
   localEnabled = hasCapability "AgentIntercomLocal";
   graphicalEnabled = hasCapability "AgentIntercomGraphical";
-  # This guard is evaluated while Home Manager merges imports, before its
-  # lazily supplied `pkgs` module argument is available.  Both the standalone
-  # flake and the NixOS Home Manager integration supply their already-resolved
-  # target platform as `homeSystem`; package selection below remains deferred.
+  # Only the projected capability, which is an early special argument, decides
+  # whether the Desktop option block exists below.  The package-set platform
+  # guard remains a later assertion: forcing it while constructing the module
+  # list recurses through Home Manager's `_module.args.pkgs`.
+  homeSystem = pkgs.stdenv.hostPlatform.system;
   graphicalSupported = homeSystem == "x86_64-linux";
   sharedAppServerSocket = "unix://\${XDG_RUNTIME_DIR}/codex-intercom-app-server.sock";
   upstreamCodexCliPackage = inputs.codex-cli.packages.${homeSystem}.default;
@@ -69,93 +69,90 @@ let
     '';
   };
 in
-lib.mkMerge (
-  [
-    {
-      assertions = [
-        {
-          assertion = !graphicalEnabled || localEnabled;
-          message = "graphical Agent Intercom requires local Agent Intercom";
-        }
-        {
-          assertion = !graphicalEnabled || graphicalSupported;
-          message = "graphical Agent Intercom requires x86_64-linux Desktop support";
-        }
-      ];
-    }
-    (lib.mkIf localEnabled {
-      # The direct, pinned CLIs are the ordinary user commands.  Keep the
-      # Intercom-specific operational entry points without letting its aliases
-      # shadow either CLI.  Graphical profiles receive Codex from the Desktop
-      # module below; non-graphical profiles receive it here.
-      home.packages =
-        [
-          agentIntercomRuntime
-          claudeCodePackage
-        ]
-        ++ lib.optional (!graphicalEnabled) codexCliPackage;
+lib.mkMerge [
+  {
+    assertions = [
+      {
+        assertion = !graphicalEnabled || localEnabled;
+        message = "graphical Agent Intercom requires local Agent Intercom";
+      }
+      {
+        assertion = !graphicalEnabled || graphicalSupported;
+        message = "graphical Agent Intercom requires x86_64-linux Desktop support";
+      }
+    ];
+  }
+  (lib.mkIf localEnabled {
+    # The direct, pinned CLIs are the ordinary user commands.  Keep the
+    # Intercom-specific operational entry points without letting its aliases
+    # shadow either CLI.  Graphical profiles receive Codex from the Desktop
+    # module below; non-graphical profiles receive it here.
+    home.packages = [
+      agentIntercomRuntime
+      claudeCodePackage
+    ]
+    ++ lib.optional (!graphicalEnabled) codexCliPackage;
 
-      home.file = {
-        ".pi/agent/packages/agent-intercom-pi" = {
-          source = "${agentIntercom}/share/agent-intercom/pi";
-          force = true;
-        };
-        ".pi/agent/packages/agent-intercom-orchestrator" = {
-          source = "${agentIntercom}/share/agent-intercom/orchestrator";
-          force = true;
-        };
-        ".pi-testing/agent/packages/agent-intercom-pi" = {
-          source = "${agentIntercom}/share/agent-intercom/pi";
-          force = true;
-        };
-        ".pi-testing/agent/packages/agent-intercom-orchestrator" = {
-          source = "${agentIntercom}/share/agent-intercom/orchestrator";
-          force = true;
+    home.file = {
+      ".pi/agent/packages/agent-intercom-pi" = {
+        source = "${agentIntercom}/share/agent-intercom/pi";
+        force = true;
+      };
+      ".pi/agent/packages/agent-intercom-orchestrator" = {
+        source = "${agentIntercom}/share/agent-intercom/orchestrator";
+        force = true;
+      };
+      ".pi-testing/agent/packages/agent-intercom-pi" = {
+        source = "${agentIntercom}/share/agent-intercom/pi";
+        force = true;
+      };
+      ".pi-testing/agent/packages/agent-intercom-orchestrator" = {
+        source = "${agentIntercom}/share/agent-intercom/orchestrator";
+        force = true;
+      };
+    };
+
+    home.activation.mergeAgentIntercomCodexMcp = inputs.hexis.lib.mkManagedConfig {
+      inherit lib pkgs hexis;
+      file = "$HOME/.codex/config.toml";
+      declared = {
+        mcp_servers.agent-intercom = {
+          command = "${agentIntercom}/bin/codex-intercom-mcp";
         };
       };
+      modes."/mcp_servers/agent-intercom" = "always";
+    };
 
-      home.activation.mergeAgentIntercomCodexMcp = inputs.hexis.lib.mkManagedConfig {
-        inherit lib pkgs hexis;
-        file = "$HOME/.codex/config.toml";
-        declared = {
-          mcp_servers.agent-intercom = {
-            command = "${agentIntercom}/bin/codex-intercom-mcp";
-          };
+    home.activation.mergeAgentIntercomClaudeMcp = inputs.hexis.lib.mkManagedConfig {
+      inherit lib pkgs hexis;
+      file = "$HOME/.claude.json";
+      declared = {
+        mcpServers.agent-intercom = {
+          command = "${agentIntercom}/bin/claude-intercom-mcp";
         };
-        modes."/mcp_servers/agent-intercom" = "always";
       };
+      modes."/mcpServers/agent-intercom" = "always";
+    };
 
-      home.activation.mergeAgentIntercomClaudeMcp = inputs.hexis.lib.mkManagedConfig {
-        inherit lib pkgs hexis;
-        file = "$HOME/.claude.json";
-        declared = {
-          mcpServers.agent-intercom = {
-            command = "${agentIntercom}/bin/claude-intercom-mcp";
-          };
-        };
-        modes."/mcpServers/agent-intercom" = "always";
+    home.activation.mergeAgentIntercomOpenCodeServerPlugin = inputs.hexis.lib.mkManagedConfig {
+      inherit lib pkgs hexis;
+      file = "$HOME/.config/opencode/opencode.json";
+      declared = {
+        plugin = [ "${agentIntercom}/share/agent-intercom/opencode/dist/plugin.mjs" ];
       };
+      modes."/plugin" = "always";
+    };
 
-      home.activation.mergeAgentIntercomOpenCodeServerPlugin = inputs.hexis.lib.mkManagedConfig {
-        inherit lib pkgs hexis;
-        file = "$HOME/.config/opencode/opencode.json";
-        declared = {
-          plugin = [ "${agentIntercom}/share/agent-intercom/opencode/dist/plugin.mjs" ];
-        };
-        modes."/plugin" = "always";
+    home.activation.mergeAgentIntercomOpenCodeTuiPlugin = inputs.hexis.lib.mkManagedConfig {
+      inherit lib pkgs hexis;
+      file = "$HOME/.config/opencode/tui.json";
+      declared = {
+        plugin = [ "${agentIntercom}/share/agent-intercom/opencode/dist/tui.mjs" ];
       };
-
-      home.activation.mergeAgentIntercomOpenCodeTuiPlugin = inputs.hexis.lib.mkManagedConfig {
-        inherit lib pkgs hexis;
-        file = "$HOME/.config/opencode/tui.json";
-        declared = {
-          plugin = [ "${agentIntercom}/share/agent-intercom/opencode/dist/tui.mjs" ];
-        };
-        modes."/plugin" = "always";
-      };
-    })
-  ]
-  ++ lib.optional (graphicalEnabled && graphicalSupported) {
+      modes."/plugin" = "always";
+    };
+  })
+  (lib.optionalAttrs graphicalEnabled {
     programs.codexDesktopLinux = {
       enable = true;
       cliPackage = codexCliPackage;
@@ -191,5 +188,5 @@ lib.mkMerge (
       };
       Install.WantedBy = [ "default.target" ];
     };
-  }
-)
+  })
+]

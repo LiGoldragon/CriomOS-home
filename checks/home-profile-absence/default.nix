@@ -4,7 +4,7 @@ let
   system = pkgs.stdenv.hostPlatform.system;
   maxProfile = ../../modules/home/profiles/max/default.nix;
   maxDirectory = toString ../../modules/home/profiles/max;
-  checksDirectory = toString ../..;
+  checksDirectory = toString ../.;
   retiredModuleFile =
     lib.concatStringsSep "-" [
       "capture"
@@ -33,6 +33,18 @@ let
     "camera"
     "bridge"
   ];
+  retiredModulePath = "${maxDirectory}/${retiredModuleFile}";
+
+  homeAggregate = import ../../modules/home/default.nix {
+    flake = null;
+    inputs = null;
+  };
+  aggregateImports =
+    (homeAggregate {
+      config = { };
+      inherit lib;
+    }).imports;
+  importsRetiredModule = builtins.any (module: toString module == retiredModulePath) aggregateImports;
 
   fakeInputs = {
     self.packages.${system}.traycer = pkgs.hello;
@@ -84,12 +96,11 @@ let
   packageName = package: package.pname or (package.name or "");
   hasBridge =
     config: builtins.any (package: packageName package == retiredBridge) config.home.packages;
-  aggregateSource = builtins.readFile ../../modules/home/default.nix;
   flakeSource = builtins.readFile ../../flake.nix;
 in
-assert !(builtins.pathExists "${maxDirectory}/${retiredModuleFile}");
+assert !(builtins.pathExists retiredModulePath);
 assert !(builtins.pathExists "${checksDirectory}/${retiredCheckDirectory}");
-assert !(lib.hasInfix retiredService aggregateSource);
+assert !importsRetiredModule;
 assert !(lib.hasInfix retiredService flakeSource);
 assert !(largeEdge.systemd.user.services ? ${retiredService});
 assert !(ordinary.systemd.user.services ? ${retiredService});

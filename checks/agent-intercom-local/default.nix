@@ -37,8 +37,11 @@ let
     (inputs.home-manager.lib.homeManagerConfiguration {
       inherit pkgs;
       extraSpecialArgs = {
-        inherit inputs horizon pkgs system;
-        homeSystem = system;
+        inherit
+          inputs
+          horizon
+          system
+          ;
         user = {
           name = "test-user";
           size.min = true;
@@ -173,4 +176,6 @@ pkgs.runCommand "agent-intercom-local-family-contract"
       .nodes."agent-intercom-core-src".locked.rev == "cb5d2212912db0cd8abbb16ab08e4b539424a05d" and
       .nodes."agent-intercom-esbuild-linux-arm64-src".locked.type == "file"
     ' ${flakeLock}
+
+    touch "$out"
   ''
