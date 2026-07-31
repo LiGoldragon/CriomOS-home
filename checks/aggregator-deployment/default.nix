@@ -190,7 +190,7 @@ else
 
     exec_start_pre="${services.aggregator-daemon.Service.ExecStartPre}"
     exec_start="${services.aggregator-daemon.Service.ExecStart}"
-    configuration_path="${fakeStateHome}/aggregator/configuration.nota"
+    configuration_path="${fakeStateHome}/aggregator/configuration.dotos"
 
     printf '%s\n' "$exec_start_pre" > exec-start-pre
     printf '%s\n' "$exec_start" > exec-start
@@ -217,17 +217,17 @@ else
     AGGREGATOR_CONFIGURATION=/stale/socket "${profileWitness}/bin/aggregator" <<'EOF' > health
     (ObserveHealth (home-profile-health))
     EOF
-    grep -q '^aggregator configuration=${fakeStateHome}/aggregator/configuration.nota request=(ObserveHealth (home-profile-health))$' health
+    grep -q '^aggregator configuration=${fakeStateHome}/aggregator/configuration.dotos request=(ObserveHealth (home-profile-health))$' health
 
     AGGREGATOR_CONFIGURATION=/stale/socket "${profileWitness}/bin/aggregator" <<'EOF' > sessions
     (ListSessions (home-profile-sessions None (10 1 None None NewestFirst)))
     EOF
-    grep -q '^aggregator configuration=${fakeStateHome}/aggregator/configuration.nota request=(ListSessions ' sessions
+    grep -q '^aggregator configuration=${fakeStateHome}/aggregator/configuration.dotos request=(ListSessions ' sessions
 
     AGGREGATOR_CONFIGURATION=/stale/socket "${profileWitness}/bin/meta-aggregator" <<'EOF' > meta
     (ObserveConfiguration (home-profile-meta))
     EOF
-    grep -q '^meta-aggregator configuration=${fakeStateHome}/aggregator/configuration.nota request=(ObserveConfiguration (home-profile-meta))$' meta
+    grep -q '^meta-aggregator configuration=${fakeStateHome}/aggregator/configuration.dotos request=(ObserveConfiguration (home-profile-meta))$' meta
 
     touch "$out"
   ''

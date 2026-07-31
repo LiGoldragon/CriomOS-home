@@ -178,12 +178,12 @@ mkIf (size.min && behavesAs.edge) {
       next_config="$(${pkgs.coreutils}/bin/mktemp)"
       cat > "$next_config" << 'CHROMA_DEFAULT_CONFIG'
     ${defaultConfig}CHROMA_DEFAULT_CONFIG
-      if [ ! -f "$config_dir/config.nota" ] \
-        || grep -Eq 'ApplyCommand|ApplyTargets|Legacy|\.ya?ml|GhosttyConfigSources' "$config_dir/config.nota" \
-        || ! grep -q 'GhosttyConfigTemplates' "$config_dir/config.nota" \
-        || ! grep -q 'PiThemeControl' "$config_dir/config.nota" \
-        || ! ${pkgs.diffutils}/bin/cmp -s "$next_config" "$config_dir/config.nota"; then
-        ${pkgs.coreutils}/bin/cp "$next_config" "$config_dir/config.nota"
+      if [ ! -f "$config_dir/config.dotos" ] \
+        || grep -Eq 'ApplyCommand|ApplyTargets|Legacy|\.ya?ml|GhosttyConfigSources' "$config_dir/config.dotos" \
+        || ! grep -q 'GhosttyConfigTemplates' "$config_dir/config.dotos" \
+        || ! grep -q 'PiThemeControl' "$config_dir/config.dotos" \
+        || ! ${pkgs.diffutils}/bin/cmp -s "$next_config" "$config_dir/config.dotos"; then
+        ${pkgs.coreutils}/bin/cp "$next_config" "$config_dir/config.dotos"
       fi
       ${pkgs.coreutils}/bin/rm -f "$next_config"
   '';

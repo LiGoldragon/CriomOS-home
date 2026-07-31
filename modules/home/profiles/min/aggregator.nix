@@ -15,7 +15,7 @@ let
   aggregatorPackage = inputs.aggregator.packages.${system}.default;
 
   stateDirectory = "${config.xdg.stateHome}/aggregator";
-  configurationPath = "${stateDirectory}/configuration.nota";
+  configurationPath = "${stateDirectory}/configuration.dotos";
   storePath = "${stateDirectory}/aggregator.sema";
   runtimeDirectoryName = "aggregator";
   aggregatorConfiguration = config.criomosHome.aggregator;

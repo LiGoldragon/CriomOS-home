@@ -514,7 +514,7 @@
         in
         checks
         // {
-          chroma-nota-config = checkPkgs.callPackage ./checks/chroma-nota-config { inherit inputs; };
+          chroma-dotos-config = checkPkgs.callPackage ./checks/chroma-dotos-config { inherit inputs; };
           listener-dictation-bindings = checkPkgs.callPackage ./checks/listener-dictation-bindings {
             inherit inputs;
           };

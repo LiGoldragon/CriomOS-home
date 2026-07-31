@@ -47,7 +47,7 @@ let
   assertions = [
     {
       condition = lib.hasInfix "(Base00 #000000)" activation;
-      message = "Chroma palette atoms must be bare NOTA strings";
+      message = "Chroma palette atoms must be bare DOTOS strings";
     }
     {
       condition = !(lib.hasInfix "(Base00 \"#000000\")" activation);
@@ -55,7 +55,7 @@ let
     }
     {
       condition = lib.hasInfix "(Dconf ${dconfPath})" activation;
-      message = "Chroma dconf path must be a bare NOTA atom";
+      message = "Chroma dconf path must be a bare DOTOS atom";
     }
     {
       condition = !(lib.hasInfix "(Dconf \"" activation);
@@ -63,7 +63,7 @@ let
     }
     {
       condition = lib.hasInfix "(Emacsclient ${emacsclientPath})" activation;
-      message = "Chroma emacsclient path must be a bare NOTA atom";
+      message = "Chroma emacsclient path must be a bare DOTOS atom";
     }
     {
       condition = !(lib.hasInfix "(Emacsclient \"" activation);
@@ -95,6 +95,6 @@ in
 if failures != [ ] then
   throw (lib.concatMapStringsSep "\n" (assertion: assertion.message) failures)
 else
-  pkgs.runCommand "chroma-nota-config-check" { } ''
-    printf 'chroma NOTA config syntax checked\n' > "$out"
+  pkgs.runCommand "chroma-dotos-config-check" { } ''
+    printf 'chroma DOTOS config syntax checked\n' > "$out"
   ''
