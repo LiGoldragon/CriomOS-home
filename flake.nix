@@ -144,23 +144,14 @@
     chroma.url = "github:LiGoldragon/chroma?ref=main";
     chroma.inputs.nixpkgs.follows = "nixpkgs";
 
-    # Spirit — schema-derived psyche record command line and user-session daemon.
-    # Consumed in modules/home/profiles/min/spirit.nix.
+    # Spirit owns the coherent daemon, judge, judge-config, and provider
+    # derivation set. Home supplies paths and unit policy but never selects
+    # those service component versions independently.
     spirit.url = "github:LiGoldragon/spirit";
     spirit.inputs.nixpkgs.follows = "nixpkgs";
 
-    # Spirit judge — the persistent model-backed admission adapter. Prompt
-    # prose is a separate non-flake input so it stays reloadable data rather
-    # than being embedded in the Spirit daemon closure.
-    spirit-judge.url = "github:LiGoldragon/spirit-judge";
-    spirit-judge.inputs.nixpkgs.follows = "nixpkgs";
-    spirit-judge-config = {
-      url = "github:LiGoldragon/spirit-judge-config";
-      flake = false;
-    };
-
-    # Agent — local OpenAI-compatible provider daemon used by Spirit's guardian.
-    # Consumed in modules/home/profiles/min/spirit.nix.
+    # Agent — retained schema-derived local provider service and CLI. It is
+    # independent of the Spirit-owned judge/provider composition.
     agent.url = "github:LiGoldragon/agent";
     agent.inputs.nixpkgs.follows = "nixpkgs";
     agent.inputs.crane.follows = "crane";

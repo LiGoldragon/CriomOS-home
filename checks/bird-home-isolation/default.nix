@@ -38,15 +38,39 @@ let
     packages.${system}.default = pkgs.writeShellScriptBin "agent" "exit 0";
   };
   fakeSpirit = {
-    packages.${system}.default = pkgs.writeShellScriptBin "spirit" "exit 0";
+    lib.${system}.mkUserServiceArtifacts =
+      { stateDirectory }:
+      let
+        stateScript = pkgs.writeShellScript "fake-spirit-state" "exit 0";
+        spiritPackage = pkgs.writeShellScriptBin "spirit" "exit 0";
+        judgePackage = pkgs.writeShellScriptBin "spirit-judge" "exit 0";
+        judgeConfig = pkgs.runCommand "fake-spirit-judge-config" { } "mkdir -p $out";
+        judgeProvider = pkgs.writeShellScriptBin "codex" "exit 0";
+      in
+      {
+        paths = {
+          inherit stateDirectory;
+          socketPath = "${stateDirectory}/spirit.sock";
+          metaSocketPath = "${stateDirectory}/meta-spirit.sock";
+          judgeSocketPath = "${stateDirectory}/spirit-judge.sock";
+          databasePath = "${stateDirectory}/spirit.sema";
+          configurationPath = "spirit.config.rkyv";
+        };
+        packages = {
+          spirit = spiritPackage;
+          judge = judgePackage;
+          inherit judgeConfig judgeProvider;
+        };
+        daemonConfiguration = stateScript;
+        activateState = stateScript;
+        initializeState = stateScript;
+        initializeJudgeState = stateScript;
+        daemonServiceWrapper = pkgs.writeShellScriptBin "spirit-daemon-service" "exit 0";
+        judgeServiceWrapper = pkgs.writeShellScriptBin "spirit-judge-daemon-service" "exit 0";
+        commandLineWrapper = spiritPackage;
+        metaSpiritCommandLineWrapper = pkgs.writeShellScriptBin "meta-spirit" "exit 0";
+      };
   };
-  fakeSpiritJudge = {
-    packages.${system}.default = pkgs.writeShellScriptBin "spirit-judge" "exit 0";
-  };
-  fakeCodex = {
-    packages.${system}.default = pkgs.writeShellScriptBin "codex" "exit 0";
-  };
-  fakeSpiritJudgeConfig = pkgs.runCommand "spirit-judge-config" { } "mkdir -p $out";
 
   mkHome =
     horizon: extraInputs: modules:
@@ -80,9 +104,6 @@ let
   localSpiritConfiguration = mkHome localPersonaHorizon {
     agent = fakeAgent;
     spirit = fakeSpirit;
-    spirit-judge = fakeSpiritJudge;
-    spirit-judge-config = fakeSpiritJudgeConfig;
-    codex-cli = fakeCodex;
   } [ spiritModule ];
 
   remoteFiles = remoteConfiguration.config.home.file;

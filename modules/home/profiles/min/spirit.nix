@@ -17,10 +17,6 @@ let
 
   system = pkgs.stdenv.hostPlatform.system;
   agentPackage = inputs.agent.packages.${system}.default;
-  spiritPackage = inputs.spirit.packages.${system}.default;
-  spiritJudgePackage = inputs.spirit-judge.packages.${system}.default;
-  spiritJudgeConfig = inputs.spirit-judge-config;
-  codexCliPackage = inputs.codex-cli.packages.${system}.default;
   serviceName =
     service:
     if builtins.isString service then
@@ -36,8 +32,8 @@ let
     horizon.node.services or [ ]
   );
 
-  # These values configure the retained agent daemon only. Spirit judgment is
-  # served by the separate OpenAI Codex adapter below.
+  # These values configure the retained agent daemon only. The maintained
+  # Spirit composition owns the separate judgment adapter and provider.
   providerName = "deepseek";
   defaultModel = "deepseek-v4-flash";
   providerEndpoint = "https://api.deepseek.com/v1";
@@ -52,11 +48,18 @@ let
   ];
 
   stateDirectory = "${config.home.homeDirectory}/.local/state/spirit";
-  socketPath = "${stateDirectory}/spirit.sock";
-  metaSocketPath = "${stateDirectory}/meta-spirit.sock";
-  spiritJudgeSocketPath = "${stateDirectory}/spirit-judge.sock";
-  databasePath = "${stateDirectory}/spirit.sema";
-  configurationPath = "spirit.config.rkyv";
+  spiritArtifacts = inputs.spirit.lib.${system}.mkUserServiceArtifacts {
+    inherit stateDirectory;
+  };
+  inherit (spiritArtifacts)
+    activateState
+    commandLineWrapper
+    daemonServiceWrapper
+    initializeJudgeState
+    initializeState
+    judgeServiceWrapper
+    metaSpiritCommandLineWrapper
+    ;
 
   agentStateDirectory = "${config.home.homeDirectory}/.local/state/agent";
   agentSocketPath = "${agentStateDirectory}/agent.sock";
@@ -74,41 +77,21 @@ let
     test -s "$out/${agentConfigurationPath}"
   '';
 
-  # The compatibility-named configuration field now carries only Spirit's
-  # typed judge socket and timeout. Provider/model selection belongs to the
-  # adapter service, not the Spirit daemon, so the legacy provider fields stay
-  # empty and cannot silently select a fallback judge.
-  guardianAgentConfiguration = "(Some (${spiritJudgeSocketPath} None None 180000 None))";
-
-  # AuthorizationMode gates the separate criome/mirror path. `Gating` remains
-  # Spirit's default; judge admission is independently mandatory through the
-  # configured typed judge socket.
-  authorizationMode = "Gating";
-
-  daemonConfiguration = pkgs.runCommand "spirit-daemon-configuration" { } ''
+  activateAgentState = pkgs.writeShellScript "agent-activation-state" ''
     set -eu
 
-    mkdir -p "$out"
-    ${spiritPackage}/bin/spirit-write-configuration \
-      "(ConfigurationWriteRequest (${socketPath} (Some ${metaSocketPath}) ${databasePath} None ${authorizationMode} ${guardianAgentConfiguration} $out/${configurationPath}))" \
-      > "$out/configuration-written.dotos"
-    test -s "$out/${configurationPath}"
-  '';
-
-  migrateState = ''
-    ${spiritPackage}/bin/spirit-migrate-store \
-      "($database_path)"
-  '';
-
-  activateState = pkgs.writeShellScript "spirit-activation-state" ''
-    set -eu
-
-    state_directory=${lib.escapeShellArg stateDirectory}
     agent_state_directory=${lib.escapeShellArg agentStateDirectory}
 
-    ${pkgs.coreutils}/bin/mkdir -p "$state_directory"
     ${pkgs.coreutils}/bin/mkdir -p "$agent_state_directory"
   '';
+
+  migrateObsoleteSpiritJudgeOverride = pkgs.writeShellApplication {
+    name = "migrate-obsolete-spirit-judge-override";
+    runtimeInputs = [ pkgs.coreutils ];
+    text = builtins.readFile ./migrate-obsolete-spirit-judge-override.sh;
+  };
+
+  obsoleteSpiritJudgeOverride = "${config.xdg.configHome}/systemd/user/spirit-judge.service.d/override.conf";
 
   initializeAgentState = pkgs.writeShellScript "agent-startup-state" ''
     set -eu
@@ -119,53 +102,6 @@ let
     ${pkgs.coreutils}/bin/rm -f \
       ${lib.escapeShellArg agentSocketPath} \
       ${lib.escapeShellArg agentMetaSocketPath}
-  '';
-
-  initializeState = pkgs.writeShellScript "spirit-startup-state" ''
-    set -eu
-
-    state_directory=${lib.escapeShellArg stateDirectory}
-    database_path=${lib.escapeShellArg databasePath}
-
-    ${pkgs.coreutils}/bin/mkdir -p "$state_directory"
-    ${pkgs.coreutils}/bin/rm -f \
-      ${lib.escapeShellArg socketPath} \
-      ${lib.escapeShellArg metaSocketPath}
-
-    ${migrateState}
-  '';
-
-  initializeJudgeState = pkgs.writeShellScript "spirit-judge-startup-state" ''
-    set -eu
-
-    ${pkgs.coreutils}/bin/mkdir -p ${lib.escapeShellArg stateDirectory}
-    ${pkgs.coreutils}/bin/rm -f ${lib.escapeShellArg spiritJudgeSocketPath}
-  '';
-
-  # spirit-judge takes exactly one argument: a NOTA payload carrying its
-  # fully typed `serve` configuration (the workspace single-argument
-  # executable rule; see standards/standard-component-architecture.md). This
-  # mirrors how `spirit-write-configuration` above is invoked: one binary name,
-  # one double-quoted NOTA record as a single shell argument.
-  spiritJudgeServeRequest = "(Serve (${spiritJudgeSocketPath} ${spiritJudgeConfig} OpenAiCodex gpt-5.6-terra (Some Medium) 180000 None None (Some codex-login) (Some ${pkgs.util-linux}/bin/setsid) (Some ${codexCliPackage}/bin/codex) None))";
-
-  spiritJudgeServiceWrapper = pkgs.writeShellScriptBin "spirit-judge-daemon-service" ''
-    set -eu
-
-    # OpenAI Codex owns the authenticated session and receives no copied token.
-    # The reference is policy data only; the executable resolves it at runtime.
-    exec ${spiritJudgePackage}/bin/spirit-judge \
-      ${lib.escapeShellArg spiritJudgeServeRequest}
-  '';
-
-  commandLineWrapper = pkgs.writeShellScriptBin "spirit" ''
-    export SPIRIT_SOCKET=${lib.escapeShellArg socketPath}
-    exec ${spiritPackage}/bin/spirit "$@"
-  '';
-
-  metaSpiritCommandLineWrapper = pkgs.writeShellScriptBin "meta-spirit" ''
-    export SPIRIT_META_SOCKET=${lib.escapeShellArg metaSocketPath}
-    exec ${spiritPackage}/bin/meta-spirit "$@"
   '';
 
   agentCommandLineWrapper = pkgs.writeShellScriptBin "agent" ''
@@ -197,7 +133,18 @@ in
 
     home.activation.spiritState = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       $DRY_RUN_CMD ${activateState}
+      $DRY_RUN_CMD ${activateAgentState}
     '';
+
+    # One historical, unmanaged drop-in shadows the generated judge ExecStart
+    # with a collected package path. Remove only that exact stale shape after
+    # the new generation is linked and before Home Manager reloads systemd.
+    home.activation.removeObsoleteSpiritJudgeOverride =
+      lib.hm.dag.entryBetween [ "reloadSystemd" ] [ "linkGeneration" ]
+        ''
+          $DRY_RUN_CMD ${migrateObsoleteSpiritJudgeOverride}/bin/migrate-obsolete-spirit-judge-override \
+            ${lib.escapeShellArg obsoleteSpiritJudgeOverride}
+        '';
 
     systemd.user.services = {
       spirit-judge = {
@@ -209,7 +156,7 @@ in
 
         Service = {
           ExecStartPre = "${initializeJudgeState}";
-          ExecStart = "${spiritJudgeServiceWrapper}/bin/spirit-judge-daemon-service";
+          ExecStart = "${judgeServiceWrapper}/bin/spirit-judge-daemon-service";
           Restart = "on-failure";
           RestartSec = "2s";
         };
@@ -263,7 +210,7 @@ in
 
         Service = {
           ExecStartPre = "${initializeState}";
-          ExecStart = "${spiritPackage}/bin/spirit-daemon ${daemonConfiguration}/${configurationPath}";
+          ExecStart = "${daemonServiceWrapper}/bin/spirit-daemon-service";
           Restart = "on-failure";
           RestartSec = "2s";
         };
