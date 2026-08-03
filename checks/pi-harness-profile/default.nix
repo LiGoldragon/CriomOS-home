@@ -48,6 +48,9 @@ let
   };
   piRuntimeFiles = piRuntimeHome.config.home.file;
   piRuntimeActivations = piRuntimeHome.config.home.activation;
+  runtimeAgentIntercom = pkgs.lib.removeSuffix "/share/agent-intercom/pi" (
+    toString piRuntimeFiles.".pi/agent/packages/agent-intercom-pi".source
+  );
   primaryGenerated = inputs.primary-generated-src;
 in
 pkgs.runCommand "pi-harness-profile"
@@ -307,12 +310,12 @@ pkgs.runCommand "pi-harness-profile"
       "$runtimeHome/.pi/agent/intercom/config.json"
     jq -e '.enabled == true and .inboundTrigger == "always"' \
       "$runtimeHome/.pi-testing/agent/intercom/config.json"
-    grep -F '${agent-intercom}/bin/codex-intercom-mcp' "$runtimeHome/.codex/config.toml"
-    jq -e '.mcpServers."agent-intercom".command == "${agent-intercom}/bin/claude-intercom-mcp"' \
+    grep -F '${runtimeAgentIntercom}/bin/codex-intercom-mcp' "$runtimeHome/.codex/config.toml"
+    jq -e '.mcpServers."agent-intercom".command == "${runtimeAgentIntercom}/bin/claude-intercom-mcp"' \
       "$runtimeHome/.claude.json"
-    jq -e '.plugin == ["${agent-intercom}/share/agent-intercom/opencode/dist/plugin.mjs"]' \
+    jq -e '.plugin == ["${runtimeAgentIntercom}/share/agent-intercom/opencode/dist/plugin.mjs"]' \
       "$runtimeHome/.config/opencode/opencode.json"
-    jq -e '.plugin == ["${agent-intercom}/share/agent-intercom/opencode/dist/tui.mjs"]' \
+    jq -e '.plugin == ["${runtimeAgentIntercom}/share/agent-intercom/opencode/dist/tui.mjs"]' \
       "$runtimeHome/.config/opencode/tui.json"
 
     cat > "$TMPDIR/check-managed-project-roles.ts" <<'EOF'
