@@ -509,8 +509,6 @@ pkgs.runCommand "pi-harness-profile"
     grep -F 'brokerCommand = "''${pkgs.nodejs}/bin/node";' ${piModelsModule}
     grep -F 'agent-intercom/pi/node_modules/tsx/dist/cli.mjs' ${piModelsModule}
     grep -F 'home.sessionVariables.PI_INTERCOM_EXTENSION_DIR = "''${agent-intercom}/share/agent-intercom/pi";' ${piModelsModule}
-    grep -F 'lib.mkIf isAgentIntercomLocal' ${piModelsModule}
-    grep -F 'isAgentIntercomLocal' ${piModelsModule}
     test -x ${agent-intercom}/bin/coi
     test -x ${agent-intercom}/bin/codex
     test -x ${agent-intercom}/bin/codex-raw
