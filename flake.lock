@@ -2499,17 +2499,17 @@
     "primary-generated-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1784550911,
-        "narHash": "sha256-MghcNiDG2nfRHx34rV3WjfG0fsKsh665XP7NiyEKaP0=",
+        "lastModified": 1785786558,
+        "narHash": "sha256-Cc+wTL7BV3J6J3kYp4y4Ys3ytd71QIWeSHKbgpDg8RY=",
         "owner": "LiGoldragon",
         "repo": "primary",
-        "rev": "c6bfffc226367b140cf6e13bdcd2a500803d361b",
+        "rev": "62eac67630c020caa8c154f7dc6ebba6196cf5d2",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "primary",
-        "rev": "c6bfffc226367b140cf6e13bdcd2a500803d361b",
+        "rev": "62eac67630c020caa8c154f7dc6ebba6196cf5d2",
         "type": "github"
       }
     },

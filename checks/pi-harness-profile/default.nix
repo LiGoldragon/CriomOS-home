@@ -328,24 +328,18 @@ pkgs.runCommand "pi-harness-profile"
     if (!projectRoot) throw new Error("expected generated project root");
 
     const expected: Record<string, [string, string | false]> = {
-      "general-code-implementer": ["openai-codex/gpt-5.6-terra", "high"],
-      "generalist": ["openai-codex/gpt-5.6-terra", "xhigh"],
-      "intent-curator": ["openai-codex/gpt-5.6-terra", "xhigh"],
-      "intent-recorder": ["openai-codex/gpt-5.6-luna", "medium"],
-      "intent-translator": ["openai-codex/gpt-5.6-terra", "xhigh"],
-      "manager": ["openai-codex/gpt-5.6-sol", "high"],
-      "nix-auditor": ["openai-codex/gpt-5.6-terra", "medium"],
-      "operating-system-implementer": ["openai-codex/gpt-5.6-terra", "xhigh"],
-      "repo-scaffolder": ["openai-codex/gpt-5.6-terra", "high"],
-      "repository-closeout": ["openai-codex/gpt-5.6-luna", "medium"],
-      "rust-auditor": ["openai-codex/gpt-5.6-terra", "medium"],
-      "scout": ["openai-codex/gpt-5.6-luna", "medium"],
-      "skill-editor": ["openai-codex/gpt-5.6-terra", "xhigh"],
-      "tracker-weaver": ["openai-codex/gpt-5.6-terra", "medium"],
+      "read-trivial": ["openai-codex/gpt-5.4-mini", "medium"],
+      "read-ordinary": ["openai-codex/gpt-5.6-luna", "high"],
+      "read-demanding": ["openai-codex/gpt-5.6-terra", "high"],
+      "read-critical": ["openai-codex/gpt-5.6-terra", "xhigh"],
+      "write-trivial": ["openai-codex/gpt-5.4-mini", "medium"],
+      "write-ordinary": ["openai-codex/gpt-5.6-luna", "high"],
+      "write-demanding": ["openai-codex/gpt-5.6-terra", "high"],
+      "write-critical": ["openai-codex/gpt-5.6-terra", "xhigh"],
     };
 
     const agents = discoverAgents(projectRoot, "project").agents.filter((agent) => agent.source === "project");
-    if (agents.length !== Object.keys(expected).length || agents.length - 1 !== 13) throw new Error(`expected one Manager and 13 active roles, got ''${agents.length}`);
+    if (agents.length !== Object.keys(expected).length) throw new Error(`expected eight generated read/write roles, got ''${agents.length}`);
     for (const agent of agents) {
       const contract = expected[agent.name];
       if (!contract) throw new Error(`undeclared generated role: ''${agent.name}`);
@@ -355,16 +349,8 @@ pkgs.runCommand "pi-harness-profile"
       }
     }
 
-    if (!agents.some((agent) => agent.name === "manager")) throw new Error("generated Manager roster entry was not discovered");
-    if (agents.filter((agent) => agent.model === "openai-codex/gpt-5.6-sol").map((agent) => agent.name).join(",") !== "manager") {
-      throw new Error("Sol must be reserved for the root Manager");
-    }
-    for (const name of ["generalist", "intent-curator", "intent-translator", "operating-system-implementer", "skill-editor"]) {
-      const agent = agents.find((candidate) => candidate.name === name);
-      if (agent?.model !== "openai-codex/gpt-5.6-terra" || agent.thinking !== "xhigh") {
-        throw new Error(`former Sol worker was not migrated to Terra xhigh: ''${name}`);
-      }
-    }
+    const retiredRoles = ["manager", "generalist", "intent-recorder", "intent-curator", "intent-translator"];
+    if (agents.some((agent) => retiredRoles.includes(agent.name))) throw new Error("retired generated role remains discoverable");
     if (agents.some((agent) => /claude|fable/i.test(agent.model ?? ""))) throw new Error("generated roster contains a forbidden Claude Fable model");
     if (fs.existsSync("${pi-subagents}/share/pi-packages/pi-subagents/src/agents/project-role-policy.ts")) {
       throw new Error("removed project-role authorization module is still packaged");
@@ -373,24 +359,41 @@ pkgs.runCommand "pi-harness-profile"
       throw new Error("generated role metadata must remain inert frontmatter, not runtime state");
     }
 
-    const designAuthority = "Agents may investigate and propose major design changes";
-    const ephemeralCommitment = "Agents are ephemeral. In psyche-facing conversation, future behavior exists\nonly in durable role or skill instruction, never in this session's continuity,\nmemory, resolve, or persona.";
-    const managerSpiritClause = "the psyche the exact proposed Spirit intent wording, scope, and proposed privacy,\nand receive explicit approval.";
-    const recorderSpiritClause = "Reject a submission brief unless it evidences that the exact proposed Spirit\nintent wording, scope, and proposed privacy were shown to and explicitly approved\nby the psyche. Never invent missing entry metadata.";
+    const briefAuthority = "The brief is your authority. Decide what it settles; return what it does not.";
+    const readOnlyBoundary = "Do not edit files, commit, or push. Fetching, cloning, and tool queries are fine.";
+    const approvalGate = "Do not make material authority, security, compatibility, schema, curriculum, or deployment changes without explicit psyche approval.";
     for (const agent of agents) {
       const packet = fs.readFileSync(projectRoot + "/.pi/agents/" + agent.name + ".md", "utf8");
-      if (packet.split(designAuthority).length - 1 !== 1) {
-        throw new Error(`generated Pi packet lacks exactly one design-authority clause: ''${agent.name}`);
+      if (packet.split(briefAuthority).length - 1 !== 1) {
+        throw new Error(`generated Pi packet lacks exactly one brief-authority clause: ''${agent.name}`);
       }
-      if (packet.includes(ephemeralCommitment) !== (agent.name === "manager")) {
-        throw new Error(`ephemeral commitment must be limited to Manager: ''${agent.name}`);
+      if (!packet.includes(approvalGate)) {
+        throw new Error(`generated Pi packet lacks the material-change approval gate: ''${agent.name}`);
+      }
+      if (packet.includes(readOnlyBoundary) !== agent.name.startsWith("read-")) {
+        throw new Error(`generated Pi packet has the wrong read-only boundary: ''${agent.name}`);
       }
     }
-    if (!fs.readFileSync(projectRoot + "/.pi/agents/manager.md", "utf8").includes(managerSpiritClause)) {
-      throw new Error("generated Manager packet lacks exact Spirit proposal-approval clause");
+
+    const psycheInteraction = fs.readFileSync(projectRoot + "/.agents/skills/psyche-interraction/SKILL.md", "utf8");
+    const intentLog = fs.readFileSync(projectRoot + "/.agents/skills/intent-log/SKILL.md", "utf8");
+    const workspaceDoctrine = fs.readFileSync(projectRoot + "/AGENTS.md", "utf8");
+    const exactSpiritApproval = "Before a core Spirit capture or mutation, show the psyche the exact proposed record wording and scope, then receive explicit approval.";
+    const approvedRecordScope = "Before capture or mutation, use only psyche-approved record wording and scope.";
+    const noInventedMetadata = "Do not synthesize confidence, access-boundary, or named-particular metadata.";
+    const separateConfidentiality = "Route content requiring confidentiality to a separate higher-layer Spirit component in its own environment.";
+    if (!psycheInteraction.includes(exactSpiritApproval)) {
+      throw new Error("generated psyche-interaction skill lacks exact Spirit wording-and-scope approval");
     }
-    if (!fs.readFileSync(projectRoot + "/.pi/agents/intent-recorder.md", "utf8").includes(recorderSpiritClause)) {
-      throw new Error("generated Intent Recorder packet lacks exact Spirit proposal-evidence clause");
+    if (!intentLog.includes(approvedRecordScope) || !intentLog.includes(noInventedMetadata) || !intentLog.includes(separateConfidentiality)) {
+      throw new Error("generated Spirit recording skill lacks the approved record-shape doctrine");
+    }
+    if (!workspaceDoctrine.includes("confidentiality belongs to a separate higher-layer Spirit component in its own") ||
+        !workspaceDoctrine.includes("core Spirit records, commits, and chat.")) {
+      throw new Error("workspace boot doctrine does not keep confidentiality above core Spirit");
+    }
+    if (workspaceDoctrine.includes("public Spirit records") || intentLog.includes("proposed privacy")) {
+      throw new Error("retired core Spirit privacy doctrine remains in the generated workspace");
     }
 
     const compactSurfaceSize = COMPACT_SUBAGENT_TOOL_DESCRIPTION.length + JSON.stringify(SubagentParams).length;
@@ -412,7 +415,7 @@ pkgs.runCommand "pi-harness-profile"
       throw new Error("full optional mechanism description is incomplete");
     }
 
-    console.log(`managed-role-witness roles=''${agents.length} compact-surface=''${compactSurfaceSize} role-metadata=inert`);
+    console.log(`managed-role-witness roles=''${agents.length} compact-surface=''${compactSurfaceSize} role-metadata=inert spirit-doctrine=current`);
     EOF
 
     check_effective_pi_layout() {
@@ -437,7 +440,7 @@ pkgs.runCommand "pi-harness-profile"
       "$TMPDIR/check-managed-project-roles.ts" "${primaryGenerated}"
 
     ${pkgs.jq}/bin/jq -e '
-      .nodes.skills.locked.rev == "634c838ea9ec7c37a29529ec631bcff11238ea84"
+      .nodes.skills.locked.rev == "0b6ad2f33a78dd515bebe1f5487fd1cdfbbe8f58"
     ' "${primaryGenerated}/flake.lock"
 
     grep -F 'localLlmApiKeyCommand = "!gopass show -o goldragon.criome/local-llm-api-token";' ${piModelsModule}
@@ -472,7 +475,7 @@ pkgs.runCommand "pi-harness-profile"
     grep -F 'packages = normalPiPackages;' ${piModelsModule}
     grep -F 'piTestingSettingsConfig = piSettingsConfig;' ${piModelsModule}
     grep -F 'github:LiGoldragon/pi-subagents-nicobailon/8b7d204fd0fd4427acdea5c1c60a2697221194ea' ${flakeFile}
-    grep -F 'github:LiGoldragon/primary/c6bfffc226367b140cf6e13bdcd2a500803d361b' ${flakeFile}
+    grep -F 'github:LiGoldragon/primary/62eac67630c020caa8c154f7dc6ebba6196cf5d2' ${flakeFile}
     grep -F 'if (toolDescriptionMode !== "compact") {' "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/index.ts"
     grep -F 'registerWaitTool(pi, state, waitToolConfig.enabled);' "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/index.ts"
     ! test -e "${pi-subagents}/share/pi-packages/pi-subagents/src/agents/project-role-policy.ts"

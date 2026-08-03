@@ -263,7 +263,7 @@
     # Generated project-role packets used by the harness compatibility check.
     # The source revision itself pins skills at the authoritative generator revision.
     primary-generated-src = {
-      url = "github:LiGoldragon/primary/c6bfffc226367b140cf6e13bdcd2a500803d361b";
+      url = "github:LiGoldragon/primary/62eac67630c020caa8c154f7dc6ebba6196cf5d2";
       flake = false;
     };
     agent-intercom-tsx-src = {
