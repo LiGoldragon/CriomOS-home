@@ -147,7 +147,7 @@
     # Spirit owns the coherent daemon, judge, judge-config, and provider
     # derivation set. Home supplies paths and unit policy but never selects
     # those service component versions independently.
-    spirit.url = "github:LiGoldragon/spirit";
+    spirit.url = "github:LiGoldragon/spirit/44ab8e97c7c7513ea6ef2a3bb81dab8ac4babff8";
     spirit.inputs.nixpkgs.follows = "nixpkgs";
 
     # Agent — retained schema-derived local provider service and CLI. It is
