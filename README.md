@@ -36,10 +36,12 @@ backend, journal parent, new GC-root path, and terminal-evidence path. Use its
 `BuildOnly` variant when activation is not authorized; it has no transport or
 activation representation. The re-export requires immutable GitHub flake refs
 and an exact paired `ssh-ng://user@host[:port]` / `user@host[:port]` remote
-identity. Its private `0700` journal/output parents, resumable v5 receipts,
-and `0600` terminal evidence are part of the bootstrap contract; a remote
-BootOnce uses a deterministic target transient unit and reconciles it after an
-interrupted client connection.
+identity plus `SshPolicy.{<private-identity> <private-known-hosts>
+RequireKnownHost}`. Its private `0700` journal/output parents, resumable v5
+receipts, and `0600` terminal evidence are part of the bootstrap contract; a
+remote BootOnce uses a deterministic target transient unit and reconciles it
+after an interrupted client connection. Finalized journals are retained rather
+than path-recursively deleted.
 
 ## Layout
 
