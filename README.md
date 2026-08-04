@@ -29,6 +29,13 @@ homeConfigurations.<user>.activationPackage
 
 with `horizon` and `system` overridden by lojix.
 
+The maintained `lojix-bootstrap` app is re-exported unchanged from this flake
+as well as CriomOS. It accepts one explicit inline `BootstrapRun` DOTOS object
+and is daemon-free: callers must supply the input mode, builder, test plan,
+backend, journal parent, new GC-root path, and terminal-evidence path. Use its
+`BuildOnly` variant when activation is not authorized; it has no transport or
+activation representation.
+
 ## Layout
 
 Blueprint conventions:

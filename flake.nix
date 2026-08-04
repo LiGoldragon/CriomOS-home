@@ -135,7 +135,7 @@
 
     # CriomOS deploy CLI. This is the Nota-first deploy tool used for
     # system, OS-only, and direct home deployments.
-    lojix.url = "github:LiGoldragon/lojix/1acbac20d172146605c16b47c601d63ad435de55";
+    lojix.url = "github:LiGoldragon/lojix/c3f0e448b7359f336da3903e4098b672e872ced8";
     lojix.inputs.nixpkgs.follows = "nixpkgs";
 
     # Chroma — unified visual-state daemon (theme + warmth + brightness).
@@ -461,10 +461,15 @@
       agentIntercomGraphicalSupported = system: system == "x86_64-linux";
       projectPackages = builtins.mapAttrs (
         system: packages:
+        let
+          packagesWithBootstrap = packages // {
+            lojix-bootstrap = inputs.lojix.packages.${system}.lojix-bootstrap;
+          };
+        in
         if agentIntercomSupported system then
-          packages
+          packagesWithBootstrap
         else
-          builtins.removeAttrs packages [ "agent-intercom" ]
+          builtins.removeAttrs packagesWithBootstrap [ "agent-intercom" ]
       ) bp.packages;
       blueprintGeneratedChecks =
         system:
@@ -574,6 +579,13 @@
     // {
       packages = projectPackages;
       checks = projectChecks;
+      apps = builtins.mapAttrs (
+        system: packages:
+        (bp.apps.${system} or { })
+        // {
+          lojix-bootstrap = inputs.lojix.apps.${system}.lojix-bootstrap;
+        }
+      ) projectPackages;
 
       homeConfigurations = builtins.mapAttrs mkHomeConfiguration horizon.users;
 
