@@ -44,10 +44,14 @@ let
     mkdir -p "$out/bin"
     cat > "$out/bin/spirit" <<'EOF'
     #!${pkgs.runtimeShell}
+    test "$#" = 1
+    test "$1" = Version
     printf 'socket=%s\n' "$SPIRIT_SOCKET"
     EOF
     cat > "$out/bin/meta-spirit" <<'EOF'
     #!${pkgs.runtimeShell}
+    test "$#" = 1
+    test "$1" = ObserveHead
     printf 'meta-socket=%s\n' "$SPIRIT_META_SOCKET"
     EOF
     cat > "$out/bin/spirit-daemon" <<'EOF'
@@ -148,7 +152,7 @@ let
         '';
         judgeServiceWrapper = pkgs.writeShellScriptBin "spirit-judge-daemon-service" ''
           exec ${fakeSpiritJudgePackage}/bin/spirit-judge \
-            ${lib.escapeShellArg "(Serve (${judgeSocketPath} ${fakeSpiritJudgeConfig} OpenAiCodex gpt-5.6-terra (Some Medium) 180000 None None (Some codex-login) (Some ${pkgs.util-linux}/bin/setsid) (Some ${fakeSpiritJudgeProvider}/bin/codex) None))"}
+            ${lib.escapeShellArg "(Serve (${judgeSocketPath} ${fakeSpiritJudgeConfig} OpenAiCodex gpt-5.6-luna (Some XHigh) 180000 None None (Some codex-login) (Some ${pkgs.util-linux}/bin/setsid) (Some ${fakeSpiritJudgeProvider}/bin/codex) None))"}
         '';
         commandLineWrapper = pkgs.writeShellScriptBin "spirit" ''
           export SPIRIT_SOCKET=${lib.escapeShellArg socketPath}
@@ -326,8 +330,10 @@ else
     ! grep -q 'spirit-judge\.url' ${../../flake.nix}
     ! grep -q 'spirit-judge-config = {' ${../../flake.nix}
 
-    SPIRIT_SOCKET=/stale/socket "${profileWitness}/bin/spirit" > current
+    SPIRIT_SOCKET=/stale/socket "${profileWitness}/bin/spirit" Version > current
     grep -q '^socket=/home/li/.local/state/spirit/spirit.sock$' current
+    SPIRIT_META_SOCKET=/stale/socket "${profileWitness}/bin/meta-spirit" ObserveHead > current-meta
+    grep -q '^meta-socket=/home/li/.local/state/spirit/meta-spirit.sock$' current-meta
     AGENT_SOCKET=/stale/socket "${profileWitness}/bin/agent" > current-agent
     grep -q '^socket=/home/li/.local/state/agent/agent.sock$' current-agent
 
@@ -371,8 +377,10 @@ else
     # spirit-judge takes exactly one argument: a NOTA payload, not argv flags.
     ! grep -q -- ' --' spirit-judge-daemon-service
     grep -q -- 'OpenAiCodex' spirit-judge-daemon-service
-    grep -q -- 'gpt-5.6-terra' spirit-judge-daemon-service
-    grep -q -- '(Some Medium)' spirit-judge-daemon-service
+    grep -q -- 'gpt-5.6-luna' spirit-judge-daemon-service
+    grep -q -- '(Some XHigh)' spirit-judge-daemon-service
+    ! grep -q -- 'gpt-5.6-terra' spirit-judge-daemon-service
+    ! grep -q -- '(Some Medium)' spirit-judge-daemon-service
     grep -q -- '(Some codex-login)' spirit-judge-daemon-service
     grep -q -- '/bin/setsid' spirit-judge-daemon-service
     grep -q -- '/bin/codex' spirit-judge-daemon-service
