@@ -79,7 +79,7 @@ pkgs.runCommand "bitwarden-availability"
     test -x "${mediumProfile}/bin/bw"
     test -x "${mediumProfile}/bin/bitwarden"
 
-    desktop_launcher="$(find "${mediumProfile}/share/applications" -maxdepth 1 -type f -name '*.desktop' -print -quit)"
+    desktop_launcher="$(find "${mediumProfile}/share/applications" -maxdepth 1 -name '*.desktop' -print -quit)"
     test -n "$desktop_launcher"
     grep -Eq '^Exec=.*bitwarden' "$desktop_launcher"
 
