@@ -76,6 +76,10 @@ pkgs.runCommand "bitwarden-availability"
   ''
     set -eu
 
+    export HOME="$TMPDIR/home"
+    export XDG_CONFIG_HOME="$HOME/.config"
+    mkdir -p "$XDG_CONFIG_HOME"
+
     "${mediumProfile}/bin/bw" --version >/dev/null
     test -x "${mediumProfile}/bin/bitwarden"
 
