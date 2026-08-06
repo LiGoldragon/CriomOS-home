@@ -66,14 +66,14 @@ let
     explorer = codexBuiltinAgent {
       name = "explorer";
       description = "Codex exploration collaboration agent.";
-      model = "gpt-5.6-luna";
-      effort = "medium";
+      model = "gpt-5.6-terra";
+      effort = "high";
     };
   };
 
   codexConfig = {
     developer_instructions = codexSkillReadDeduplicationInstruction;
-    model = "gpt-5.5";
+    model = "gpt-5.6-terra";
     model_reasoning_effort = "high";
     personality = "pragmatic";
     plan_mode_reasoning_effort = "xhigh";
@@ -118,12 +118,17 @@ let
         "weekly-limit"
       ];
       status_line_use_colors = true;
-      model_availability_nux."gpt-5.5" = 4;
+      model_availability_nux."gpt-5.6-terra" = 4;
     };
 
     plugins = {
       "gmail@openai-curated".enabled = true;
       "github@openai-curated".enabled = true;
+    };
+
+    orchestrator = {
+      default_subagent_model = "gpt-5.6-terra";
+      default_subagent_reasoning_effort = "xhigh";
     };
   };
 
@@ -713,6 +718,8 @@ mkIf size.min {
 
       ".codex/non-orchestrator.config.toml".text = ''
         developer_instructions = ${toJSON codexSkillReadDeduplicationInstruction}
+        model = "gpt-5.6-terra"
+        model_reasoning_effort = "xhigh"
       '';
 
       ".codex/agents/default.toml".text = codexBuiltinAgentFiles.default;
@@ -733,6 +740,11 @@ mkIf size.min {
       file = "$HOME/.codex/config.toml";
       declared = codexConfig;
       modes = {
+        "/model" = "always";
+        "/model_reasoning_effort" = "always";
+        "/orchestrator/default_subagent_model" = "always";
+        "/orchestrator/default_subagent_reasoning_effort" = "always";
+        "/tui/model_availability_nux" = "always";
         "/tui/theme" = "once";
       };
     };

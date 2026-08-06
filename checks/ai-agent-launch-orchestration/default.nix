@@ -52,6 +52,18 @@ pkgs.runCommand "ai-agent-launch-orchestration"
       grep -F 'PI_PACKAGE_DIR:-$HOME/.local/share/criomos/pi/package' ${minProfileModule}
       grep -F 'non-orchestrator.config.toml' ${minProfileModule}
       grep -F 'developer_instructions = ''${toJSON codexSkillReadDeduplicationInstruction}' ${minProfileModule}
+      nonOrchestratorFixture="$TMPDIR/non-orchestrator.config.toml"
+      awk '
+        /"\.codex\/non-orchestrator\.config\.toml"\.text =/ { in_config = 1; next }
+        in_config && /;[[:space:]]*$/ { exit }
+        in_config && /developer_instructions/ { next }
+        in_config {
+          sub(/^[[:space:]]*/, "")
+          print
+        }
+      ' ${minProfileModule} > "$nonOrchestratorFixture"
+      test "$(yq -p toml '.model' "$nonOrchestratorFixture")" = "gpt-5.6-terra"
+      test "$(yq -p toml '.model_reasoning_effort' "$nonOrchestratorFixture")" = "xhigh"
 
       # Codex V1 is deliberate: collaboration is enabled and V2 remains off.
       grep -F 'features = {' ${minProfileModule}
@@ -70,11 +82,11 @@ pkgs.runCommand "ai-agent-launch-orchestration"
       test "$(yq -p toml '.features.multi_agent' "$codexFixture")" = true
       test "$(yq -p toml '.features.multi_agent_v2' "$codexFixture")" = false
       ! yq -p toml -e '.features | has("collab")' "$codexFixture" > /dev/null
-      ! grep -F 'default_subagent_model' ${minProfileModule}
-      ! grep -F 'default_subagent_reasoning_effort' ${minProfileModule}
+      grep -F 'default_subagent_model = "gpt-5.6-terra";' ${minProfileModule}
+      grep -F 'default_subagent_reasoning_effort = "xhigh";' ${minProfileModule}
 
-      # User-level files override the three built-ins rather than relying on
-      # inherited global subagent defaults.
+      # User-level role files set Terra explicitly, and the global fallback
+      # protects every omission from selecting a different model.
       grep -F 'name = ''${toJSON name}' ${minProfileModule}
       grep -F 'model = ''${toJSON model}' ${minProfileModule}
       grep -F 'model_reasoning_effort = ''${toJSON effort}' ${minProfileModule}
@@ -82,9 +94,9 @@ pkgs.runCommand "ai-agent-launch-orchestration"
       grep -F 'worker = codexBuiltinAgent {' ${minProfileModule}
       grep -F 'explorer = codexBuiltinAgent {' ${minProfileModule}
       grep -F 'model = "gpt-5.6-terra";' ${minProfileModule}
-      grep -F 'model = "gpt-5.6-luna";' ${minProfileModule}
+      ! grep -F 'model = "gpt-5.6-luna";' ${minProfileModule}
       grep -F 'effort = "high";' ${minProfileModule}
-      grep -F 'effort = "medium";' ${minProfileModule}
+      ! grep -F 'effort = "medium";' ${minProfileModule}
       grep -F '".codex/agents/default.toml".text = codexBuiltinAgentFiles.default;' ${minProfileModule}
       grep -F '".codex/agents/worker.toml".text = codexBuiltinAgentFiles.worker;' ${minProfileModule}
       grep -F '".codex/agents/explorer.toml".text = codexBuiltinAgentFiles.explorer;' ${minProfileModule}
@@ -103,7 +115,8 @@ pkgs.runCommand "ai-agent-launch-orchestration"
       grep -F ${claudeCodePackage}/bin/claude ${agentProfilePath}/bin/cci
       ! grep -F ${agentProfilePath}/bin/claude ${agentProfilePath}/bin/cci
       test "$(readlink -f ${agentProfilePath}/bin/pi)" = "$(readlink -f ${piPackage}/bin/pi)"
-      test "$(${codexCliPackage}/bin/codex --version)" = "codex-cli 0.146.0"
+      test "$(${codexCliPackage}/bin/codex --version)" = "codex-cli 0.146.1"
+      test "$(${claudeCodePackage}/bin/claude --version)" = "2.1.223 (Claude Code)"
 
       grep -F 'This source map does not grant tool permission' ${piPackage}/lib/pi-monorepo/packages/coding-agent/dist/core/system-prompt.js
       grep -F 'does not override project, role, skill, system, developer, or user instructions' ${piPackage}/lib/pi-monorepo/packages/coding-agent/dist/core/system-prompt.js
