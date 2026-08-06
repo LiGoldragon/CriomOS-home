@@ -126,6 +126,54 @@ root_retains_target() {
 root_missing() {
   [ ! -e "$1" ] && [ ! -L "$1" ]
 }
+root_is_stale_managed_extension() {
+  stale_root="$1"
+  # A stale automatic root retains the containing extension output.  Require
+  # that precise shape as well as a valid, different Claude version before
+  # replacing it; an arbitrary store path at a managed-looking filename is
+  # not authority to remove anything.
+  stale_output="$(@READLINK@ -f "$stale_root" 2>/dev/null || true)"
+  valid_target "$stale_output" || return 1
+  stale_version="$(@JQ@ -er '.version | strings' "$stale_output/extension/package.json" 2>/dev/null || true)"
+  valid_version "$stale_version" && [ "$stale_version" != "$version" ]
+}
+replace_stale_managed_root() {
+  root="$1" root_target="$2"
+  # Only the manifest's exact current entry is eligible.  The stable and
+  # versioned Home Manager links independently prove the target is current;
+  # the manifest proves this root name is lifecycle-owned.  Everything else
+  # remains a fail-closed collision.
+  [ "$root" = "$root_dir/$desired" ] && [ "$root_target" = "$target" ] \
+    && [ -L "$ext_dir/$desired" ] \
+    && [ "$(@READLINK@ -f "$ext_dir/$desired" 2>/dev/null || true)" = "$target" ] \
+    && [ -L "$root" ] && ! root_retains_target "$root" "$root_target" \
+    && root_is_stale_managed_extension "$root" || return 1
+  [ "$dry" -eq 0 ] || return 1
+
+  stale_backup="$root.stale.$$"
+  root_missing "$stale_backup" || return 1
+  # Renaming the old link out of the declared name is atomic.  If Nix cannot
+  # register the replacement, restore precisely that link before returning
+  # failure, leaving manifest and registry convergence unavailable.
+  @COREUTILS@/bin/mv -T "$root" "$stale_backup" || return 1
+  if register_root "$root" "$root_target"; then
+    @COREUTILS@/bin/rm -f "$stale_backup"
+    @COREUTILS@/bin/sync -f "$root_dir"
+    return 0
+  fi
+  if root_missing "$root"; then
+    @COREUTILS@/bin/mv -T "$stale_backup" "$root" || return 1
+  elif [ -L "$root" ] && root_retains_target "$root" "$root_target"; then
+    @COREUTILS@/bin/rm -f "$root"
+    @COREUTILS@/bin/mv -T "$stale_backup" "$root" || return 1
+  else
+    # An unexpected concurrent replacement is neither ours nor safe to
+    # delete. Leave both paths for investigation and fail closed.
+    return 1
+  fi
+  @COREUTILS@/bin/sync -f "$root_dir"
+  return 1
+}
 # Older lifecycle releases wrote versioned aliases through the stable managed
 # link. Preserve that narrowly owned shape long enough to migrate it after Home
 # Manager moves the stable link to a newer extension target.
@@ -166,9 +214,10 @@ manifest_is_valid() {
 }
 
 repair_missing_manifest_roots() {
-  # Validate the complete manifest before mutation. Only a missing root next
-  # to a direct, target-matching owned link is repairable; an existing wrong
-  # root is indistinguishable from tampering and remains untouched.
+  # Validate the complete manifest before mutation. A missing root next to a
+  # direct, target-matching owned link is repairable. The sole existing-root
+  # exception is the exact declared current root proven stale by its own
+  # extension output; every other collision remains untouched.
   manifest_repair_entries=""; seen_names=""; manifest_header="$(@COREUTILS@/bin/head -n1 "$manifest" || true)"
   [ "$(@COREUTILS@/bin/wc -c < "$manifest")" = "$(@COREUTILS@/bin/tr -d '\000' < "$manifest" | @COREUTILS@/bin/wc -c)" ] || return 1
   case "$manifest_header" in v1|v1-bootstrap|v1-ready) ;; *) return 1;; esac
@@ -185,6 +234,8 @@ repair_missing_manifest_roots() {
         :
       elif root_missing "$root"; then
         manifest_repair_entries="$manifest_repair_entries$name"$'\t'"$tgt"$'\n'
+      elif replace_stale_managed_root "$root" "$tgt"; then
+        :
       else
         return 1
       fi

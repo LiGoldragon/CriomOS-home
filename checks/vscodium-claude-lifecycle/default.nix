@@ -159,10 +159,19 @@ let
     mkdir -p $out/extension
     printf '{"version":"2.1.220"}\n' > $out/extension/package.json
   '';
+  extE = pkgs.runCommand "claude-extension-fixture-e" { } ''
+    mkdir -p $out/extension
+    printf '{"version":"2.1.223"}\n' > $out/extension/package.json
+  '';
+  foreignRoot = pkgs.runCommand "vscodium-claude-foreign-root-fixture" { } ''
+    mkdir -p $out
+    printf foreign > $out/sentinel
+  '';
   extAPath = "${extA}/extension";
   extBPath = "${extB}/extension";
   extCPath = "${extC}/extension";
   extDPath = "${extD}/extension";
+  extEPath = "${extE}/extension";
 in
 assert vscodeConfig.package.pname == homePkgs.vscodium.pname;
 assert vscodeConfig.package.version == homePkgs.vscodium.version;
@@ -456,21 +465,26 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
     cmp "$missing_root_ext/.extensions-immutable.json" "$missing_root_state/extensions-immutable.registry.json"
     test ! -e "$missing_root_launch/refresh-gap"
     test ! -e "$missing_root_launch/codium.pid"
-    # A root that exists but does not retain the declared target is tampering:
-    # neither it nor the stale registry/state may be changed or refreshed.
+    # Regression: a previously managed automatic root already named for the
+    # Home-declared 2.1.223 extension can still resolve to 2.1.220. The exact
+    # manifest entry, direct current link, and old extension output authorize
+    # an atomic replacement; activation then reaches registry readiness
+    # without starting a Codium GUI process.
     wrong_root_home="$TMPDIR/wrong-root"
     wrong_root_ext="$wrong_root_home/.vscode-oss/extensions"
     wrong_root_state="$wrong_root_home/state"
     wrong_root_roots="$wrong_root_state/gcroots"
     wrong_root_launch="$TMPDIR/wrong-root-launch"
     mkdir -p "$wrong_root_ext" "$wrong_root_roots" "$wrong_root_launch"
-    ln -s ${extDPath} "$wrong_root_ext/anthropic.claude-code"
-    ln -s ${extDPath} "$wrong_root_ext/anthropic.claude-code-2.1.220-linux-x64"
-    ln -s ${extA} "$wrong_root_roots/anthropic.claude-code-2.1.220-linux-x64"
-    printf 'v1\nmanaged\t2.1.220\tanthropic.claude-code-2.1.220-linux-x64\t%s\n' ${extDPath} > "$wrong_root_state/manifest"
-    cp "$migration_ext/.extensions-immutable.json" "$wrong_root_ext/.extensions-immutable.json"
-    printf '%s\n' "[{\"identifier\":{\"id\":\"anthropic.claude-code\"},\"version\":\"2.1.215\",\"relativeLocation\":\"anthropic.claude-code-2.1.215-linux-x64\",\"location\":{\"path\":\"$wrong_root_ext/anthropic.claude-code-2.1.215-linux-x64\"}},{\"identifier\":{\"id\":\"openai.chatgpt\"},\"version\":\"26.5602.71036\",\"relativeLocation\":\"openai.chatgpt\",\"location\":{\"path\":\"$wrong_root_ext/openai.chatgpt\"}}]" > "$wrong_root_ext/extensions.json"
-    { find -P "$wrong_root_ext" "$wrong_root_roots" -printf '%p %y %l\n' | sort; cat "$wrong_root_state/manifest"; cat "$wrong_root_ext/extensions.json"; } > "$TMPDIR/wrong-root.before"
+    ln -s ${extEPath} "$wrong_root_ext/anthropic.claude-code"
+    ln -s ${extEPath} "$wrong_root_ext/anthropic.claude-code-2.1.223-linux-x64"
+    ln -s ${extD} "$wrong_root_roots/anthropic.claude-code-2.1.223-linux-x64"
+    printf 'v1\nmanaged\t2.1.223\tanthropic.claude-code-2.1.223-linux-x64\t%s\n' ${extEPath} > "$wrong_root_state/manifest"
+    ${pkgs.jq}/bin/jq -n \
+      '[{identifier: {id: "anthropic.claude-code"}, version: "2.1.223", relativeLocation: "anthropic.claude-code"},
+        {identifier: {id: "openai.chatgpt"}, version: "26.5721.30844", relativeLocation: "openai.chatgpt"}]' \
+      > "$wrong_root_ext/.extensions-immutable.json"
+    printf '%s\n' "[{\"identifier\":{\"id\":\"anthropic.claude-code\"},\"version\":\"2.1.220\",\"relativeLocation\":\"anthropic.claude-code-2.1.220-linux-x64\",\"location\":{\"path\":\"$wrong_root_ext/anthropic.claude-code-2.1.220-linux-x64\"}},{\"identifier\":{\"id\":\"openai.chatgpt\"},\"version\":\"26.5602.71036\",\"relativeLocation\":\"openai.chatgpt\",\"location\":{\"path\":\"$wrong_root_ext/openai.chatgpt\"}}]" > "$wrong_root_ext/extensions.json"
     export FAKE_LAUNCH_DIR="$wrong_root_launch" FAKE_LOCK="$wrong_root_state/lifecycle.lock"
     env \
       CRIOMOS_VSCODIUM_EXTENSIONS_DIR="$wrong_root_ext" \
@@ -478,11 +492,56 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
       CRIOMOS_VSCODIUM_GCROOT_DIR="$wrong_root_roots" \
       CRIOMOS_VSCODIUM_LOCK_FILE="$wrong_root_state/lifecycle.lock" \
       "${lifecycle}" --activation-refresh
-    { find -P "$wrong_root_ext" "$wrong_root_roots" -printf '%p %y %l\n' | sort; cat "$wrong_root_state/manifest"; cat "$wrong_root_ext/extensions.json"; } > "$TMPDIR/wrong-root.after"
-    cmp "$TMPDIR/wrong-root.before" "$TMPDIR/wrong-root.after"
-    test ! -e "$wrong_root_state/extensions-immutable.registry.json"
+    test -L "$wrong_root_roots/anthropic.claude-code-2.1.223-linux-x64"
+    test "$(readlink -f "$wrong_root_roots/anthropic.claude-code-2.1.223-linux-x64")" = "$(readlink -f ${extE})"
+    ${pkgs.gnugrep}/bin/grep -Fq $'managed\t2.1.223\tanthropic.claude-code-2.1.223-linux-x64\t' "$wrong_root_state/manifest"
+    ${pkgs.jq}/bin/jq -e --arg ext "$wrong_root_ext" \
+      'any(.[]; .identifier.id == "anthropic.claude-code"
+          and .version == "2.1.223"
+          and .relativeLocation == "anthropic.claude-code-2.1.223-linux-x64"
+          and .location.path == ($ext + "/anthropic.claude-code-2.1.223-linux-x64"))' \
+      "$wrong_root_ext/extensions.json"
+    cmp "$wrong_root_ext/.extensions-immutable.json" "$wrong_root_state/extensions-immutable.registry.json"
     test ! -e "$wrong_root_launch/refresh-gap"
     test ! -e "$wrong_root_launch/codium.pid"
+    # A failed replacement restores the old owned stale root exactly and does
+    # not make the registry ready.
+    failed_root_home="$TMPDIR/failed-root"
+    failed_root_ext="$failed_root_home/.vscode-oss/extensions"
+    failed_root_state="$failed_root_home/state"
+    failed_root_roots="$failed_root_state/gcroots"
+    mkdir -p "$failed_root_ext" "$failed_root_roots"
+    ln -s ${extEPath} "$failed_root_ext/anthropic.claude-code"
+    ln -s ${extEPath} "$failed_root_ext/anthropic.claude-code-2.1.223-linux-x64"
+    ln -s ${extD} "$failed_root_roots/anthropic.claude-code-2.1.223-linux-x64"
+    printf 'v1\nmanaged\t2.1.223\tanthropic.claude-code-2.1.223-linux-x64\t%s\n' ${extEPath} > "$failed_root_state/manifest"
+    cp "$wrong_root_ext/.extensions-immutable.json" "$failed_root_ext/.extensions-immutable.json"
+    cp "$wrong_root_ext/extensions.json" "$failed_root_ext/extensions.json"
+    cp "$failed_root_ext/extensions.json" "$TMPDIR/failed-root.registry.before"
+    env CRIOMOS_VSCODIUM_EXTENSIONS_DIR="$failed_root_ext" CRIOMOS_VSCODIUM_STATE_DIR="$failed_root_state" CRIOMOS_VSCODIUM_GCROOT_DIR="$failed_root_roots" CRIOMOS_VSCODIUM_LOCK_FILE="$failed_root_state/lifecycle.lock" CRIOMOS_VSCODIUM_NIX_STORE=/bin/false "${lifecycle}" --activation-refresh
+    test "$(readlink -f "$failed_root_roots/anthropic.claude-code-2.1.223-linux-x64")" = "$(readlink -f ${extD})"
+    ! find "$failed_root_roots" -maxdepth 1 -name 'anthropic.claude-code-2.1.223-linux-x64.stale.*' | grep -q .
+    cmp "$TMPDIR/failed-root.registry.before" "$failed_root_ext/extensions.json"
+    test ! -e "$failed_root_state/extensions-immutable.registry.json"
+    # A generic store output at the managed name is not a stale Claude root;
+    # preserve it and do not let activation reach registry convergence.
+    foreign_root_home="$TMPDIR/foreign-root"
+    foreign_root_ext="$foreign_root_home/.vscode-oss/extensions"
+    foreign_root_state="$foreign_root_home/state"
+    foreign_root_roots="$foreign_root_state/gcroots"
+    mkdir -p "$foreign_root_ext" "$foreign_root_roots"
+    ln -s ${extEPath} "$foreign_root_ext/anthropic.claude-code"
+    ln -s ${extEPath} "$foreign_root_ext/anthropic.claude-code-2.1.223-linux-x64"
+    ln -s ${foreignRoot} "$foreign_root_roots/anthropic.claude-code-2.1.223-linux-x64"
+    printf 'v1\nmanaged\t2.1.223\tanthropic.claude-code-2.1.223-linux-x64\t%s\n' ${extEPath} > "$foreign_root_state/manifest"
+    cp "$wrong_root_ext/.extensions-immutable.json" "$foreign_root_ext/.extensions-immutable.json"
+    cp "$wrong_root_ext/extensions.json" "$foreign_root_ext/extensions.json"
+    { find -P "$foreign_root_ext" "$foreign_root_roots" -printf '%p %y %l\n' | sort; cat "$foreign_root_state/manifest"; cat "$foreign_root_ext/extensions.json"; } > "$TMPDIR/foreign-root.before"
+    env CRIOMOS_VSCODIUM_EXTENSIONS_DIR="$foreign_root_ext" CRIOMOS_VSCODIUM_STATE_DIR="$foreign_root_state" CRIOMOS_VSCODIUM_GCROOT_DIR="$foreign_root_roots" CRIOMOS_VSCODIUM_LOCK_FILE="$foreign_root_state/lifecycle.lock" "${lifecycle}" --activation-refresh
+    { find -P "$foreign_root_ext" "$foreign_root_roots" -printf '%p %y %l\n' | sort; cat "$foreign_root_state/manifest"; cat "$foreign_root_ext/extensions.json"; } > "$TMPDIR/foreign-root.after"
+    cmp "$TMPDIR/foreign-root.before" "$TMPDIR/foreign-root.after"
+    test "$(cat ${foreignRoot}/sentinel)" = foreign
+    test ! -e "$foreign_root_state/extensions-immutable.registry.json"
     CRIOMOS_VSCODIUM_EXTENSIONS_DIR="$ext" CRIOMOS_VSCODIUM_STATE_DIR="$state" CRIOMOS_VSCODIUM_GCROOT_DIR="$roots" "${lifecycle}" --activate
     test "$(head -n1 "$state/manifest")" = v1-bootstrap
     tree_before=$(find -P "$ext" "$roots" -printf '%p %y %l\n' | sort)
