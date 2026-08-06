@@ -71,6 +71,8 @@ pkgs.runCommand "ai-agent-launch-orchestration"
       grep -F 'multi_agent_v2 = false;' ${minProfileModule}
       grep -F 'entryBefore [ "mergeCodexConfig" ]' ${minProfileModule}
       grep -F 'del(.features.collab)' ${minProfileModule}
+      grep -F "yq -p toml -o json '.features | has(\"collab\")'" ${minProfileModule}
+      ! grep -F "yq -p toml -e '.features | has(\"collab\")'" ${minProfileModule}
       codexFixture="$TMPDIR/codex-config.toml"
       cat > "$codexFixture" <<'EOF'
     [features]
@@ -82,6 +84,28 @@ pkgs.runCommand "ai-agent-launch-orchestration"
       test "$(yq -p toml '.features.multi_agent' "$codexFixture")" = true
       test "$(yq -p toml '.features.multi_agent_v2' "$codexFixture")" = false
       ! yq -p toml -e '.features | has("collab")' "$codexFixture" > /dev/null
+      # Home Manager may have switched the profile and then stopped before its
+      # managed merge. This is the observed stale state: the config has current
+      # feature keys but no retired `collab` key. Its predicate must remain a
+      # successful Bash `set -e` conditional without yq's no-match diagnostic.
+      codexNoCollabFixture="$TMPDIR/codex-no-collab.toml"
+      cat > "$codexNoCollabFixture" <<'EOF'
+    [features]
+    multi_agent = true
+    multi_agent_v2 = false
+    EOF
+      cat > "$TMPDIR/remove-deprecated-collab" <<'EOF'
+    #!${pkgs.bash}/bin/bash
+    set -eu
+    if [ -f "$1" ] && [ "$(yq -p toml -o json '.features | has("collab")' "$1")" = true ]; then
+      yq -p toml -o toml -i 'del(.features.collab)' "$1"
+    fi
+    touch "$2"
+    EOF
+      chmod +x "$TMPDIR/remove-deprecated-collab"
+      "$TMPDIR/remove-deprecated-collab" "$codexNoCollabFixture" "$TMPDIR/no-collab-completed"
+      test -e "$TMPDIR/no-collab-completed"
+      test "$(yq -p toml -o json '.features | has("collab")' "$codexNoCollabFixture")" = false
       grep -F 'default_subagent_model = "gpt-5.6-terra";' ${minProfileModule}
       grep -F 'default_subagent_reasoning_effort = "xhigh";' ${minProfileModule}
 

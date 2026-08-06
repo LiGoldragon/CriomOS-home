@@ -730,7 +730,7 @@ mkIf size.min {
     # Hexis intentionally preserves undeclared user keys. Remove the retired
     # Codex V1 spelling before its managed merge snapshots the live config.
     activation.removeDeprecatedCodexCollab = lib.hm.dag.entryBefore [ "mergeCodexConfig" ] ''
-      if [ -f "$HOME/.codex/config.toml" ] && ${pkgs.yq-go}/bin/yq -p toml -e '.features | has("collab")' "$HOME/.codex/config.toml" > /dev/null; then
+      if [ -f "$HOME/.codex/config.toml" ] && [ "$( ${pkgs.yq-go}/bin/yq -p toml -o json '.features | has("collab")' "$HOME/.codex/config.toml" )" = true ]; then
         ${pkgs.yq-go}/bin/yq -p toml -o toml -i 'del(.features.collab)' "$HOME/.codex/config.toml"
       fi
     '';
