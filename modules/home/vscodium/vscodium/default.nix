@@ -154,9 +154,9 @@ let
     mktplcRef = {
       name = "claude-code";
       publisher = "anthropic";
-      version = "2.1.220";
+      version = "2.1.223";
     };
-    vsix = vsixFromInput "claude-code-2.1.220.vsix" inputs.claude-code-vsix;
+    vsix = vsixFromInput "claude-code-2.1.223.vsix" inputs.claude-code-vsix;
     postInstall = ''
       bin_dir=$out/share/vscode/extensions/anthropic.claude-code/resources/native-binary
       if [ -d "$bin_dir" ]; then
@@ -175,9 +175,9 @@ let
     mktplcRef = {
       name = "chatgpt";
       publisher = "openai";
-      version = "26.5721.30844";
+      version = "26.5730.61639";
     };
-    vsix = vsixFromInput "openai.chatgpt-26.5721.30844-linux-x64.vsix" inputs.codex-chatgpt-vsix;
+    vsix = vsixFromInput "openai.chatgpt-26.5730.61639-linux-x64.vsix" inputs.codex-chatgpt-vsix;
   };
 
   # All aski-related code dropped per Li 2026-04-25.

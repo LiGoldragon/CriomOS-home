@@ -171,10 +171,10 @@ assert homePkgs.lib.getExe vscodeConfig.package == "${vscodeConfig.package}/bin/
 assert vscodeConfig.nameShort == "VSCodium";
 assert vscodeConfig.dataFolderName == ".vscode-oss";
 assert builtins.any (
-  extension: extension.version == "26.5721.30844"
+  extension: extension.version == "26.5730.61639"
 ) vscodeConfig.profiles.default.extensions;
 assert builtins.any (
-  extension: extension.version == "2.1.220"
+  extension: extension.version == "2.1.223"
 ) vscodeConfig.profiles.default.extensions;
 assert activation.bootstrapMutableClaudeCodeExtension.before == [ "linkGeneration" ];
 assert builtins.match ".*--bootstrap.*" activation.bootstrapMutableClaudeCodeExtension.data != null;
@@ -186,6 +186,18 @@ assert
 pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
   set -euxo pipefail
   test "$(id -u)" -ne 0
+  # The marketplace metadata controls Home Manager's immutable extension
+  # declaration.  It must match each locked VSIX manifest: a stale metadata
+  # version leaves a newer managed extension beside an older immutable record,
+  # which correctly makes the activation lifecycle fail closed.
+  test "$(
+    ${pkgs.unzip}/bin/unzip -p ${inputs.claude-code-vsix} extension/package.json \
+      | ${pkgs.jq}/bin/jq -er .version
+  )" = 2.1.223
+  test "$(
+    ${pkgs.unzip}/bin/unzip -p ${inputs.codex-chatgpt-vsix} extension/package.json \
+      | ${pkgs.jq}/bin/jq -er .version
+  )" = 26.5730.61639
   for runtime_script in "${lifecycleSource}" "${supervisorSource}" "${launcherSource}"; do
     ${pkgs.bash}/bin/bash -n "$runtime_script"
     ! ${pkgs.gnugrep}/bin/grep -E \
