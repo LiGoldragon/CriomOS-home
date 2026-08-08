@@ -66,7 +66,7 @@
     # gate entirely.
     claude-code-vsix = {
       type = "file";
-      url = "https://anthropic.gallerycdn.vsassets.io/extensions/anthropic/claude-code/2.1.223/1785977630860/Microsoft.VisualStudio.Services.VSIXPackage";
+      url = "https://anthropic.gallerycdn.vsassets.io/extensions/anthropic/claude-code/2.1.226/1786157339602/Microsoft.VisualStudio.Services.VSIXPackage";
       flake = false;
     };
 
@@ -80,7 +80,7 @@
     # check before deploying.
     codex-chatgpt-vsix = {
       type = "file";
-      url = "https://openai.gallerycdn.vsassets.io/extensions/openai/chatgpt/26.5730.61639/1785899067126/Microsoft.VisualStudio.Services.VSIXPackage";
+      url = "https://openai.gallerycdn.vsassets.io/extensions/openai/chatgpt/26.5803.41515/1786066287969/Microsoft.VisualStudio.Services.VSIXPackage";
       flake = false;
     };
 
@@ -135,7 +135,7 @@
 
     # CriomOS deploy CLI. This is the Nota-first deploy tool used for
     # system, OS-only, and direct home deployments.
-    lojix.url = "github:LiGoldragon/lojix/ab4d7d97d05197e19f0dcce369e0ca535a7564b7";
+    lojix.url = "github:LiGoldragon/lojix/fda1a2191152dcaab81836c4d4bed63083be4790";
     lojix.inputs.nixpkgs.follows = "nixpkgs";
 
     # Chroma — unified visual-state daemon (theme + warmth + brightness).
