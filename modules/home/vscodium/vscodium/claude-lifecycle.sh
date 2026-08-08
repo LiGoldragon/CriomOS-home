@@ -119,9 +119,10 @@ register_root() {
   [ -L "$root" ] && root_retains_target "$root" "$root_target"
 }
 root_retains_target() {
-  root_target="$(@READLINK@ -f "$1" 2>/dev/null || true)"
-  valid_target "$root_target" || return 1
-  case "$2" in "$root_target"|"$root_target"/*) return 0;; *) return 1;; esac
+  local retained_target
+  retained_target="$(@READLINK@ -f "$1" 2>/dev/null || true)"
+  valid_target "$retained_target" || return 1
+  case "$2" in "$retained_target"|"$retained_target"/*) return 0;; *) return 1;; esac
 }
 root_missing() {
   [ ! -e "$1" ] && [ ! -L "$1" ]
