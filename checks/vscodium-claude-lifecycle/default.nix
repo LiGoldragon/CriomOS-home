@@ -528,7 +528,7 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
     cp "$wrong_root_ext/.extensions-immutable.json" "$failed_root_ext/.extensions-immutable.json"
     cp "$wrong_root_ext/extensions.json" "$failed_root_ext/extensions.json"
     cp "$failed_root_ext/extensions.json" "$TMPDIR/failed-root.registry.before"
-    env CRIOMOS_VSCODIUM_EXTENSIONS_DIR="$failed_root_ext" CRIOMOS_VSCODIUM_STATE_DIR="$failed_root_state" CRIOMOS_VSCODIUM_GCROOT_DIR="$failed_root_roots" CRIOMOS_VSCODIUM_LOCK_FILE="$failed_root_state/lifecycle.lock" CRIOMOS_VSCODIUM_NIX_STORE=/bin/false "${lifecycle}" --activation-refresh
+    env CRIOMOS_VSCODIUM_EXTENSIONS_DIR="$failed_root_ext" CRIOMOS_VSCODIUM_STATE_DIR="$failed_root_state" CRIOMOS_VSCODIUM_GCROOT_DIR="$failed_root_roots" CRIOMOS_VSCODIUM_LOCK_FILE="$failed_root_state/lifecycle.lock" CRIOMOS_VSCODIUM_NIX_STORE=${pkgs.coreutils}/bin/false "${lifecycle}" --activation-refresh
     test "$(readlink -f "$failed_root_roots/anthropic.claude-code-2.1.223-linux-x64")" = "$(readlink -f ${extD})"
     ! find "$failed_root_roots" -maxdepth 1 -name 'anthropic.claude-code-2.1.223-linux-x64.stale.*' | grep -q .
     cmp "$TMPDIR/failed-root.registry.before" "$failed_root_ext/extensions.json"
