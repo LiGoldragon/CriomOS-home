@@ -135,7 +135,7 @@
 
     # CriomOS deploy CLI. This is the Nota-first deploy tool used for
     # system, OS-only, and direct home deployments.
-    lojix.url = "github:LiGoldragon/lojix/fda1a2191152dcaab81836c4d4bed63083be4790";
+    lojix.url = "github:LiGoldragon/lojix/913c076f51410cb8b97f03fd010d6761ae108c33";
     lojix.inputs.nixpkgs.follows = "nixpkgs";
 
     # Chroma — unified visual-state daemon (theme + warmth + brightness).
