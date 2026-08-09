@@ -50,6 +50,32 @@ let
       fi
       registry="$CRIOMOS_VSCODIUM_EXTENSIONS_DIR/extensions.json"
       immutable="$CRIOMOS_VSCODIUM_EXTENSIONS_DIR/.extensions-immutable.json"
+      if [ "''${FAKE_CODIUM_SCAN_FILESYSTEM:-0}" = 1 ]; then
+        immutable_claude_version="$(${pkgs.jq}/bin/jq -er \
+          '.[] | select(.identifier.id == "anthropic.claude-code") | .version' "$immutable")"
+        immutable_openai_version="$(${pkgs.jq}/bin/jq -er \
+          '.[] | select(.identifier.id == "openai.chatgpt") | .version' "$immutable")"
+        desired_claude="anthropic.claude-code-$immutable_claude_version-linux-x64"
+        discovery="$FAKE_LAUNCH_DIR/refresh-discovery"
+        : > "$discovery"
+        for candidate in "$CRIOMOS_VSCODIUM_EXTENSIONS_DIR"/anthropic.claude-code-*-linux-x64; do
+          [ -L "$candidate" ] || continue
+          candidate_target="$(${pkgs.coreutils}/bin/readlink -f "$candidate")"
+          ${pkgs.jq}/bin/jq -e --arg version "$immutable_claude_version" \
+            '(.publisher | ascii_downcase) == "anthropic"
+             and .name == "claude-code"
+             and .version == $version' \
+            "$candidate_target/package.json" >/dev/null
+          printf 'claude %s %s\n' "''${candidate##*/}" "$candidate_target" >> "$discovery"
+        done
+        ${pkgs.gnugrep}/bin/grep -Fq "claude $desired_claude " "$discovery"
+        openai_target="$(${pkgs.coreutils}/bin/readlink -f \
+          "$CRIOMOS_VSCODIUM_EXTENSIONS_DIR/openai.chatgpt")"
+        ${pkgs.jq}/bin/jq -e --arg version "$immutable_openai_version" \
+          '.publisher == "openai" and .name == "chatgpt" and .version == $version' \
+          "$openai_target/package.json" >/dev/null
+        printf 'openai openai.chatgpt %s\n' "$openai_target" >> "$discovery"
+      fi
       ${pkgs.jq}/bin/jq \
         --arg ext_dir "$CRIOMOS_VSCODIUM_EXTENSIONS_DIR" \
         '. as $registry
@@ -94,8 +120,13 @@ let
       exit 143
     }
     trap terminate INT TERM HUP
+    printf '%s\n' launch >> "$FAKE_LAUNCH_DIR/app.launches"
     ${pkgs.coreutils}/bin/touch "$FAKE_LAUNCH_DIR/app.started"
     wait "$child_a" "$child_b"
+  '';
+  fakeNotifier = pkgs.writeShellScript "vscodium-launch-notifier-fixture" ''
+    set -euf
+    printf '%s\n' "$*" >> "$FAKE_LAUNCH_DIR/notifier.calls"
   '';
   lifecycleSource = pkgs.replaceVars ../../modules/home/vscodium/vscodium/claude-lifecycle.sh {
     COREUTILS = "${pkgs.coreutils}";
@@ -138,6 +169,7 @@ let
     CODIUM = "${homePkgs.vscodium}/bin/codium";
     FLOCK = "${pkgs.util-linux}/bin/flock";
     LIFECYCLE = "${lifecycle}";
+    NOTIFY_SEND = "${fakeNotifier}";
     SUPERVISOR = "${supervisor}";
     READLINK = "${pkgs.coreutils}/bin/readlink";
     SLEEP = "${pkgs.coreutils}/bin/sleep";
@@ -163,6 +195,30 @@ let
     mkdir -p $out/extension
     printf '{"version":"2.1.223"}\n' > $out/extension/package.json
   '';
+  transitionPreviousVersion = "7.8.9";
+  transitionCurrentVersion = "7.9.0";
+  transitionLegacyAliasVersion = "7.7.0";
+  transitionOpenaiVersion = "30.1.0";
+  transitionPreviousOpenaiVersion = "29.9.0";
+  transitionPreviousExt = pkgs.runCommand "claude-extension-transition-previous-fixture" { } ''
+    mkdir -p $out/extension
+    printf '{"name":"claude-code","publisher":"Anthropic","version":"${transitionPreviousVersion}"}\n' > $out/extension/package.json
+  '';
+  transitionCurrentExt = pkgs.runCommand "claude-extension-transition-current-fixture" { } ''
+    mkdir -p $out/extension
+    printf '{"name":"claude-code","publisher":"Anthropic","version":"${transitionCurrentVersion}"}\n' > $out/extension/package.json
+  '';
+  adversarialExt = pkgs.runCommand "claude-extension-adversarial-fixture" { } ''
+    mkdir -p $out/extension
+    printf '{"name":"claude-code","publisher":"Foreign","version":"${transitionPreviousVersion}"}\n' > $out/extension/package.json
+  '';
+  transitionOpenaiExt = pkgs.runCommand "openai-extension-transition-fixture" { } ''
+    mkdir -p $out/extension
+    printf '{"name":"chatgpt","publisher":"openai","version":"${transitionOpenaiVersion}"}\n' > $out/extension/package.json
+  '';
+  immutableCurrent = pkgs.writeText "vscodium-immutable-current-fixture.json" ''
+    [{"identifier":{"id":"anthropic.claude-code"},"version":"${transitionCurrentVersion}","relativeLocation":"anthropic.claude-code"},{"identifier":{"id":"openai.chatgpt"},"version":"${transitionOpenaiVersion}","relativeLocation":"openai.chatgpt"}]
+  '';
   foreignRoot = pkgs.runCommand "vscodium-claude-foreign-root-fixture" { } ''
     mkdir -p $out
     printf foreign > $out/sentinel
@@ -172,6 +228,10 @@ let
   extCPath = "${extC}/extension";
   extDPath = "${extD}/extension";
   extEPath = "${extE}/extension";
+  transitionPreviousExtPath = "${transitionPreviousExt}/extension";
+  transitionCurrentExtPath = "${transitionCurrentExt}/extension";
+  adversarialExtPath = "${adversarialExt}/extension";
+  transitionOpenaiExtPath = "${transitionOpenaiExt}/extension";
 in
 assert vscodeConfig.package.pname == homePkgs.vscodium.pname;
 assert vscodeConfig.package.version == homePkgs.vscodium.version;
@@ -475,6 +535,266 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
     cmp "$missing_root_ext/.extensions-immutable.json" "$missing_root_state/extensions-immutable.registry.json"
     test ! -e "$missing_root_launch/refresh-gap"
     test ! -e "$missing_root_launch/codium.pid"
+    write_recovery_immutable() {
+      recovery_ext="$1"
+      ln -s ${immutableCurrent} "$recovery_ext/.extensions-immutable.json"
+    }
+    write_stale_recovery_registry() {
+      recovery_ext="$1"
+      ${pkgs.jq}/bin/jq -n --arg ext "$recovery_ext" \
+        '[{
+           identifier: {id: "anthropic.claude-code"},
+           version: "${transitionPreviousVersion}",
+           relativeLocation: "anthropic.claude-code-${transitionPreviousVersion}-linux-x64",
+           location: {
+             path: ($ext + "/anthropic.claude-code-${transitionPreviousVersion}-linux-x64"),
+             fsPath: ($ext + "/anthropic.claude-code-${transitionPreviousVersion}-linux-x64")
+           }
+         }, {
+           identifier: {id: "openai.chatgpt"},
+           version: "${transitionPreviousOpenaiVersion}",
+           relativeLocation: "openai.chatgpt",
+           location: {path: ($ext + "/openai.chatgpt"), fsPath: ($ext + "/openai.chatgpt")}
+         }, {
+           identifier: {id: "fixture.unmanaged"},
+           version: "9.8.7",
+           relativeLocation: "fixture.unmanaged",
+           location: {path: ($ext + "/fixture.unmanaged"), fsPath: ($ext + "/fixture.unmanaged")},
+           metadata: {preserve: true, nested: ["alpha", "beta"]}
+         }]' > "$recovery_ext/extensions.json"
+    }
+    capture_recovery_state() {
+      recovery_ext="$1" recovery_state="$2" recovery_roots="$3" recovery_output="$4"
+      {
+        find -P "$recovery_ext" "$recovery_roots" -printf '%p %y %l\n' | sort
+        for recovery_file in \
+          "$recovery_state/manifest" \
+          "$recovery_ext/.extensions-immutable.json" \
+          "$recovery_ext/extensions.json" \
+          "$recovery_state/extensions-immutable.registry.json"; do
+          printf 'FILE %s\n' "$recovery_file"
+          if [ -f "$recovery_file" ]; then cat "$recovery_file"; else printf 'ABSENT\n'; fi
+        done
+      } > "$recovery_output"
+    }
+    setup_failed_recovery() {
+      failure_label="$1"
+      failure_home="$TMPDIR/$failure_label"
+      failure_ext="$failure_home/.vscode-oss/extensions"
+      failure_state="$failure_home/state"
+      failure_roots="$failure_state/gcroots"
+      failure_launch="$TMPDIR/$failure_label-launch"
+      mkdir -p "$failure_ext" "$failure_roots" "$failure_launch"
+      ln -s ${transitionCurrentExtPath} "$failure_ext/anthropic.claude-code"
+      write_recovery_immutable "$failure_ext"
+      write_stale_recovery_registry "$failure_ext"
+      printf '%s\n' '[{"stale-owner-state":true}]' > "$failure_state/extensions-immutable.registry.json"
+    }
+    assert_failed_managed_launch() {
+      if env \
+        CRIOMOS_VSCODIUM_EXTENSIONS_DIR="$failure_ext" \
+        CRIOMOS_VSCODIUM_STATE_DIR="$failure_state" \
+        CRIOMOS_VSCODIUM_GCROOT_DIR="$failure_roots" \
+        CRIOMOS_VSCODIUM_LOCK_FILE="$failure_state/lifecycle.lock" \
+        FAKE_LAUNCH_DIR="$failure_launch" \
+        FAKE_LOCK="$failure_state/lifecycle.lock" \
+        "${launcher}" 2> "$failure_launch/stderr"; then
+        false
+      fi
+      ${pkgs.gnugrep}/bin/grep -Fq \
+        'Managed extension state is inconsistent. Contact the system steward; no extension collision was overwritten.' \
+        "$failure_launch/stderr"
+      test "$(wc -l < "$failure_launch/notifier.calls")" -eq 1
+      ${pkgs.gnugrep}/bin/grep -Fq 'VSCodium could not start' "$failure_launch/notifier.calls"
+      ${pkgs.gnugrep}/bin/grep -Fq 'no extension collision was overwritten' "$failure_launch/notifier.calls"
+      test ! -e "$failure_launch/app.started"
+      test ! -e "$failure_launch/app.launches"
+      test ! -e "$failure_launch/codium.pid"
+      test ! -e "$failure_launch/supervisor.pid"
+    }
+
+    # A prior managed version can retain its exact root after its versioned
+    # link disappears while Home Manager declares a newer immutable version.
+    # The launcher authenticates and restores that link, migrates to the
+    # current tuple, preserves the other managed extension and an unrelated
+    # registry row, and starts the application exactly once.
+    retained_home="$TMPDIR/retained-version-transition"
+    retained_ext="$retained_home/.vscode-oss/extensions"
+    retained_state="$retained_home/state"
+    retained_roots="$retained_state/gcroots"
+    retained_launch="$TMPDIR/retained-version-transition-launch"
+    mkdir -p "$retained_ext" "$retained_roots" "$retained_launch"
+    ln -s ${transitionCurrentExtPath} "$retained_ext/anthropic.claude-code"
+    ln -s "$retained_ext/anthropic.claude-code" \
+      "$retained_ext/anthropic.claude-code-${transitionLegacyAliasVersion}-linux-x64"
+    ln -s ${transitionOpenaiExtPath} "$retained_ext/openai.chatgpt"
+    ln -s ${transitionOpenaiExtPath} \
+      "$retained_ext/openai.chatgpt-${transitionOpenaiVersion}-linux-x64"
+    ln -s ${transitionPreviousExt} \
+      "$retained_roots/anthropic.claude-code-${transitionPreviousVersion}-linux-x64"
+    printf 'v1\nmanaged\t${transitionPreviousVersion}\tanthropic.claude-code-${transitionPreviousVersion}-linux-x64\t%s\n' \
+      ${transitionPreviousExtPath} > "$retained_state/manifest"
+    write_recovery_immutable "$retained_ext"
+    write_stale_recovery_registry "$retained_ext"
+    ${pkgs.jq}/bin/jq -S \
+      '[.[] | select(.identifier.id != "anthropic.claude-code" and .identifier.id != "openai.chatgpt")]' \
+      "$retained_ext/extensions.json" > "$retained_launch/unmanaged-before.json"
+    caller_cgroup="$(<"/proc/$$/cgroup")"
+    env \
+      CRIOMOS_VSCODIUM_EXTENSIONS_DIR="$retained_ext" \
+      CRIOMOS_VSCODIUM_STATE_DIR="$retained_state" \
+      CRIOMOS_VSCODIUM_GCROOT_DIR="$retained_roots" \
+      CRIOMOS_VSCODIUM_LOCK_FILE="$retained_state/lifecycle.lock" \
+      FAKE_LAUNCH_DIR="$retained_launch" \
+      FAKE_LOCK="$retained_state/lifecycle.lock" \
+      FAKE_CALLER_CGROUP="$caller_cgroup" \
+      FAKE_CODIUM_CLOSE_FD9=1 \
+      FAKE_CODIUM_SCAN_FILESYSTEM=1 \
+      FAKE_APP_SECONDS=0.2 \
+      "${launcher}"
+    for _ in 1 2 3 4 5 6 7 8 9 10; do
+      [ -e "$retained_launch/app.started" ] && break
+      sleep 0.1
+    done
+    test "$(wc -l < "$retained_launch/app.launches")" -eq 1
+    test -e "$retained_launch/app.started"
+    test ! -e "$retained_launch/notifier.calls"
+    test -L "$retained_ext/anthropic.claude-code-${transitionCurrentVersion}-linux-x64"
+    test "$(readlink -f "$retained_ext/anthropic.claude-code-${transitionCurrentVersion}-linux-x64")" = \
+      "$(readlink -f ${transitionCurrentExtPath})"
+    test -L "$retained_roots/anthropic.claude-code-${transitionCurrentVersion}-linux-x64"
+    test "$(readlink -f "$retained_roots/anthropic.claude-code-${transitionCurrentVersion}-linux-x64")" = \
+      "$(readlink -f ${transitionCurrentExt})"
+    test ! -e "$retained_ext/anthropic.claude-code-${transitionPreviousVersion}-linux-x64"
+    test ! -e "$retained_roots/anthropic.claude-code-${transitionPreviousVersion}-linux-x64"
+    test -L "$retained_ext/anthropic.claude-code-${transitionLegacyAliasVersion}-linux-x64"
+    test "$(readlink "$retained_ext/anthropic.claude-code-${transitionLegacyAliasVersion}-linux-x64")" = \
+      "$retained_ext/anthropic.claude-code"
+    test "$(readlink -f "$retained_ext/anthropic.claude-code-${transitionLegacyAliasVersion}-linux-x64")" = \
+      "$(readlink -f ${transitionCurrentExtPath})"
+    test -L "$retained_ext/openai.chatgpt"
+    test -L "$retained_ext/openai.chatgpt-${transitionOpenaiVersion}-linux-x64"
+    test "$(wc -l < "$retained_state/manifest")" -eq 2
+    test "$(head -n1 "$retained_state/manifest")" = v1
+    ${pkgs.gnugrep}/bin/grep -Fq \
+      $'managed\t${transitionCurrentVersion}\tanthropic.claude-code-${transitionCurrentVersion}-linux-x64\t' \
+      "$retained_state/manifest"
+    ${pkgs.jq}/bin/jq -e --arg ext "$retained_ext" \
+      'any(.[]; .identifier.id == "anthropic.claude-code"
+          and .version == "${transitionCurrentVersion}"
+          and .relativeLocation == "anthropic.claude-code-${transitionCurrentVersion}-linux-x64"
+          and .location.path == ($ext + "/anthropic.claude-code-${transitionCurrentVersion}-linux-x64")
+          and .location.fsPath == ($ext + "/anthropic.claude-code-${transitionCurrentVersion}-linux-x64"))
+       and any(.[]; .identifier.id == "openai.chatgpt"
+          and .version == "${transitionOpenaiVersion}"
+          and .relativeLocation == "openai.chatgpt"
+          and .location.path == ($ext + "/openai.chatgpt")
+          and .location.fsPath == ($ext + "/openai.chatgpt"))' \
+      "$retained_ext/extensions.json"
+    ${pkgs.jq}/bin/jq -S \
+      '[.[] | select(.identifier.id != "anthropic.claude-code" and .identifier.id != "openai.chatgpt")]' \
+      "$retained_ext/extensions.json" > "$retained_launch/unmanaged-after.json"
+    cmp "$retained_launch/unmanaged-before.json" "$retained_launch/unmanaged-after.json"
+    cmp "$retained_ext/.extensions-immutable.json" "$retained_state/extensions-immutable.registry.json"
+    ${pkgs.gnugrep}/bin/grep -Fq \
+      'claude anthropic.claude-code-${transitionLegacyAliasVersion}-linux-x64 ' \
+      "$retained_launch/refresh-discovery"
+    ${pkgs.gnugrep}/bin/grep -Fq \
+      'claude anthropic.claude-code-${transitionCurrentVersion}-linux-x64 ' \
+      "$retained_launch/refresh-discovery"
+    ${pkgs.gnugrep}/bin/grep -Fq 'openai openai.chatgpt ' "$retained_launch/refresh-discovery"
+    for _ in 1 2 3 4 5 6 7 8 9 10; do
+      ${pkgs.util-linux}/bin/flock -xn "$retained_state/lifecycle.lock" true && break
+      sleep 0.1
+    done
+    ${pkgs.util-linux}/bin/flock -xn "$retained_state/lifecycle.lock" true
+    test "$(wc -l < "$retained_launch/app.launches")" -eq 1
+
+    # Existing filesystem collisions are never replaced by missing-link
+    # recovery. The managed launcher surfaces the failure and does not reach
+    # either the supervisor or mutable registry refresh.
+    setup_failed_recovery retained-link-directory-collision
+    ln -s ${transitionPreviousExt} \
+      "$failure_roots/anthropic.claude-code-${transitionPreviousVersion}-linux-x64"
+    mkdir "$failure_ext/anthropic.claude-code-${transitionPreviousVersion}-linux-x64"
+    printf preserved > \
+      "$failure_ext/anthropic.claude-code-${transitionPreviousVersion}-linux-x64/sentinel"
+    printf 'v1\nmanaged\t${transitionPreviousVersion}\tanthropic.claude-code-${transitionPreviousVersion}-linux-x64\t%s\n' \
+      ${transitionPreviousExtPath} > "$failure_state/manifest"
+    capture_recovery_state "$failure_ext" "$failure_state" "$failure_roots" "$failure_launch/before"
+    assert_failed_managed_launch
+    capture_recovery_state "$failure_ext" "$failure_state" "$failure_roots" "$failure_launch/after"
+    cmp "$failure_launch/before" "$failure_launch/after"
+    test "$(cat "$failure_ext/anthropic.claude-code-${transitionPreviousVersion}-linux-x64/sentinel")" = preserved
+
+    # A different extension output is foreign at the retained root boundary,
+    # even though the root filename looks owned.
+    setup_failed_recovery retained-wrong-root
+    ln -s ${extA} \
+      "$failure_roots/anthropic.claude-code-${transitionPreviousVersion}-linux-x64"
+    printf 'v1\nmanaged\t${transitionPreviousVersion}\tanthropic.claude-code-${transitionPreviousVersion}-linux-x64\t%s\n' \
+      ${transitionPreviousExtPath} > "$failure_state/manifest"
+    capture_recovery_state "$failure_ext" "$failure_state" "$failure_roots" "$failure_launch/before"
+    assert_failed_managed_launch
+    capture_recovery_state "$failure_ext" "$failure_state" "$failure_roots" "$failure_launch/after"
+    cmp "$failure_launch/before" "$failure_launch/after"
+
+    # Matching semver is insufficient authority: publisher and extension name
+    # must identify the retained target as Anthropic's Claude extension.
+    setup_failed_recovery retained-adversarial-package
+    ln -s ${adversarialExt} \
+      "$failure_roots/anthropic.claude-code-${transitionPreviousVersion}-linux-x64"
+    printf 'v1\nmanaged\t${transitionPreviousVersion}\tanthropic.claude-code-${transitionPreviousVersion}-linux-x64\t%s\n' \
+      ${adversarialExtPath} > "$failure_state/manifest"
+    capture_recovery_state "$failure_ext" "$failure_state" "$failure_roots" "$failure_launch/before"
+    assert_failed_managed_launch
+    capture_recovery_state "$failure_ext" "$failure_state" "$failure_roots" "$failure_launch/after"
+    cmp "$failure_launch/before" "$failure_launch/after"
+
+    # Immutable authority is the Home Manager store symlink, not merely JSON
+    # with the right bytes. Regular user state and a foreign symlink cannot
+    # authorize recreating a missing lifecycle link.
+    setup_failed_recovery retained-regular-immutable
+    ln -s ${transitionPreviousExt} \
+      "$failure_roots/anthropic.claude-code-${transitionPreviousVersion}-linux-x64"
+    rm "$failure_ext/.extensions-immutable.json"
+    cp ${immutableCurrent} "$failure_ext/.extensions-immutable.json"
+    printf 'v1\nmanaged\t${transitionPreviousVersion}\tanthropic.claude-code-${transitionPreviousVersion}-linux-x64\t%s\n' \
+      ${transitionPreviousExtPath} > "$failure_state/manifest"
+    capture_recovery_state "$failure_ext" "$failure_state" "$failure_roots" "$failure_launch/before"
+    assert_failed_managed_launch
+    capture_recovery_state "$failure_ext" "$failure_state" "$failure_roots" "$failure_launch/after"
+    cmp "$failure_launch/before" "$failure_launch/after"
+
+    setup_failed_recovery retained-foreign-immutable
+    ln -s ${transitionPreviousExt} \
+      "$failure_roots/anthropic.claude-code-${transitionPreviousVersion}-linux-x64"
+    rm "$failure_ext/.extensions-immutable.json"
+    cp ${immutableCurrent} "$failure_home/foreign-immutable.json"
+    ln -s "$failure_home/foreign-immutable.json" "$failure_ext/.extensions-immutable.json"
+    printf 'v1\nmanaged\t${transitionPreviousVersion}\tanthropic.claude-code-${transitionPreviousVersion}-linux-x64\t%s\n' \
+      ${transitionPreviousExtPath} > "$failure_state/manifest"
+    capture_recovery_state "$failure_ext" "$failure_state" "$failure_roots" "$failure_launch/before"
+    assert_failed_managed_launch
+    capture_recovery_state "$failure_ext" "$failure_state" "$failure_roots" "$failure_launch/after"
+    cmp "$failure_launch/before" "$failure_launch/after"
+
+    # No repair discovered in an early row may execute before the complete
+    # manifest is accepted. A malformed later row preserves the full state.
+    setup_failed_recovery later-malformed-row
+    ln -s ${transitionPreviousExt} \
+      "$failure_roots/anthropic.claude-code-${transitionPreviousVersion}-linux-x64"
+    printf 'v1\nmanaged\t${transitionPreviousVersion}\tanthropic.claude-code-${transitionPreviousVersion}-linux-x64\t%s\nmalformed-row\n' \
+      ${transitionPreviousExtPath} > "$failure_state/manifest"
+    capture_recovery_state "$failure_ext" "$failure_state" "$failure_roots" "$failure_launch/before"
+    assert_failed_managed_launch
+    capture_recovery_state "$failure_ext" "$failure_state" "$failure_roots" "$failure_launch/after"
+    cmp "$failure_launch/before" "$failure_launch/after"
+    test ! -e \
+      "$failure_ext/anthropic.claude-code-${transitionPreviousVersion}-linux-x64"
+    test "$(readlink -f "$failure_roots/anthropic.claude-code-${transitionPreviousVersion}-linux-x64")" = \
+      "$(readlink -f ${transitionPreviousExt})"
+
     # Regression: a previously managed automatic root already named for the
     # Home-declared 2.1.223 extension can still resolve to 2.1.220. The exact
     # manifest entry, direct current link, and old extension output authorize

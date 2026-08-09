@@ -127,6 +127,9 @@ root_retains_target() {
 root_missing() {
   [ ! -e "$1" ] && [ ! -L "$1" ]
 }
+link_missing() {
+  [ ! -e "$1" ] && [ ! -L "$1" ]
+}
 root_is_stale_managed_extension() {
   stale_root="$1"
   # A stale automatic root retains the containing extension output.  Require
@@ -138,7 +141,7 @@ root_is_stale_managed_extension() {
   stale_version="$(@JQ@ -er '.version | strings' "$stale_output/extension/package.json" 2>/dev/null || true)"
   valid_version "$stale_version" && [ "$stale_version" != "$version" ]
 }
-replace_stale_managed_root() {
+stale_managed_root_is_replaceable() {
   root="$1" root_target="$2"
   # Only the manifest's exact current entry is eligible.  The stable and
   # versioned Home Manager links independently prove the target is current;
@@ -148,7 +151,11 @@ replace_stale_managed_root() {
     && [ -L "$ext_dir/$desired" ] \
     && [ "$(@READLINK@ -f "$ext_dir/$desired" 2>/dev/null || true)" = "$target" ] \
     && [ -L "$root" ] && ! root_retains_target "$root" "$root_target" \
-    && root_is_stale_managed_extension "$root" || return 1
+    && root_is_stale_managed_extension "$root"
+}
+replace_stale_managed_root() {
+  root="$1" root_target="$2"
+  stale_managed_root_is_replaceable "$root" "$root_target" || return 1
   [ "$dry" -eq 0 ] || return 1
 
   stale_backup="$root.stale.$$"
@@ -214,12 +221,48 @@ manifest_is_valid() {
   [ "$manifest_valid" -eq 1 ]
 }
 
+manifest_target_is_claude_extension() {
+  declared_version="$1" declared_target="$2"
+  [ -f "$declared_target/package.json" ] && @JQ@ -e \
+    --arg version "$declared_version" \
+    '(.publisher? | strings | ascii_downcase) == "anthropic"
+     and (.name? | strings) == "claude-code"
+     and (.version? | strings) == $version' \
+    "$declared_target/package.json" >/dev/null 2>&1
+}
+
+immutable_declares_current_managed_extensions() {
+  immutable_raw_target="$(@READLINK@ "$immutable" 2>/dev/null || true)"
+  immutable_target="$(@READLINK@ -f "$immutable" 2>/dev/null || true)"
+  [ -L "$immutable" ] || return 1
+  case "$immutable_raw_target" in /nix/store/*) ;; *) return 1;; esac
+  [ -f "$immutable_target" ] \
+    && valid_target "$immutable_target" \
+    && manifest_target_is_claude_extension "$version" "$target" \
+    && @JQ@ -e \
+      --arg claude_version "$version" \
+      'if type == "array" then
+         ([.[] | select(.identifier.id? == "anthropic.claude-code")]) as $claude
+         | ([.[] | select(.identifier.id? == "openai.chatgpt")]) as $openai
+         | ($claude | length == 1)
+         and ($openai | length == 1)
+         and ($claude[0].version? == $claude_version)
+         and ($claude[0].relativeLocation? == "anthropic.claude-code")
+         and ($openai[0].version? | type == "string")
+         and ($openai[0].relativeLocation? | type == "string")
+         and ($openai[0].relativeLocation | test("^[A-Za-z0-9][A-Za-z0-9._-]*$"))
+       else false end' \
+      "$immutable_target" >/dev/null 2>&1
+}
+
 repair_missing_manifest_roots() {
-  # Validate the complete manifest before mutation. A missing root next to a
-  # direct, target-matching owned link is repairable. The sole existing-root
-  # exception is the exact declared current root proven stale by its own
-  # extension output; every other collision remains untouched.
-  manifest_repair_entries=""; seen_names=""; manifest_header="$(@COREUTILS@/bin/head -n1 "$manifest" || true)"
+  # Scan the complete manifest into a repair plan before changing any path.
+  # A direct owned link can recover its missing root. A sole v1 tuple can
+  # recover its absent link only when the retained root, exact target package
+  # identity, and current immutable Home Manager declaration all agree.
+  # Every collision or later malformed/duplicate row remains fail-closed.
+  manifest_repair_entries=""; seen_names=""; manifest_entry_count=0; missing_link_count=0
+  manifest_header="$(@COREUTILS@/bin/head -n1 "$manifest" || true)"
   [ "$(@COREUTILS@/bin/wc -c < "$manifest")" = "$(@COREUTILS@/bin/tr -d '\000' < "$manifest" | @COREUTILS@/bin/wc -c)" ] || return 1
   case "$manifest_header" in v1|v1-bootstrap|v1-ready) ;; *) return 1;; esac
   while IFS= read -r line || [ -n "$line" ]; do
@@ -229,26 +272,47 @@ repair_missing_manifest_roots() {
     [ -z "$extra" ] && valid_manifest_entry "$owner" "$ver" "$name" "$tgt" || return 1
     case " $seen_names " in *" $name "*) return 1;; esac
     seen_names="$seen_names $name"
+    manifest_entry_count=$((manifest_entry_count + 1))
     root="$root_dir/$name"
     if [ -L "$ext_dir/$name" ] && [ "$(@READLINK@ -f "$ext_dir/$name" 2>/dev/null || true)" = "$tgt" ]; then
       if [ -L "$root" ] && root_retains_target "$root" "$tgt"; then
         :
       elif root_missing "$root"; then
-        manifest_repair_entries="$manifest_repair_entries$name"$'\t'"$tgt"$'\n'
-      elif replace_stale_managed_root "$root" "$tgt"; then
-        :
+        manifest_repair_entries="$manifest_repair_entries"repair-root$'\t'"$name"$'\t'"$tgt"$'\n'
+      elif stale_managed_root_is_replaceable "$root" "$tgt"; then
+        manifest_repair_entries="$manifest_repair_entries"replace-stale-root$'\t'"$name"$'\t'"$tgt"$'\n'
       else
         return 1
       fi
     elif manifest_entry_is_owned_indirection "$name" "$tgt"; then
       :
+    elif link_missing "$ext_dir/$name" \
+      && [ -L "$root" ] && root_retains_target "$root" "$tgt" \
+      && manifest_target_is_claude_extension "$ver" "$tgt"; then
+      missing_link_count=$((missing_link_count + 1))
+      manifest_repair_entries="$manifest_repair_entries"restore-link$'\t'"$name"$'\t'"$tgt"$'\n'
     else
       return 1
     fi
   done < <(@COREUTILS@/bin/tail -n +2 "$manifest")
-  while IFS=$'\t' read -r name tgt || [ -n "$name" ]; do
-    [ -n "$name" ] || continue
-    register_root "$root_dir/$name" "$tgt" || return 1
+  if [ "$missing_link_count" -ne 0 ]; then
+    [ "$manifest_header" = v1 ] \
+      && [ "$manifest_entry_count" -eq 1 ] \
+      && [ "$missing_link_count" -eq 1 ] \
+      && immutable_declares_current_managed_extensions || return 1
+  fi
+  while IFS=$'\t' read -r repair_kind name tgt || [ -n "$repair_kind" ]; do
+    [ -n "$repair_kind" ] || continue
+    case "$repair_kind" in
+      repair-root) register_root "$root_dir/$name" "$tgt" || return 1 ;;
+      replace-stale-root) replace_stale_managed_root "$root_dir/$name" "$tgt" || return 1 ;;
+      restore-link)
+        # `ln` creates the missing directory entry atomically and refuses any
+        # path that appeared after validation; never replace a collision.
+        mutate @COREUTILS@/bin/ln -s "$tgt" "$ext_dir/$name" || return 1
+        ;;
+      *) return 1 ;;
+    esac
   done <<< "$manifest_repair_entries"
 }
 
@@ -572,7 +636,13 @@ reconcile() {
       printf 'criomos-codium: preserving unmanaged collision %s\n' "$link" >&2; return 0
     fi
   else
-    mutate @COREUTILS@/bin/ln -s "$target" "$link.tmp.$$"; mutate @COREUTILS@/bin/mv -Tf "$link.tmp.$$" "$link"
+    # Create the absent directory entry directly. If another writer wins the
+    # race after the absence probe, `ln` refuses that collision; never stage a
+    # later force-move which could overwrite it.
+    if ! mutate @COREUTILS@/bin/ln -s "$target" "$link"; then
+      printf 'criomos-codium: preserving unmanaged collision %s\n' "$link" >&2
+      return 0
+    fi
   fi
   root="$root_dir/$desired"
   register_root "$root" "$target" || return 0

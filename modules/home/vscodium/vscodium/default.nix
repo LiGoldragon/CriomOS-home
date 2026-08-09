@@ -70,6 +70,7 @@ let
     CODIUM = "${codiumPackage}/bin/codium";
     FLOCK = "${pkgs.util-linux}/bin/flock";
     LIFECYCLE = "${codiumClaudeLifecycle}/bin/criomos-codium-claude-lifecycle";
+    NOTIFY_SEND = "${pkgs.libnotify}/bin/notify-send";
     SUPERVISOR = "${codiumSupervisor}/bin/criomos-codium-supervisor";
     READLINK = "${pkgs.coreutils}/bin/readlink";
     SLEEP = "${pkgs.coreutils}/bin/sleep";

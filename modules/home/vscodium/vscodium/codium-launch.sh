@@ -36,6 +36,17 @@ case "$codium" in
   /*) [ -x "$codium" ] || exit 127 ;;
   *) exit 127 ;;
 esac
+notify_send="@NOTIFY_SEND@"
+case "$notify_send" in
+  /*) [ -x "$notify_send" ] || exit 127 ;;
+  *) exit 127 ;;
+esac
+notify_launch_failure() {
+  failure_detail="$1"
+  printf 'criomos-codium: %s\n' "$failure_detail" >&2
+  "$notify_send" --app-name=VSCodium --urgency=critical --icon=dialog-error \
+    'VSCodium could not start' "$failure_detail" >/dev/null 2>&1 || true
+}
 
 # These are Codium's terminal or state-management modes from `codium --help`.
 # They must retain its synchronous CLI contract, including its exact output and
@@ -53,7 +64,11 @@ done
 canonical_existing_path "$lock_file" || path_error lock
 exec 9>"$lock_file"
 if @FLOCK@ -xn 9; then
-  CRIOMOS_VSCODIUM_LOCK_HELD=1 @LIFECYCLE@ --prepare-launch
+  if ! CRIOMOS_VSCODIUM_LOCK_HELD=1 @LIFECYCLE@ --prepare-launch; then
+    notify_launch_failure \
+      'Managed extension state is inconsistent. Contact the system steward; no extension collision was overwritten.'
+    exit 1
+  fi
 elif @FLOCK@ -sn 9; then
   : # A live supervisor protects mutable extension state with its SH lease.
 else
