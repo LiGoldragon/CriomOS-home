@@ -58,8 +58,7 @@ let
         desired_claude="anthropic.claude-code-$immutable_claude_version-linux-x64"
         discovery="$FAKE_LAUNCH_DIR/refresh-discovery"
         : > "$discovery"
-        for candidate in "$CRIOMOS_VSCODIUM_EXTENSIONS_DIR"/anthropic.claude-code-*-linux-x64; do
-          [ -L "$candidate" ] || continue
+        while IFS= read -r -d "" candidate; do
           candidate_target="$(${pkgs.coreutils}/bin/readlink -f "$candidate")"
           ${pkgs.jq}/bin/jq -e --arg version "$immutable_claude_version" \
             '(.publisher | ascii_downcase) == "anthropic"
@@ -67,7 +66,11 @@ let
              and .version == $version' \
             "$candidate_target/package.json" >/dev/null
           printf 'claude %s %s\n' "''${candidate##*/}" "$candidate_target" >> "$discovery"
-        done
+        done < <(
+          ${pkgs.findutils}/bin/find -P "$CRIOMOS_VSCODIUM_EXTENSIONS_DIR" \
+            -maxdepth 1 -type l -name 'anthropic.claude-code-*-linux-x64' -print0 \
+            | LC_ALL=C ${pkgs.coreutils}/bin/sort -z
+        )
         ${pkgs.gnugrep}/bin/grep -Fq "claude $desired_claude " "$discovery"
         openai_target="$(${pkgs.coreutils}/bin/readlink -f \
           "$CRIOMOS_VSCODIUM_EXTENSIONS_DIR/openai.chatgpt")"
