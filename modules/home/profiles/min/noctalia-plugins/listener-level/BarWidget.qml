@@ -16,6 +16,7 @@ Item {
   property string listenerState: "idle"
   property real microphoneLevel: 0.0
   property real visibleMicrophoneLevel: 0.0
+  property int inFlightCount: 0
   property bool hasSeenEvent: false
   property bool successFlash: false
   property int activityTick: 0
@@ -29,7 +30,7 @@ Item {
   readonly property bool transcribing: listenerState === "transcribing"
   readonly property bool cancelling: listenerState === "cancelling"
   readonly property bool cancelled: listenerState === "cancelled"
-  readonly property bool active: starting || recording || finalizing || transcribing || cancelling
+  readonly property bool active: starting || recording || finalizing || transcribing || cancelling || inFlightCount > 0
   readonly property real amplifiedMicrophoneLevel: Math.min(1.0, microphoneLevel * 2.75)
   readonly property color barColor: {
     if (successFlash)
@@ -45,7 +46,7 @@ Item {
     return Qt.alpha(Color.mOnSurfaceVariant, statusSocket.connected ? 0.38 : 0.18);
   }
 
-  implicitWidth: 34
+  implicitWidth: inFlightCount > 0 ? 48 : 34
   implicitHeight: 22
 
   function consumeStatusMessage(message) {
@@ -63,6 +64,7 @@ Item {
 
       listenerState = nextState;
       microphoneLevel = Math.max(0.0, Math.min(1.0, Number(event.level || 0.0)));
+      inFlightCount = Math.max(0, Math.floor(Number(event.in_flight || 0)));
       if (listenerState === "recording") {
         lastLevelEventMilliseconds = Date.now();
         visibleMicrophoneLevel = Math.max(visibleMicrophoneLevel * 0.55, amplifiedMicrophoneLevel);
@@ -80,6 +82,7 @@ Item {
     listenerState = "idle";
     microphoneLevel = 0.0;
     visibleMicrophoneLevel = 0.0;
+    inFlightCount = 0;
     statusSocket.connected = false;
     reconnectTimer.restart();
   }
@@ -122,7 +125,7 @@ Item {
   Timer {
     interval: 110
     repeat: true
-    running: root.starting || root.finalizing || root.transcribing || root.cancelling
+    running: root.starting || root.finalizing || root.transcribing || root.cancelling || root.inFlightCount > 0
     onTriggered: root.activityTick = root.activityTick + 1
   }
 
@@ -144,40 +147,62 @@ Item {
 
   Row {
     anchors.centerIn: parent
-    spacing: 2
+    spacing: 4
 
-    Repeater {
-      model: [0.48, 0.76, 1.0, 0.76, 0.48]
+    Row {
+      spacing: 2
 
-      Rectangle {
-        width: 3
-        radius: 1.5
-        anchors.verticalCenter: parent.verticalCenter
-        height: {
-          if (root.recording)
-            return Math.round(4 + root.visibleMicrophoneLevel * 16 * modelData);
-          if (root.starting)
-            return Math.round(5 + (Math.sin(root.activityTick * 0.9 + index) + 1.0) * 3 * modelData);
-          if (root.finalizing || root.transcribing || root.cancelling)
-            return Math.round(7 + (Math.sin(root.activityTick * 0.9 + index) + 1.0) * 4 * modelData);
-          if (root.successFlash || root.cancelled || root.listenerState === "error")
-            return 12;
-          return 4;
-        }
-        color: root.barColor
-        opacity: root.active || root.successFlash || root.cancelled || root.listenerState === "error" || statusSocket.connected ? 1.0 : 0.5
+      Repeater {
+        model: [0.48, 0.76, 1.0, 0.76, 0.48]
 
-        Behavior on height {
-          NumberAnimation {
-            duration: 80
-            easing.type: Easing.OutCubic
+        Rectangle {
+          width: 3
+          radius: 1.5
+          anchors.verticalCenter: parent.verticalCenter
+          height: {
+            if (root.recording)
+              return Math.round(4 + root.visibleMicrophoneLevel * 16 * modelData);
+            if (root.starting)
+              return Math.round(5 + (Math.sin(root.activityTick * 0.9 + index) + 1.0) * 3 * modelData);
+            if (root.finalizing || root.transcribing || root.cancelling)
+              return Math.round(7 + (Math.sin(root.activityTick * 0.9 + index) + 1.0) * 4 * modelData);
+            if (root.successFlash || root.cancelled || root.listenerState === "error")
+              return 12;
+            return 4;
+          }
+          color: root.barColor
+          opacity: root.active || root.successFlash || root.cancelled || root.listenerState === "error" || statusSocket.connected ? 1.0 : 0.5
+
+          Behavior on height {
+            NumberAnimation {
+              duration: 80
+              easing.type: Easing.OutCubic
+            }
+          }
+          Behavior on color {
+            ColorAnimation {
+              duration: 120
+            }
           }
         }
-        Behavior on color {
-          ColorAnimation {
-            duration: 120
-          }
-        }
+      }
+    }
+
+    Rectangle {
+      visible: root.inFlightCount > 0
+      width: 16
+      height: 16
+      radius: 8
+      anchors.verticalCenter: parent.verticalCenter
+      color: "#facc15"
+      opacity: 0.82 + (Math.sin(root.activityTick * 0.6) + 1.0) * 0.09
+
+      Text {
+        anchors.centerIn: parent
+        text: String(root.inFlightCount)
+        color: "#111827"
+        font.pixelSize: 10
+        font.bold: true
       }
     }
   }

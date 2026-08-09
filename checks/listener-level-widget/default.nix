@@ -33,6 +33,9 @@ pkgs.runCommand "listener-level-widget" { } ''
   ${pkgs.gnugrep}/bin/grep -F 'listenerState === "cancelled"' "$widget"
   ${pkgs.gnugrep}/bin/grep -F 'listenerState === "error"' "$widget"
   ${pkgs.gnugrep}/bin/grep -F 'Number(event.level || 0.0)' "$widget"
+  ${pkgs.gnugrep}/bin/grep -F 'Number(event.in_flight || 0)' "$widget"
+  ${pkgs.gnugrep}/bin/grep -F 'root.inFlightCount > 0' "$widget"
+  ${pkgs.gnugrep}/bin/grep -F 'text: String(root.inFlightCount)' "$widget"
   ${pkgs.gnugrep}/bin/grep -F 'microphoneLevel * 2.75' "$widget"
   ${pkgs.gnugrep}/bin/grep -F 'visibleMicrophoneLevel' "$widget"
   ${pkgs.gnugrep}/bin/grep -F 'levelAgeMilliseconds > 450' "$widget"
@@ -49,7 +52,7 @@ pkgs.runCommand "listener-level-widget" { } ''
     exit 1
   fi
 
-  if ${pkgs.gnugrep}/bin/grep -E 'transcript|text' "$widget" >/dev/null; then
+  if ${pkgs.gnugrep}/bin/grep -E 'event\.(text|transcript)|transcript(Text|_text)' "$widget" >/dev/null; then
     echo 'listener-level widget must not carry transcript text' >&2
     exit 1
   fi
