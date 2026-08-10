@@ -6,6 +6,17 @@
 let
   lib = pkgs.lib;
   system = pkgs.stdenv.hostPlatform.system;
+  expectedSchemaRustRevision = "37b7d1035a472a15081f3e2e8a93b95bf733c3ee";
+  schemaRustLock = builtins.fromJSON (builtins.readFile ../../flake.lock);
+  # Keep this bounded to the branch that owns the declarative pin. A revision
+  # which exists only on another branch must fail this witness instead of being
+  # rescued by an all-refs fetch during a later system evaluation.
+  schemaRustSource = builtins.fetchGit {
+    url = "https://github.com/LiGoldragon/schema-rust.git";
+    ref = "main";
+    rev = expectedSchemaRustRevision;
+  };
+  schemaRustManifest = builtins.fromTOML (builtins.readFile "${schemaRustSource}/Cargo.toml");
   maintainedSpiritPackages = inputs.spirit.packages.${system};
   maintainedSpiritArtifacts = inputs.spirit.lib.${system}.mkUserServiceArtifacts {
     stateDirectory = "/home/li/.local/state/spirit";
@@ -240,6 +251,14 @@ let
   liveJudgeOverrideTarget = pkgs.writeShellScriptBin "spirit-judge-daemon-service" "exit 0";
 
   assertions = [
+    {
+      condition = schemaRustLock.nodes."schema-rust-source".locked.rev == expectedSchemaRustRevision;
+      message = "Spirit's schema-rust source pin must be the exact schema-rust main revision.";
+    }
+    {
+      condition = schemaRustManifest.package.name == "schema-rust";
+      message = "the exact schema-rust main revision must be fetchable through its main ref.";
+    }
     {
       condition = builtins.all (name: builtins.hasAttr name maintainedSpiritPackages) [
         "default"

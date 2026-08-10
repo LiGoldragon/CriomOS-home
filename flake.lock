@@ -3065,11 +3065,11 @@
     "schema-rust-source": {
       "flake": false,
       "locked": {
-        "lastModified": 1783441348,
-        "narHash": "sha256-gm4TCLoMjwIrTAxP/2b1Y2M+YZVMn814hsbcvq0Kt5Y=",
+        "lastModified": 1786147409,
+        "narHash": "sha256-cIUWohv1X4+9yDFMvx4BztZyFEPBJlBd+kGzvrOvkyE=",
         "owner": "LiGoldragon",
         "repo": "schema-rust",
-        "rev": "f3b4563163dd11ba1cbbcca8081701ab7830b8f5",
+        "rev": "37b7d1035a472a15081f3e2e8a93b95bf733c3ee",
         "type": "github"
       },
       "original": {
