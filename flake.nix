@@ -170,11 +170,6 @@
     orchestrate.url = "github:LiGoldragon/orchestrate/dd70f6688e58d8cda379a187630aa364834eab74";
     orchestrate.inputs.nixpkgs.follows = "nixpkgs";
 
-    # Keep the retired writer available for existing callers without changing
-    # the current state-only daemon or its service contract.
-    orchestrate-legacy.url = "github:LiGoldragon/orchestrate/83e09a1316340a17ca23ef5cd2a3dd2a47874281";
-    orchestrate-legacy.inputs.nixpkgs.follows = "nixpkgs";
-
     # Message — the messenger: stateful local messaging daemon owning the
     # durable agent-identity map, delivery registry, message ledger,
     # per-recipient inboxes, and thread index (messenger.sema). Consumed in

@@ -31,8 +31,8 @@ let
   moduleConfiguration =
     if moduleResult.config ? content then moduleResult.config.content else moduleResult.config;
   service = moduleConfiguration.systemd.user.services.orchestrate-daemon.Service;
+  orchestrateProfilePackage = builtins.head moduleConfiguration.home.packages;
   orchestratePackage = inputs.orchestrate.packages.${system}.default;
-  legacyOrchestratePackage = inputs.orchestrate-legacy.packages.${system}.default;
   expectedExecStart = "${orchestratePackage}/bin/orchestrate-daemon ${stateDirectory}/orchestrate.sema %t/orchestrate/orchestrate.sock %t/orchestrate/orchestrate-owner.sock %t/orchestrate/orchestrate-upgrade.sock ${workspaceRoot} ${gitIndexRoot} messenger=${messengerSocketPath}";
   daemonExecStart = lib.replaceStrings [ "%t" ] [ runtimeDirectory ] service.ExecStart;
 
@@ -54,6 +54,10 @@ let
       message = "the removed configuration writer must not be an ExecStartPre step.";
     }
     {
+      condition = builtins.length moduleConfiguration.home.packages == 1;
+      message = "the profile must contain only the current Orchestrate package wrapper.";
+    }
+    {
       condition = !(service ? Environment);
       message = "the state-only daemon service must not carry a VCS PATH.";
     }
@@ -72,7 +76,7 @@ else
 
     test -x "${orchestratePackage}/bin/orchestrate-daemon"
     test ! -e "${orchestratePackage}/bin/orchestrate-write-configuration"
-    test -x "${legacyOrchestratePackage}/bin/orchestrate-write-configuration"
+    test ! -e "${orchestrateProfilePackage}/bin/orchestrate-write-configuration"
 
     state_directory=${lib.escapeShellArg stateDirectory}
     runtime_directory=${lib.escapeShellArg runtimeDirectory}
