@@ -135,7 +135,7 @@
 
     # CriomOS deploy CLI. This is the Nota-first deploy tool used for
     # system, OS-only, and direct home deployments.
-    lojix.url = "github:LiGoldragon/lojix/913c076f51410cb8b97f03fd010d6761ae108c33";
+    lojix.url = "github:LiGoldragon/lojix/54710fabbab7c47ce19764a98e7153e5c93a49f4";
     lojix.inputs.nixpkgs.follows = "nixpkgs";
 
     # Chroma — unified visual-state daemon (theme + warmth + brightness).
@@ -463,6 +463,7 @@
         system: packages:
         let
           packagesWithBootstrap = packages // {
+            lojix-client = inputs.lojix.packages.${system}.default;
             lojix-bootstrap = inputs.lojix.packages.${system}.lojix-bootstrap;
           };
         in
@@ -542,6 +543,7 @@
           vscodium-claude-lifecycle = checkPkgs.callPackage ./checks/vscodium-claude-lifecycle {
             inherit inputs;
           };
+          lojix-ownership = checkPkgs.callPackage ./checks/lojix-ownership { inherit inputs; };
         }
         // lib.optionalAttrs (agentIntercomSupported _system) {
           agent-intercom-local = checkPkgs.callPackage ./checks/agent-intercom-local { inherit inputs; };
