@@ -163,11 +163,11 @@
     aggregator.inputs.crane.follows = "crane";
 
     # Orchestrate — multi-agent claim/coordination daemon for the `primary`
-    # workspace. The 0.18.3 state-only boundary takes its Sema store and three
+    # workspace. The 0.20.0 state-only boundary takes its Sema store and three
     # Unix sockets as direct argv, refuses host worktree scaffolding, and keeps
     # Observe/Query as pure store projections. The Home service supplies the
     # co-resident messenger socket only; no router is deployed.
-    orchestrate.url = "github:LiGoldragon/orchestrate/bc3b8f27cb33beffc7cacc80454f4628d37526c4";
+    orchestrate.url = "github:LiGoldragon/orchestrate/dd70f6688e58d8cda379a187630aa364834eab74";
     orchestrate.inputs.nixpkgs.follows = "nixpkgs";
 
     # Keep the retired writer available for existing callers without changing
