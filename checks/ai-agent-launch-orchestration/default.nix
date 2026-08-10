@@ -106,8 +106,24 @@ pkgs.runCommand "ai-agent-launch-orchestration"
       "$TMPDIR/remove-deprecated-collab" "$codexNoCollabFixture" "$TMPDIR/no-collab-completed"
       test -e "$TMPDIR/no-collab-completed"
       test "$(yq -p toml -o json '.features | has("collab")' "$codexNoCollabFixture")" = false
+      grep -F 'agents = {' ${minProfileModule}
+      ! grep -F 'orchestrator = {' ${minProfileModule}
       grep -F 'default_subagent_model = "gpt-5.6-luna";' ${minProfileModule}
       grep -F 'default_subagent_reasoning_effort = "xhigh";' ${minProfileModule}
+      grep -F '"/agents/default_subagent_model" = "always";' ${minProfileModule}
+      grep -F '"/agents/default_subagent_reasoning_effort" = "always";' ${minProfileModule}
+
+      # The subagent defaults belong to Codex's strict-schema [agents] table.
+      # Parse the exact table shape without contacting a model or network.
+      codexHome="$TMPDIR/codex-home"
+      mkdir -p "$codexHome"
+      cat > "$codexHome/config.toml" <<'EOF'
+    [agents]
+    default_subagent_model = "gpt-5.6-luna"
+    default_subagent_reasoning_effort = "xhigh"
+    EOF
+      CODEX_HOME="$codexHome" DISABLE_AUTOUPDATER=1 ${codexCliPackage}/bin/codex \
+        --strict-config exec-server --listen stdio < /dev/null > "$TMPDIR/codex-agents-config.log" 2>&1
 
       # User-level role files set Terra explicitly, and the global fallback
       # protects every omission from selecting a different model.

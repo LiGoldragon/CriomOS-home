@@ -126,7 +126,7 @@ let
       "github@openai-curated".enabled = true;
     };
 
-    orchestrator = {
+    agents = {
       default_subagent_model = "gpt-5.6-luna";
       default_subagent_reasoning_effort = "xhigh";
     };
@@ -742,8 +742,8 @@ mkIf size.min {
       modes = {
         "/model" = "always";
         "/model_reasoning_effort" = "always";
-        "/orchestrator/default_subagent_model" = "always";
-        "/orchestrator/default_subagent_reasoning_effort" = "always";
+        "/agents/default_subagent_model" = "always";
+        "/agents/default_subagent_reasoning_effort" = "always";
         "/tui/model_availability_nux" = "always";
         "/tui/theme" = "once";
       };
