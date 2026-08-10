@@ -167,7 +167,7 @@
     # Unix sockets as direct argv, refuses host worktree scaffolding, and keeps
     # Observe/Query as pure store projections. The Home service supplies the
     # co-resident messenger socket only; no router is deployed.
-    orchestrate.url = "github:LiGoldragon/orchestrate/dd70f6688e58d8cda379a187630aa364834eab74";
+    orchestrate.url = "github:LiGoldragon/orchestrate/45283e2120e930e62dabdaf650e704a425be804c";
     orchestrate.inputs.nixpkgs.follows = "nixpkgs";
 
     # Message — the messenger: stateful local messaging daemon owning the
