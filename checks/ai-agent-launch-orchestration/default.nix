@@ -106,7 +106,7 @@ pkgs.runCommand "ai-agent-launch-orchestration"
       "$TMPDIR/remove-deprecated-collab" "$codexNoCollabFixture" "$TMPDIR/no-collab-completed"
       test -e "$TMPDIR/no-collab-completed"
       test "$(yq -p toml -o json '.features | has("collab")' "$codexNoCollabFixture")" = false
-      grep -F 'default_subagent_model = "gpt-5.6-terra";' ${minProfileModule}
+      grep -F 'default_subagent_model = "gpt-5.6-luna";' ${minProfileModule}
       grep -F 'default_subagent_reasoning_effort = "xhigh";' ${minProfileModule}
 
       # User-level role files set Terra explicitly, and the global fallback
