@@ -539,6 +539,9 @@
             inherit inputs;
           };
           lojix-ownership = checkPkgs.callPackage ./checks/lojix-ownership { inherit inputs; };
+          main-contract-pins = checkPkgs.callPackage ./checks/main-contract-pins {
+            inherit inputs;
+          };
         }
         // lib.optionalAttrs (agentIntercomSupported _system) {
           agent-intercom-local = checkPkgs.callPackage ./checks/agent-intercom-local { inherit inputs; };

@@ -5,7 +5,7 @@ let
 
   commonArguments = {
     pname = "mentci";
-    version = "0.1.0";
+    version = "0.5.0";
     src = craneLib.cleanCargoSource inputs.mentci-src;
 
     strictDeps = true;
