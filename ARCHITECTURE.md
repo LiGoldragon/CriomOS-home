@@ -212,6 +212,11 @@ Claude Code, Codex, and Pi are updated together through CriomOS-home and the
 full CriomOS lock, so active profiles and full-system deployments stay in
 sync after crashes or reboots.
 
+One authoritative release identity governs the family: the exact pushed
+CriomOS/CriomOS-home lock pair used for deployment. Update and verify the
+Lojix daemon before its clients and Home profile, so clients never run ahead
+of the daemon protocol and Home activation consumes that same release.
+
 Cluster-host update authority: Bird/Zeus update authority uses LiGoldragon
 `main` by default, not per-user branches. For Crayon OS host maintenance the
 maintainer has root SSH on all cluster hosts but cannot SSH as Bird on Zeus.
