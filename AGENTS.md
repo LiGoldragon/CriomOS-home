@@ -24,3 +24,10 @@ First thing: run `bd list --status open`. Read `docs/ROADMAP.md`.
 ## Carve-outs
 
 - Live-activating HM generations with compositor / input changes risks losing the session. Apply through a safe path (rebuild + new login).
+
+## Protos estate status
+
+Protos estate scope: out of scope
+Stack: not applicable
+Role: operating-system source
+This is scope metadata, not a stack.
