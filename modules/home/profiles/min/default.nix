@@ -289,7 +289,6 @@ let
   unixDeveloperPackages = unixUtilities ++ programmingTools;
 
   deploymentPackages = with pkgs; [
-    inputs.lojix.packages.${pkgs.stdenv.hostPlatform.system}.default
     age
     sops
     ssh-to-age

@@ -3,8 +3,8 @@
     system = throw ''
       CriomOS-home: no system input was provided.
 
-      Home-only deployment is driven by lojix, which derives the target
-      system from the projected horizon and overrides this input.
+      The OS-owned deployment path must provide the target system and
+      projected horizon by overriding this input.
     '';
   };
 }

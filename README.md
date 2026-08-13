@@ -6,8 +6,8 @@ Split out from legacy CriomOS so that:
 
 1. `CriomOS` stays network-neutral and free of desktop-shell inputs
    (niri, noctalia, stylix, emacs sources, vscodium extensions).
-2. Home-only deploys can evaluate this flake directly while passing the
-   same projected `horizon` and `system` inputs used by CriomOS.
+2. Home consumes the `horizon` and `system` projections supplied by
+   CriomOS; it has no deployment authority.
 
 **Status:** active. Tracks [docs/ROADMAP.md](docs/ROADMAP.md).
 
@@ -21,27 +21,10 @@ inputs.criomos-home.inputs.system.follows = "system";
 inputs.criomos-home.inputs.pkgs.follows = "pkgs";
 ```
 
-Direct home-only deploys build:
-
-```text
-homeConfigurations.<user>.activationPackage
-```
-
-with `horizon` and `system` overridden by lojix.
-
-The maintained `lojix-bootstrap` app is re-exported unchanged from this flake
-as well as CriomOS. It accepts one explicit inline `BootstrapRun` DOTOS object
-and is daemon-free: callers must supply the input mode, builder, test plan,
-backend, journal parent, new GC-root path, and terminal-evidence path. Use its
-`BuildOnly` variant when activation is not authorized; it has no transport or
-activation representation. The re-export requires immutable GitHub flake refs
-and an exact paired `ssh-ng://user@host[:port]` / `user@host[:port]` remote
-identity plus `SshPolicy.{<private-identity> <private-known-hosts>
-RequireKnownHost}`. Its private `0700` journal/output parents, resumable v5
-receipts, and `0600` terminal evidence are part of the bootstrap contract; a
-remote BootOnce uses a deterministic target transient unit and reconciles it
-after an interrupted client connection. Finalized journals are retained rather
-than path-recursively deleted.
+Deployment, bootstrap, and activation authority belong to CriomOS. Lojix is
+OS-owned: CriomOS-home neither depends on it nor exports or executes it.
+Home only consumes generic `horizon` and `system` projections that CriomOS
+supplies to its modules.
 
 ## Layout
 

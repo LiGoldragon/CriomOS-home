@@ -10,10 +10,11 @@ Use this when changing the operator's home profile, desktop session,
 Niri bindings, Noctalia status bar, user-scoped packages, or dictation
 tooling.
 
-CriomOS-home owns per-user configuration. It is consumed by CriomOS for
-full system deploys and can also be activated as a home-only profile
-through lojix. System privileges, groups, kernel modules, and device
-rules belong in CriomOS.
+CriomOS-home owns per-user configuration. System privileges, groups, kernel
+modules, device rules, deployment, bootstrap, and activation authority belong
+in CriomOS. Lojix is exclusively OS-owned: CriomOS-home consumes only the
+generic projections supplied by CriomOS and neither depends on nor executes
+Lojix.
 
 ---
 
@@ -187,13 +188,11 @@ commit is not part of a `CompleteHost` deployment until CriomOS's
 --refresh` on the CriomOS flake refreshes CriomOS itself; it
 does not override nested input pins.
 
-When a CriomOS-home change is intended to ship through `CompleteHost`,
-push the CriomOS-home commit, run `nix flake update criomos-home`
-in CriomOS, and update any top-level CriomOS input that the home
-flake follows and needs at runtime. Commit and push CriomOS's
-`flake.lock`, then deploy `CompleteHost` through Lojix. Treat the
-downstream lock bump as part of the home change, not as a
-separate optional cleanup.
+When a CriomOS-home change is intended to ship through the OS deployment path,
+push the CriomOS-home commit, run `nix flake update criomos-home` in CriomOS,
+and update any top-level CriomOS input that the home flake follows and needs at
+runtime. Commit and push CriomOS's `flake.lock`. The downstream lock bump is
+part of the home change, not a separate optional cleanup.
 
 For local checks that do not call paid APIs:
 
@@ -207,20 +206,8 @@ Build from pushed origin with `--refresh` before treating package changes
 as verified. Home activation should restart `listener.service`; do not
 signal niri.
 
-Submit deployment work directly through the typed Lojix interfaces. With an
-authorized user target and selected revision, submit the documented user-
-environment path before treating apparent source or documentation tension as a
-reason to redesign it; investigate only an actual admission, authorization,
-reachability, build, activation, or verification failure. Use `meta-lojix` for
-privileged deploy admission and `lojix` for observations; there is no profile
-wrapper or compatibility translator. A user-environment
-activation is submitted as a `UserEnvironment` deploy through the selected
-CriomOS flake revision, with an explicit builder value (`None` or
-`(Some <builder-node>)`) and explicit substituter records when needed. The
-accepted admission shape is `DeployAccepted DeployHandle`; it proves only that
-the daemon accepted the request. Use `lojix` typed generation/status/event
-queries for terminal evidence and filter human-facing logs through
-`redact-nix-store-paths` or `with-nix-store-redaction`.
+Do not submit, observe, bootstrap, or activate deployments from
+CriomOS-home. Those actions belong to CriomOS and require OS-side authority.
 
 For Niri settings, repo changes and builds are not live runtime state. After a
 `UserEnvironment` activation reaches the expected profile state, the operator

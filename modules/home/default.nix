@@ -8,7 +8,7 @@
 #
 #   { horizon, user, inputs, ... }
 #
-# - horizon: from lojix's projection (the per-(cluster, node) view).
+# - horizon: from the OS-supplied projection (the per-(cluster, node) view).
 # - user:    horizon.users.<userName>, set per-user in CriomOS userHomes.
 # - inputs:  CriomOS-home's own flake inputs (niri-flake, noctalia,
 #            stylix, vscodium-ext, etc.) — this aggregate forwards

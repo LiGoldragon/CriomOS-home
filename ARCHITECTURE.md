@@ -213,17 +213,11 @@ full CriomOS lock, so active profiles and full-system deployments stay in
 sync after crashes or reboots.
 
 One authoritative release identity governs the family: the exact pushed
-CriomOS/CriomOS-home lock pair used for deployment. Update and verify the
-Lojix daemon before its clients and Home profile, so clients never run ahead
-of the daemon protocol and Home activation consumes that same release.
-
-Cluster-host update authority: Bird/Zeus update authority uses LiGoldragon
-`main` by default, not per-user branches. For Crayon OS host maintenance the
-maintainer has root SSH on all cluster hosts but cannot SSH as Bird on Zeus.
-Bird's Zeus home-profile redeploy therefore runs through lojix's root-mediated
-user-environment activation: lojix reaches Zeus as `root` and drops privilege to
-Bird through a login (`runuser --login`) to set and activate Bird's Home Manager
-profile, needing no direct Bird SSH. Witnessed working as of lojix `0.4.5`.
+CriomOS/CriomOS-home lock pair selected by the OS deployment path. CriomOS
+owns deployment, bootstrap, and activation authority. Lojix is exclusively
+OS-owned; this repository has no Lojix input, package, app, service, state,
+environment, or executable surface. Home consumes only the generic `horizon`
+and `system` projections supplied by CriomOS.
 
 ## Networking and media
 

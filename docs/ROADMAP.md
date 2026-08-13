@@ -37,9 +37,8 @@ beads issue it points to.
 
 - [x] CriomOS consumes `inputs.criomos-home.homeModules.default`
       through the NixOS home-manager integration.
-- [ ] Keep direct home-only activation documented as a lojix-driven
-      operation; raw `home-manager switch --flake` remains an escape
-      hatch, not the primary path.
+- [x] Keep deployment and activation authority in CriomOS. Home consumes only
+      the generic projections supplied by the OS.
 
 ## Open questions
 

@@ -133,11 +133,6 @@
     google-workspace-cli.url = "github:googleworkspace/cli";
     google-workspace-cli.inputs.nixpkgs.follows = "nixpkgs";
 
-    # CriomOS deploy CLI. This is the Nota-first deploy tool used for
-    # system, OS-only, and direct home deployments.
-    lojix.url = "github:LiGoldragon/lojix/54710fabbab7c47ce19764a98e7153e5c93a49f4";
-    lojix.inputs.nixpkgs.follows = "nixpkgs";
-
     # Chroma — unified visual-state daemon (theme + warmth + brightness).
     # Replaces darkman + the nightshift-* services + the brightness shell
     # wrapper. Consumed in modules/home/profiles/min/chroma.nix.
@@ -456,16 +451,10 @@
       agentIntercomGraphicalSupported = system: system == "x86_64-linux";
       projectPackages = builtins.mapAttrs (
         system: packages:
-        let
-          packagesWithBootstrap = packages // {
-            lojix-client = inputs.lojix.packages.${system}.default;
-            lojix-bootstrap = inputs.lojix.packages.${system}.lojix-bootstrap;
-          };
-        in
         if agentIntercomSupported system then
-          packagesWithBootstrap
+          packages
         else
-          builtins.removeAttrs packagesWithBootstrap [ "agent-intercom" ]
+          builtins.removeAttrs packages [ "agent-intercom" ]
       ) bp.packages;
       blueprintGeneratedChecks =
         system:
@@ -540,7 +529,7 @@
           vscodium-claude-lifecycle = checkPkgs.callPackage ./checks/vscodium-claude-lifecycle {
             inherit inputs;
           };
-          lojix-ownership = checkPkgs.callPackage ./checks/lojix-ownership { inherit inputs; };
+          system-projection-boundary = checkPkgs.callPackage ./checks/system-projection-boundary { };
           main-contract-pins = checkPkgs.callPackage ./checks/main-contract-pins {
             inherit inputs;
           };
@@ -582,13 +571,7 @@
     // {
       packages = projectPackages;
       checks = projectChecks;
-      apps = builtins.mapAttrs (
-        system: packages:
-        (bp.apps.${system} or { })
-        // {
-          lojix-bootstrap = inputs.lojix.apps.${system}.lojix-bootstrap;
-        }
-      ) projectPackages;
+      apps = builtins.mapAttrs (system: _: bp.apps.${system} or { }) projectPackages;
 
       homeConfigurations = builtins.mapAttrs mkHomeConfiguration horizon.users;
 
