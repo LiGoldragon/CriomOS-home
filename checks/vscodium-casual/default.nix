@@ -2,6 +2,7 @@
 
 let
   codiumPackage = pkgs.callPackage ../../packages/vscodium-casual { };
+  codiumModule = ../../modules/home/vscodium/vscodium/default.nix;
 in
 pkgs.runCommand "vscodium-casual-check" { } ''
   wrapper="${codiumPackage}/bin/codium"
@@ -12,6 +13,10 @@ pkgs.runCommand "vscodium-casual-check" { } ''
   grep -F -- "--disable-extension vscode.html-language-features" "$wrapper"
   grep -F -- "--disable-extension vscode.json-language-features" "$wrapper"
   grep -F -- "--disable-extension vscode.php-language-features" "$wrapper"
+  grep -F -- '"nix.enableLanguageServer" = false;' "$codiumModule"
+  grep -F -- '"nix.serverPath" = null;' "$codiumModule"
+  grep -F -- '"rust-analyzer.server.path" = null;' "$codiumModule"
+  grep -F -- '"git.autoRepositoryDetection" = false;' "$codiumModule"
 
   touch "$out"
 ''

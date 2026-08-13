@@ -193,7 +193,7 @@ let
     # so we keep it enabled for extensions that read VCS state (vscode-pi, etc).
     # VisualJJ colocates in the same SCM panel for the actual jj workflow.
     "git.enabled" = true;
-    "git.autoRepositoryDetection" = true;
+    "git.autoRepositoryDetection" = false;
     "visualjj.showSourceControlColocated" = true;
 
     # direnv — explicitly do NOT auto-restart the extension host on
@@ -205,8 +205,8 @@ let
     "direnv.restart.automatic" = false;
 
     # VSCodium is the casual glossing / markdown-preview editor. Keep
-    # syntax-oriented extensions, but do not start language servers from
-    # Codium windows.
+    # ordinary syntax support, but do not automatically start language
+    # servers, semantic analyzers, or workspace scanners from Codium windows.
     "nix.enableLanguageServer" = false;
     "nix.serverPath" = null;
     "rust-analyzer.server.path" = null;

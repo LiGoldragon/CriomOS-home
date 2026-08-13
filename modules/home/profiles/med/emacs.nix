@@ -220,9 +220,8 @@ let
     ;; blocks below have correct :hook / :after / :commands / :custom /
     ;; :mode triggers, so they defer cleanly. The few that MUST be eager
     ;; carry :demand t below (modal keybindings live at first keypress,
-    ;; completion UI live for M-x, base16-theme load before the theme
-    ;; switch block, eglot's add-to-list runs before any LSP-using mode
-    ;; opens, etc.).
+    ;; completion UI live for M-x and base16-theme load before the theme
+    ;; switch block, etc.).
     ;;
     ;; eval-and-compile is load-bearing here: use-package macroexpansion
     ;; checks this variable at byte-compile time. Setting it with a plain
@@ -233,11 +232,12 @@ let
     (eval-and-compile (setq use-package-always-defer t))
 
     (use-package eat :defer t)
-    (use-package apheleia)
+    (use-package apheleia :defer t)
     (use-package envrc :demand t :config (envrc-global-mode))
 
     (use-package eglot
-     :demand t
+     ;; Servers are available through M-x eglot, never from a mode hook.
+     :commands (eglot eglot-ensure eglot-shutdown)
      :custom (eglot-extend-to-xref t)
      :config
      (add-to-list 'eglot-server-programs '(nix-ts-mode . ("nil")))
@@ -247,16 +247,15 @@ let
     (use-package imenu-list)
 
     (use-package flycheck-eglot
-     :demand t
      :after (flycheck eglot)
-     :config (global-flycheck-eglot-mode 1))
+     :commands (flycheck-eglot-mode global-flycheck-eglot-mode))
 
     (use-package highlight-indentation)
 
     (use-package nix-ts-mode
      :mode "\\.nix\\'")
 
-    (use-package nixfmt :hook (nix-ts-mode . nixfmt-on-save-mode))
+    (use-package nixfmt :commands nixfmt-buffer)
     (use-package nix-update)
     (use-package justl)
     (use-package json-mode)
@@ -278,7 +277,8 @@ let
      :mode "\\.rs\\'"
      :custom
      (rust-mode-treesitter-derive nil)
-     (rust-format-on-save t))
+     ;; Formatting stays an explicit rust-format-buffer action.
+     (rust-format-on-save nil))
 
     (use-package magit-delta :hook (magit-mode . magit-delta-mode))
     (use-package difftastic)
@@ -290,7 +290,8 @@ let
     (use-package ssh-deploy)
 
     (use-package org-roam
-     :config (org-roam-db-autosync-mode 1)
+     ;; Keep the database synchronizer opt-in: it can be started manually.
+     :commands org-roam-db-autosync-mode
      :custom
      (org-roam-v2-ack t)
      (org-roam-directory "~/git/wiki")
@@ -325,9 +326,7 @@ let
     (use-package clojure-ts-mode :custom (clojure-ts-ensure-grammars nil))
 
     (use-package flycheck-clj-kondo
-     :hook
-     ((clojure-ts-mode clojurescript-ts-mode clojurec-ts-mode)
-      . flycheck-mode)
+     :after flycheck
      :config
      (progn
        (flycheck-clj-kondo--define-checker
@@ -495,8 +494,8 @@ let
     (use-package git-gutter :demand t :config (global-git-gutter-mode))
 
     (use-package projectile
-     :demand t
-     :config (projectile-mode +1)
+     ;; Project indexing is available through explicit Projectile commands.
+     :commands (projectile-mode projectile-switch-project)
      :custom (projectile-project-search-path '("~/git/" "/git/")))
 
     (use-package eshell-prompt-extras
@@ -531,17 +530,18 @@ let
     (use-package git-link :custom (git-link-use-commit t))
 
     (use-package flycheck
-     :demand t
+     ;; Syntax checks run only when flycheck-buffer or flycheck-mode is invoked.
+     :commands (flycheck-buffer flycheck-mode)
      :custom
      (flycheck-idle-change-delay 7)
      (flycheck-idle-buffer-switch-delay 49)
-     (flycheck-check-syntax-automatically '(save idle-change mode-enabled)))
+     (flycheck-check-syntax-automatically nil))
 
     (use-package flycheck-guile
      :custom (geiser-default-implementation 'guile))
 
     (use-package ghq :commands ghq)
-    (use-package shfmt :hook (sh-mode . shfmt-on-save-mode))
+    (use-package shfmt :commands shfmt-buffer)
     (use-package sly)
     (use-package sly-macrostep)
     (use-package sly-asdf)
@@ -557,10 +557,6 @@ let
 
     (use-package format-all
      :commands (format-all-mode format-all-buffer format-all-region-or-buffer)
-     :hook
-     ((prog-mode . format-all-mode)
-      (markdown-mode . format-all-mode)
-      (gfm-mode . format-all-mode))
      :init
      (setq format-all-formatters
            '(("Emacs Lisp" elisp-autofmt)
