@@ -514,6 +514,7 @@
           active-network-widget = checkPkgs.callPackage ./checks/active-network-widget { };
           solar-time-widget = checkPkgs.callPackage ./checks/solar-time-widget { };
           keyboard-layout-policy = checkPkgs.callPackage ./checks/keyboard-layout-policy { inherit inputs; };
+          emacs-rust-analyzer-autostart = checkPkgs.callPackage ./checks/emacs-rust-analyzer-autostart { };
           rust-toolchain = checkPkgs.callPackage ./checks/rust-toolchain { inherit inputs; };
           leta = checkPkgs.callPackage ./checks/leta { inherit inputs; };
           no-easyeffects = checkPkgs.callPackage ./checks/no-easyeffects { };

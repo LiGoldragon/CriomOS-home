@@ -278,8 +278,7 @@ let
      :mode "\\.rs\\'"
      :custom
      (rust-mode-treesitter-derive nil)
-     (rust-format-on-save t)
-     :hook (rust-mode . eglot-ensure))
+     (rust-format-on-save t))
 
     (use-package magit-delta :hook (magit-mode . magit-delta-mode))
     (use-package difftastic)
