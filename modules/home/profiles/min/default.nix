@@ -298,7 +298,7 @@ let
   # Pi is built directly from inputs.pi-src. Agent Intercom supplies the
   # normal `codex` and `claude` entries when Horizon enables its local
   # capability; the direct commands below remain explicit raw recovery paths.
-  claudeCodePackage = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.claude-code;
+  claudeCodePackage = pkgs.callPackage ../../../../packages/claude-code { inherit inputs; };
   codexCliPackage = inputs.codex-cli.packages.${pkgs.stdenv.hostPlatform.system}.default;
   piPackage = pkgs.callPackage ../../../../packages/pi { inherit inputs; };
 

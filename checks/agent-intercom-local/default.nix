@@ -66,7 +66,7 @@ let
   );
   flakeFile = ../../flake.nix;
   flakeLock = ../../flake.lock;
-  claudeCodePackage = inputs.llm-agents.packages.${system}.claude-code;
+  claudeCodePackage = pkgs.callPackage ../../packages/claude-code { inherit inputs; };
   codexCliPackage = inputs.codex-cli.packages.${system}.default;
 in
 assert localHomeConfiguration.home.file ? ".pi/agent/packages/agent-intercom-pi";

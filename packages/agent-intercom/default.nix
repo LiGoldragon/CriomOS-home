@@ -17,7 +17,7 @@ then
 else
   let
     system = pkgs.stdenv.hostPlatform.system;
-    claudeCodePackage = inputs.llm-agents.packages.${system}.claude-code;
+    claudeCodePackage = pkgs.callPackage ../claude-code { inherit inputs; };
     esbuildCompanion =
       {
         x86_64-linux = {

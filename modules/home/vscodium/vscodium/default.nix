@@ -13,7 +13,7 @@
 let
   inherit (user) size;
   codiumPackage = pkgs.callPackage ../../../../packages/vscodium-casual { };
-  claudeCodePackage = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.claude-code;
+  claudeCodePackage = pkgs.callPackage ../../../../packages/claude-code { inherit inputs; };
   codexCliPackage = inputs.codex-cli.packages.${pkgs.stdenv.hostPlatform.system}.default;
   agentIntercomLocal = builtins.any (
     service:
@@ -155,9 +155,9 @@ let
     mktplcRef = {
       name = "claude-code";
       publisher = "anthropic";
-      version = "2.1.226";
+      version = "2.1.231";
     };
-    vsix = vsixFromInput "claude-code-2.1.226.vsix" inputs.claude-code-vsix;
+    vsix = vsixFromInput "claude-code-2.1.231.vsix" inputs.claude-code-vsix;
     postInstall = ''
       bin_dir=$out/share/vscode/extensions/anthropic.claude-code/resources/native-binary
       if [ -d "$bin_dir" ]; then
@@ -176,9 +176,9 @@ let
     mktplcRef = {
       name = "chatgpt";
       publisher = "openai";
-      version = "26.5803.41515";
+      version = "26.5803.61601";
     };
-    vsix = vsixFromInput "openai.chatgpt-26.5803.41515-linux-x64.vsix" inputs.codex-chatgpt-vsix;
+    vsix = vsixFromInput "openai.chatgpt-26.5803.61601-linux-x64.vsix" inputs.codex-chatgpt-vsix;
   };
 
   # All aski-related code dropped per Li 2026-04-25.

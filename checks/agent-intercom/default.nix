@@ -68,7 +68,7 @@ let
   coiSource = "${inputs.agent-intercom-codex-src}/codex/coi.ts";
   coiSharedAppServerPatch = ../../packages/agent-intercom/coi-shared-app-server.patch;
   codexCliPackage = inputs.codex-cli.packages.${pkgs.stdenv.hostPlatform.system}.default;
-  claudeCodePackage = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.claude-code;
+  claudeCodePackage = pkgs.callPackage ../../packages/claude-code { inherit inputs; };
   directCodexCliPackage = graphicalHomeConfiguration.programs.codexDesktopLinux.cliPackage;
   packageName = package: package.pname or (package.name or "");
   hasAgentIntercomRuntime =

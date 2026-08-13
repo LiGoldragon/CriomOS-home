@@ -33,7 +33,7 @@ let
   graphicalSupported = homeSystem == "x86_64-linux";
   sharedAppServerSocket = "unix://\${XDG_RUNTIME_DIR}/codex-intercom-app-server.sock";
   upstreamCodexCliPackage = inputs.codex-cli.packages.${homeSystem}.default;
-  claudeCodePackage = inputs.llm-agents.packages.${homeSystem}.claude-code;
+  claudeCodePackage = pkgs.callPackage ../../../../packages/claude-code { inherit inputs; };
   # The upstream Nix package wraps its native executable with an identity that
   # points at an unmanaged $HOME/.local/bin path.  Preserve its closure and
   # official pinned binary, but expose `codex` as the raw Nix-owned executable
