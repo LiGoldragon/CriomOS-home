@@ -21,7 +21,7 @@ in
 lib.mkIf behavesAs.edge {
   home.packages = [ pkgs.libnotify ];
 
-  programs.noctalia-shell = {
+  programs.noctalia = {
     enable = true;
     package = noctaliaShell;
     systemd.enable = false;
