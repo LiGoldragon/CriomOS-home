@@ -142,18 +142,18 @@
     # Spirit owns the coherent daemon, judge, judge-config, and provider
     # derivation set. Home supplies paths and unit policy but never selects
     # those service component versions independently.
-    spirit.url = "github:LiGoldragon/spirit/7405eee89e3b1b5b6764eb1a50cbdf467b93c9a7";
+    spirit.url = "github:LiGoldragon/spirit/008d8ca0e4a309bdd922fae61681cdc97a484bac";
     spirit.inputs.nixpkgs.follows = "nixpkgs";
 
     # Agent — retained schema-derived local provider service and CLI. It is
     # independent of the Spirit-owned judge/provider composition.
-    agent.url = "github:LiGoldragon/agent";
+    agent.url = "github:LiGoldragon/agent/3a3534931be790e63d3db01bbd238ad044b2d35f";
     agent.inputs.nixpkgs.follows = "nixpkgs";
     agent.inputs.crane.follows = "crane";
 
     # Aggregator — local transcript/evidence recovery daemon. Pinned to the
     # audited source accepted for Home-profile deployment.
-    aggregator.url = "github:LiGoldragon/aggregator/86f8eb04d7f0bc1913c36a1a65e6782db98b6523";
+    aggregator.url = "github:LiGoldragon/aggregator/f777eb2a6e92d26eb0ce7315586c939c071111a0";
     aggregator.inputs.nixpkgs.follows = "nixpkgs";
     aggregator.inputs.crane.follows = "crane";
 
@@ -162,7 +162,7 @@
     # Unix sockets as direct argv, refuses host worktree scaffolding, and keeps
     # Observe/Query as pure store projections. The Home service supplies the
     # co-resident messenger socket only; no router is deployed.
-    orchestrate.url = "github:LiGoldragon/orchestrate/45283e2120e930e62dabdaf650e704a425be804c";
+    orchestrate.url = "github:LiGoldragon/orchestrate/b14355577286e56902d085ad4e1bf2654a55931e";
     orchestrate.inputs.nixpkgs.follows = "nixpkgs";
 
     # Message — the messenger: stateful local messaging daemon owning the
@@ -174,7 +174,7 @@
     # the additive v2 -> v3 store migration — the deployed store, born at v2,
     # is preserved aside and re-stamped on first open — on the
     # incident-hardened sema-engine 0.11.2 orchestrate 0.14.1 runs.
-    message.url = "github:LiGoldragon/message/1c47a20e9b9227d704d6e7ecab2c0d5dd136bba9";
+    message.url = "github:LiGoldragon/message/bf7295641bb2f15ad86622f242909a0646166ced";
     message.inputs.nixpkgs.follows = "nixpkgs";
     message.inputs.crane.follows = "crane";
 
@@ -182,10 +182,10 @@
     # The daemon repo is packaged locally because it does not expose a flake;
     # mentci-egui exposes the GUI and its remote-control helper binaries.
     mentci-src = {
-      url = "github:LiGoldragon/mentci";
+      url = "github:LiGoldragon/mentci/aa2ce64448aeba01b20009a7a5a87070d6d9679b";
       flake = false;
     };
-    mentci-egui.url = "github:LiGoldragon/mentci-egui";
+    mentci-egui.url = "github:LiGoldragon/mentci-egui/f8b86ffeab51d61953000a58f20fb0cac9933845";
     mentci-egui.inputs.nixpkgs.follows = "nixpkgs";
 
     # `pi` (earendil-works/pi coding-agent CLI) — TypeScript npm
@@ -194,7 +194,7 @@
     # (buildNpmPackage over the `packages/coding-agent` workspace).
     # Replaces the previous pi-mentci wrapper flake (dropped 2026-04-25).
     pi-src = {
-      url = "github:earendil-works/pi?ref=v0.80.10";
+      url = "github:earendil-works/pi?ref=v0.84.1";
       flake = false;
     };
 
@@ -203,33 +203,33 @@
     # derivation assembles their supported Pi, Codex, Claude, OpenCode, and
     # orchestrator surfaces without mutable npm installation.
     agent-intercom-pi-src = {
-      url = "github:dataforxyz/agent-intercom-pi/d539a5476c26679f558d74b894b902d6366770a4";
+      url = "github:dataforxyz/agent-intercom-pi/b6f8f9d08c8c5ec7141a0258ce61cda59d327a20";
       flake = false;
     };
     agent-intercom-codex-src = {
-      url = "github:dataforxyz/agent-intercom-codex/118c85391b525982f00f38a3e3b67278e20e2774";
+      url = "github:dataforxyz/agent-intercom-codex/ea1c5b538c95b89af3fd36344396779e2eadbadb";
       flake = false;
     };
     agent-intercom-claude-src = {
-      url = "github:dataforxyz/agent-intercom-claude/f558e3bfa0d0df799b57f729a2be903e85760df4";
+      url = "github:dataforxyz/agent-intercom-claude/d62b3c85547b8b83fdfe06afb38968646fe813b8";
       flake = false;
     };
     agent-intercom-opencode-src = {
-      url = "github:dataforxyz/agent-intercom-opencode/5aea7545e00af04f2dd14a05bff69436917a4f46";
+      url = "github:dataforxyz/agent-intercom-opencode/9d81100ea074f68f6466656c65536504209eb060";
       flake = false;
     };
     agent-intercom-orchestrator-src = {
-      url = "github:dataforxyz/agent-intercom-orchestrator/fb3a74c9bf96373c82d8be31da7bae97d6ac0119";
+      url = "github:dataforxyz/agent-intercom-orchestrator/a7e16bd4386726002ab6880b35ebacdeef00fd0d";
       flake = false;
     };
     agent-intercom-core-src = {
-      url = "github:dataforxyz/agent-intercom-core/cb5d2212912db0cd8abbb16ab08e4b539424a05d";
+      url = "github:dataforxyz/agent-intercom-core/8316cbab548f422ad11c78ed887fabeef94817c1";
       flake = false;
     };
     # Maintained unofficial Linux desktop integration. The lock file pins the
     # source and its upstream DMG metadata; the Home Manager module owns its
     # package, Computer Use, and experimental Remote Mobile Control shape.
-    codex-desktop-linux.url = "github:ilysenko/codex-desktop-linux";
+    codex-desktop-linux.url = "github:ilysenko/codex-desktop-linux/c6d76231f0623c3ef0b18c7e9158697c96bdcf9f";
     codex-desktop-linux.inputs.nixpkgs.follows = "nixpkgs";
 
     # Pi extension packages. Kept as flake inputs so source revisions and
@@ -247,13 +247,13 @@
     # Maintained reliability fork. Its ledger records the retained local
     # acceptance behavior and validation witnesses.
     pi-subagents-src = {
-      url = "github:LiGoldragon/pi-subagents-nicobailon/8b7d204fd0fd4427acdea5c1c60a2697221194ea";
+      url = "github:LiGoldragon/pi-subagents-nicobailon/bfca4f8317551fa9e8e8ef82c2608a6216953216";
       flake = false;
     };
     # Generated project-role packets used by the harness compatibility check.
     # The source revision itself pins skills at the authoritative generator revision.
     primary-generated-src = {
-      url = "github:LiGoldragon/primary/62eac67630c020caa8c154f7dc6ebba6196cf5d2";
+      url = "github:LiGoldragon/primary/13f996eb0532183938c99949fd21d3081d3c56a6";
       flake = false;
     };
     agent-intercom-tsx-src = {
@@ -306,7 +306,7 @@
       url = "https://registry.npmjs.org/pi-continue/-/pi-continue-0.9.3.tgz";
       flake = false;
     };
-    pi-session-namer.url = "github:LiGoldragon/pi-session-namer/96b83cd0fdf02584ad1c3a024e505a42b83ce659";
+    pi-session-namer.url = "github:LiGoldragon/pi-session-namer/76a145939d8fc52bda07117e7c04ad66f84f2114";
     pi-session-namer.inputs.nixpkgs.follows = "nixpkgs";
     pi-web-access-src = {
       type = "file";

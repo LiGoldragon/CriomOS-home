@@ -1,4 +1,4 @@
-{ pkgs }:
+{ pkgs, ... }:
 pkgs.runCommand "system-projection-boundary" { } ''
   source=${../..}
 

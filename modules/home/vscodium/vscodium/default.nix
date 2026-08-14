@@ -244,7 +244,7 @@ let
 in
 lib.mkIf size.medium {
 
-  programs.vscode = {
+  programs.vscodium = {
     enable = true;
     package = codiumManagedPackage;
 

@@ -6,7 +6,7 @@
 let
   lib = pkgs.lib;
   system = pkgs.stdenv.hostPlatform.system;
-  expectedSchemaRustRevision = "37b7d1035a472a15081f3e2e8a93b95bf733c3ee";
+  expectedSchemaRustRevision = "f3b4563163dd11ba1cbbcca8081701ab7830b8f5";
   schemaRustLock = builtins.fromJSON (builtins.readFile ../../flake.lock);
   # Keep this bounded to the branch that owns the declarative pin. A revision
   # which exists only on another branch must fail this witness instead of being

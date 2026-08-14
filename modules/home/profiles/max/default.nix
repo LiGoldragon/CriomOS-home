@@ -51,7 +51,7 @@ mkMerge [
       with pkgs;
       [
         # freecad # broken
-        wasistlos
+        karere
         gitkraken
       ]
       ++ windowsEmulationsPackages

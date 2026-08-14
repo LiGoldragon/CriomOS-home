@@ -26,7 +26,7 @@ let
       }
     ];
   };
-  vscodeConfig = homeConfiguration.config.programs.vscode;
+  vscodeConfig = homeConfiguration.config.programs.vscodium;
   activation = homeConfiguration.config.home.activation;
   nixStoreFixture = pkgs.writeShellScript "nix-store-fixture" ''
     set -euf
@@ -240,8 +240,6 @@ assert vscodeConfig.package.pname == homePkgs.vscodium.pname;
 assert vscodeConfig.package.version == homePkgs.vscodium.version;
 assert vscodeConfig.package.meta.mainProgram == "codium";
 assert homePkgs.lib.getExe vscodeConfig.package == "${vscodeConfig.package}/bin/codium";
-assert vscodeConfig.nameShort == "VSCodium";
-assert vscodeConfig.dataFolderName == ".vscode-oss";
 assert builtins.any (
   extension: extension.version == "26.5803.61601"
 ) vscodeConfig.profiles.default.extensions;
