@@ -10,13 +10,7 @@
 let
   inherit (horizon.node) behavesAs;
   colors = config.lib.stylix.colors.withHashtag;
-  noctaliaShell =
-    inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
-      (old: {
-        patches = (old.patches or [ ]) ++ [
-          ./noctalia-patches/niri-title-only-updates.patch
-        ];
-      });
+  noctaliaShell = inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default;
 in
 lib.mkIf behavesAs.edge {
   home.packages = [ pkgs.libnotify ];
