@@ -112,7 +112,6 @@ let
       visual-regexp-steroids
       ztree
       cider
-      zprint-format
 
       # Common Lisp
       sly
