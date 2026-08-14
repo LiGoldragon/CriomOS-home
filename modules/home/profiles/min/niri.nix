@@ -38,7 +38,7 @@ let
     screenshot_name="$(${pkgs.coreutils}/bin/date +%Y%m%d-%H%M%S).png"
     screenshot_path="$HOME/${screenshotDirectory}/$screenshot_name"
 
-    if ${pkgs.niri}/bin/niri msg action screenshot-screen --path "$screenshot_path"; then
+    if ${config.programs.niri.package}/bin/niri msg action screenshot-screen --path "$screenshot_path"; then
       wait_attempts=0
       while [ "$wait_attempts" -lt 20 ] && [ ! -s "$screenshot_path" ]; do
         wait_attempts=$((wait_attempts + 1))
@@ -107,7 +107,7 @@ let
     ${noctaliaIpc} lockScreen lock
 
     ${pkgs.coreutils}/bin/sleep 3
-    ${pkgs.niri}/bin/niri msg action power-off-monitors || true
+    ${config.programs.niri.package}/bin/niri msg action power-off-monitors || true
   '';
 
   lockListener = pkgs.writeShellScript "criomos-lock-listener" ''
