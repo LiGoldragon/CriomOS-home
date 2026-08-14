@@ -33,7 +33,7 @@ let
   ];
 
   mentciPackages = [
-    inputs.mentci-egui.packages.${pkgs.stdenv.hostPlatform.system}.default
+    # inputs.mentci-egui.packages.${pkgs.stdenv.hostPlatform.system}.default # Broken: meta-signal-mentci-0.3.1 build.rs imports schema_rust::bootstrap::BootstrapInterfaceGeneration which does not exist
     (pkgs.callPackage ../../../../packages/mentci { inherit inputs; })
   ];
 

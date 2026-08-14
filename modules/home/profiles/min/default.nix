@@ -337,7 +337,7 @@ let
     directCodex
     directPi
     piTesting
-    inputs.mentci-egui.packages.${pkgs.stdenv.hostPlatform.system}.default
+    # inputs.mentci-egui.packages.${pkgs.stdenv.hostPlatform.system}.default # Broken: meta-signal-mentci-0.3.1 build.rs imports schema_rust::bootstrap::BootstrapInterfaceGeneration which does not exist
     pkgs.opencode
     pkgs.llama-cpp
     (pkgs.callPackage ../../../../packages/gws { inherit inputs; })
