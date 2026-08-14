@@ -37,9 +37,12 @@ let
     (pkgs.callPackage ../../../../packages/mentci { inherit inputs; })
   ];
 
-  windowsEmulationsPackages = with pkgs; [
-    bottles
-  ];
+  # bottles removed 2026-08-14: bottles-65.4 FHS Wine environment pulls in
+  # i686-linux packages (dosbox, openldap-2.6.13, gtk4, sdl2-compat) whose
+  # new dependency hashes are absent from all configured binary caches and
+  # cannot be built on the x86_64-only remote builder. Re-add once the
+  # nixos cache carries the new i686 derivations or an i686 builder is added.
+  windowsEmulationsPackages = [];
 
 in
 mkMerge [
