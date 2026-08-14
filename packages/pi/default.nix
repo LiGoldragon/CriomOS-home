@@ -19,7 +19,7 @@ pkgs.buildNpmPackage (finalAttrs: {
   # at runtime. Install the whole monorepo and stitch in the `pi`
   # binary ourselves in postInstall.
 
-  npmDepsHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+  npmDepsHash = "sha256-tufyZQRPAUeDtiq0UQodbKA/Y9xUAvNT8K+NWFjkeME=";
 
   makeCacheWritable = true;
 
@@ -29,9 +29,9 @@ pkgs.buildNpmPackage (finalAttrs: {
   # the source of truth at the pinned tag.
   postPatch = ''
     substituteInPlace packages/ai/package.json \
-      --replace-fail '"generate-models": "node scripts/generate-models.ts"' \
+      --replace-fail '"generate-models": "node scripts/generate-models.ts --strict"' \
                      '"generate-models": "true"' \
-      --replace-fail '"generate-image-models": "node scripts/generate-image-models.ts"' \
+      --replace-fail '"generate-image-models": "node scripts/generate-image-models.ts --strict"' \
                      '"generate-image-models": "true"'
   '';
 
