@@ -32,7 +32,9 @@ pkgs.buildNpmPackage (finalAttrs: {
       --replace-fail '"generate-models": "node scripts/generate-models.ts --strict"' \
                      '"generate-models": "true"' \
       --replace-fail '"generate-image-models": "node scripts/generate-image-models.ts --strict"' \
-                     '"generate-image-models": "true"'
+                     '"generate-image-models": "true"' \
+      --replace-fail '"check:model-data": "node scripts/check-model-data.ts"' \
+                     '"check:model-data": "true"'
   '';
 
   # pi's root `build` script sequences workspaces in dependency
