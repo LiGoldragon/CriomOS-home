@@ -1530,17 +1530,17 @@
         "rust-build": "rust-build_3"
       },
       "locked": {
-        "lastModified": 1786383233,
-        "narHash": "sha256-JJuGvqkwmpMTsDrmcY2gb/KGVtIeEU5Y81Gr6cyx4cc=",
+        "lastModified": 1786575529,
+        "narHash": "sha256-vxFu7+MWQFtdw8sIIX/gU1HOIvdCHVDhzE96r4okaQE=",
         "owner": "LiGoldragon",
         "repo": "mentci-egui",
-        "rev": "f8b86ffeab51d61953000a58f20fb0cac9933845",
+        "rev": "2af0aa5a86fdbdfde13e7eb9fd338da40451d901",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "mentci-egui",
-        "rev": "f8b86ffeab51d61953000a58f20fb0cac9933845",
+        "rev": "2af0aa5a86fdbdfde13e7eb9fd338da40451d901",
         "type": "github"
       }
     },

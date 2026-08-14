@@ -185,7 +185,7 @@
       url = "github:LiGoldragon/mentci/aa2ce64448aeba01b20009a7a5a87070d6d9679b";
       flake = false;
     };
-    mentci-egui.url = "github:LiGoldragon/mentci-egui/f8b86ffeab51d61953000a58f20fb0cac9933845";
+    mentci-egui.url = "github:LiGoldragon/mentci-egui/2af0aa5a86fdbdfde13e7eb9fd338da40451d901";
     mentci-egui.inputs.nixpkgs.follows = "nixpkgs";
 
     # `pi` (earendil-works/pi coding-agent CLI) — TypeScript npm
