@@ -35,7 +35,7 @@ else
       pname = "agent-intercom-core";
       version = "0.1.0";
       src = inputs.agent-intercom-core-src;
-      npmDepsHash = "sha256-qT+xrER82aNLFowWeoHNWvL+p3eI77oNpg4Q2fV5Fkc=";
+      npmDepsHash = "sha256-WM4rUbND4l/2kDZDeZY2rDDp2QsYGXy+I2Uf6Bnc6MA=";
       npmDepsFetcherVersion = 2;
       dontNpmInstall = true;
 
