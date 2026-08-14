@@ -72,7 +72,7 @@ let
 
     mkdir -p "$out"
     ${agentPackage}/bin/agent-write-configuration \
-      "(AgentConfigurationWriteRequest (${agentSocketPath} ${agentMetaSocketPath} 384 ${agentDatabasePath} [(ProviderSeed (${providerName} ${providerEndpoint} ${defaultModel} (Gopass ${providerGopassPath})))] $out/${agentConfigurationPath}))" \
+      "AgentConfigurationWriteRequest.{${agentSocketPath} ${agentMetaSocketPath} 384 ${agentDatabasePath} [ProviderSeed.{${providerName} ${providerEndpoint} ${defaultModel} Gopass.${providerGopassPath}}] $out/${agentConfigurationPath}}" \
       > "$out/configuration-written.dotos"
     test -s "$out/${agentConfigurationPath}"
   '';
