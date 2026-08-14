@@ -1,8 +1,6 @@
-diff --git a/codex/coi.ts b/codex/coi.ts
-index 0584cd6..f0d7f4b 100644
---- a/codex/coi.ts
-+++ b/codex/coi.ts
-@@ -16,6 +16,7 @@ export interface CoiOptions {
+--- a/codex/coi.ts	1970-01-01 01:00:01.000000000 +0100
++++ b/codex/coi.ts	2026-08-14 08:41:09.466667826 +0200
+@@ -26,6 +26,7 @@
    instructions?: string;
    socketPath?: string;
    statePath?: string;
@@ -10,7 +8,7 @@ index 0584cd6..f0d7f4b 100644
    noTui: boolean;
    copyShortcut: boolean;
    codexCommand: string;
-@@ -91,6 +92,19 @@ function readValue(args: string[], index: number, option: string): string {
+@@ -132,6 +133,19 @@
    return value;
  }
  
@@ -30,7 +28,8 @@ index 0584cd6..f0d7f4b 100644
  function envFlagEnabled(value: string | undefined, defaultValue: boolean): boolean {
    if (value === undefined) return defaultValue;
    const normalized = value.trim().toLowerCase();
-@@ -246,5 +259,9 @@ export function parseCoiArgs(argv: string[], env: NodeJS.ProcessEnv = process.e
+@@ -337,6 +351,10 @@
+       case "--intercom-state":
          options.statePath = resolve(value ?? readValue(argv, index++, key));
          break;
 +      case "--intercom-shared-app-server":
@@ -40,7 +39,7 @@ index 0584cd6..f0d7f4b 100644
        case "--no-tui":
        case "--intercom-no-tui":
          options.noTui = true;
-@@ -267,6 +284,7 @@ export function parseCoiArgs(argv: string[], env: NodeJS.ProcessEnv = process.e
+@@ -361,6 +379,7 @@
      instructions: options.instructions ?? env.CODEX_INTERCOM_INSTRUCTIONS,
      socketPath: options.socketPath,
      statePath: options.statePath,
@@ -48,7 +47,7 @@ index 0584cd6..f0d7f4b 100644
      noTui: options.noTui ?? false,
      copyShortcut: options.copyShortcut ?? envFlagEnabled(env.CODEX_INTERCOM_SHORTCUT, true),
      codexCommand: env.CODEX_INTERCOM_CODEX_COMMAND || "codex",
-@@ -357,10 +375,10 @@ export function buildCodexAppServerArgs(
+@@ -450,10 +469,10 @@
    return ["app-server", ...appServerArgs, "--listen", `unix://${socketPath}`];
  }
  
@@ -61,7 +60,7 @@ index 0584cd6..f0d7f4b 100644
        throw new Error(`Codex app-server exited before creating ${socketPath}`);
      }
      if (existsSync(socketPath)) return;
-@@ -538,23 +556,26 @@ export async function runCoi(options: CoiOptions): Promise<number> {
+@@ -644,11 +663,12 @@
    const name = options.name ?? identity.name;
    const intercomDir = getIntercomDirPath();
    cleanupOldCoiStateFiles(intercomDir);
@@ -69,26 +68,32 @@ index 0584cd6..f0d7f4b 100644
 +  const ownsAppServer = options.sharedAppServerSocketPath === undefined;
 +  const socketPath = options.sharedAppServerSocketPath ?? options.socketPath ?? join(intercomDir, `coi-${process.pid}.sock`);
    const statePath = options.statePath ?? join(intercomDir, `coi-${sanitizeSegment(id)}-state.json`);
-   const fresh = process.env.AGENT_INTERCOM_FRESH === "1";
+   const fresh = env.AGENT_INTERCOM_FRESH === "1";
    resetCoiStateForFreshStart(statePath, fresh);
 -  rmSync(socketPath, { force: true });
 +  if (ownsAppServer) rmSync(socketPath, { force: true });
  
--  const appServer = spawn(options.codexCommand, buildCodexAppServerArgs(options.codexArgs, socketPath), {
+   const resumeRequest = resolveCoiResumeRequest(options.codexArgs);
+   const agent: BridgeAgentConfig = {
+@@ -663,19 +683,21 @@
+   };
+   assertHardenedBossAgentConfig(agent);
+ 
+-  const appServer = spawn(options.codexCommand, buildCodexAppServerArgs(options.codexArgs, socketPath, env), {
 -    cwd: options.cwd,
--    env: process.env,
+-    env,
 -    stdio: ["ignore", "ignore", "pipe"],
 -  });
 -  appServer.stderr?.on("data", (chunk) => {
 +  const appServer = ownsAppServer
-+    ? spawn(options.codexCommand, buildCodexAppServerArgs(options.codexArgs, socketPath), {
++    ? spawn(options.codexCommand, buildCodexAppServerArgs(options.codexArgs, socketPath, env), {
 +      cwd: options.cwd,
-+      env: process.env,
++      env,
 +      stdio: ["ignore", "ignore", "pipe"],
 +    })
 +    : null;
 +  appServer?.stderr?.on("data", (chunk) => {
-     if (process.env.CODEX_INTERCOM_DEBUG) process.stderr.write(String(chunk));
+     if (env.CODEX_INTERCOM_DEBUG) process.stderr.write(String(chunk));
    });
  
    const cleanup = async () => {
@@ -97,7 +102,9 @@ index 0584cd6..f0d7f4b 100644
 -    rmSync(socketPath, { force: true });
 +    if (ownsAppServer) rmSync(socketPath, { force: true });
    };
-@@ -604,7 +625,12 @@ export async function runCoi(options: CoiOptions): Promise<number> {
+ 
+   let daemon: CodexBridgeDaemon | null = null;
+@@ -714,7 +736,12 @@
    process.stderr.write(`coi intercom session: ${name} (${id})\n`);
  
    if (options.noTui) {
@@ -111,18 +118,18 @@ index 0584cd6..f0d7f4b 100644
      await cleanupOnce();
      return 0;
    }
-diff --git a/codex/coi.test.ts b/codex/coi.test.ts
-index 449a21f..371b49c 100644
---- a/codex/coi.test.ts
-+++ b/codex/coi.test.ts
-@@ -3,5 +3,5 @@ import assert from "node:assert/strict";
- import { existsSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from "node:fs";
+--- a/codex/coi.test.ts	1970-01-01 01:00:01.000000000 +0100
++++ b/codex/coi.test.ts	2026-08-14 08:41:16.255675220 +0200
+@@ -3,7 +3,7 @@
+ import { chmodSync, existsSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from "node:fs";
  import { tmpdir } from "node:os";
  import { join } from "node:path";
--import { buildCodexAppServerArgs, buildCoiTuiArgs, cleanupOldCoiStateFiles, createDefaultIdentity, deriveBridgeAgentRuntimeConfig, hasCodexHelpOrVersion, parseCoiArgs, resetCoiStateForFreshStart, resolveCoiResumeRequest, sanitizeSegment, splitCodexResumeArgs } from "./coi.ts";
-+import { buildCodexAppServerArgs, buildCoiTuiArgs, cleanupOldCoiStateFiles, createDefaultIdentity, deriveBridgeAgentRuntimeConfig, hasCodexHelpOrVersion, parseCoiArgs, resetCoiStateForFreshStart, resolveCoiResumeRequest, resolveSharedAppServerSocketPath, sanitizeSegment, splitCodexResumeArgs } from "./coi.ts";
+-import { assertHardenedBossCoiLaunch, buildCodexAppServerArgs, buildCoiTuiArgs, cleanupOldCoiStateFiles, createDefaultIdentity, deriveBridgeAgentRuntimeConfig, hasCodexHelpOrVersion, parseCoiArgs, resetCoiStateForFreshStart, resolveCoiResumeRequest, runCoi, runInteractiveTui, sanitizeSegment, splitCodexResumeArgs } from "./coi.ts";
++import { assertHardenedBossCoiLaunch, buildCodexAppServerArgs, buildCoiTuiArgs, cleanupOldCoiStateFiles, createDefaultIdentity, deriveBridgeAgentRuntimeConfig, hasCodexHelpOrVersion, parseCoiArgs, resetCoiStateForFreshStart, resolveCoiResumeRequest, resolveSharedAppServerSocketPath, runCoi, runInteractiveTui, sanitizeSegment, splitCodexResumeArgs } from "./coi.ts";
  import { filterAltIInput, TuiInputDecoder } from "./tui-input.ts";
-@@ -54,5 +54,20 @@ test("parseCoiArgs supports disabling the Alt+I terminal shortcut", () => {
+ 
+ test("sanitizeSegment keeps readable safe ids", () => {
+@@ -55,6 +55,21 @@
    assert.equal(parseCoiArgs(["--intercom-shortcut"], { CODEX_INTERCOM_SHORTCUT: "off" }).copyShortcut, true);
  });
  
@@ -143,27 +150,24 @@ index 449a21f..371b49c 100644
 +
  test("splitCodexResumeArgs keeps options before the resumed thread id", () => {
    assert.deepEqual(splitCodexResumeArgs(["--profile", "cliproxy", "-m", "gpt-test", "hello there"]), {
-diff --git a/codex/bridge-daemon.ts b/codex/bridge-daemon.ts
-index 995dbd9..86bf19d 100644
---- a/codex/bridge-daemon.ts
-+++ b/codex/bridge-daemon.ts
-@@ -764,6 +764,10 @@ export class CodexBridgeDaemon {
-   async stop(): Promise<void> {
-     for (const agent of this.agents) await agent.stop().catch(() => undefined);
+     optionArgs: ["--profile", "cliproxy", "-m", "gpt-test"],
+--- a/codex/bridge-daemon.ts	1970-01-01 01:00:01.000000000 +0100
++++ b/codex/bridge-daemon.ts	2026-08-14 08:35:54.136223145 +0200
+@@ -815,6 +815,10 @@
      await this.app.disconnect();
    }
-+
+ 
 +  waitForAppServerExit(): Promise<void> {
 +    return new Promise((resolve) => this.app.once("exit", resolve));
 +  }
- 
++
    async ensureThreadForAgent(agentId: string): Promise<string> {
-diff --git a/codex/bridge-daemon.test.ts b/codex/bridge-daemon.test.ts
-index 989dd47..ef38021 100644
---- a/codex/bridge-daemon.test.ts
-+++ b/codex/bridge-daemon.test.ts
-@@ -149,6 +149,48 @@ test("persistent Codex bridge reconnects its stable Intercom identity after bro
-  await agent.stop();
+     const agent = this.agents.find((candidate) => candidate.id === agentId);
+     if (!agent) throw new Error(`No bridge agent registered with id: ${agentId}`);
+--- a/codex/bridge-daemon.test.ts	1970-01-01 01:00:01.000000000 +0100
++++ b/codex/bridge-daemon.test.ts	2026-08-14 08:35:54.136334614 +0200
+@@ -152,6 +152,48 @@
+   await agent.stop();
  });
  
 +test("an Intercom message wakes a virtual Codex agent on its attached app-server", async () => {
@@ -209,13 +213,12 @@ index 989dd47..ef38021 100644
 +});
 +
  test("threadSandboxMode maps bridge sandbox policies to codex thread modes", () => {
-  assert.equal(threadSandboxMode({ type: "readOnly" }), "read-only");
-  assert.equal(threadSandboxMode({ type: "workspaceWrite" }), "workspace-write");
-diff --git a/broker/spawn.ts b/broker/spawn.ts
-index 12ddf55..79afbd8 100644
---- a/broker/spawn.ts
-+++ b/broker/spawn.ts
-@@ -175,14 +175,14 @@ export function getBrokerSpawnOptions(
+   assert.equal(threadSandboxMode({ type: "readOnly" }), "read-only");
+   assert.equal(threadSandboxMode({ type: "workspaceWrite" }), "workspace-write");
+--- a/broker/spawn.ts	1970-01-01 01:00:01.000000000 +0100
++++ b/broker/spawn.ts	2026-08-14 08:35:54.136413687 +0200
+@@ -174,14 +174,14 @@
+   env: NodeJS.ProcessEnv = process.env,
  ): {
    detached: true;
 -  stdio: "ignore";
@@ -231,11 +234,13 @@ index 12ddf55..79afbd8 100644
      cwd: extensionDir,
      env: { ...env, PI_CODING_AGENT_DIR: getAgentDirPath(env), NODE_NO_WARNINGS: "1" },
      windowsHide: true,
-   };
-@@ -220,3 +220,6 @@ export async function spawnBrokerIfNeeded(brokerCommand: string, brokerArgs: str
+@@ -219,6 +219,9 @@
+       writeWindowsHiddenLauncher(launch.launcherCommandLine, launch.launcherPath);
      }
      const child = spawn(launch.command, launch.args, getBrokerSpawnOptions());
 +    child.stderr?.on("data", (chunk) => {
 +      if (process.env.CODEX_INTERCOM_DEBUG) process.stderr.write(String(chunk));
 +    });
      child.unref();
+ 
+     await new Promise<void>((resolve, reject) => {
