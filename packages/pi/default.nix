@@ -54,6 +54,14 @@ pkgs.buildNpmPackage (finalAttrs: {
               xiaomi-token-plan-cn xiaomi-token-plan-sgp zai-coding-cn zai; do
       echo '{}' > packages/ai/src/providers/data/$f.json
     done
+    # .manifest.json is imported by all.ts for its generatedAt timestamp
+    echo '{"generatedAt":"1970-01-01T00:00:00Z"}' > packages/ai/src/providers/data/.manifest.json
+
+    # With empty {} provider stubs, GITHUB_COPILOT_MODELS resolves to an empty
+    # record type and Object.values() returns unknown[] under strict mode, causing
+    # a type error on model.id. Suppress it with @ts-ignore.
+    sed -i '349s/^/\/\/ @ts-ignore — model catalog is an empty stub in offline build\n/' \
+      packages/ai/src/auth/oauth/github-copilot.ts
   '';
 
   # pi's root `build` script sequences workspaces in dependency
