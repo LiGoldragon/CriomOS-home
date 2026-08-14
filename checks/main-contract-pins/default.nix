@@ -4,7 +4,7 @@ let
   lock = builtins.fromJSON (builtins.readFile ../../flake.lock);
   expected = {
     agent = "3a3534931be790e63d3db01bbd238ad044b2d35f";
-    mentci-src = "aa2ce64448aeba01b20009a7a5a87070d6d9679b";
+    mentci-src = "235b1b44ecd93857df60c36a2ca4fa16fab5984f";
     mentci-egui = "f8b86ffeab51d61953000a58f20fb0cac9933845";
   };
   mentci = pkgs.callPackage ../../packages/mentci { inherit inputs; };

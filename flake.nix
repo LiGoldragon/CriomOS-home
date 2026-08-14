@@ -597,6 +597,11 @@
           # also passes its own `inputs` via extraSpecialArgs, which
           # would otherwise win the priority race.
           _module.args.inputs = lib.mkForce inputs;
+          # Use nixpkgs niri (v26.04) instead of niri-flake's niri-stable
+          # (v25.08).  niri-flake's niri-unstable in the current lock is
+          # from July 2025 (pre-v26.04); nixpkgs already carries v26.04
+          # which includes the DMA-buffer leak fix from PR #3404.
+          programs.niri.package = lib.mkForce pkgs.niri;
           _module.args.criomos-lib = lib.mkForce inputs.criomos-lib.lib;
           _module.args.constants = lib.mkForce inputs.criomos-lib.lib.constants;
           _module.args.rustToolchain =
