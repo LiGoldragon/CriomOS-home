@@ -49,7 +49,6 @@ let
 
   codingPackages = with pkgs; [
     qrencode
-    jmtpfs
     # start('bash')
     nix-prefetch-git
     # start('pythonPackages')
