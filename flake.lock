@@ -1547,17 +1547,17 @@
     "mentci-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1786382792,
-        "narHash": "sha256-+SUvrtTlOeRAnAy7omeT67hgBAvZ01fS2nSWynMnDEo=",
+        "lastModified": 1786575526,
+        "narHash": "sha256-cq+0oZxqL0p0yAcx9/gljfZW89+U83g4b1dDZ7ilqvE=",
         "owner": "LiGoldragon",
         "repo": "mentci",
-        "rev": "aa2ce64448aeba01b20009a7a5a87070d6d9679b",
+        "rev": "235b1b44ecd93857df60c36a2ca4fa16fab5984f",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "mentci",
-        "rev": "aa2ce64448aeba01b20009a7a5a87070d6d9679b",
+        "rev": "235b1b44ecd93857df60c36a2ca4fa16fab5984f",
         "type": "github"
       }
     },

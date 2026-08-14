@@ -182,7 +182,7 @@
     # The daemon repo is packaged locally because it does not expose a flake;
     # mentci-egui exposes the GUI and its remote-control helper binaries.
     mentci-src = {
-      url = "github:LiGoldragon/mentci/aa2ce64448aeba01b20009a7a5a87070d6d9679b";
+      url = "github:LiGoldragon/mentci/235b1b44ecd93857df60c36a2ca4fa16fab5984f";
       flake = false;
     };
     mentci-egui.url = "github:LiGoldragon/mentci-egui/2af0aa5a86fdbdfde13e7eb9fd338da40451d901";
