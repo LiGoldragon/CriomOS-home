@@ -35,6 +35,25 @@ pkgs.buildNpmPackage (finalAttrs: {
                      '"generate-image-models": "true"' \
       --replace-fail '"check:model-data": "node scripts/check-model-data.ts"' \
                      '"check:model-data": "true"'
+
+    # pi v0.84.1 does not commit the generated provider JSON catalogs to source
+    # (they live in packages/ai/src/providers/data/*.json and are produced by
+    # generate-models at dev-time). The TypeScript build imports them directly,
+    # so they must exist before `tsgo` runs. Provide empty-object stubs — each
+    # provider catalog is typed as Record<string,Record<string,object>>, so {}
+    # is a valid (zero-model) value.
+    mkdir -p packages/ai/src/providers/data
+    for f in amazon-bedrock anthropic ant-ling azure-openai-responses \
+              baseten cerebras cloudflare-ai-gateway cloudflare-workers-ai \
+              deepseek fireworks github-copilot google google-vertex groq \
+              huggingface kimi-coding minimax-cn minimax mistral \
+              moonshotai-cn moonshotai nvidia openai-codex openai \
+              opencode-go opencode openrouter qwen-token-plan-cn \
+              qwen-token-plan-individual qwen-token-plan together \
+              vercel-ai-gateway xai xiaomi xiaomi-token-plan-ams \
+              xiaomi-token-plan-cn xiaomi-token-plan-sgp zai-coding-cn zai; do
+      echo '{}' > packages/ai/src/providers/data/$f.json
+    done
   '';
 
   # pi's root `build` script sequences workspaces in dependency
