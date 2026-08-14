@@ -34,7 +34,7 @@ let
 
   mentciPackages = [
     # inputs.mentci-egui.packages.${pkgs.stdenv.hostPlatform.system}.default # Broken: meta-signal-mentci-0.3.1 build.rs imports schema_rust::bootstrap::BootstrapInterfaceGeneration which does not exist
-    (pkgs.callPackage ../../../../packages/mentci { inherit inputs; })
+    # (pkgs.callPackage ../../../../packages/mentci { inherit inputs; }) # Broken: same meta-signal-mentci-0.3.1 schema_rust API issue
   ];
 
   # bottles removed 2026-08-14: bottles-65.4 FHS Wine environment pulls in
