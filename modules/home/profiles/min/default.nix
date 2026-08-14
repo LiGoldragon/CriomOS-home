@@ -187,7 +187,7 @@ let
     wl-clipboard
     libnotify
     imv
-    wf-recorder
+    # wf-recorder # Broken: accesses removed AVCodec fields (pix_fmts, ch_layouts, sample_fmts) incompatible with FFmpeg 9.0
     libva-utils
     ffmpeg-full
     # start("GTK")
