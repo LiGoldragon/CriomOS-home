@@ -86,6 +86,9 @@ let
       window-decoration = false
       gtk-titlebar = false
       window-theme = ghostty
+      # Ghostty 1.3.1 auto-injection loses Home Manager's ZDOTDIR. The
+      # managed zshrc loads Ghostty integration itself, after its own setup.
+      shell-integration = none
       background = ${colors.base00}
       foreground = ${colors.base05}
       cursor-color = ${colors.base05}

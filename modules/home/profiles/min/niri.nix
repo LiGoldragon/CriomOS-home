@@ -5,10 +5,12 @@
   user,
   constants,
   horizon,
+  inputs,
   ...
 }:
 let
   terminal = "${pkgs.ghostty}/bin/ghostty";
+  noctaliaShell = inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default;
   rescueTerminalPackage = pkgs.writeShellScriptBin "criomos-rescue-terminal" ''
     set -eu
 
@@ -298,7 +300,7 @@ in
       spawn-at-startup = [
         { command = [ "${syncSessionEnvironment}" ]; }
         { command = [ "mako" ]; }
-        { command = [ "noctalia-shell" ]; }
+        { command = [ "${noctaliaShell}/bin/noctalia" ]; }
       ];
 
       animations = {
