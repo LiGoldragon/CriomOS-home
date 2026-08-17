@@ -114,6 +114,18 @@ pkgs.runCommand "agent-intercom-local-family-contract"
     for tsxRuntime in pi orchestrator codex; do
       test -x ${agentIntercom}/share/agent-intercom/"$tsxRuntime"/node_modules/@esbuild/${esbuildCompanion}/bin/esbuild
     done
+    for piPeer in pi-ai pi-coding-agent pi-tui; do
+      test -e ${agentIntercom}/share/agent-intercom/orchestrator/node_modules/@earendil-works/"$piPeer"
+    done
+
+    # Fleet cleanup executes the orchestrator CLI outside Pi's extension
+    # resolver. Import the extension directly to prove that its Pi peers are
+    # available through the packaged local Node resolution tree.
+    (
+      cd ${agentIntercom}/share/agent-intercom/orchestrator
+      ${pkgs.nodejs}/bin/node --experimental-strip-types --input-type=module \
+        -e 'await import("./src/index.ts")'
+    )
 
     # The wrappers remain wakeable aliases whose child commands are raw,
     # pinned upstream clients.

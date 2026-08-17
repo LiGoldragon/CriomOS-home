@@ -17,6 +17,7 @@ then
 else
   let
     system = pkgs.stdenv.hostPlatform.system;
+    piPackage = inputs.self.packages.${system}.pi;
     claudeCodePackage = pkgs.callPackage ../claude-code { inherit inputs; };
     esbuildCompanion =
       {
@@ -74,6 +75,18 @@ else
       cp -R ${agentIntercomCore}/. "${packageRoot}/node_modules/@dataforxyz/agent-intercom-core"
     '';
 
+    # The upstream Agent Intercom orchestrator declares Pi's public packages
+    # as peers. Its fleet cleanup starts the TypeScript CLI directly, outside
+    # Pi's own extension resolver, so those peers must be present in its local
+    # Node resolution tree. Reuse the pinned Pi package rather than admitting
+    # a second npm dependency family.
+    installPiPeerRuntime = packageRoot: ''
+      mkdir -p "${packageRoot}/node_modules/@earendil-works"
+      ln -s ${piPackage}/lib/pi-monorepo/packages/ai "${packageRoot}/node_modules/@earendil-works/pi-ai"
+      ln -s ${piPackage}/lib/pi-monorepo/packages/coding-agent "${packageRoot}/node_modules/@earendil-works/pi-coding-agent"
+      ln -s ${piPackage}/lib/pi-monorepo/packages/tui "${packageRoot}/node_modules/@earendil-works/pi-tui"
+    '';
+
     sharedAppServerWrapperHook =
       if sharedAppServerSocket == null then
         ""
@@ -109,6 +122,7 @@ else
       ${installTsxRuntime "$root/pi"}
       ${installTsxRuntime "$root/orchestrator"}
       ${installTsxRuntime "$root/codex"}
+      ${installPiPeerRuntime "$root/orchestrator"}
       patch --directory "$root/codex" --strip=1 --input ${./coi-shared-app-server.patch}
       (cd "$root/codex" && ${pkgs.nodejs}/bin/node scripts/build.mjs)
 

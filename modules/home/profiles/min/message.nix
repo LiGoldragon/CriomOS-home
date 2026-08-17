@@ -14,17 +14,19 @@ let
   system = pkgs.stdenv.hostPlatform.system;
   messagePackage = inputs.message.packages.${system}.default;
 
-  messageProfilePackage = pkgs.runCommand "${messagePackage.name}-profile" { nativeBuildInputs = [ pkgs.makeWrapper ]; } ''
-    mkdir -p $out/bin
-    for binary in ${messagePackage}/bin/*; do
-      ln -s "$binary" "$out/bin/$(basename "$binary")"
-    done
-    rm $out/bin/message $out/bin/meta-message
-    makeWrapper ${messagePackage}/bin/message $out/bin/message \
-      --run 'export MESSAGE_SOCKET="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/message/message.sock"'
-    makeWrapper ${messagePackage}/bin/meta-message $out/bin/meta-message \
-      --run 'export MESSAGE_META_SOCKET="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/message/message-owner.sock"'
-  '';
+  messageProfilePackage =
+    pkgs.runCommand "${messagePackage.name}-profile" { nativeBuildInputs = [ pkgs.makeWrapper ]; }
+      ''
+        mkdir -p $out/bin
+        for binary in ${messagePackage}/bin/*; do
+          ln -s "$binary" "$out/bin/$(basename "$binary")"
+        done
+        rm $out/bin/message $out/bin/meta-message
+        makeWrapper ${messagePackage}/bin/message $out/bin/message \
+          --run 'export MESSAGE_SOCKET="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/message/message.sock"'
+        makeWrapper ${messagePackage}/bin/meta-message $out/bin/meta-message \
+          --run 'export MESSAGE_META_SOCKET="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/message/message-owner.sock"'
+      '';
 
   # The message daemon is the messenger: the stateful local messaging
   # component owning the durable agent-identity map and delivery registry
@@ -44,7 +46,7 @@ let
   # startup or local registry work.
   routerSocketPath = "%t/router/router.sock";
 
-  # message-write-configuration takes one inline NOTA argument (the
+  # message-write-configuration takes one inline Dotos object (the
   # single-argument text edge), unlike orchestrate's positional writer.
   # The owner uid is read at service start so the unit does not bake a
   # numeric uid into the store; systemd expands the %t-derived socket
@@ -56,7 +58,7 @@ let
     router_socket="$3"
     ${pkgs.coreutils}/bin/mkdir -p ${stateDirectory}
     exec ${messagePackage}/bin/message-write-configuration \
-      "(ConfigurationWriteRequest $working_socket $meta_socket $router_socket ${databasePath} ${config.home.username} $(${pkgs.coreutils}/bin/id -u) ${signalPath})"
+      "ConfigurationWriteRequest.{$working_socket $meta_socket $router_socket ${databasePath} ${config.home.username} $(${pkgs.coreutils}/bin/id -u) ${signalPath}}"
   '';
 in
 {
