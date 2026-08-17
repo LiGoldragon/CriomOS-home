@@ -450,6 +450,10 @@ mkIf size.min {
     };
   };
 
+  # Ghostty 1.3 honors GTK's primary-selection preference.  Keep the
+  # established Wayland middle-click/Shift+Insert paste behavior enabled.
+  dconf.settings."org/gnome/desktop/interface".gtk-enable-primary-paste = true;
+
   services = {
     dunst = {
       enable = !size.min;
