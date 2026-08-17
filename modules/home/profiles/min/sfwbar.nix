@@ -30,11 +30,19 @@ lib.mkIf behavesAs.edge {
         wallpaper_scheme = lib.mkForce "m3-rainbow";
       };
       idle = {
-        enabled = true;
-        screenOffTimeout = 300;
-        lockTimeout = 3600;
-        suspendTimeout = 0;
-        fadeDuration = 5;
+        pre_action_fade_seconds = 5;
+        behavior = {
+          "screen-off" = {
+            enabled = true;
+            timeout = 300;
+            action = "screen_off";
+          };
+          lock = {
+            enabled = true;
+            timeout = 3600;
+            action = "lock";
+          };
+        };
       };
       bar.widgets = {
         margin_ends = 0;

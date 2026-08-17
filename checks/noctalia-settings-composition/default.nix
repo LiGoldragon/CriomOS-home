@@ -31,6 +31,13 @@ let
     ];
   };
   settings = homeConfiguration.config.programs.noctalia.settings;
+  configToml =
+    builtins.readFile
+      homeConfiguration.config.xdg.configFile."noctalia/config.toml".source;
+  parsedConfigToml = builtins.fromTOML configToml;
+  noctaliaShell = inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  noctaliaExecutable = pkgs.lib.getExe' noctaliaShell "noctalia";
+  generatedConfig = pkgs.writeText "noctalia-settings-composition.toml" configToml;
 in
 assert pkgs.lib.assertMsg (
   settings.theme.mode == "auto"
@@ -44,6 +51,35 @@ assert pkgs.lib.assertMsg (
 assert pkgs.lib.assertMsg (
   settings.bar.widgets.margin_ends == 0
 ) "the Noctalia bar must remain configured for full output width";
-pkgs.runCommand "noctalia-settings-composition" { } ''
+assert pkgs.lib.assertMsg (
+  parsedConfigToml.idle.pre_action_fade_seconds == 5
+  &&
+    parsedConfigToml.idle.behavior."screen-off" == {
+      enabled = true;
+      timeout = 300;
+      action = "screen_off";
+    }
+  &&
+    parsedConfigToml.idle.behavior.lock == {
+      enabled = true;
+      timeout = 3600;
+      action = "lock";
+    }
+) "the generated Noctalia TOML must declare the v5 screen-off and lock behaviors";
+assert pkgs.lib.assertMsg (
+  !(parsedConfigToml.idle ? enabled)
+  && !(parsedConfigToml.idle ? fadeDuration)
+  && !(parsedConfigToml.idle ? lockTimeout)
+  && !(parsedConfigToml.idle ? screenOffTimeout)
+  && !(parsedConfigToml.idle ? suspendTimeout)
+) "the generated Noctalia TOML must not retain ignored v4 idle settings";
+pkgs.runCommand "noctalia-settings-composition" { nativeBuildInputs = [ noctaliaShell ]; } ''
+  validation_output="$TMPDIR/noctalia-config-validation"
+  ${noctaliaExecutable} config validate ${generatedConfig} >"$validation_output" 2>&1
+  ${pkgs.coreutils}/bin/cat "$validation_output"
+  if ${pkgs.gnugrep}/bin/grep -E ':[[:space:]]idle\.[^:]*:[[:space:]]unknown setting' "$validation_output"; then
+    echo 'Noctalia validator reported an unknown idle setting' >&2
+    exit 1
+  fi
   touch "$out"
 ''
