@@ -11,6 +11,7 @@
 let
   terminal = "${pkgs.ghostty}/bin/ghostty";
   noctaliaShell = inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  noctaliaExecutable = lib.getExe' noctaliaShell "noctalia";
   rescueTerminalPackage = pkgs.writeShellScriptBin "criomos-rescue-terminal" ''
     set -eu
 
@@ -73,40 +74,16 @@ let
   noctaliaIpc = pkgs.writeShellScript "criomos-noctalia-ipc" ''
     set -eu
 
-    # Quickshell matches IPC instances by QML path; ${pkgs.noctalia-shell}'s
-    # baked-in path diverges from the running instance after an HM rebuild,
-    # so resolve the live binary and config path from the running process
-    # before sending IPC commands.
-    # Match the live process name, not the full argv. The current
-    # QuickShell invocation includes "-p <config>" after the binary path,
-    # so full-argv matching is fragile across upstream launch changes.
-    pid="$(${pkgs.procps}/bin/pgrep -u "$UID" quickshell | ${pkgs.coreutils}/bin/head -n1 || true)"
-    if [ -z "$pid" ]; then
-      echo "criomos-noctalia-ipc: no running quickshell instance" >&2
-      exit 1
-    fi
-
-    qs_bin="$(${pkgs.coreutils}/bin/readlink "/proc/$pid/exe")"
-    # Recent noctalia launches pass the config path on argv as
-    # 'quickshell -p <path>' rather than exporting QS_CONFIG_PATH.
-    # Prefer argv so the lock helper follows the actual live instance,
-    # then fall back to the env var for older launches.
-    qs_path="$(${pkgs.gawk}/bin/awk 'BEGIN{RS="\0"} seen { print; exit } $0 == "-p" { seen = 1 }' "/proc/$pid/cmdline")"
-    if [ -z "$qs_path" ]; then
-      qs_path="$(${pkgs.gawk}/bin/awk 'BEGIN{RS="\0"} /^QS_CONFIG_PATH=/{sub(/^QS_CONFIG_PATH=/,""); print; exit}' "/proc/$pid/environ")"
-    fi
-    if [ -z "$qs_bin" ] || [ -z "$qs_path" ]; then
-      echo "criomos-noctalia-ipc: missing exe or QS_CONFIG_PATH for pid $pid" >&2
-      exit 1
-    fi
-
-    exec "$qs_bin" -p "$qs_path" ipc call "$@"
+    # Noctalia owns stable native message commands. Call the selected package
+    # directly so profile rebuilds do not depend on a prior process image or
+    # a QML-path-derived IPC endpoint.
+    exec ${noctaliaExecutable} msg "$@"
   '';
 
   lockSession = pkgs.writeShellScript "criomos-lock-session" ''
     set -eu
 
-    ${noctaliaIpc} lockScreen lock
+    ${noctaliaIpc} session lock
 
     ${pkgs.coreutils}/bin/sleep 3
     ${config.programs.niri.package}/bin/niri msg action power-off-monitors || true
@@ -300,7 +277,7 @@ in
       spawn-at-startup = [
         { command = [ "${syncSessionEnvironment}" ]; }
         { command = [ "mako" ]; }
-        { command = [ "${noctaliaShell}/bin/noctalia" ]; }
+        { command = [ noctaliaExecutable ]; }
       ];
 
       animations = {
@@ -334,12 +311,9 @@ in
           action = a.toggle-overview;
           repeat = false;
         };
-        # Route through the live QuickShell instance. Directly invoking
-        # ${pkgs.noctalia-shell}/bin/noctalia-shell can miss the running
-        # instance after a profile rebuild because QuickShell IPC is keyed
-        # by the QML/config path baked into the live process.
-        "Mod+D".action = a.spawn "${noctaliaIpc}" "launcher" "toggle";
-        "Mod+Space".action = a.spawn "${noctaliaIpc}" "launcher" "toggle";
+        # Noctalia's native CLI addresses its running instance directly.
+        "Mod+D".action = a.spawn "${noctaliaIpc}" "panel-toggle" "launcher";
+        "Mod+Space".action = a.spawn "${noctaliaIpc}" "panel-toggle" "launcher";
 
         # Window
         "Mod+Q".action = a.close-window;

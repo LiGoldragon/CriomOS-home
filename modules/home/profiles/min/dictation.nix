@@ -57,10 +57,7 @@ let
   startDictationServices = pkgs.writeShellScript "criomos-start-dictation-services" ''
     set -eu
 
-    # Quickshell scans plugins only at startup. After a dictation
-    # plugin deploy, restart noctalia-shell if a widget renders but
-    # stops updating; home-manager switch alone can leave old plugin
-    # code loaded.
+    # Refresh service-facing session variables before restarting Listener.
     ${pkgs.systemd}/bin/systemctl --user import-environment \
       DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_RUNTIME_DIR \
       HYPRLAND_INSTANCE_SIGNATURE NIRI_SOCKET SWAYSOCK XKB_DEFAULT_LAYOUT XKB_DEFAULT_VARIANT

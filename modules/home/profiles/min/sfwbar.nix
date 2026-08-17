@@ -20,6 +20,11 @@ lib.mkIf behavesAs.edge {
     package = noctaliaShell;
     systemd.enable = false;
     settings = {
+      theme = {
+        mode = "auto";
+        source = "wallpaper";
+        wallpaper_scheme = "m3-rainbow";
+      };
       idle = {
         enabled = true;
         screenOffTimeout = 300;
@@ -28,6 +33,7 @@ lib.mkIf behavesAs.edge {
         fadeDuration = 5;
       };
       bar.widgets = {
+        margin_ends = 0;
         left = [
           { id = "Launcher"; }
           { id = "Clock"; }

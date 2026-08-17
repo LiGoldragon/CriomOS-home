@@ -137,7 +137,7 @@ let
 
     # App-scope components have transient names. Match the running process
     # command line and protect that specific scope only.
-    protect_matching_process_scopes '(^|/| )quickshell( |$)|noctalia-shell' \
+    protect_matching_process_scopes '(^|/| )noctalia( |$)' \
       CPUWeight=900 \
       IOAccounting=yes \
       IOWeight=900 \
