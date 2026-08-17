@@ -46,7 +46,7 @@ let
   # startup or local registry work.
   routerSocketPath = "%t/router/router.sock";
 
-  # message-write-configuration takes one inline Dotos object (the
+  # message-write-configuration takes one inline brace object (the
   # single-argument text edge), unlike orchestrate's positional writer.
   # The owner uid is read at service start so the unit does not bake a
   # numeric uid into the store; systemd expands the %t-derived socket
@@ -58,7 +58,7 @@ let
     router_socket="$3"
     ${pkgs.coreutils}/bin/mkdir -p ${stateDirectory}
     exec ${messagePackage}/bin/message-write-configuration \
-      "ConfigurationWriteRequest.{$working_socket $meta_socket $router_socket ${databasePath} ${config.home.username} $(${pkgs.coreutils}/bin/id -u) ${signalPath}}"
+      "{$working_socket $meta_socket $router_socket ${databasePath} ${config.home.username} $(${pkgs.coreutils}/bin/id -u) ${signalPath}}"
   '';
 in
 {

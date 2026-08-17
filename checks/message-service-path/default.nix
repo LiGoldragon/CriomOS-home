@@ -33,8 +33,9 @@ assert service.RuntimeDirectoryMode == "0700";
 pkgs.runCommand "message-service-path" { nativeBuildInputs = [ pkgs.gnugrep ]; } ''
   set -eu
 
-  grep -F 'ConfigurationWriteRequest.{' ${writer}
+  grep -F '"{$working_socket $meta_socket $router_socket' ${writer}
   ! grep -F '(ConfigurationWriteRequest ' ${writer}
+  ! grep -F 'ConfigurationWriteRequest.' ${writer}
   grep -F '${messagePackage}/bin/message-write-configuration' ${writer}
   touch "$out"
 ''
