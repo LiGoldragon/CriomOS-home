@@ -22,9 +22,9 @@ assert pkgs.lib.hasInfix "\${noctaliaIpc} session lock" niri;
 assert !(pkgs.lib.hasInfix "quickshell" niri);
 assert pkgs.lib.hasInfix "(^|/| )noctalia( |$)" uiPriority;
 assert !(pkgs.lib.hasInfix "quickshell" uiPriority);
-assert pkgs.lib.hasInfix ''mode = "auto";'' sfwbar;
-assert pkgs.lib.hasInfix ''source = "wallpaper";'' sfwbar;
-assert pkgs.lib.hasInfix ''wallpaper_scheme = "m3-rainbow";'' sfwbar;
+assert pkgs.lib.hasInfix ''mode = lib.mkForce "auto";'' sfwbar;
+assert pkgs.lib.hasInfix ''source = lib.mkForce "wallpaper";'' sfwbar;
+assert pkgs.lib.hasInfix ''wallpaper_scheme = lib.mkForce "m3-rainbow";'' sfwbar;
 assert pkgs.lib.hasInfix "margin_ends = 0;" sfwbar;
 pkgs.runCommand "desktop-shell-launch"
   {

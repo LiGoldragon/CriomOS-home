@@ -21,9 +21,13 @@ lib.mkIf behavesAs.edge {
     systemd.enable = false;
     settings = {
       theme = {
-        mode = "auto";
-        source = "wallpaper";
-        wallpaper_scheme = "m3-rainbow";
+        # Stylix supplies a palette and, at ordinary priority, a static
+        # `dark`/`light` mode and `custom` source.  These are the user's
+        # declared Noctalia theme choices, so they take precedence without
+        # disabling Stylix's palette or unrelated target settings.
+        mode = lib.mkForce "auto";
+        source = lib.mkForce "wallpaper";
+        wallpaper_scheme = lib.mkForce "m3-rainbow";
       };
       idle = {
         enabled = true;

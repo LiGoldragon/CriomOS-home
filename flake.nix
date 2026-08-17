@@ -511,6 +511,9 @@
           ghostty-primary-selection = checkPkgs.callPackage ./checks/ghostty-primary-selection { };
           bird-home-isolation = checkPkgs.callPackage ./checks/bird-home-isolation { inherit inputs; };
           desktop-shell-launch = checkPkgs.callPackage ./checks/desktop-shell-launch { inherit inputs; };
+          noctalia-settings-composition = checkPkgs.callPackage ./checks/noctalia-settings-composition {
+            inherit inputs;
+          };
           nix-profile-compatibility = checkPkgs.callPackage ./checks/nix-profile-compatibility { };
           home-profile-absence = checkPkgs.callPackage ./checks/home-profile-absence {
             inherit inputs;
