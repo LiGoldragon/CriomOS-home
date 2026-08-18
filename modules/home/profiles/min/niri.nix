@@ -305,7 +305,10 @@ in
 
       binds = {
         # Launch
-        "Mod+Shift+Return".action = a.spawn terminal "+new-window";
+        # Route through Ghostty's GTK singleton, like its desktop launcher.
+        # The singleton creates the window, so it inherits the last focused
+        # terminal's working directory instead of Niri's caller directory.
+        "Mod+Shift+Return".action = a.spawn terminal "--gtk-single-instance=true";
         "Mod+Ctrl+Return".action = a.spawn rescueTerminal;
         "Mod+O" = {
           action = a.toggle-overview;

@@ -508,7 +508,7 @@
           rust-toolchain = checkPkgs.callPackage ./checks/rust-toolchain { inherit inputs; };
           leta = checkPkgs.callPackage ./checks/leta { inherit inputs; };
           no-easyeffects = checkPkgs.callPackage ./checks/no-easyeffects { };
-          ghostty-primary-selection = checkPkgs.callPackage ./checks/ghostty-primary-selection { };
+          ghostty-primary-selection = checkPkgs.callPackage ./checks/ghostty-primary-selection { inherit inputs; };
           bird-home-isolation = checkPkgs.callPackage ./checks/bird-home-isolation { inherit inputs; };
           desktop-shell-launch = checkPkgs.callPackage ./checks/desktop-shell-launch { inherit inputs; };
           noctalia-settings-composition = checkPkgs.callPackage ./checks/noctalia-settings-composition {
