@@ -11,6 +11,9 @@ let
   inherit (horizon.node) behavesAs;
   colors = config.lib.stylix.colors.withHashtag;
   noctaliaShell = inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  listenerLevelWidget = pkgs.replaceVars ./noctalia-plugins/listener-level/level.luau {
+    SOCAT = "${pkgs.socat}/bin/socat";
+  };
 in
 lib.mkIf behavesAs.edge {
   home.packages = [ pkgs.libnotify ];
@@ -44,6 +47,8 @@ lib.mkIf behavesAs.edge {
           };
         };
       };
+      plugins.enabled = [ "criomos/listener-level" ];
+      widget.listener-level.type = "criomos/listener-level:level";
       bar.widgets = {
         margin_ends = 0;
         left = [
@@ -56,7 +61,7 @@ lib.mkIf behavesAs.edge {
           { id = "Workspace"; }
         ];
         right = [
-          { id = "plugin:listener-level"; }
+          { id = "listener-level"; }
           { id = "plugin:active-network"; }
           {
             id = "Tray";
@@ -105,10 +110,6 @@ lib.mkIf behavesAs.edge {
   };
 
   xdg.configFile = {
-    "noctalia/plugins/listener-level/manifest.json".source =
-      ./noctalia-plugins/listener-level/manifest.json;
-    "noctalia/plugins/listener-level/BarWidget.qml".source =
-      ./noctalia-plugins/listener-level/BarWidget.qml;
     "noctalia/plugins/solar-time/manifest.json".source = ./noctalia-plugins/solar-time/manifest.json;
     "noctalia/plugins/solar-time/BarWidget.qml".source = ./noctalia-plugins/solar-time/BarWidget.qml;
     "noctalia/plugins/solar-time/SolarClock.js".source = ./noctalia-plugins/solar-time/SolarClock.js;
@@ -118,6 +119,13 @@ lib.mkIf behavesAs.edge {
       ./noctalia-plugins/active-network/BarWidget.qml;
     "noctalia/plugins/active-network/StatusValidation.js".source =
       ./noctalia-plugins/active-network/StatusValidation.js;
+  };
+
+  xdg.dataFile = {
+    "noctalia/plugins/listener-level/plugin.toml".source =
+      ./noctalia-plugins/listener-level/plugin.toml;
+    "noctalia/plugins/listener-level/level.luau".source =
+      listenerLevelWidget;
   };
 
   services.mako = {
