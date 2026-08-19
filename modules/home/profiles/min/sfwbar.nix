@@ -72,6 +72,17 @@ lib.mkIf behavesAs.edge {
     };
   };
 
+  # Noctalia overlays this mutable state file after the declarative config.
+  # Reconcile only the authority boundary: legacy `auto` must not turn
+  # Noctalia back into a global colour-scheme writer, while its wallpaper
+  # palette and other user state remain untouched.
+  home.activation.reconcileNoctaliaThemeMode = inputs.hexis.lib.mkManagedConfig {
+    inherit lib pkgs hexis;
+    file = "$HOME/.local/state/noctalia/settings.toml";
+    declared.theme.mode = "external";
+    modes."/theme/mode" = "always";
+  };
+
   home.activation.mergeNoctaliaPlugins = inputs.hexis.lib.mkManagedConfig {
     inherit lib pkgs hexis;
     file = "$HOME/.config/noctalia/plugins.json";
