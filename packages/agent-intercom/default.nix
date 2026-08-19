@@ -138,6 +138,7 @@ else
       tar -xzf ${esbuildCompanion.src} -C "$claudeBuild/node_modules/@esbuild/${esbuildCompanion.packageName}" --strip-components=1
       (cd "$claudeBuild" && ${pkgs.nodejs}/bin/node scripts/build.mjs)
       cp -R "$claudeBuild/dist" "$root/claude"
+      cp -R "$claudeBuild/node_modules" "$root/claude/node_modules"
 
       mkdir -p "$out/bin"
       makeWrapper ${pkgs.nodejs}/bin/node "$out/bin/codex-intercom-mcp" \

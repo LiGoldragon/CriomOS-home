@@ -241,10 +241,10 @@ assert vscodeConfig.package.version == homePkgs.vscodium.version;
 assert vscodeConfig.package.meta.mainProgram == "codium";
 assert homePkgs.lib.getExe vscodeConfig.package == "${vscodeConfig.package}/bin/codium";
 assert builtins.any (
-  extension: extension.version == "26.5803.61601"
+  extension: extension.version == "26.5814.41407"
 ) vscodeConfig.profiles.default.extensions;
 assert builtins.any (
-  extension: extension.version == "2.1.231"
+  extension: extension.version == "2.1.235"
 ) vscodeConfig.profiles.default.extensions;
 assert activation.bootstrapMutableClaudeCodeExtension.before == [ "linkGeneration" ];
 assert builtins.match ".*--bootstrap.*" activation.bootstrapMutableClaudeCodeExtension.data != null;
@@ -263,7 +263,7 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
   test "$(
     ${pkgs.unzip}/bin/unzip -p ${inputs.claude-code-vsix} extension/package.json \
       | ${pkgs.jq}/bin/jq -er .version
-  )" = 2.1.231
+  )" = 2.1.235
   test "$(
     ${pkgs.unzip}/bin/unzip -p ${inputs.claude-code-vsix} extension/package.json \
       | ${pkgs.jq}/bin/jq -er '.engines.vscode'
@@ -271,7 +271,7 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
   test "$(
     ${pkgs.unzip}/bin/unzip -p ${inputs.codex-chatgpt-vsix} extension/package.json \
       | ${pkgs.jq}/bin/jq -er .version
-  )" = 26.5803.61601
+  )" = 26.5814.41407
   test "$(
     ${pkgs.unzip}/bin/unzip -p ${inputs.codex-chatgpt-vsix} extension/package.json \
       | ${pkgs.jq}/bin/jq -er '.engines.vscode'
