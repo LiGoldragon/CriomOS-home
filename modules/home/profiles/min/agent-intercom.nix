@@ -56,16 +56,14 @@ let
   # Agent Intercom owns its operational entry points (`coi`, `cci`, MCP
   # servers, and fleet tools), but normal shell commands must remain the
   # pinned upstream CLIs.  In a graphical profile the Desktop module also
-  # supplies `codex`; publishing Intercom's wake alias under that same name
-  # makes Home Manager's package union fail before activation.
+  # supplies `codex`. The producer never exports normal command names; this
+  # runtime view hides only explicit raw recovery commands from the user union.
   agentIntercomRuntime = pkgs.symlinkJoin {
     name = "agent-intercom-runtime";
     paths = [ agentIntercom ];
     postBuild = ''
       rm \
-        "$out/bin/codex" \
         "$out/bin/codex-raw" \
-        "$out/bin/claude" \
         "$out/bin/claude-raw"
     '';
   };

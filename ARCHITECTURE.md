@@ -166,11 +166,10 @@ peer, listener, SSH tunnel, authorization key, remote identity, enrollment,
 reconnect, OAuth, pairing, or private-key configuration exists in the profile
 or its derivations.
 
-Normal `codex` launches enter `coi --yolo`, which gives Codex
-`danger-full-access` with approval `never`; `coi` invokes the explicitly raw
-Codex executable for its child app-server, preventing wrapper recursion.
-Normal `claude` launches enter `cci --dangerously-skip-permissions`; `cci` and
-its worker invoke the explicitly raw Claude executable. `codex-raw`,
+Normal `codex` and `claude` are the direct, pinned upstream CLIs. Agent
+Intercom exposes the distinct `coi --yolo` and
+`cci --dangerously-skip-permissions` bridges; their child processes invoke the
+explicitly raw upstream CLIs, preventing wrapper recursion. `codex-raw`,
 `claude-raw`, `direct-codex`, and `direct-claude` are recovery/debug-only.
 
 The maintained `ilysenko/codex-desktop-linux` source remains pinned at

@@ -92,11 +92,13 @@ pkgs.runCommand "agent-intercom-local-family-contract"
     set -eu
 
     for executable in \
-      coi codex codex-raw cci claude claude-raw \
+      coi codex-raw cci claude-raw \
       codex-intercom-mcp claude-intercom-mcp codex-intercom-bridge \
       agent-intercom-fleet agent-intercom-fleet-cleanup; do
       test -x ${agentIntercom}/bin/"$executable"
     done
+    ! test -e ${agentIntercom}/bin/codex
+    ! test -e ${agentIntercom}/bin/claude
     for artifact in \
       pi/index.ts \
       orchestrator/src/agent-fleet-cli.mjs \

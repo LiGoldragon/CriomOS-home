@@ -308,9 +308,8 @@ let
     ssh-to-age
   ];
 
-  # Pi is built directly from inputs.pi-src. Agent Intercom supplies the
-  # normal `codex` and `claude` entries when Horizon enables its local
-  # capability; the direct commands below remain explicit raw recovery paths.
+  # Pi is built directly from inputs.pi-src. Direct Codex and Claude packages
+  # own their normal commands; Agent Intercom exposes only distinct bridges.
   claudeCodePackage = pkgs.callPackage ../../../../packages/claude-code { inherit inputs; };
   codexCliPackage = inputs.codex-cli.packages.${pkgs.stdenv.hostPlatform.system}.default;
   piPackage = pkgs.callPackage ../../../../packages/pi { inherit inputs; };

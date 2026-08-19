@@ -510,10 +510,10 @@ pkgs.runCommand "pi-harness-profile"
     grep -F 'agent-intercom/pi/node_modules/tsx/dist/cli.mjs' ${piModelsModule}
     grep -F 'home.sessionVariables.PI_INTERCOM_EXTENSION_DIR = "''${agent-intercom}/share/agent-intercom/pi";' ${piModelsModule}
     test -x ${agent-intercom}/bin/coi
-    test -x ${agent-intercom}/bin/codex
+    ! test -e ${agent-intercom}/bin/codex
     test -x ${agent-intercom}/bin/codex-raw
     test -x ${agent-intercom}/bin/cci
-    test -x ${agent-intercom}/bin/claude
+    ! test -e ${agent-intercom}/bin/claude
     test -x ${agent-intercom}/bin/claude-raw
     grep -F -- '--yolo' ${agent-intercom}/bin/coi
     ! grep -F ${agent-intercom}/bin/codex ${agent-intercom}/bin/coi

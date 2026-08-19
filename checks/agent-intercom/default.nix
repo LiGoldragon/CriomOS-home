@@ -137,10 +137,10 @@ pkgs.runCommand "agent-intercom-local-home-contract"
     test -x ${graphicalProfilePath}/bin/claude
     test "$( ${graphicalProfilePath}/bin/claude --version )" = '2.1.235 (Claude Code)'
     test "$(readlink -f ${directCodexCliPackage}/bin/codex)" = "$(readlink -f ${codexCliPackage}/libexec/codex)"
-    test -x ${agentIntercom}/bin/codex
+    ! test -e ${agentIntercom}/bin/codex
     test -x ${agentIntercom}/bin/codex-raw
     test -x ${agentIntercom}/bin/cci
-    test -x ${agentIntercom}/bin/claude
+    ! test -e ${agentIntercom}/bin/claude
     test -x ${agentIntercom}/bin/claude-raw
     test -x ${agentIntercom}/bin/codex-intercom-mcp
     test -x ${agentIntercom}/bin/claude-intercom-mcp
@@ -149,8 +149,8 @@ pkgs.runCommand "agent-intercom-local-home-contract"
     test -f ${agentIntercom}/share/agent-intercom/opencode/dist/tui.mjs
     test -f ${agentIntercom}/share/agent-intercom/pi/index.ts
 
-    # Normal aliases carry the required dangerous defaults, while their child
-    # command variables resolve to raw upstream CLIs rather than the aliases.
+    # Distinct bridges carry the required dangerous defaults, while their
+    # child command variables resolve to raw upstream CLIs.
     grep -F -- '--yolo' ${agentIntercom}/bin/coi
     grep -F ${codexCliPackage}/bin/codex ${agentIntercom}/bin/coi
     ! grep -F ${agentIntercom}/bin/codex ${agentIntercom}/bin/coi
@@ -191,9 +191,9 @@ pkgs.runCommand "agent-intercom-local-home-contract"
 
     grep -F 'CODEX_INTERCOM_CODEX_COMMAND' ${agentIntercomPackage}
     grep -F 'CLAUDE_INTERCOM_CLAUDE_COMMAND' ${agentIntercomPackage}
-    grep -F 'makeWrapper "$out/bin/coi" "$out/bin/codex"' ${agentIntercomPackage}
+    ! grep -F 'makeWrapper "$out/bin/coi" "$out/bin/codex"' ${agentIntercomPackage}
     grep -F -- 'coi.mjs --yolo' ${agentIntercomPackage}
-    grep -F 'makeWrapper "$out/bin/cci" "$out/bin/claude"' ${agentIntercomPackage}
+    ! grep -F 'makeWrapper "$out/bin/cci" "$out/bin/claude"' ${agentIntercomPackage}
     grep -F -- 'cci.mjs --dangerously-skip-permissions' ${agentIntercomPackage}
     ! grep -Ei 'remote-gateway|secure-remote|agent-intercom-access|ssh|credential|secret|token|oauth|enroll|pair' ${agentIntercomPackage}
 

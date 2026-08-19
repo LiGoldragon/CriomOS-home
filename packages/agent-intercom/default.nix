@@ -148,13 +148,12 @@ else
         --add-flags "$root/codex/dist/bridge-daemon.mjs"
       # `coi` starts a local server on non-graphical profiles. A graphical
       # profile supplies a shared Desktop-owned socket, so the bridge attaches
-      # instead. Its child command always remains the upstream raw CLI, never
-      # this package's normal `codex` alias.
+      # instead. Its child command always remains the upstream raw CLI. The
+      # package deliberately never publishes the normal `codex` command.
       makeWrapper ${pkgs.nodejs}/bin/node "$out/bin/coi" \
         --add-flags "$root/codex/dist/coi.mjs --yolo" \
         --set CODEX_INTERCOM_CODEX_COMMAND ${codexRawCommand} \
         ${sharedAppServerWrapperHook}
-      makeWrapper "$out/bin/coi" "$out/bin/codex"
       # The graphical profile supplies a symlinkJoin that remaps Codex to its
       # Nix-owned raw executable. `makeWrapper` would validate that target
       # during this derivation's build, before Nix has realized the indirect
@@ -172,15 +171,14 @@ else
       makeWrapper ${pkgs.nodejs}/bin/node "$out/bin/claude-intercom-worker" \
         --add-flags "$root/claude/worker-daemon.mjs" \
         --set CLAUDE_INTERCOM_CLAUDE_COMMAND ${claudeCodePackage}/bin/claude
-      # `cci` is the normal wakeable Claude bridge. Its own child process is
-      # the upstream raw CLI, while normal `claude` remains only an alias.
+      # `cci` is the distinct wakeable Claude bridge. Its own child process is
+      # the upstream raw CLI; the package never publishes normal `claude`.
       makeWrapper ${pkgs.nodejs}/bin/node "$out/bin/cci" \
         --add-flags "$root/claude/cci.mjs --dangerously-skip-permissions" \
         --set CLAUDE_INTERCOM_CLAUDE_COMMAND ${claudeCodePackage}/bin/claude
       makeWrapper ${pkgs.nodejs}/bin/node "$out/bin/ccim" \
         --add-flags "$root/claude/ccim.mjs" \
         --set CLAUDE_INTERCOM_CLAUDE_COMMAND ${claudeCodePackage}/bin/claude
-      makeWrapper "$out/bin/cci" "$out/bin/claude"
       makeWrapper ${claudeCodePackage}/bin/claude "$out/bin/claude-raw"
 
       makeWrapper ${pkgs.nodejs}/bin/node "$out/bin/agent-intercom-fleet" \
