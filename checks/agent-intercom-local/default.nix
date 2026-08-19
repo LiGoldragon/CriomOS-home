@@ -135,6 +135,26 @@ pkgs.runCommand "agent-intercom-local-family-contract"
     grep -F -- '--dangerously-skip-permissions' ${agentIntercom}/bin/cci
     grep -F ${claudeCodePackage}/bin/claude ${agentIntercom}/bin/cci
     ! grep -F ${agentIntercom}/bin/claude ${agentIntercom}/bin/cci
+    test -f ${agentIntercom}/share/agent-intercom/claude/node_modules/@dataforxyz/agent-intercom-core/package.json
+    grep -F 'cp -R "$claudeBuild/node_modules" "$root/claude/node_modules"' ${agentIntercomPackage}
+    # Load both adapters from their deployed package root: this exercises Node
+    # resolution of the copied Claude runtime, rather than merely the raw CLI.
+    ${pkgs.nodejs}/bin/node --input-type=module -e '
+      await import("${agentIntercom}/share/agent-intercom/claude/cci.mjs");
+    ' </dev/null > "$TMPDIR/cci-adapter.log" 2>&1 &
+    cciPid=$!
+    sleep 1
+    kill "$cciPid" 2>/dev/null || true
+    wait "$cciPid" 2>/dev/null || true
+    ! grep -F 'ERR_MODULE_NOT_FOUND' "$TMPDIR/cci-adapter.log"
+    ${pkgs.nodejs}/bin/node --input-type=module -e '
+      await import("${agentIntercom}/share/agent-intercom/claude/ccim.mjs");
+    ' </dev/null > "$TMPDIR/ccim-adapter.log" 2>&1 &
+    ccimPid=$!
+    sleep 1
+    kill "$ccimPid" 2>/dev/null || true
+    wait "$ccimPid" 2>/dev/null || true
+    ! grep -F 'ERR_MODULE_NOT_FOUND' "$TMPDIR/ccim-adapter.log"
 
     protocol_home="$TMPDIR/protocol-home"
     mkdir -p "$protocol_home" "$TMPDIR/runtime"
@@ -172,20 +192,20 @@ pkgs.runCommand "agent-intercom-local-family-contract"
     ! grep -Ei 'Gateway|Peer|remote-gateway|tunnel|ssh|credential|secret|token|oauth|enroll|pair' ${agentIntercomModule}
     ! grep -Ei 'remote-gateway|secure-remote|agent-intercom-access|ssh|credential|secret|token|oauth|enroll|pair' ${agentIntercomPackage}
 
-    grep -F 'github:dataforxyz/agent-intercom-pi/d539a5476c26679f558d74b894b902d6366770a4' ${flakeFile}
-    grep -F 'github:dataforxyz/agent-intercom-codex/118c85391b525982f00f38a3e3b67278e20e2774' ${flakeFile}
-    grep -F 'github:dataforxyz/agent-intercom-claude/f558e3bfa0d0df799b57f729a2be903e85760df4' ${flakeFile}
-    grep -F 'github:dataforxyz/agent-intercom-opencode/5aea7545e00af04f2dd14a05bff69436917a4f46' ${flakeFile}
-    grep -F 'github:dataforxyz/agent-intercom-orchestrator/fb3a74c9bf96373c82d8be31da7bae97d6ac0119' ${flakeFile}
-    grep -F 'github:dataforxyz/agent-intercom-core/cb5d2212912db0cd8abbb16ab08e4b539424a05d' ${flakeFile}
+    grep -F 'github:dataforxyz/agent-intercom-pi/b6f8f9d08c8c5ec7141a0258ce61cda59d327a20' ${flakeFile}
+    grep -F 'github:dataforxyz/agent-intercom-codex/ea1c5b538c95b89af3fd36344396779e2eadbadb' ${flakeFile}
+    grep -F 'github:dataforxyz/agent-intercom-claude/d62b3c85547b8b83fdfe06afb38968646fe813b8' ${flakeFile}
+    grep -F 'github:dataforxyz/agent-intercom-opencode/9d81100ea074f68f6466656c65536504209eb060' ${flakeFile}
+    grep -F 'github:dataforxyz/agent-intercom-orchestrator/a7e16bd4386726002ab6880b35ebacdeef00fd0d' ${flakeFile}
+    grep -F 'github:dataforxyz/agent-intercom-core/8316cbab548f422ad11c78ed887fabeef94817c1' ${flakeFile}
     grep -F 'linux-arm64-0.25.0.tgz' ${flakeFile}
     ${pkgs.jq}/bin/jq -e '
-      .nodes."agent-intercom-pi-src".locked.rev == "d539a5476c26679f558d74b894b902d6366770a4" and
-      .nodes."agent-intercom-codex-src".locked.rev == "118c85391b525982f00f38a3e3b67278e20e2774" and
-      .nodes."agent-intercom-claude-src".locked.rev == "f558e3bfa0d0df799b57f729a2be903e85760df4" and
-      .nodes."agent-intercom-opencode-src".locked.rev == "5aea7545e00af04f2dd14a05bff69436917a4f46" and
-      .nodes."agent-intercom-orchestrator-src".locked.rev == "fb3a74c9bf96373c82d8be31da7bae97d6ac0119" and
-      .nodes."agent-intercom-core-src".locked.rev == "cb5d2212912db0cd8abbb16ab08e4b539424a05d" and
+      .nodes."agent-intercom-pi-src".locked.rev == "b6f8f9d08c8c5ec7141a0258ce61cda59d327a20" and
+      .nodes."agent-intercom-codex-src".locked.rev == "ea1c5b538c95b89af3fd36344396779e2eadbadb" and
+      .nodes."agent-intercom-claude-src".locked.rev == "d62b3c85547b8b83fdfe06afb38968646fe813b8" and
+      .nodes."agent-intercom-opencode-src".locked.rev == "9d81100ea074f68f6466656c65536504209eb060" and
+      .nodes."agent-intercom-orchestrator-src".locked.rev == "a7e16bd4386726002ab6880b35ebacdeef00fd0d" and
+      .nodes."agent-intercom-core-src".locked.rev == "8316cbab548f422ad11c78ed887fabeef94817c1" and
       .nodes."agent-intercom-esbuild-linux-arm64-src".locked.type == "file"
     ' ${flakeLock}
 

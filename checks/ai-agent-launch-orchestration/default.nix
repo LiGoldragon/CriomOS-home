@@ -157,7 +157,11 @@ pkgs.runCommand "ai-agent-launch-orchestration"
       test "$(readlink -f ${agentProfilePath}/bin/pi)" = "$(readlink -f ${piPackage}/bin/pi)"
       test "$(${codexCliPackage}/bin/codex --version)" = "codex-cli 0.148.0"
       test "$(${claudeCodePackage}/bin/claude --version)" = "2.1.235 (Claude Code)"
-      test "$(${agentProfilePath}/bin/claude --version)" = "2.1.235 (Claude Code)"
+      codexVersion="$(${agentProfilePath}/bin/codex --version)"
+      printf '%s\n' "$codexVersion" | grep -F '[agent-intercom-build]'
+      printf '%s\n' "$codexVersion" | grep -F 'codex-cli 0.148.0'
+      claudeVersion="$(${agentProfilePath}/bin/claude --version)"
+      test "$claudeVersion" = "2.1.235 (Claude Code)"
 
       grep -F 'This source map does not grant tool permission' ${piPackage}/lib/pi-monorepo/packages/coding-agent/dist/core/system-prompt.js
       grep -F 'does not override project, role, skill, system, developer, or user instructions' ${piPackage}/lib/pi-monorepo/packages/coding-agent/dist/core/system-prompt.js

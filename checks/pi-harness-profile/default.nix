@@ -483,12 +483,12 @@ pkgs.runCommand "pi-harness-profile"
     grep -F 'registerWaitTool(pi, state, waitToolConfig.enabled);' "${pi-subagents}/share/pi-packages/pi-subagents/src/extension/index.ts"
     ! test -e "${pi-subagents}/share/pi-packages/pi-subagents/src/agents/project-role-policy.ts"
     ! grep -R -E 'authorizeProjectRoleDispatch|projectRoleDispatchKind|PROJECT_ROLE_METADATA_ENV|projectRolePolicy' "${pi-subagents}/share/pi-packages/pi-subagents/src"
-    grep -F 'github:dataforxyz/agent-intercom-pi/d539a5476c26679f558d74b894b902d6366770a4' ${flakeFile}
-    grep -F 'github:dataforxyz/agent-intercom-codex/118c85391b525982f00f38a3e3b67278e20e2774' ${flakeFile}
-    grep -F 'github:dataforxyz/agent-intercom-claude/f558e3bfa0d0df799b57f729a2be903e85760df4' ${flakeFile}
-    grep -F 'github:dataforxyz/agent-intercom-opencode/5aea7545e00af04f2dd14a05bff69436917a4f46' ${flakeFile}
-    grep -F 'github:dataforxyz/agent-intercom-orchestrator/fb3a74c9bf96373c82d8be31da7bae97d6ac0119' ${flakeFile}
-    grep -F 'github:dataforxyz/agent-intercom-core/cb5d2212912db0cd8abbb16ab08e4b539424a05d' ${flakeFile}
+    grep -F 'github:dataforxyz/agent-intercom-pi/b6f8f9d08c8c5ec7141a0258ce61cda59d327a20' ${flakeFile}
+    grep -F 'github:dataforxyz/agent-intercom-codex/ea1c5b538c95b89af3fd36344396779e2eadbadb' ${flakeFile}
+    grep -F 'github:dataforxyz/agent-intercom-claude/d62b3c85547b8b83fdfe06afb38968646fe813b8' ${flakeFile}
+    grep -F 'github:dataforxyz/agent-intercom-opencode/9d81100ea074f68f6466656c65536504209eb060' ${flakeFile}
+    grep -F 'github:dataforxyz/agent-intercom-orchestrator/a7e16bd4386726002ab6880b35ebacdeef00fd0d' ${flakeFile}
+    grep -F 'github:dataforxyz/agent-intercom-core/8316cbab548f422ad11c78ed887fabeef94817c1' ${flakeFile}
     ! grep -F 'github:LiGoldragon/pi-intercom' ${flakeFile}
     ! grep -F 'pi-subagents-tintinweb-testing-src' ${flakeFile}
     ! grep -F 'pi-subagents-tintinweb-testing-src' ${piModelsModule}
