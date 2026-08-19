@@ -1,15 +1,7 @@
-{ inputs, pkgs, ... }:
+{ inputs, homePkgs, ... }:
 let
-  lib = pkgs.lib;
-  system = pkgs.stdenv.hostPlatform.system;
-  packageOverlays = import ../../overlays { inherit inputs; };
-  profilePkgs =
-    (import inputs.nixpkgs {
-      inherit system;
-      config.allowUnfree = true;
-    }).extend
-      (lib.composeManyExtensions packageOverlays);
-  ytDlp = profilePkgs.yt-dlp;
+  lib = homePkgs.lib;
+  ytDlp = homePkgs.yt-dlp;
   previousVersion = "2026.07.04";
   sourceVersion = builtins.head (
     builtins.match ".*__version__ = '([^']+)'.*" (
@@ -29,7 +21,7 @@ let
   mediumProfile = ../../modules/home/profiles/med;
   minModule = import minProfile {
     inherit lib;
-    pkgs = profilePkgs;
+    pkgs = homePkgs;
     criomos-lib = null;
     user = {
       useColemak = false;
@@ -55,7 +47,7 @@ let
   };
   mediumModule = import mediumProfile {
     inherit lib;
-    pkgs = profilePkgs;
+    pkgs = homePkgs;
     user = {
       githubId = "yt-dlp-check";
       useColemak = false;
@@ -71,9 +63,9 @@ assert ytDlp.version == sourceVersion;
 assert lib.versionAtLeast sourceVersion previousVersion;
 assert importsProfile minProfile;
 assert importsProfile mediumProfile;
-assert builtins.elem profilePkgs.mpv minPackages;
+assert builtins.elem homePkgs.mpv minPackages;
 assert builtins.elem ytDlp mediumPackages;
-profilePkgs.runCommand "yt-dlp-current-source"
+homePkgs.runCommand "yt-dlp-current-source"
   {
     inherit ytDlp;
   }

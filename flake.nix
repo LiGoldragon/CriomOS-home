@@ -549,7 +549,10 @@
           main-contract-pins = checkPkgs.callPackage ./checks/main-contract-pins {
             inherit inputs;
           };
-          yt-dlp = checkPkgs.callPackage ./checks/yt-dlp { inherit inputs; };
+          yt-dlp = checkPkgs.callPackage ./checks/yt-dlp {
+            inherit inputs;
+            homePkgs = pkgs;
+          };
         }
         // lib.optionalAttrs (agentIntercomSupported _system) {
           agent-intercom-local = checkPkgs.callPackage ./checks/agent-intercom-local { inherit inputs; };
