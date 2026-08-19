@@ -33,6 +33,10 @@ let
     "camera"
     "bridge"
   ];
+  retiredMentciEgui = lib.concatStringsSep "-" [
+    "mentci"
+    "egui"
+  ];
   retiredModulePath = "${maxDirectory}/${retiredModuleFile}";
 
   homeAggregate = import ../../modules/home/default.nix {
@@ -100,6 +104,7 @@ in
 assert !(builtins.pathExists retiredModulePath);
 assert !(builtins.pathExists "${checksDirectory}/${retiredCheckDirectory}");
 assert !importsRetiredModule;
+assert !(lib.hasInfix retiredMentciEgui flakeSource);
 assert !(lib.hasInfix retiredService flakeSource);
 assert !(largeEdge.systemd.user.services ? ${retiredService});
 assert !(ordinary.systemd.user.services ? ${retiredService});
