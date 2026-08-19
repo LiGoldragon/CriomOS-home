@@ -560,6 +560,9 @@
             inherit inputs;
           };
           agent-intercom = checkPkgs.callPackage ./checks/agent-intercom { inherit inputs; };
+          agent-intercom-graphical-tui = checkPkgs.callPackage ./checks/agent-intercom-graphical-tui {
+            inherit inputs;
+          };
         }
       ) derivationChecks;
 

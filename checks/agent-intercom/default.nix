@@ -3,6 +3,8 @@ let
   agentIntercom = pkgs.callPackage ../../packages/agent-intercom { inherit inputs; };
   graphicalAgentIntercom = pkgs.callPackage ../../packages/agent-intercom {
     inherit inputs;
+    codexCliPackage = directCodexCliPackage;
+    codexRawCommand = "${codexCliPackage}/libexec/codex";
     sharedAppServerSocket = "unix://\${XDG_RUNTIME_DIR}/codex-intercom-app-server.sock";
   };
   pi = inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.pi;
@@ -70,6 +72,10 @@ let
   codexCliPackage = inputs.codex-cli.packages.${pkgs.stdenv.hostPlatform.system}.default;
   claudeCodePackage = pkgs.callPackage ../../packages/claude-code { inherit inputs; };
   directCodexCliPackage = graphicalHomeConfiguration.programs.codexDesktopLinux.cliPackage;
+  graphicalProfilePath = pkgs.buildEnv {
+    name = "agent-intercom-graphical-profile-path";
+    paths = graphicalHomeConfiguration.home.packages;
+  };
   packageName = package: package.pname or (package.name or "");
   hasAgentIntercomRuntime =
     configuration:
@@ -115,6 +121,7 @@ pkgs.runCommand "agent-intercom-local-home-contract"
       pkgs.gnugrep
       pkgs.jq
       pkgs.nodejs
+      graphicalProfilePath
     ];
   }
   ''
@@ -122,8 +129,14 @@ pkgs.runCommand "agent-intercom-local-home-contract"
 
     test -x ${agentIntercom}/bin/coi
     test -x ${graphicalAgentIntercom}/bin/coi
+    test -x ${graphicalAgentIntercom}/bin/codex-raw
+    test "$( ${graphicalAgentIntercom}/bin/codex-raw --version )" = 'codex-cli 0.148.0'
     test -x ${directCodexCliPackage}/bin/codex
-    test "$(readlink -f ${directCodexCliPackage}/bin/codex)" = "$(readlink -f ${codexCliPackage}/bin/codex-raw)"
+    test -x ${graphicalProfilePath}/bin/codex
+    test "$( ${graphicalProfilePath}/bin/codex --version )" = 'codex-cli 0.148.0'
+    test -x ${graphicalProfilePath}/bin/claude
+    test "$( ${graphicalProfilePath}/bin/claude --version )" = '2.1.235 (Claude Code)'
+    test "$(readlink -f ${directCodexCliPackage}/bin/codex)" = "$(readlink -f ${codexCliPackage}/libexec/codex)"
     test -x ${agentIntercom}/bin/codex
     test -x ${agentIntercom}/bin/codex-raw
     test -x ${agentIntercom}/bin/cci

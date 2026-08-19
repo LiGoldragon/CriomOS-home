@@ -31,6 +31,20 @@ let
     emailAddress
     ;
   inherit (user) githubId name;
+  serviceName =
+    service:
+    if builtins.isString service then
+      service
+    else if builtins.isAttrs service then
+      let
+        names = builtins.attrNames service;
+      in
+      if builtins.length names == 1 then builtins.head names else null
+    else
+      null;
+  agentIntercomLocalEnabled = builtins.any (
+    service: serviceName service == "AgentIntercomLocal"
+  ) (node.services or [ ]);
   codexSkillReadDeduplicationInstruction = "Skill-read de-duplication: A pasted <skill ...>...</skill> block is complete when it has matching opening and closing <skill> tags, a skill name, a location, and non-empty body text. Treat a complete pasted skill block as already loaded for this session. Read the same skill location again only when the block is structurally missing content, the user asks to verify source or freshness, or a higher-priority instruction explicitly requires verification.";
 
   codexProjectTrust = trust_level: { inherit trust_level; };
@@ -333,7 +347,6 @@ let
     pkgs.gemini-cli
     piPackage
     directClaude
-    codexCliPackage
     directCodex
     directPi
     piTesting
@@ -341,7 +354,8 @@ let
     pkgs.llama-cpp
     (pkgs.callPackage ../../../../packages/gws { inherit inputs; })
     (pkgs.callPackage ../../../../packages/playwright-cli { })
-  ];
+  ]
+  ++ optional (!agentIntercomLocalEnabled) codexCliPackage;
 
   nixpkgsPackages =
     with pkgs;

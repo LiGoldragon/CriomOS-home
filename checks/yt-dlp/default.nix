@@ -1,4 +1,9 @@
-{ inputs, homePkgs, ... }:
+{
+  inputs,
+  pkgs,
+  homePkgs ? inputs.pkgs.pkgs.extend (pkgs.lib.composeManyExtensions (import ../../overlays { inherit inputs; })),
+  ...
+}:
 let
   lib = homePkgs.lib;
   ytDlp = homePkgs.yt-dlp;

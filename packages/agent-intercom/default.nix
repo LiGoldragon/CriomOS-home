@@ -2,6 +2,7 @@
   inputs,
   pkgs,
   codexCliPackage ? inputs.codex-cli.packages.${pkgs.stdenv.hostPlatform.system}.default,
+  codexRawCommand ? "${codexCliPackage}/bin/codex",
   sharedAppServerSocket ? null,
   ...
 }:
@@ -151,10 +152,20 @@ else
       # this package's normal `codex` alias.
       makeWrapper ${pkgs.nodejs}/bin/node "$out/bin/coi" \
         --add-flags "$root/codex/dist/coi.mjs --yolo" \
-        --set CODEX_INTERCOM_CODEX_COMMAND ${codexCliPackage}/bin/codex \
+        --set CODEX_INTERCOM_CODEX_COMMAND ${codexRawCommand} \
         ${sharedAppServerWrapperHook}
       makeWrapper "$out/bin/coi" "$out/bin/codex"
-      makeWrapper ${codexCliPackage}/bin/codex "$out/bin/codex-raw"
+      # The graphical profile supplies a symlinkJoin that remaps Codex to its
+      # Nix-owned raw executable. `makeWrapper` would validate that target
+      # during this derivation's build, before Nix has realized the indirect
+      # symlinkJoin on a remote builder. Emit a simple runtime launcher: its
+      # store reference remains part of the output closure, but it no longer
+      # imposes an invalid build-time ordering requirement.
+      cat > "$out/bin/codex-raw" <<'EOF'
+      #!${pkgs.runtimeShell}
+      exec ${codexRawCommand} "$@"
+      EOF
+      chmod +x "$out/bin/codex-raw"
 
       makeWrapper ${pkgs.nodejs}/bin/node "$out/bin/claude-intercom-mcp" \
         --add-flags "$root/claude/claude-server.mjs"

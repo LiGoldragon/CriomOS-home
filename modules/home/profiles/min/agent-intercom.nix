@@ -43,12 +43,13 @@ let
     paths = [ upstreamCodexCliPackage ];
     postBuild = ''
       rm "$out/bin/codex"
-      ln -s ${upstreamCodexCliPackage}/bin/codex-raw "$out/bin/codex"
+      ln -s ${upstreamCodexCliPackage}/libexec/codex "$out/bin/codex"
     '';
     meta.mainProgram = "codex";
   };
   agentIntercom = pkgs.callPackage ../../../../packages/agent-intercom {
     inherit inputs codexCliPackage;
+    codexRawCommand = "${upstreamCodexCliPackage}/libexec/codex";
     sharedAppServerSocket =
       if graphicalEnabled && graphicalSupported then sharedAppServerSocket else null;
   };
@@ -85,13 +86,15 @@ lib.mkMerge [
   (lib.mkIf localEnabled {
     # The direct, pinned CLIs are the ordinary user commands.  Keep the
     # Intercom-specific operational entry points without letting its aliases
-    # shadow either CLI.  Graphical profiles receive Codex from the Desktop
-    # module below; non-graphical profiles receive it here.
+    # shadow either CLI.  Keep the direct Codex package in the Home union for
+    # every local profile: Desktop consumes it as a configured CLI path but
+    # does not publish that path itself, and the union is the closure that
+    # makes ordinary `codex` available alongside Intercom.
     home.packages = [
       agentIntercomRuntime
       claudeCodePackage
-    ]
-    ++ lib.optional (!graphicalEnabled) codexCliPackage;
+      codexCliPackage
+    ];
 
     home.file = {
       ".pi/agent/packages/agent-intercom-pi" = {
