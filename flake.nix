@@ -21,6 +21,13 @@
     pkgs.inputs.nixpkgs.follows = "nixpkgs";
     pkgs.inputs.system.follows = "system";
 
+    # Upstream source for the centrally overridden yt-dlp package. Keep this
+    # non-flake input independently current with `nix flake update yt-dlp`.
+    yt-dlp = {
+      url = "github:yt-dlp/yt-dlp";
+      flake = false;
+    };
+
     horizon.url = "path:./stubs/no-horizon";
 
     # Compositor + shell.
@@ -441,8 +448,9 @@
       bp = inputs.blueprint { inherit inputs; };
       coreModule = bp.homeModules.default;
       horizon = inputs.horizon.horizon;
-      pkgs = inputs.pkgs.pkgs;
       lib = inputs.nixpkgs.lib;
+      packageOverlays = import ./overlays { inherit inputs; };
+      pkgs = inputs.pkgs.pkgs.extend (lib.composeManyExtensions packageOverlays);
       agentIntercomSystems = [
         "x86_64-linux"
         "aarch64-linux"
@@ -508,7 +516,9 @@
           rust-toolchain = checkPkgs.callPackage ./checks/rust-toolchain { inherit inputs; };
           leta = checkPkgs.callPackage ./checks/leta { inherit inputs; };
           no-easyeffects = checkPkgs.callPackage ./checks/no-easyeffects { };
-          ghostty-primary-selection = checkPkgs.callPackage ./checks/ghostty-primary-selection { inherit inputs; };
+          ghostty-primary-selection = checkPkgs.callPackage ./checks/ghostty-primary-selection {
+            inherit inputs;
+          };
           bird-home-isolation = checkPkgs.callPackage ./checks/bird-home-isolation { inherit inputs; };
           desktop-shell-launch = checkPkgs.callPackage ./checks/desktop-shell-launch { inherit inputs; };
           noctalia-settings-composition = checkPkgs.callPackage ./checks/noctalia-settings-composition {
@@ -539,6 +549,7 @@
           main-contract-pins = checkPkgs.callPackage ./checks/main-contract-pins {
             inherit inputs;
           };
+          yt-dlp = checkPkgs.callPackage ./checks/yt-dlp { inherit inputs; };
         }
         // lib.optionalAttrs (agentIntercomSupported _system) {
           agent-intercom-local = checkPkgs.callPackage ./checks/agent-intercom-local { inherit inputs; };

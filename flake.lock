@@ -2444,7 +2444,8 @@
         "substack-cli": "substack-cli",
         "system": "system",
         "uv2nix": "uv2nix",
-        "visualjj-vsix": "visualjj-vsix"
+        "visualjj-vsix": "visualjj-vsix",
+        "yt-dlp": "yt-dlp"
       }
     },
     "router-source": {
@@ -3821,6 +3822,22 @@
       "original": {
         "owner": "Supreeeme",
         "repo": "xwayland-satellite",
+        "type": "github"
+      }
+    },
+    "yt-dlp": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1787121734,
+        "narHash": "sha256-ZCRvcs+XnA8GyEZCrd3ZLB5UTmVNPlGaMtsjuwHKsqk=",
+        "owner": "yt-dlp",
+        "repo": "yt-dlp",
+        "rev": "0d1e029d14058ddfb986fdafb07c00869c89105a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "yt-dlp",
+        "repo": "yt-dlp",
         "type": "github"
       }
     }

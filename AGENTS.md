@@ -25,6 +25,10 @@ First thing: run `bd list --status open`. Read `docs/ROADMAP.md`.
 
 - Live-activating HM generations with compositor / input changes risks losing the session. Apply through a safe path (rebuild + new login).
 
+## Package customization
+
+Keep package overrides in the central `overlays/` registry, which `flake.nix` extends once before Home configurations are constructed. Refresh the independently pinned yt-dlp source with `nix flake update yt-dlp` only.
+
 ## Protos estate status
 
 Protos estate scope: out of scope
