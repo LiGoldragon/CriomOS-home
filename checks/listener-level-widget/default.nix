@@ -27,7 +27,11 @@ assert manifest["widget"] == [{"id": "level", "entry": "level.luau"}]
 
   ${pkgs.gnugrep}/bin/grep -F 'plugins.enabled = [ "criomos/listener-level" ];' "$sfwbar"
   ${pkgs.gnugrep}/bin/grep -F 'widget.listener-level.type = "criomos/listener-level:level";' "$sfwbar"
-  ${pkgs.gnugrep}/bin/grep -F '{ id = "listener-level"; }' "$sfwbar"
+  ${pkgs.gnugrep}/bin/grep -F 'bar.main = {' "$sfwbar"
+  ${pkgs.gnugrep}/bin/grep -F '"listener-level"' "$sfwbar"
+  ${pkgs.gnugrep}/bin/grep -F '"launcher"' "$sfwbar"
+  ${pkgs.gnugrep}/bin/grep -F '"workspaces"' "$sfwbar"
+  ${pkgs.gnugrep}/bin/grep -F '"control-center"' "$sfwbar"
   ${pkgs.gnugrep}/bin/grep -F '"noctalia/plugins/listener-level/plugin.toml".source' "$sfwbar"
   ${pkgs.gnugrep}/bin/grep -F '"noctalia/plugins/listener-level/level.luau".source' "$sfwbar"
   ${pkgs.gnugrep}/bin/grep -F 'listenerLevelWidget = pkgs.replaceVars' "$sfwbar"
@@ -38,6 +42,14 @@ assert manifest["widget"] == [{"id": "level", "entry": "level.luau"}]
   ${pkgs.gnugrep}/bin/grep -F 'history = 0;' "$sfwbar"
   if ${pkgs.gnugrep}/bin/grep -F 'plugin:whisrs-level' "$sfwbar" >/dev/null; then
     echo 'Whisrs level widget must not remain in the bar' >&2
+    exit 1
+  fi
+  if ${pkgs.gnugrep}/bin/grep -E 'bar\.widgets|(^|[[:space:]])(left|right)[[:space:]]*=' "$sfwbar" >/dev/null; then
+    echo 'listener-level must use only Noctalia v5 bar.main start/center/end lanes' >&2
+    exit 1
+  fi
+  if ${pkgs.gnugrep}/bin/grep -E 'plugin:(solar-time|active-network)' "$sfwbar" >/dev/null; then
+    echo 'unregistered v4 plugin entries must not remain in the v5 bar lanes' >&2
     exit 1
   fi
 

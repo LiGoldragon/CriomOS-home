@@ -49,8 +49,34 @@ assert pkgs.lib.assertMsg (
   settings.theme.wallpaper_scheme == "m3-rainbow"
 ) "the declared Noctalia wallpaper scheme must remain effective";
 assert pkgs.lib.assertMsg (
-  settings.bar.widgets.margin_ends == 0
+  settings.bar.main.margin_ends == 0
 ) "the Noctalia bar must remain configured for full output width";
+assert pkgs.lib.assertMsg (
+  settings.bar.main.start == [ "launcher" "clock" "media" ]
+  && settings.bar.main.center == [ "workspaces" ]
+  && settings.bar.main.end == [ "listener-level" "tray" "battery" "volume" "brightness" "control-center" ]
+  && settings.widget.listener-level.type == "criomos/listener-level:level"
+  && settings.widget.tray.drawer
+  && settings.widget.battery.display_mode == "graphic"
+) "the Noctalia bar must retain its complete v5 lane order and listener plugin alias";
+assert pkgs.lib.assertMsg (
+  !(settings.bar ? widgets)
+  && !(settings.bar.main ? left)
+  && !(settings.bar.main ? right)
+  && !(settings.bar.main ? startWidgets)
+  && !(settings.bar.main ? endWidgets)
+) "the Noctalia bar must not retain v4 lane fields";
+assert pkgs.lib.assertMsg (
+  builtins.all builtins.isString (
+    settings.bar.main.start ++ settings.bar.main.center ++ settings.bar.main.end
+  )
+) "every Noctalia v5 bar lane entry must be a string";
+assert pkgs.lib.assertMsg (
+  !(builtins.elem "solar-time" settings.bar.main.start)
+  && !(builtins.elem "active-network" settings.bar.main.end)
+  && !(builtins.elem "plugin:solar-time" settings.bar.main.start)
+  && !(builtins.elem "plugin:active-network" settings.bar.main.end)
+) "unregistered v4 plugin entries must not remain in v5 bar lanes";
 assert pkgs.lib.assertMsg (
   parsedConfigToml.idle.pre_action_fade_seconds == 5
   &&
@@ -77,8 +103,8 @@ pkgs.runCommand "noctalia-settings-composition" { nativeBuildInputs = [ noctalia
   validation_output="$TMPDIR/noctalia-config-validation"
   ${noctaliaExecutable} config validate ${generatedConfig} >"$validation_output" 2>&1
   ${pkgs.coreutils}/bin/cat "$validation_output"
-  if ${pkgs.gnugrep}/bin/grep -E ':[[:space:]]idle\.[^:]*:[[:space:]]unknown setting' "$validation_output"; then
-    echo 'Noctalia validator reported an unknown idle setting' >&2
+  if ${pkgs.gnugrep}/bin/grep -E ':[[:space:]](idle\.|bar\.(widgets|main)\.|widget\.)[^:]*:[[:space:]]unknown setting|unrecognized widget type' "$validation_output"; then
+    echo 'Noctalia validator reported an obsolete or unregistered bar setting' >&2
     exit 1
   fi
   touch "$out"

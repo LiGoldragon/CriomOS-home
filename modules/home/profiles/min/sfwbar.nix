@@ -49,33 +49,25 @@ lib.mkIf behavesAs.edge {
       };
       plugins.enabled = [ "criomos/listener-level" ];
       widget.listener-level.type = "criomos/listener-level:level";
-      bar.widgets = {
+      widget.tray.drawer = true;
+      widget.battery.display_mode = "graphic";
+      bar.main = {
         margin_ends = 0;
-        left = [
-          { id = "Launcher"; }
-          { id = "Clock"; }
-          { id = "plugin:solar-time"; }
-          { id = "MediaMini"; }
+        start = [
+          "launcher"
+          "clock"
+          "media"
         ];
         center = [
-          { id = "Workspace"; }
+          "workspaces"
         ];
-        right = [
-          { id = "listener-level"; }
-          { id = "plugin:active-network"; }
-          {
-            id = "Tray";
-            colorizeIcons = false;
-            drawerEnabled = true;
-            hidePassive = false;
-          }
-          {
-            id = "Battery";
-            displayMode = "graphic";
-          }
-          { id = "Volume"; }
-          { id = "Brightness"; }
-          { id = "ControlCenter"; }
+        end = [
+          "listener-level"
+          "tray"
+          "battery"
+          "volume"
+          "brightness"
+          "control-center"
         ];
       };
     };
