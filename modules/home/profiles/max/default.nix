@@ -32,11 +32,6 @@ let
     pavucontrol # TODO: pwvucontrol doesnt display virtual sources
   ];
 
-  mentciPackages = [
-    # inputs.mentci-egui.packages.${pkgs.stdenv.hostPlatform.system}.default # Broken: meta-signal-mentci-0.3.1 build.rs imports schema_rust::bootstrap::BootstrapInterfaceGeneration which does not exist
-    # (pkgs.callPackage ../../../../packages/mentci { inherit inputs; }) # Broken: same meta-signal-mentci-0.3.1 schema_rust API issue
-  ];
-
   # bottles removed 2026-08-14: bottles-65.4 FHS Wine environment pulls in
   # i686-linux packages (dosbox, openldap-2.6.13, gtk4, sdl2-compat) whose
   # new dependency hashes are absent from all configured binary caches and
@@ -94,7 +89,7 @@ mkMerge [
   # Max-tier exceptions per Li 2026-04-25: obs-studio + gimp/krita/
   # calibre/inkscape (when isMultimediaDev) live at size.max only.
   (mkIf size.max {
-    home.packages = mentciPackages ++ optionals isMultimediaDev maxMultimediaPackages;
+    home.packages = optionals isMultimediaDev maxMultimediaPackages;
 
     programs.obs-studio = {
       enable = true;

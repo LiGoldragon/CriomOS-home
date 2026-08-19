@@ -48,7 +48,6 @@ let
 
   fakeInputs = {
     self.packages.${system}.traycer = pkgs.hello;
-    mentci-egui.packages.${system}.default = pkgs.hello;
     hexis.lib.wrapWithHexis = { package, ... }: package;
   };
 

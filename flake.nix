@@ -185,15 +185,12 @@
     message.inputs.nixpkgs.follows = "nixpkgs";
     message.inputs.crane.follows = "crane";
 
-    # Mentci — psyche-facing approval daemon and egui client surface.
-    # The daemon repo is packaged locally because it does not expose a flake;
-    # mentci-egui exposes the GUI and its remote-control helper binaries.
+    # Mentci approval daemon source, packaged locally because it does not
+    # expose a flake.
     mentci-src = {
       url = "github:LiGoldragon/mentci/235b1b44ecd93857df60c36a2ca4fa16fab5984f";
       flake = false;
     };
-    mentci-egui.url = "github:LiGoldragon/mentci-egui/2af0aa5a86fdbdfde13e7eb9fd338da40451d901";
-    mentci-egui.inputs.nixpkgs.follows = "nixpkgs";
 
     # `pi` (earendil-works/pi coding-agent CLI) — TypeScript npm
     # monorepo with no upstream flake. Consumed as a non-flake source
