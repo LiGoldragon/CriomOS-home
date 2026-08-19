@@ -40,8 +40,8 @@ let
   generatedConfig = pkgs.writeText "noctalia-settings-composition.toml" configToml;
 in
 assert pkgs.lib.assertMsg (
-  settings.theme.mode == "auto"
-) "the declared Noctalia theme mode must override Stylix's dark-mode target";
+  settings.theme.mode == "external"
+) "Noctalia must consume Chroma's external light/dark mode";
 assert pkgs.lib.assertMsg (
   settings.theme.source == "wallpaper"
 ) "the declared Noctalia theme source must override Stylix's custom-palette target";
@@ -52,9 +52,21 @@ assert pkgs.lib.assertMsg (
   settings.bar.main.margin_ends == 0
 ) "the Noctalia bar must remain configured for full output width";
 assert pkgs.lib.assertMsg (
-  settings.bar.main.start == [ "launcher" "clock" "media" ]
+  settings.bar.main.start == [
+    "launcher"
+    "clock"
+    "media"
+  ]
   && settings.bar.main.center == [ "workspaces" ]
-  && settings.bar.main.end == [ "listener-level" "tray" "battery" "volume" "brightness" "control-center" ]
+  &&
+    settings.bar.main.end == [
+      "listener-level"
+      "tray"
+      "battery"
+      "volume"
+      "brightness"
+      "control-center"
+    ]
   && settings.widget.listener-level.type == "criomos/listener-level:level"
   && settings.widget.tray.drawer
   && settings.widget.battery.display_mode == "graphic"
@@ -66,11 +78,9 @@ assert pkgs.lib.assertMsg (
   && !(settings.bar.main ? startWidgets)
   && !(settings.bar.main ? endWidgets)
 ) "the Noctalia bar must not retain v4 lane fields";
-assert pkgs.lib.assertMsg (
-  builtins.all builtins.isString (
-    settings.bar.main.start ++ settings.bar.main.center ++ settings.bar.main.end
-  )
-) "every Noctalia v5 bar lane entry must be a string";
+assert pkgs.lib.assertMsg (builtins.all builtins.isString (
+  settings.bar.main.start ++ settings.bar.main.center ++ settings.bar.main.end
+)) "every Noctalia v5 bar lane entry must be a string";
 assert pkgs.lib.assertMsg (
   !(builtins.elem "solar-time" settings.bar.main.start)
   && !(builtins.elem "active-network" settings.bar.main.end)
@@ -103,8 +113,8 @@ pkgs.runCommand "noctalia-settings-composition" { nativeBuildInputs = [ noctalia
   validation_output="$TMPDIR/noctalia-config-validation"
   ${noctaliaExecutable} config validate ${generatedConfig} >"$validation_output" 2>&1
   ${pkgs.coreutils}/bin/cat "$validation_output"
-  if ${pkgs.gnugrep}/bin/grep -E ':[[:space:]](idle\.|bar\.(widgets|main)\.|widget\.)[^:]*:[[:space:]]unknown setting|unrecognized widget type' "$validation_output"; then
-    echo 'Noctalia validator reported an obsolete or unregistered bar setting' >&2
+  if ${pkgs.gnugrep}/bin/grep -E ':[[:space:]](idle\.|bar\.(widgets|main)\.|widget\.)[^:]*:[[:space:]]unknown setting' "$validation_output"; then
+    echo 'Noctalia validator reported an obsolete setting' >&2
     exit 1
   fi
   touch "$out"

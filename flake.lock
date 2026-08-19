@@ -424,16 +424,16 @@
         "rust-build": "rust-build"
       },
       "locked": {
-        "lastModified": 1786574692,
-        "narHash": "sha256-Z5P/n7WmMhXWMZAGccfsudSj6GrskIeBdYOqZgPngKw=",
+        "lastModified": 1787171953,
+        "narHash": "sha256-3rT4dhrvQqh827taFJU8TZfWJvV1oeP40xce2JplSCo=",
         "owner": "LiGoldragon",
         "repo": "chroma",
-        "rev": "227c35e46e3461d740999b2a73eb414b1ce535c1",
+        "rev": "eea85f4aae5a21813314a128faa5dce1e22eff48",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
-        "ref": "main",
+        "ref": "eea85f4aae5a",
         "repo": "chroma",
         "type": "github"
       }
@@ -1721,16 +1721,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1786662831,
-        "narHash": "sha256-j2a1tMMumc9XN6K7HQPwR5i2tJsUGAZ+xIMQKocsO90=",
-        "owner": "noctalia-dev",
-        "repo": "noctalia-shell",
-        "rev": "f6ae73a0cef3da0288ee512462afc71b36d47bf9",
+        "lastModified": 1787173051,
+        "narHash": "sha256-PIZh/PLUvnVu+qeerC2SAlx0I+m2ggXALgIOrM1/+J4=",
+        "owner": "LiGoldragon",
+        "repo": "noctalia",
+        "rev": "9778437e8bd326d6d82340fff6b0400eee2caf6f",
         "type": "github"
       },
       "original": {
-        "owner": "noctalia-dev",
-        "repo": "noctalia-shell",
+        "owner": "LiGoldragon",
+        "repo": "noctalia",
+        "rev": "9778437e8bd326d6d82340fff6b0400eee2caf6f",
         "type": "github"
       }
     },

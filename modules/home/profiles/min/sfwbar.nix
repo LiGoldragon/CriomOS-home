@@ -24,11 +24,10 @@ lib.mkIf behavesAs.edge {
     systemd.enable = false;
     settings = {
       theme = {
-        # Stylix supplies a palette and, at ordinary priority, a static
-        # `dark`/`light` mode and `custom` source.  These are the user's
-        # declared Noctalia theme choices, so they take precedence without
-        # disabling Stylix's palette or unrelated target settings.
-        mode = lib.mkForce "auto";
+        # Chroma is the sole light/dark authority.  Noctalia consumes its
+        # portal-published external mode, retaining its wallpaper palette
+        # without writing a competing global color-scheme value.
+        mode = lib.mkForce "external";
         source = lib.mkForce "wallpaper";
         wallpaper_scheme = lib.mkForce "m3-rainbow";
       };
@@ -116,8 +115,7 @@ lib.mkIf behavesAs.edge {
   xdg.dataFile = {
     "noctalia/plugins/listener-level/plugin.toml".source =
       ./noctalia-plugins/listener-level/plugin.toml;
-    "noctalia/plugins/listener-level/level.luau".source =
-      listenerLevelWidget;
+    "noctalia/plugins/listener-level/level.luau".source = listenerLevelWidget;
   };
 
   services.mako = {

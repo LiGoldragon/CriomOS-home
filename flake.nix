@@ -33,7 +33,7 @@
     # Compositor + shell.
     niri-flake.url = "github:sodiboo/niri-flake";
     niri-flake.inputs.nixpkgs.follows = "nixpkgs";
-    noctalia.url = "github:noctalia-dev/noctalia-shell";
+    noctalia.url = "github:LiGoldragon/noctalia/9778437e8bd326d6d82340fff6b0400eee2caf6f";
     noctalia.inputs.nixpkgs.follows = "nixpkgs";
 
     # Styling.
@@ -143,7 +143,7 @@
     # Chroma — unified visual-state daemon (theme + warmth + brightness).
     # Replaces darkman + the nightshift-* services + the brightness shell
     # wrapper. Consumed in modules/home/profiles/min/chroma.nix.
-    chroma.url = "github:LiGoldragon/chroma?ref=main";
+    chroma.url = "github:LiGoldragon/chroma/eea85f4aae5a";
     chroma.inputs.nixpkgs.follows = "nixpkgs";
 
     # Spirit owns the coherent daemon, judge, judge-config, and provider
