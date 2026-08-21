@@ -501,6 +501,7 @@
         checks
         // {
           chroma-dotos-config = checkPkgs.callPackage ./checks/chroma-dotos-config { inherit inputs; };
+          default-opener = checkPkgs.callPackage ./checks/default-opener { inherit inputs; };
           listener-dictation-bindings = checkPkgs.callPackage ./checks/listener-dictation-bindings {
             inherit inputs;
           };

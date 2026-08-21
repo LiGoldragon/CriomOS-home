@@ -162,10 +162,6 @@ let
     waylandSupport = true;
   };
 
-  desktopOpen = pkgs.writeShellScriptBin "xdg-open" ''
-    exec ${pkgs.handlr-regex}/bin/handlr open "$@"
-  '';
-
   fontPackages = with pkgs; [
     dejavu_fonts
     inter
@@ -189,8 +185,6 @@ let
   '';
 
   modernGraphicalPackages = with pkgs; [
-    (lib.hiPrio desktopOpen)
-    handlr-regex
     mpv
     # ctags
     swaylock
@@ -449,7 +443,10 @@ let
   # consolidation.
 
 in
-mkIf size.min {
+{
+  imports = [ ./default-opener.nix ];
+
+  config = mkIf size.min {
   fonts.fontconfig = {
     enable = true;
     # TODO
@@ -704,11 +701,6 @@ mkIf size.min {
       ];
 
     file = {
-      ".local/bin/xdg-open" = {
-        source = "${desktopOpen}/bin/xdg-open";
-        executable = true;
-      };
-
       ".config/IJHack/QtPass.conf".text = ''
         [General]
         autoclearSeconds=20
@@ -826,18 +818,6 @@ mkIf size.min {
     configFile = {
       "fontconfig/conf.d/10-CriomOS-fonts-paths.conf".text = mkFontConf;
 
-      "uwsm/env".text = ''
-        export SSH_AUTH_SOCK="''${XDG_RUNTIME_DIR}/gnupg/S.gpg-agent.ssh"
-        export XDG_SESSION_DESKTOP=niri
-        export NIXOS_OZONE_WL=1
-        export ELECTRON_OZONE_PLATFORM_HINT=wayland
-        export QT_QPA_PLATFORM=wayland
-        export QT_WAYLAND_DISABLE_WINDOWDECORATION=1
-        export GDK_BACKEND=wayland
-        export SDL_VIDEODRIVER=wayland
-        export MOZ_ENABLE_WAYLAND=1
-        export _JAVA_AWT_WM_NONREPARENTING=1
-      '';
     };
 
     configFile."handlr/handlr.toml".text = ''
@@ -848,7 +828,6 @@ mkIf size.min {
       enable = true;
       defaultApplications =
         let
-          defaultBrowser = "chromium.desktop";
           defaultMailer = "evolution.desktop";
           defaultAudioPlayer = "mpv.desktop";
         in
@@ -862,21 +841,6 @@ mkIf size.min {
           "application/epub+zip" = "calibre-ebook-viewer.desktop";
           "application/pdf" = "org.pwmt.zathura-pdf-mupdf.desktop";
 
-          "text/html" = defaultBrowser;
-          "x-scheme-handler/http" = defaultBrowser;
-          "x-scheme-handler/https" = defaultBrowser;
-          "x-scheme-handler/ftp" = defaultBrowser;
-          "x-scheme-handler/chrome" = defaultBrowser;
-          "application/x-extension-htm" = defaultBrowser;
-          "application/x-extension-html" = defaultBrowser;
-          "application/x-extension-shtml" = defaultBrowser;
-          "application/xhtml+xml" = defaultBrowser;
-          "application/x-extension-xhtml" = defaultBrowser;
-          "application/x-extension-xht" = defaultBrowser;
-
-          "x-scheme-handler/about" = defaultBrowser;
-          "x-scheme-handler/unknown" = defaultBrowser;
-
           "x-scheme-handler/mailto" = defaultMailer;
           "x-scheme-handler/news" = defaultMailer;
           "x-scheme-handler/snews" = defaultMailer;
@@ -888,5 +852,6 @@ mkIf size.min {
         };
     };
 
+  };
   };
 }
