@@ -255,6 +255,75 @@ immutable_declares_current_managed_extensions() {
       "$immutable_target" >/dev/null 2>&1
 }
 
+claude_extension_target() {
+  candidate_target="$1"
+  [ -f "$candidate_target/package.json" ] && @JQ@ -e \
+    '(.publisher? | strings | ascii_downcase) == "anthropic"
+     and (.name? | strings) == "claude-code"
+     and (.version? | strings | test("^[0-9]+[.][0-9]+[.][0-9]+(-[0-9A-Za-z-]+([.][0-9A-Za-z-]+)*)?([+][0-9A-Za-z-]+([.][0-9A-Za-z-]+)*)?$") )' \
+    "$candidate_target/package.json" >/dev/null 2>&1
+}
+
+contradictory_managed_state_is_recoverable() {
+  # A historical interrupted activation can leave three independently
+  # managed versions: the manifest names one version while retaining another
+  # target, the versioned link resolves to the named version, and Home
+  # declares a newer current version.  This is recoverable only when every
+  # participant is independently authenticated.  In particular, a lookalike
+  # link, root, immutable declaration, or extra manifest row remains
+  # fail-closed.
+  [ -f "$manifest" ] && [ ! -L "$manifest" ] || return 1
+  [ "$(@COREUTILS@/bin/wc -c < "$manifest")" = "$(@COREUTILS@/bin/tr -d '\000' < "$manifest" | @COREUTILS@/bin/wc -c)" ] || return 1
+  [ "$(@COREUTILS@/bin/head -n1 "$manifest")" = v1 ] || return 1
+  manifest_rows="$(@COREUTILS@/bin/tail -n +2 "$manifest")"
+  [ -n "$manifest_rows" ] && [ "$(printf '%s\n' "$manifest_rows" | @COREUTILS@/bin/wc -l)" -eq 1 ] || return 1
+  manifest_tabs="${manifest_rows//[^$'\t']/}"
+  [ "${#manifest_tabs}" -eq 3 ] || return 1
+  IFS=$'\t' read -r manifest_owner manifest_version manifest_name manifest_target manifest_extra <<< "$manifest_rows"
+  [ -z "$manifest_extra" ] \
+    && valid_manifest_entry "$manifest_owner" "$manifest_version" "$manifest_name" "$manifest_target" \
+    || return 1
+  [ "$manifest_name" != "$desired" ] || return 1
+
+  old_link="$ext_dir/$manifest_name"
+  old_root="$root_dir/$manifest_name"
+  [ -L "$old_link" ] && [ -L "$old_root" ] || return 1
+  old_link_raw="$(@READLINK@ "$old_link" 2>/dev/null || true)"
+  old_link_target="$(@READLINK@ -f "$old_link" 2>/dev/null || true)"
+  case "$old_link_raw" in /nix/store/*) ;; *) return 1;; esac
+  valid_target "$old_link_target" \
+    && manifest_target_is_claude_extension "$manifest_version" "$old_link_target" \
+    && root_retains_target "$old_root" "$manifest_target" \
+    && claude_extension_target "$manifest_target" \
+    || return 1
+
+  # The current declaration authenticates both Home's stable target and the
+  # immutable registry.  Refuse to create either current owned name if a
+  # collision is already present.
+  immutable_declares_current_managed_extensions || return 1
+  link_missing "$ext_dir/$desired" && root_missing "$root_dir/$desired" || return 1
+}
+
+recover_contradictory_managed_state() {
+  contradictory_managed_state_is_recoverable || return 1
+
+  # The current names were proved absent above. `ln` still refuses a writer
+  # which races in after the proof; no existing extension entry is replaced.
+  @COREUTILS@/bin/ln -s "$target" "$ext_dir/$desired" || return 1
+  if ! register_root "$root_dir/$desired" "$target"; then
+    @COREUTILS@/bin/rm -f "$ext_dir/$desired"
+    return 1
+  fi
+
+  # Once the exact current tuple is rooted, make it the sole lifecycle record
+  # before removing the two fully authenticated, obsolete owner entries.
+  tmp_manifest="$manifest.tmp.$$"
+  { printf 'v1\n'; printf 'managed\t%s\t%s\t%s\n' "$version" "$desired" "$target"; } > "$tmp_manifest"
+  @COREUTILS@/bin/mv -f "$tmp_manifest" "$manifest"
+  manifest_is_valid || return 1
+  @COREUTILS@/bin/rm -f "$old_link" "$old_root"
+}
+
 repair_missing_manifest_roots() {
   # Scan the complete manifest into a repair plan before changing any path.
   # A direct owned link can recover its missing root. A sole v1 tuple can
@@ -616,8 +685,10 @@ reconcile() {
   [ "$bootstrap_only" -eq 1 ] && exit 0
   if [ -e "$manifest" ]; then
     # Do not create, retarget, or remove anything from an untrusted manifest.
-    repair_missing_manifest_roots || return 0
-    manifest_is_valid || return 0
+    if ! repair_missing_manifest_roots || ! manifest_is_valid; then
+      recover_contradictory_managed_state || return 0
+      manifest_is_valid || return 0
+    fi
     if [ "$manifest_header" = v1-bootstrap ] && [ -z "$manifest_prior_entries" ]; then
       [ "$dry" -eq 1 ] && return 0
       @SED@ '1s/.*/v1-ready/' "$manifest" > "$manifest.tmp.$$"

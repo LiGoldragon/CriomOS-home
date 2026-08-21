@@ -198,6 +198,24 @@ let
     mkdir -p $out/extension
     printf '{"version":"2.1.223"}\n' > $out/extension/package.json
   '';
+  contradictoryDeclaredVersion = "2.1.226";
+  contradictoryLinkVersion = "2.1.223";
+  contradictoryRootVersion = "2.1.220";
+  contradictoryDeclaredExt = pkgs.runCommand "claude-extension-contradictory-declared" { } ''
+    mkdir -p $out/extension
+    printf '{"name":"claude-code","publisher":"Anthropic","version":"${contradictoryDeclaredVersion}"}\n' > $out/extension/package.json
+  '';
+  contradictoryLinkExt = pkgs.runCommand "claude-extension-contradictory-link" { } ''
+    mkdir -p $out/extension
+    printf '{"name":"claude-code","publisher":"Anthropic","version":"${contradictoryLinkVersion}"}\n' > $out/extension/package.json
+  '';
+  contradictoryRootExt = pkgs.runCommand "claude-extension-contradictory-root" { } ''
+    mkdir -p $out/extension
+    printf '{"name":"claude-code","publisher":"Anthropic","version":"${contradictoryRootVersion}"}\n' > $out/extension/package.json
+  '';
+  contradictoryImmutable = pkgs.writeText "vscodium-immutable-contradictory-fixture.json" ''
+    [{"identifier":{"id":"anthropic.claude-code"},"version":"${contradictoryDeclaredVersion}","relativeLocation":"anthropic.claude-code"},{"identifier":{"id":"openai.chatgpt"},"version":"${transitionOpenaiVersion}","relativeLocation":"openai.chatgpt"}]
+  '';
   transitionPreviousVersion = "7.8.9";
   transitionCurrentVersion = "7.9.0";
   transitionLegacyAliasVersion = "7.7.0";
@@ -231,6 +249,9 @@ let
   extCPath = "${extC}/extension";
   extDPath = "${extD}/extension";
   extEPath = "${extE}/extension";
+  contradictoryDeclaredExtPath = "${contradictoryDeclaredExt}/extension";
+  contradictoryLinkExtPath = "${contradictoryLinkExt}/extension";
+  contradictoryRootExtPath = "${contradictoryRootExt}/extension";
   transitionPreviousExtPath = "${transitionPreviousExt}/extension";
   transitionCurrentExtPath = "${transitionCurrentExt}/extension";
   adversarialExtPath = "${adversarialExt}/extension";
@@ -835,6 +856,67 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
     cmp "$wrong_root_ext/.extensions-immutable.json" "$wrong_root_state/extensions-immutable.registry.json"
     test ! -e "$wrong_root_launch/refresh-gap"
     test ! -e "$wrong_root_launch/codium.pid"
+    # A captured interrupted activation can contradict itself across three
+    # lifecycle-owned versions. The current immutable declaration and stable
+    # Home link authenticate the replacement; the old direct link, root, and
+    # manifest grammar authenticate only the obsolete records that may be
+    # removed. Unmanaged extension and settings data survive unchanged.
+    contradictory_home="$TMPDIR/contradictory-managed"
+    contradictory_ext="$contradictory_home/.vscode-oss/extensions"
+    contradictory_state="$contradictory_home/state"
+    contradictory_roots="$contradictory_state/gcroots"
+    contradictory_launch="$TMPDIR/contradictory-managed-launch"
+    mkdir -p "$contradictory_ext" "$contradictory_roots" "$contradictory_launch" \
+      "$contradictory_home/.config/VSCodium/User"
+    ln -s ${contradictoryDeclaredExtPath} "$contradictory_ext/anthropic.claude-code"
+    ln -s ${contradictoryLinkExtPath} \
+      "$contradictory_ext/anthropic.claude-code-${contradictoryLinkVersion}-linux-x64"
+    ln -s ${contradictoryRootExt} \
+      "$contradictory_roots/anthropic.claude-code-${contradictoryLinkVersion}-linux-x64"
+    ln -s ${transitionOpenaiExtPath} "$contradictory_ext/openai.chatgpt"
+    ln -s ${contradictoryImmutable} "$contradictory_ext/.extensions-immutable.json"
+    printf 'v1\nmanaged\t${contradictoryLinkVersion}\tanthropic.claude-code-${contradictoryLinkVersion}-linux-x64\t%s\n' \
+      ${contradictoryRootExtPath} > "$contradictory_state/manifest"
+    printf preserved > "$contradictory_ext/unmanaged-sentinel"
+    printf '{"preserved":true}\n' > "$contradictory_home/.config/VSCodium/User/settings.json"
+    ${pkgs.jq}/bin/jq -n --arg ext "$contradictory_ext" \
+      '[{identifier: {id: "anthropic.claude-code"}, version: "${contradictoryRootVersion}", relativeLocation: "anthropic.claude-code-${contradictoryRootVersion}-linux-x64", location: {path: ($ext + "/anthropic.claude-code-${contradictoryRootVersion}-linux-x64")}}, {identifier: {id: "openai.chatgpt"}, version: "${transitionPreviousOpenaiVersion}", relativeLocation: "openai.chatgpt", location: {path: ($ext + "/openai.chatgpt")}}, {identifier: {id: "fixture.unmanaged"}, version: "9.8.7", relativeLocation: "fixture.unmanaged", location: {path: ($ext + "/fixture.unmanaged")}, metadata: {preserve: true}}]' \
+      > "$contradictory_ext/extensions.json"
+    ${pkgs.jq}/bin/jq -S \
+      '[.[] | select(.identifier.id == "fixture.unmanaged")]' \
+      "$contradictory_ext/extensions.json" > "$contradictory_launch/unmanaged-before.json"
+    export FAKE_LAUNCH_DIR="$contradictory_launch" FAKE_LOCK="$contradictory_state/lifecycle.lock"
+    env \
+      CRIOMOS_VSCODIUM_EXTENSIONS_DIR="$contradictory_ext" \
+      CRIOMOS_VSCODIUM_STATE_DIR="$contradictory_state" \
+      CRIOMOS_VSCODIUM_GCROOT_DIR="$contradictory_roots" \
+      CRIOMOS_VSCODIUM_LOCK_FILE="$contradictory_state/lifecycle.lock" \
+      "${lifecycle}" --activation-refresh
+    env \
+      CRIOMOS_VSCODIUM_EXTENSIONS_DIR="$contradictory_ext" \
+      CRIOMOS_VSCODIUM_STATE_DIR="$contradictory_state" \
+      CRIOMOS_VSCODIUM_GCROOT_DIR="$contradictory_roots" \
+      CRIOMOS_VSCODIUM_LOCK_FILE="$contradictory_state/lifecycle.lock" \
+      "${lifecycle}" --activation-refresh
+    test -L "$contradictory_ext/anthropic.claude-code-${contradictoryDeclaredVersion}-linux-x64"
+    test "$(readlink -f "$contradictory_ext/anthropic.claude-code-${contradictoryDeclaredVersion}-linux-x64")" = "$(readlink -f ${contradictoryDeclaredExtPath})"
+    test -L "$contradictory_roots/anthropic.claude-code-${contradictoryDeclaredVersion}-linux-x64"
+    test "$(readlink -f "$contradictory_roots/anthropic.claude-code-${contradictoryDeclaredVersion}-linux-x64")" = "$(readlink -f ${contradictoryDeclaredExt})"
+    test ! -e "$contradictory_ext/anthropic.claude-code-${contradictoryLinkVersion}-linux-x64"
+    test ! -e "$contradictory_roots/anthropic.claude-code-${contradictoryLinkVersion}-linux-x64"
+    test "$(cat "$contradictory_ext/unmanaged-sentinel")" = preserved
+    test "$(cat "$contradictory_home/.config/VSCodium/User/settings.json")" = '{"preserved":true}'
+    test "$(head -n1 "$contradictory_state/manifest")" = v1
+    ${pkgs.gnugrep}/bin/grep -Fq \
+      $'managed\t${contradictoryDeclaredVersion}\tanthropic.claude-code-${contradictoryDeclaredVersion}-linux-x64\t' \
+      "$contradictory_state/manifest"
+    ${pkgs.jq}/bin/jq -S \
+      '[.[] | select(.identifier.id == "fixture.unmanaged")]' \
+      "$contradictory_ext/extensions.json" > "$contradictory_launch/unmanaged-after.json"
+    cmp "$contradictory_launch/unmanaged-before.json" "$contradictory_launch/unmanaged-after.json"
+    cmp "$contradictory_ext/.extensions-immutable.json" "$contradictory_state/extensions-immutable.registry.json"
+    test ! -e "$contradictory_launch/refresh-gap"
+    test ! -e "$contradictory_launch/codium.pid"
     # A failed replacement restores the old owned stale root exactly and does
     # not make the registry ready.
     failed_root_home="$TMPDIR/failed-root"
