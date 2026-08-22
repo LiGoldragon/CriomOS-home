@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  inputs,
   user,
   textScale,
   ...
@@ -11,8 +12,12 @@ let
   inherit (textScale) emacsHeight;
 
   emacsBase = pkgs.emacs-pgtk;
+  emacsPackageSet = pkgs.emacsPackagesFor emacsBase;
+  chromaTheme = inputs.chroma-emacs.lib.mkChromaTheme {
+    inherit emacsPackageSet;
+  };
 
-  emacsWithPackages = (pkgs.emacsPackagesFor emacsBase).withPackages (
+  emacsWithPackages = emacsPackageSet.withPackages (
     epkgs: with epkgs; [
       # Modal editing
       xah-fly-keys
@@ -103,6 +108,7 @@ let
 
       # Theme
       base16-theme
+      chromaTheme
 
       # Misc
       highlight-indentation
@@ -307,20 +313,8 @@ let
     (use-package password-store)
     (use-package base16-theme :demand t)
 
-    ;; Load ignis theme from darkman state at startup.
-    (let ((theme-dir (expand-file-name ".config/emacs-ignis-themes" "~")))
-      (when (file-directory-p theme-dir)
-        (add-to-list 'custom-theme-load-path theme-dir)
-        (let ((mode-file (expand-file-name "darkman/current-mode"
-                           (or (getenv "XDG_STATE_HOME")
-                               (expand-file-name ".local/state" "~")))))
-          (when (file-readable-p mode-file)
-            (let ((mode (string-trim (with-temp-buffer
-                                       (insert-file-contents mode-file)
-                                       (buffer-string)))))
-              (pcase mode
-                ("dark" (load-theme 'ignis-dark t))
-                ("light" (load-theme 'ignis-light t))))))))
+    ${builtins.readFile ../../emacs/chroma-theme-init.el}
+    (chroma-theme-mode 1)
 
     (use-package clojure-ts-mode :custom (clojure-ts-ensure-grammars nil))
 

@@ -1,0 +1,165 @@
+set -euo pipefail
+
+if [[ "${CHROMA_EMACS_RESIDENT_INSIDE:-}" != 1 ]]; then
+  export CHROMA_EMACS_RESIDENT_INSIDE=1
+  exec dbus-run-session --config-file="$CHROMA_EMACS_DBUS_SESSION_CONF" -- "$0" "$@"
+fi
+
+test_root="$(mktemp -d)"
+cleanup() {
+  [[ -n "${emacs_socket_name:-}" ]] && emacsclient --socket-name "$emacs_socket_name" --eval '(kill-emacs)' >/dev/null 2>&1 || true
+  [[ -n "${chroma_pid:-}" ]] && kill "$chroma_pid" >/dev/null 2>&1 || true
+  [[ -n "${gamma_pid:-}" ]] && kill "$gamma_pid" >/dev/null 2>&1 || true
+}
+trap cleanup EXIT
+
+export HOME="$test_root/home"
+export XDG_CONFIG_HOME="$HOME/.config"
+export XDG_STATE_HOME="$HOME/.local/state"
+export XDG_CACHE_HOME="$HOME/.cache"
+export XDG_RUNTIME_DIR="$test_root/runtime"
+mkdir -p "$XDG_CONFIG_HOME/chroma" "$XDG_CONFIG_HOME/emacs-ignis-themes" "$XDG_STATE_HOME" "$XDG_CACHE_HOME" "$XDG_RUNTIME_DIR"
+chmod 700 "$XDG_RUNTIME_DIR"
+
+events="$test_root/events"
+mkdir -p "$events"
+coproc EVENT_WATCH { stdbuf -oL inotifywait --monitor --quiet --event close_write --format '%f' "$events"; }
+
+await_event() {
+  local received
+  if ! IFS= read -r -t 20 -u "${EVENT_WATCH[0]}" received; then
+    echo "timed out waiting for Emacs projection event" >&2
+    return 1
+  fi
+  test "$received" = applied
+}
+
+write_theme() {
+  local name="$1"
+  local background="$2"
+  cat > "$XDG_CONFIG_HOME/emacs-ignis-themes/$name-theme.el" <<EOF
+(deftheme $name)
+(custom-theme-set-faces '$name '(default ((t (:foreground "#eeeeee" :background "$background")))))
+(provide-theme '$name)
+EOF
+}
+
+write_theme ignis-light '#f4f0e8'
+write_theme ignis-dark '#181818'
+cat > "$XDG_CONFIG_HOME/emacs-ignis-themes/chroma-test-overlay-theme.el" <<'EOF'
+(deftheme chroma-test-overlay)
+(custom-theme-set-faces
+ 'chroma-test-overlay
+ '(mode-line ((t (:foreground "#ffffff" :background "#335577")))))
+(provide-theme 'chroma-test-overlay)
+EOF
+
+cat > "$XDG_CONFIG_HOME/chroma/config.dotos" <<'EOF'
+(Config
+  (Theme
+    (Concerns Terminal)
+    (Palettes
+      (Dark (Base00 #000000) (Base01 #111111) (Base02 #222222) (Base03 #333333) (Base04 #444444) (Base05 #dddddd) (Base06 #eeeeee) (Base07 #ffffff) (Base08 #ff0000) (Base09 #ff8800) (Base0A #ffff00) (Base0B #00ff00) (Base0C #00ffff) (Base0D #0000ff) (Base0E #ff00ff) (Base0F #aa0000))
+      (Light (Base00 #f4f0e8) (Base01 #e8e0d8) (Base02 #ddd5ce) (Base03 #887a70) (Base04 #6a5e55) (Base05 #3d3530) (Base06 #2a2420) (Base07 #1a1510) (Base08 #cc0044) (Base09 #d06600) (Base0A #b89000) (Base0B #1a8a30) (Base0C #9930cc) (Base0D #b03080) (Base0E #8822bb) (Base0F #cc3355)))
+    (Adapters)
+    (FontPointSize 12)
+    (Schedule (Manual Light)))
+  (Warmth (Schedule (Manual Neutral)))
+  (Brightness (Schedule (Manual Bright))))
+EOF
+
+export CHROMA_SANDBOX_FAKE_GAMMA_READY="$test_root/gamma-ready"
+chroma-emacs-test-gamma &
+gamma_pid=$!
+while [[ ! -e "$CHROMA_SANDBOX_FAKE_GAMMA_READY" ]]; do
+  inotifywait --quiet --event create --event close_write "$(dirname "$CHROMA_SANDBOX_FAKE_GAMMA_READY")" >/dev/null
+done
+
+start_chroma() {
+  chroma-daemon >"$test_root/chroma.log" 2>&1 &
+  chroma_pid=$!
+}
+
+start_chroma
+while [[ ! -S "$XDG_RUNTIME_DIR/chroma.sock" ]]; do
+  inotifywait --quiet --event create "$XDG_RUNTIME_DIR" >/dev/null
+done
+
+cat > "$HOME/test-init.el" <<EOF
+(load "$CHROMA_EMACS_TEST_THEME_INIT")
+(advice-add 'chroma-theme--handle-snapshot :after
+            (lambda (&rest _) (with-temp-file "$events/applied" (insert "applied"))))
+(chroma-theme-mode 1)
+EOF
+
+start_emacs() {
+  emacs_socket_name="$1"
+  emacs --quick --daemon="$emacs_socket_name" --load "$HOME/test-init.el"
+  emacsclient --socket-name "$emacs_socket_name" --eval '(progn (with-temp-file (expand-file-name "emacs-ready" (getenv "XDG_RUNTIME_DIR")) (insert "ready")) t)'
+}
+
+status_is_applied() {
+  local revision="$1"
+  local status
+  status="$(gdbus call --session --dest io.github.LiGoldragon.Chroma \
+    --object-path /io/github/LiGoldragon/Chroma/Theme \
+    --method io.github.LiGoldragon.Chroma.Theme1.GetProjectionStatus emacs \
+    )"
+  echo "projection status: $status" >&2
+  if ! grep -F "'Applied', uint64 $revision" <<<"$status" >/dev/null; then
+    echo "expected Applied revision $revision, received: $status" >&2
+    return 1
+  fi
+}
+
+assert_emacs_state() {
+  local expected_theme="$1"
+  local expected_background="$2"
+  local expected_overlay="$3"
+  local state
+  state="$(emacsclient --socket-name "$emacs_socket_name" --eval \
+    "(prin1-to-string (list (if (memq '$expected_theme custom-enabled-themes) t nil) (if (memq 'chroma-test-overlay custom-enabled-themes) t nil) (face-attribute 'default :background nil t) (face-attribute 'mode-line :background nil t)))" \
+    )"
+  local expected_fragment="t $expected_overlay \\\"$expected_background\\\""
+  if [[ "$expected_overlay" == t ]]; then
+    expected_fragment+=" \\\"#335577\\\""
+  fi
+  if ! grep -F "$expected_fragment" <<<"$state" >/dev/null; then
+    echo "expected Emacs state for $expected_theme, received: $state" >&2
+    return 1
+  fi
+}
+
+# Late startup: Chroma owns the bus before the resident Emacs daemon arrives.
+start_emacs chroma-resident-one
+await_event
+status_is_applied 0
+assert_emacs_state ignis-light '#f4f0e8' nil
+
+emacsclient --socket-name "$emacs_socket_name" --eval "(load-theme 'chroma-test-overlay t)" >/dev/null
+chroma 'SetTheme.(Dark)' >/dev/null
+await_event
+status_is_applied 1
+assert_emacs_state ignis-dark '#181818' t
+
+# Chroma restart: owner change must cause Emacs re-registration and snapshot reconciliation.
+kill "$chroma_pid"
+wait "$chroma_pid" || true
+unset chroma_pid
+start_chroma
+await_event
+status_is_applied 1
+assert_emacs_state ignis-dark '#181818' t
+
+chroma 'SetTheme.(Light)' >/dev/null
+await_event
+status_is_applied 2
+assert_emacs_state ignis-light '#f4f0e8' t
+
+# A new daemon instance represents an Emacs restart and must reconcile the current snapshot.
+emacsclient --socket-name "$emacs_socket_name" --eval '(kill-emacs)' >/dev/null
+emacs_socket_name=''
+start_emacs chroma-resident-two
+await_event
+status_is_applied 2
+assert_emacs_state ignis-light '#f4f0e8' nil

@@ -424,17 +424,38 @@
         "rust-build": "rust-build"
       },
       "locked": {
-        "lastModified": 1787171953,
-        "narHash": "sha256-3rT4dhrvQqh827taFJU8TZfWJvV1oeP40xce2JplSCo=",
+        "lastModified": 1787441948,
+        "narHash": "sha256-qzt5GvWoUoNbQxkJ+H0xv1pyiVxBYTL6odOghMhkoG0=",
         "owner": "LiGoldragon",
         "repo": "chroma",
-        "rev": "eea85f4aae5a21813314a128faa5dce1e22eff48",
+        "rev": "6a8e4c6a9bb0be0a76baa43b975df91edf6752f9",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
-        "ref": "eea85f4aae5a",
         "repo": "chroma",
+        "rev": "6a8e4c6a9bb0be0a76baa43b975df91edf6752f9",
+        "type": "github"
+      }
+    },
+    "chroma-emacs": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1787439109,
+        "narHash": "sha256-dxXVb4EiCclZwU+fId+UkmMa4D6wRbVq4Sz5P48Uays=",
+        "owner": "LiGoldragon",
+        "repo": "chroma-emacs",
+        "rev": "d432f95db5837e685e32afbf5790060fb15a3703",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LiGoldragon",
+        "repo": "chroma-emacs",
+        "rev": "d432f95db5837e685e32afbf5790060fb15a3703",
         "type": "github"
       }
     },
@@ -2289,6 +2310,7 @@
         "annas-mcp": "annas-mcp",
         "blueprint": "blueprint",
         "chroma": "chroma",
+        "chroma-emacs": "chroma-emacs",
         "claude-answers": "claude-answers",
         "claude-code-vsix": "claude-code-vsix",
         "codex-chatgpt-vsix": "codex-chatgpt-vsix",

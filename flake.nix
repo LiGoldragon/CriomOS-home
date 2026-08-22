@@ -143,8 +143,13 @@
     # Chroma — unified visual-state daemon (theme + warmth + brightness).
     # Replaces darkman + the nightshift-* services + the brightness shell
     # wrapper. Consumed in modules/home/profiles/min/chroma.nix.
-    chroma.url = "github:LiGoldragon/chroma/eea85f4aae5a";
+    chroma.url = "github:LiGoldragon/chroma/6a8e4c6a9bb0be0a76baa43b975df91edf6752f9";
     chroma.inputs.nixpkgs.follows = "nixpkgs";
+
+    # Resident Emacs projection for Chroma's desired theme state.  Home owns
+    # the concrete Ignis themes and supplies this package its exact Emacs set.
+    chroma-emacs.url = "github:LiGoldragon/chroma-emacs/d432f95db5837e685e32afbf5790060fb15a3703";
+    chroma-emacs.inputs.nixpkgs.follows = "nixpkgs";
 
     # Spirit owns the coherent daemon, judge, judge-config, and provider
     # derivation set. Home supplies paths and unit policy but never selects
@@ -501,6 +506,7 @@
         checks
         // {
           chroma-dotos-config = checkPkgs.callPackage ./checks/chroma-dotos-config { inherit inputs; };
+          chroma-emacs-resident = checkPkgs.callPackage ./checks/chroma-emacs-resident { inherit inputs; };
           default-opener = checkPkgs.callPackage ./checks/default-opener { inherit inputs; };
           listener-dictation-bindings = checkPkgs.callPackage ./checks/listener-dictation-bindings {
             inherit inputs;

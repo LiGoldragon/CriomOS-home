@@ -43,7 +43,6 @@ let
   moduleContent = if moduleResult ? content then moduleResult.content else moduleResult;
   activation = builtins.unsafeDiscardStringContext moduleContent.home.activation.chromaConfigSeed.data;
   dconfPath = builtins.unsafeDiscardStringContext "${pkgs.dconf}/bin/dconf";
-  emacsclientPath = builtins.unsafeDiscardStringContext "${pkgs.emacs-pgtk}/bin/emacsclient";
   assertions = [
     {
       condition = lib.hasInfix "(Base00 #000000)" activation;
@@ -62,14 +61,6 @@ let
       message = "Chroma dconf path must not be quoted";
     }
     {
-      condition = lib.hasInfix "(Emacsclient ${emacsclientPath})" activation;
-      message = "Chroma emacsclient path must be a bare DOTOS atom";
-    }
-    {
-      condition = !(lib.hasInfix "(Emacsclient \"" activation);
-      message = "Chroma emacsclient path must not be quoted";
-    }
-    {
       condition = !(lib.hasInfix "(Dark \"" activation);
       message = "Chroma Ghostty dark template path must not be quoted";
     }
@@ -78,8 +69,8 @@ let
       message = "Chroma Ghostty light template path must not be quoted";
     }
     {
-      condition = lib.hasInfix "(Concerns Terminal Desktop Ghostty Emacs Pi)" activation;
-      message = "Chroma config must enable the Pi live theme concern";
+      condition = lib.hasInfix "(Concerns Terminal Desktop Ghostty Pi)" activation;
+      message = "Chroma config must leave Emacs to the resident D-Bus projection";
     }
     {
       condition = lib.hasInfix "(RegistryDirectory (RuntimeRelative chroma/pi-live-theme.d))" activation;

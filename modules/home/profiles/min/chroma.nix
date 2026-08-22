@@ -107,13 +107,11 @@ let
   defaultConfig = ''
     (Config
       (Theme
-        (Concerns Terminal Desktop Ghostty Emacs Pi)
+        (Concerns Terminal Desktop Ghostty Pi)
         (Palettes
     ${darkPalette}
     ${lightPalette})
-        (Adapters
-          (Dconf ${pkgs.dconf}/bin/dconf)
-          (Emacsclient ${pkgs.emacs-pgtk}/bin/emacsclient))
+        (Adapters (Dconf ${pkgs.dconf}/bin/dconf))
         (FontPointSize ${toString fontPt})
         (GhosttyConfigTemplates
           (Dark ${ghosttyDarkConfig})

@@ -144,6 +144,20 @@ native-compilation is forbidden: it invalidates on every Nix rebuild.
 (Emacs *internals* remain owned by CriomOS-emacs; this is the build-time
 artefact policy for the home-managed config.)
 
+### Resident Chroma theme projection
+
+CriomOS-home materializes the concrete `ignis-light` and `ignis-dark` themes
+in the user's Emacs theme directory and supplies the `chroma-theme` package
+with the same `emacsPackagesFor emacs-pgtk` package set used by the Emacs
+program and service. The package is required by the native-compiled Home init,
+configured with those two symbols, and enabled as `chroma-theme-mode`.
+
+Chroma remains the desired Light/Dark authority on the same-user session bus;
+the resident Emacs consumer applies only the configured Ignis theme pair and
+preserves unrelated overlays. Home owns no Darkman state reader, one-shot
+`emacsclient` adapter, protocol compatibility path, or systemd ordering edge
+for this projection.
+
 ## Agent and browser tooling
 
 Coding-agent harnesses and their extensions are packaged declaratively
