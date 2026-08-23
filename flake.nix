@@ -135,6 +135,12 @@
     codex-cli.url = "github:sadjow/codex-cli-nix";
     codex-cli.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Agent harness managers.  Herdr supplies its official tagged flake;
+    # Orca remains packaged in its dedicated repository and Home consumes
+    # only that pinned package output.
+    herdr.url = "github:herdrdev/herdr/v0.8.2";
+    orca-ide.url = "github:Samuka007/nix-orca/249a8d3c1bb2842ddec882ef2c1afd28c426b19e";
+
     # Google Workspace CLI for no-MCP assistant access to Gmail, Drive,
     # Calendar, Docs, Sheets, Slides, Tasks, and People/Contacts.
     google-workspace-cli.url = "github:googleworkspace/cli";

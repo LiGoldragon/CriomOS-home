@@ -338,6 +338,8 @@ let
 
   AIPackages = [
     pkgs.gemini-cli
+    inputs.herdr.packages.${pkgs.stdenv.hostPlatform.system}.herdr
+    inputs.orca-ide.packages.${pkgs.stdenv.hostPlatform.system}.orca-ide
     piPackage
     directClaude
     directCodex
