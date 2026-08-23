@@ -484,13 +484,13 @@
     "claude-code-vsix": {
       "flake": false,
       "locked": {
-        "narHash": "sha256-5j8wQyIuKWE0EqhUJtLk7Zr663BZvK8SjEHhdT5viM0=",
+        "narHash": "sha256-nVgXEhf/Bmo0pTi+PuMKeXM0eZaAPDzq4LMjX8UqYrQ=",
         "type": "file",
-        "url": "https://anthropic.gallerycdn.vsassets.io/extensions/anthropic/claude-code/2.1.235/1787085642251/Microsoft.VisualStudio.Services.VSIXPackage"
+        "url": "https://anthropic.gallerycdn.vsassets.io/extensions/anthropic/claude-code/2.1.241/1787446368098/Microsoft.VisualStudio.Services.VSIXPackage"
       },
       "original": {
         "type": "file",
-        "url": "https://anthropic.gallerycdn.vsassets.io/extensions/anthropic/claude-code/2.1.235/1787085642251/Microsoft.VisualStudio.Services.VSIXPackage"
+        "url": "https://anthropic.gallerycdn.vsassets.io/extensions/anthropic/claude-code/2.1.241/1787446368098/Microsoft.VisualStudio.Services.VSIXPackage"
       }
     },
     "codex-chatgpt-vsix": {
@@ -513,11 +513,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1787094470,
-        "narHash": "sha256-UiHfeA8umiWByi/ijDnfnlGcVSEAhwNv1Gue3h6ey/U=",
+        "lastModified": 1787260212,
+        "narHash": "sha256-cd9PhHDHLOmZEGqRd+zQPGNJHCtFrFWzIreM5IVbwVQ=",
         "owner": "sadjow",
         "repo": "codex-cli-nix",
-        "rev": "cfbeeca2f4dfbbfcc3c1a5b21e61a051ff43533d",
+        "rev": "36fefe14f5549c2751afa313bfcc8582eb025707",
         "type": "github"
       },
       "original": {
@@ -1475,11 +1475,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1787114088,
-        "narHash": "sha256-LYHdEFpZ5Zx6VgKmbhG3SGEUUtV/zksg+YcZT3e9mHg=",
+        "lastModified": 1787508742,
+        "narHash": "sha256-2AnKVZNgXcpcYV1rK9h9DILL6uzJ7PlKYdAs0FtrUS0=",
         "owner": "numtide",
         "repo": "llm-agents.nix",
-        "rev": "c4c6673c4c1ceb69d845fa665a714e1273d0acac",
+        "rev": "aa8a6076962029a05e40abc3742c000877027c60",
         "type": "github"
       },
       "original": {
@@ -1741,11 +1741,11 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1787052956,
-        "narHash": "sha256-fZt7Au28AduGpt7vRfIOcpsHKJ+9cEnuQ2NdWuh0KVc=",
+        "lastModified": 1787209939,
+        "narHash": "sha256-WvvHR4kSQLAbtouMC/ruZ5UpLwlUcY3K4FAllMN+yGk=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "b47ad65d73ab65ded9ab408fe558866d71defee8",
+        "rev": "391b592eb44808b3bd0cb80bb71b63a5a118b8bb",
         "type": "github"
       },
       "original": {

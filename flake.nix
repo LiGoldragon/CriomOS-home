@@ -73,7 +73,7 @@
     # gate entirely.
     claude-code-vsix = {
       type = "file";
-      url = "https://anthropic.gallerycdn.vsassets.io/extensions/anthropic/claude-code/2.1.235/1787085642251/Microsoft.VisualStudio.Services.VSIXPackage";
+      url = "https://anthropic.gallerycdn.vsassets.io/extensions/anthropic/claude-code/2.1.241/1787446368098/Microsoft.VisualStudio.Services.VSIXPackage";
       flake = false;
     };
 

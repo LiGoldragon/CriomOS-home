@@ -130,12 +130,12 @@ pkgs.runCommand "agent-intercom-local-home-contract"
     test -x ${agentIntercom}/bin/coi
     test -x ${graphicalAgentIntercom}/bin/coi
     test -x ${graphicalAgentIntercom}/bin/codex-raw
-    test "$( ${graphicalAgentIntercom}/bin/codex-raw --version )" = 'codex-cli 0.148.0'
+    test "$( ${graphicalAgentIntercom}/bin/codex-raw --version )" = 'codex-cli 0.149.0'
     test -x ${directCodexCliPackage}/bin/codex
     test -x ${graphicalProfilePath}/bin/codex
-    test "$( ${graphicalProfilePath}/bin/codex --version )" = 'codex-cli 0.148.0'
+    test "$( ${graphicalProfilePath}/bin/codex --version )" = 'codex-cli 0.149.0'
     test -x ${graphicalProfilePath}/bin/claude
-    test "$( ${graphicalProfilePath}/bin/claude --version )" = '2.1.235 (Claude Code)'
+    test "$( ${graphicalProfilePath}/bin/claude --version )" = '2.1.241 (Claude Code)'
     test "$(readlink -f ${directCodexCliPackage}/bin/codex)" = "$(readlink -f ${codexCliPackage}/libexec/codex)"
     ! test -e ${agentIntercom}/bin/codex
     test -x ${agentIntercom}/bin/codex-raw
