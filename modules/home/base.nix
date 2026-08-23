@@ -103,11 +103,7 @@ let
     c = light;
   };
 
-  emacsThemeDir = pkgs.runCommand "ignis-emacs-themes" { } ''
-    mkdir -p $out
-    cp ${ignisDarkEmacsTheme} $out/ignis-dark-theme.el
-    cp ${ignisLightEmacsTheme} $out/ignis-light-theme.el
-  '';
+  emacsThemeDir = import ./emacs/ignis-themes.nix { inherit pkgs dark light; };
 
   redactNixStorePaths = pkgs.writeShellScriptBin "redact-nix-store-paths" ''
     exec ${pkgs.gnused}/bin/sed -E "s#/nix/store/[a-z0-9]{32}-[^[:space:]\"'<>)]*#/nix/store/<redacted>#g"

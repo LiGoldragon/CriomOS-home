@@ -158,6 +158,14 @@ preserves unrelated overlays. Home owns no Darkman state reader, one-shot
 `emacsclient` adapter, protocol compatibility path, or systemd ordering edge
 for this projection.
 
+`modules/home/emacs/ignis-themes.nix` is the shared generator and
+materializer for that pair. The resident D-Bus witness copies those generated
+files, rather than maintaining substitute test themes, and proves the enabled
+target, disabled opposite, overlay priority, and rendered face on each
+transition. The Home init compiler records the exact Emacs package closure it
+uses; the same witness verifies that record against both the Emacs program and
+service package, and requires the emitted `init.elc` plus native `.eln`.
+
 ## Agent and browser tooling
 
 Coding-agent harnesses and their extensions are packaged declaratively

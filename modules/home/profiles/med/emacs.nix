@@ -689,6 +689,7 @@ let
       ''
         mkdir -p $out/eln-cache
         cp ${pkgs.writeText "init.el" initEl} $out/init.el
+        printf '%s\n' '${emacsWithPackages}' > $out/emacs-package-closure
 
         export HOME=$TMPDIR
         cd $out

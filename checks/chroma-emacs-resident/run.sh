@@ -21,6 +21,12 @@ export XDG_RUNTIME_DIR="$test_root/runtime"
 mkdir -p "$XDG_CONFIG_HOME/chroma" "$XDG_CONFIG_HOME/emacs-ignis-themes" "$XDG_STATE_HOME" "$XDG_CACHE_HOME" "$XDG_RUNTIME_DIR"
 chmod 700 "$XDG_RUNTIME_DIR"
 
+cp "$CHROMA_EMACS_TEST_THEME_DIRECTORY"/ignis-dark-theme.el "$XDG_CONFIG_HOME/emacs-ignis-themes/"
+cp "$CHROMA_EMACS_TEST_THEME_DIRECTORY"/ignis-light-theme.el "$XDG_CONFIG_HOME/emacs-ignis-themes/"
+test -f "$CHROMA_EMACS_HOME_INIT_COMPILED/init.elc"
+find "$CHROMA_EMACS_HOME_INIT_COMPILED/eln-cache" -type f -name '*.eln' | grep -q .
+test "$(<"$CHROMA_EMACS_HOME_INIT_COMPILED/emacs-package-closure")" = "$CHROMA_EMACS_HOME_PACKAGE"
+
 events="$test_root/events"
 mkdir -p "$events"
 coproc EVENT_WATCH { stdbuf -oL inotifywait --monitor --quiet --event close_write --format '%f' "$events"; }
@@ -34,18 +40,6 @@ await_event() {
   test "$received" = applied
 }
 
-write_theme() {
-  local name="$1"
-  local background="$2"
-  cat > "$XDG_CONFIG_HOME/emacs-ignis-themes/$name-theme.el" <<EOF
-(deftheme $name)
-(custom-theme-set-faces '$name '(default ((t (:foreground "#eeeeee" :background "$background")))))
-(provide-theme '$name)
-EOF
-}
-
-write_theme ignis-light '#f4f0e8'
-write_theme ignis-dark '#181818'
 cat > "$XDG_CONFIG_HOME/emacs-ignis-themes/chroma-test-overlay-theme.el" <<'EOF'
 (deftheme chroma-test-overlay)
 (custom-theme-set-faces
@@ -114,13 +108,14 @@ status_is_applied() {
 
 assert_emacs_state() {
   local expected_theme="$1"
-  local expected_background="$2"
-  local expected_overlay="$3"
+  local opposite_theme="$2"
+  local expected_background="$3"
+  local expected_overlay="$4"
   local state
   state="$(emacsclient --socket-name "$emacs_socket_name" --eval \
-    "(prin1-to-string (list (if (memq '$expected_theme custom-enabled-themes) t nil) (if (memq 'chroma-test-overlay custom-enabled-themes) t nil) (face-attribute 'default :background nil t) (face-attribute 'mode-line :background nil t)))" \
+    "(prin1-to-string (list (if (memq '$expected_theme custom-enabled-themes) t nil) (if (memq '$opposite_theme custom-enabled-themes) t nil) (if (memq 'chroma-test-overlay custom-enabled-themes) t nil) (face-attribute 'default :background nil t) (face-attribute 'mode-line :background nil t)))" \
     )"
-  local expected_fragment="t $expected_overlay \\\"$expected_background\\\""
+  local expected_fragment="t nil $expected_overlay \\\"$expected_background\\\""
   if [[ "$expected_overlay" == t ]]; then
     expected_fragment+=" \\\"#335577\\\""
   fi
@@ -134,13 +129,13 @@ assert_emacs_state() {
 start_emacs chroma-resident-one
 await_event
 status_is_applied 0
-assert_emacs_state ignis-light '#f4f0e8' nil
+assert_emacs_state ignis-light ignis-dark '#faf5f0' nil
 
 emacsclient --socket-name "$emacs_socket_name" --eval "(load-theme 'chroma-test-overlay t)" >/dev/null
 chroma 'SetTheme.(Dark)' >/dev/null
 await_event
 status_is_applied 1
-assert_emacs_state ignis-dark '#181818' t
+assert_emacs_state ignis-dark ignis-light '#000000' t
 
 # Chroma restart: owner change must cause Emacs re-registration and snapshot reconciliation.
 kill "$chroma_pid"
@@ -149,12 +144,12 @@ unset chroma_pid
 start_chroma
 await_event
 status_is_applied 1
-assert_emacs_state ignis-dark '#181818' t
+assert_emacs_state ignis-dark ignis-light '#000000' t
 
 chroma 'SetTheme.(Light)' >/dev/null
 await_event
 status_is_applied 2
-assert_emacs_state ignis-light '#f4f0e8' t
+assert_emacs_state ignis-light ignis-dark '#faf5f0' t
 
 # A new daemon instance represents an Emacs restart and must reconcile the current snapshot.
 emacsclient --socket-name "$emacs_socket_name" --eval '(kill-emacs)' >/dev/null
@@ -162,4 +157,4 @@ emacs_socket_name=''
 start_emacs chroma-resident-two
 await_event
 status_is_applied 2
-assert_emacs_state ignis-light '#f4f0e8' nil
+assert_emacs_state ignis-light ignis-dark '#faf5f0' nil

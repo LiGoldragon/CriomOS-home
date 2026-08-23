@@ -59,8 +59,15 @@ let
       size.medium = true;
     };
   };
-  minPackages = (minModule.content or minModule).home.packages;
-  mediumPackages = (mediumModule.content or mediumModule).home.packages;
+  moduleContent = module:
+    if module ? config && module.config ? content then
+      module.config.content
+    else if module ? content then
+      module.content
+    else
+      module;
+  minPackages = (moduleContent minModule).home.packages;
+  mediumPackages = (moduleContent mediumModule).home.packages;
   importsProfile = profile: builtins.any (module: toString module == toString profile) profileImports;
 in
 assert ytDlp.src == inputs.yt-dlp;

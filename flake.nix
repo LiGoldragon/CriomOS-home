@@ -148,7 +148,7 @@
 
     # Resident Emacs projection for Chroma's desired theme state.  Home owns
     # the concrete Ignis themes and supplies this package its exact Emacs set.
-    chroma-emacs.url = "github:LiGoldragon/chroma-emacs/d432f95db5837e685e32afbf5790060fb15a3703";
+    chroma-emacs.url = "github:LiGoldragon/chroma-emacs/119a231358cf69c16161812caf69fff4b726be5c";
     chroma-emacs.inputs.nixpkgs.follows = "nixpkgs";
 
     # Spirit owns the coherent daemon, judge, judge-config, and provider

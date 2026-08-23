@@ -445,17 +445,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1787439109,
-        "narHash": "sha256-dxXVb4EiCclZwU+fId+UkmMa4D6wRbVq4Sz5P48Uays=",
+        "lastModified": 1787444681,
+        "narHash": "sha256-/MWmrLxAVdwnXiEyalgRSC2XvmDgV3F0s088c5Qrdis=",
         "owner": "LiGoldragon",
         "repo": "chroma-emacs",
-        "rev": "d432f95db5837e685e32afbf5790060fb15a3703",
+        "rev": "119a231358cf69c16161812caf69fff4b726be5c",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "chroma-emacs",
-        "rev": "d432f95db5837e685e32afbf5790060fb15a3703",
+        "rev": "119a231358cf69c16161812caf69fff4b726be5c",
         "type": "github"
       }
     },
