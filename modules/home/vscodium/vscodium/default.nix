@@ -176,9 +176,9 @@ let
     mktplcRef = {
       name = "chatgpt";
       publisher = "openai";
-      version = "26.5814.41407";
+      version = "26.5818.61809";
     };
-    vsix = vsixFromInput "openai.chatgpt-26.5814.41407-linux-x64.vsix" inputs.codex-chatgpt-vsix;
+    vsix = vsixFromInput "openai.chatgpt-26.5818.61809-linux-x64.vsix" inputs.codex-chatgpt-vsix;
   };
 
   # All aski-related code dropped per Li 2026-04-25.

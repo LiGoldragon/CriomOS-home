@@ -262,7 +262,7 @@ assert vscodeConfig.package.version == homePkgs.vscodium.version;
 assert vscodeConfig.package.meta.mainProgram == "codium";
 assert homePkgs.lib.getExe vscodeConfig.package == "${vscodeConfig.package}/bin/codium";
 assert builtins.any (
-  extension: extension.version == "26.5814.41407"
+  extension: extension.version == "26.5818.61809"
 ) vscodeConfig.profiles.default.extensions;
 assert builtins.any (
   extension: extension.version == "2.1.241"
@@ -292,7 +292,7 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
   test "$(
     ${pkgs.unzip}/bin/unzip -p ${inputs.codex-chatgpt-vsix} extension/package.json \
       | ${pkgs.jq}/bin/jq -er .version
-  )" = 26.5814.41407
+  )" = 26.5818.61809
   test "$(
     ${pkgs.unzip}/bin/unzip -p ${inputs.codex-chatgpt-vsix} extension/package.json \
       | ${pkgs.jq}/bin/jq -er '.engines.vscode'
