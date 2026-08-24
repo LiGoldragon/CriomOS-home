@@ -496,13 +496,13 @@
     "codex-chatgpt-vsix": {
       "flake": false,
       "locked": {
-        "narHash": "sha256-jdABnCs5J+nQMGqk+2u04XvyvGURR7HnHX+1fy9SYis=",
+        "narHash": "sha256-hESdRToDjMdHQZJyPn+NoUjHosEh351UzgCkNNC0Mvw=",
         "type": "file",
-        "url": "https://openai.gallerycdn.vsassets.io/extensions/openai/chatgpt/26.5814.41407/1787011453099/Microsoft.VisualStudio.Services.VSIXPackage"
+        "url": "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/openai/vsextensions/chatgpt/26.5818.61809/vspackage"
       },
       "original": {
         "type": "file",
-        "url": "https://openai.gallerycdn.vsassets.io/extensions/openai/chatgpt/26.5814.41407/1787011453099/Microsoft.VisualStudio.Services.VSIXPackage"
+        "url": "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/openai/vsextensions/chatgpt/26.5818.61809/vspackage"
       }
     },
     "codex-cli": {
@@ -513,11 +513,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1787260212,
-        "narHash": "sha256-cd9PhHDHLOmZEGqRd+zQPGNJHCtFrFWzIreM5IVbwVQ=",
+        "lastModified": 1787535200,
+        "narHash": "sha256-qDi3utpYi4LnJvxtJN92EIVXLUfrjjX2kQJ3OKULiwg=",
         "owner": "sadjow",
         "repo": "codex-cli-nix",
-        "rev": "36fefe14f5549c2751afa313bfcc8582eb025707",
+        "rev": "05b1b39da135e34526f898600e09e67b55d5436c",
         "type": "github"
       },
       "original": {

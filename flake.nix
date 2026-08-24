@@ -87,7 +87,7 @@
     # check before deploying.
     codex-chatgpt-vsix = {
       type = "file";
-      url = "https://openai.gallerycdn.vsassets.io/extensions/openai/chatgpt/26.5814.41407/1787011453099/Microsoft.VisualStudio.Services.VSIXPackage";
+      url = "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/openai/vsextensions/chatgpt/26.5818.61809/vspackage";
       flake = false;
     };
 

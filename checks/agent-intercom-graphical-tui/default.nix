@@ -54,13 +54,13 @@ pkgs.runCommand "agent-intercom-graphical-tui-contract"
   ''
     set -eu
 
-    test "$( ${profile}/bin/codex --version )" = 'codex-cli 0.149.0'
+    test "$( ${profile}/bin/codex --version )" = 'codex-cli 0.149.1'
     test "$( ${profile}/bin/claude --version )" = '2.1.241 (Claude Code)'
     test -x ${agentIntercom}/bin/coi
     test -x ${agentIntercom}/bin/cci
     ! test -e ${agentIntercom}/bin/codex
     ! test -e ${agentIntercom}/bin/claude
-    test "$( ${agentIntercom}/bin/codex-raw --version )" = 'codex-cli 0.149.0'
+    test "$( ${agentIntercom}/bin/codex-raw --version )" = 'codex-cli 0.149.1'
     test -f ${agentIntercom}/share/agent-intercom/claude/node_modules/@dataforxyz/agent-intercom-core/package.json
 
     ${pkgs.nodejs}/bin/node --input-type=module -e '
