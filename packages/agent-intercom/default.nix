@@ -3,7 +3,6 @@
   pkgs,
   codexCliPackage ? pkgs.callPackage ../codex { inherit inputs; },
   codexRawCommand ? "${codexCliPackage}/bin/codex",
-  sharedAppServerSocket ? null,
   ...
 }:
 # Blueprint evaluates package outputs for every exposed system. Avoid resolving
@@ -88,13 +87,6 @@ else
       ln -s ${piPackage}/lib/pi-monorepo/packages/tui "${packageRoot}/node_modules/@earendil-works/pi-tui"
     '';
 
-    sharedAppServerWrapperHook =
-      if sharedAppServerSocket == null then
-        ""
-      else
-        ''
-          --run 'export CODEX_INTERCOM_APP_SERVER_SOCKET="${sharedAppServerSocket}"'
-        '';
   in
   pkgs.stdenvNoCC.mkDerivation {
     pname = "agent-intercom";
@@ -105,7 +97,6 @@ else
       pkgs.gnutar
       pkgs.makeWrapper
       pkgs.nodejs
-      pkgs.patch
     ];
 
     installPhase = ''
@@ -124,7 +115,6 @@ else
       ${installTsxRuntime "$root/orchestrator"}
       ${installTsxRuntime "$root/codex"}
       ${installPiPeerRuntime "$root/orchestrator"}
-      patch --directory "$root/codex" --strip=1 --input ${./coi-shared-app-server.patch}
       (cd "$root/codex" && ${pkgs.nodejs}/bin/node scripts/build.mjs)
 
       claudeBuild="$TMPDIR/claude"
@@ -146,20 +136,11 @@ else
         --add-flags "$root/codex/dist/codex-server.mjs"
       makeWrapper ${pkgs.nodejs}/bin/node "$out/bin/codex-intercom-bridge" \
         --add-flags "$root/codex/dist/bridge-daemon.mjs"
-      # `coi` starts a local server on non-graphical profiles. A graphical
-      # profile supplies a shared Desktop-owned socket, so the bridge attaches
-      # instead. Its child command always remains the upstream raw CLI. The
-      # package deliberately never publishes the normal `codex` command.
+      # `coi` owns its local bridge process and always invokes the shared raw
+      # CLI. The package deliberately never publishes normal `codex`.
       makeWrapper ${pkgs.nodejs}/bin/node "$out/bin/coi" \
         --add-flags "$root/codex/dist/coi.mjs --yolo" \
-        --set CODEX_INTERCOM_CODEX_COMMAND ${codexRawCommand} \
-        ${sharedAppServerWrapperHook}
-      # The graphical profile supplies a symlinkJoin that remaps Codex to its
-      # Nix-owned raw executable. `makeWrapper` would validate that target
-      # during this derivation's build, before Nix has realized the indirect
-      # symlinkJoin on a remote builder. Emit a simple runtime launcher: its
-      # store reference remains part of the output closure, but it no longer
-      # imposes an invalid build-time ordering requirement.
+        --set CODEX_INTERCOM_CODEX_COMMAND ${codexRawCommand}
       cat > "$out/bin/codex-raw" <<'EOF'
       #!${pkgs.runtimeShell}
       exec ${codexRawCommand} "$@"

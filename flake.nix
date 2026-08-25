@@ -131,7 +131,7 @@
     # llm-agents keeps its own nixpkgs: its package set follows fast
     # tool packaging and currently needs newer pnpm attributes than the
     # profile-wide nixpkgs pin provides.
-    llm-agents.url = "github:numtide/llm-agents.nix";
+    llm-agents.url = "github:numtide/llm-agents.nix/ed38c11e34e72199025ab70dc0042d78ef4c64cd";
     # Agent harness managers.  Herdr supplies its official tagged flake;
     # Orca remains packaged in its dedicated repository and Home consumes
     # only that pinned package output.
@@ -238,13 +238,6 @@
       url = "github:dataforxyz/agent-intercom-core/8316cbab548f422ad11c78ed887fabeef94817c1";
       flake = false;
     };
-    # Maintained unofficial Linux desktop integration. The lock file pins the
-    # source and its upstream DMG metadata; Home seals its launcher to the
-    # llm-agents Codex package while this module owns Computer Use and remote
-    # control.
-    codex-desktop-linux.url = "github:ilysenko/codex-desktop-linux/c6d76231f0623c3ef0b18c7e9158697c96bdcf9f";
-    codex-desktop-linux.inputs.nixpkgs.follows = "nixpkgs";
-
     # Pi extension packages. Kept as flake inputs so source revisions and
     # content hashes live in flake.lock, not in package Nix code.
     pi-linkup-src = {
@@ -622,7 +615,6 @@
             inputs.stylix.homeModules.stylix
             inputs.niri-flake.homeModules.config
             inputs.noctalia.homeModules.default
-            inputs.codex-desktop-linux.homeManagerModules.default
           ];
           # mkForce because the consumer (e.g. CriomOS userHomes.nix)
           # also passes its own `inputs` via extraSpecialArgs, which

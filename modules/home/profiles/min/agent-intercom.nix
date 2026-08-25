@@ -5,7 +5,6 @@
   horizon,
   user,
   hexis,
-  config,
   ...
 }:
 let
@@ -34,17 +33,25 @@ let
   # list recurses through Home Manager's `_module.args.pkgs`.
   homeSystem = pkgs.stdenv.hostPlatform.system;
   graphicalSupported = homeSystem == "x86_64-linux";
-  sharedAppServerSocket = "unix://\${XDG_RUNTIME_DIR}/codex-intercom-app-server.sock";
   codexCliPackage = pkgs.callPackage ../../../../packages/codex { inherit inputs; };
   claudeCodePackage = pkgs.callPackage ../../../../packages/claude-code { inherit inputs; };
   claudeDesktopPackage = inputs.llm-agents.packages.${homeSystem}.claude-desktop;
+  chatgptPackage = inputs.llm-agents.packages.${homeSystem}.chatgpt;
+  chatgptWithSharedCodex = pkgs.symlinkJoin {
+    name = "chatgpt-with-shared-codex-cli";
+    paths = [ chatgptPackage ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      rm "$out/bin/chatgpt"
+      makeWrapper ${chatgptPackage}/bin/chatgpt "$out/bin/chatgpt" \
+        --set CODEX_CLI_PATH ${codexCliPackage}/bin/codex
+    '';
+  };
   # The shared package is the sole Codex derivation for the terminal,
   # Desktop, Agent Intercom, and editor paths.
   agentIntercom = pkgs.callPackage ../../../../packages/agent-intercom {
     inherit inputs codexCliPackage;
     codexRawCommand = "${codexCliPackage}/bin/codex";
-    sharedAppServerSocket =
-      if graphicalEnabled && graphicalSupported then sharedAppServerSocket else null;
   };
   # Agent Intercom owns its operational entry points (`coi`, `cci`, MCP
   # servers, and fleet tools), but normal shell commands must remain the
@@ -145,7 +152,10 @@ lib.mkMerge [
     };
   })
   (lib.optionalAttrs desktopEnabled {
-    home.packages = [ claudeDesktopPackage ];
+    home.packages = [
+      claudeDesktopPackage
+      chatgptWithSharedCodex
+    ];
 
     # The package owns the Claude desktop entry.  Link that exact entry into
     # the active XDG applications directory so the `claude://` OAuth callback
@@ -155,40 +165,11 @@ lib.mkMerge [
       "${claudeDesktopPackage}/share/applications/claude-desktop.desktop";
     xdg.mimeApps.defaultApplications."x-scheme-handler/claude" = "claude-desktop.desktop";
 
-    programs.codexDesktopLinux = {
-      enable = true;
-      cliPackage = codexCliPackage;
-      computerUseUi.enable = true;
-      remoteMobileControl.enable = true;
-      remoteControl = {
-        enable = true;
-        package = codexCliPackage;
-        listen = sharedAppServerSocket;
-      };
-    };
-
-    systemd.user.services.agent-intercom-codex-bridge = {
-      Unit = {
-        Description = "Agent Intercom bridge for the Desktop-owned Codex app-server";
-        Requires = [ "codex-remote-control.service" ];
-        BindsTo = [ "codex-remote-control.service" ];
-        PartOf = [ "codex-remote-control.service" ];
-        After = [ "codex-remote-control.service" ];
-      };
-      Service = {
-        WorkingDirectory = config.home.homeDirectory;
-        ExecStart = lib.escapeShellArgs [
-          "${agentIntercom}/bin/coi"
-          "--no-tui"
-          "--intercom-id"
-          "codex-desktop"
-          "--intercom-name"
-          "Codex Desktop"
-        ];
-        Restart = "always";
-        RestartSec = "2s";
-      };
-      Install.WantedBy = [ "default.target" ];
-    };
+    # The official Linux ChatGPT package owns this entry.  Keep the entry in
+    # the active XDG applications directory and use its executable wrapper so
+    # the GUI and terminal both use the sole shared Codex derivation.
+    xdg.dataFile."applications/chatgpt.desktop".source =
+      "${chatgptWithSharedCodex}/share/applications/chatgpt.desktop";
+    xdg.mimeApps.defaultApplications."x-scheme-handler/codex" = "chatgpt.desktop";
   })
 ]

@@ -34,7 +34,6 @@ let
       user.size.min = true;
     };
     modules = [
-      inputs.codex-desktop-linux.homeManagerModules.default
       piModelsModule
       agentIntercomModule
       {
