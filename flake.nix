@@ -82,7 +82,7 @@
     # Open VSX catalogue is deliberately not the update authority here:
     # Codium marketplace checks are disabled, and its catalogue cadence can
     # otherwise leave the sidebar behind the TUI.  For a coordinated Codex
-    # refresh, bump this URL with `codex-cli`, run
+    # refresh, update llm-agents with this URL, run
     # `nix flake update codex-chatgpt-vsix`, and run the VSCodium lifecycle
     # check before deploying.
     codex-chatgpt-vsix = {
@@ -132,9 +132,6 @@
     # tool packaging and currently needs newer pnpm attributes than the
     # profile-wide nixpkgs pin provides.
     llm-agents.url = "github:numtide/llm-agents.nix";
-    codex-cli.url = "github:sadjow/codex-cli-nix";
-    codex-cli.inputs.nixpkgs.follows = "nixpkgs";
-
     # Agent harness managers.  Herdr supplies its official tagged flake;
     # Orca remains packaged in its dedicated repository and Home consumes
     # only that pinned package output.
@@ -242,8 +239,9 @@
       flake = false;
     };
     # Maintained unofficial Linux desktop integration. The lock file pins the
-    # source and its upstream DMG metadata; the Home Manager module owns its
-    # package, Computer Use, and experimental Remote Mobile Control shape.
+    # source and its upstream DMG metadata; Home seals its launcher to the
+    # llm-agents Codex package while this module owns Computer Use and remote
+    # control.
     codex-desktop-linux.url = "github:ilysenko/codex-desktop-linux/c6d76231f0623c3ef0b18c7e9158697c96bdcf9f";
     codex-desktop-linux.inputs.nixpkgs.follows = "nixpkgs";
 

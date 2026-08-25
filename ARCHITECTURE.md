@@ -194,20 +194,11 @@ Intercom exposes the distinct `coi --yolo` and
 explicitly raw upstream CLIs, preventing wrapper recursion. `codex-raw`,
 `claude-raw`, `direct-codex`, and `direct-claude` are recovery/debug-only.
 
-The maintained `ilysenko/codex-desktop-linux` source remains pinned at
-`c6d76231f0623c3ef0b18c7e9158697c96bdcf9f`, but its activation is hard-blocked.
-Its `nix/home-manager-module.nix` wraps `cliPackage` as `CODEX_CLI_PATH` and,
-when Remote Mobile Control is enabled, independently launches `codex app-server
---remote-control`. The pinned Codex adapter
-`118c85391b525982f00f38a3e3b67278e20e2774` makes `coi` start its own explicitly
-raw Codex `app-server --listen unix://…` before opening a remote TUI. Therefore
-`coi` is not a drop-in `CODEX_CLI_PATH`: using it would misinterpret a Desktop
-app-server invocation or create competing app-server ownership. The pinned
-sources expose no Desktop attachment to the `coi` session, and ordinary MCP is
-not a wakeable substitute. Desktop, Computer Use, and Mobile Control remain
-inactive until that contract exists; the independent graphical portal,
-accessibility, capture, and virtual-input prerequisites remain capability-gated.
-Electron sandboxing is never weakened.
+The maintained Codex Desktop integration and Claude Desktop are installed only
+for medium graphical Agent Intercom profiles. Home's single `llm-agents`
+Codex derivation supplies terminal, Desktop, Agent Intercom, and editor paths.
+Claude Desktop keeps its package-managed embedded runtime; Home has no
+external-runtime override.
 
 A Nix utility fetches Hugging Face models by URL or query, mirroring
 `nix-prefetch-url`: it prefetches via the Hugging Face CLI, hashes, and

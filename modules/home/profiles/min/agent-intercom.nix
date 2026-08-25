@@ -3,6 +3,7 @@
   lib,
   pkgs,
   horizon,
+  user,
   hexis,
   config,
   ...
@@ -25,6 +26,8 @@ let
 
   localEnabled = hasCapability "AgentIntercomLocal";
   graphicalEnabled = hasCapability "AgentIntercomGraphical";
+  mediumEnabled = user.size.medium or false;
+  desktopEnabled = graphicalEnabled && mediumEnabled;
   # Only the projected capability, which is an early special argument, decides
   # whether the Desktop option block exists below.  The package-set platform
   # guard remains a later assertion: forcing it while constructing the module
@@ -32,24 +35,14 @@ let
   homeSystem = pkgs.stdenv.hostPlatform.system;
   graphicalSupported = homeSystem == "x86_64-linux";
   sharedAppServerSocket = "unix://\${XDG_RUNTIME_DIR}/codex-intercom-app-server.sock";
-  upstreamCodexCliPackage = inputs.codex-cli.packages.${homeSystem}.default;
+  codexCliPackage = pkgs.callPackage ../../../../packages/codex { inherit inputs; };
   claudeCodePackage = pkgs.callPackage ../../../../packages/claude-code { inherit inputs; };
-  # The upstream Nix package wraps its native executable with an identity that
-  # points at an unmanaged $HOME/.local/bin path.  Preserve its closure and
-  # official pinned binary, but expose `codex` as the raw Nix-owned executable
-  # so ordinary invocations have no mutable-user-path identity.
-  codexCliPackage = pkgs.symlinkJoin {
-    name = "criomos-codex-direct";
-    paths = [ upstreamCodexCliPackage ];
-    postBuild = ''
-      rm "$out/bin/codex"
-      ln -s ${upstreamCodexCliPackage}/libexec/codex "$out/bin/codex"
-    '';
-    meta.mainProgram = "codex";
-  };
+  claudeDesktopPackage = inputs.llm-agents.packages.${homeSystem}.claude-desktop;
+  # The shared package is the sole Codex derivation for the terminal,
+  # Desktop, Agent Intercom, and editor paths.
   agentIntercom = pkgs.callPackage ../../../../packages/agent-intercom {
     inherit inputs codexCliPackage;
-    codexRawCommand = "${upstreamCodexCliPackage}/libexec/codex";
+    codexRawCommand = "${codexCliPackage}/bin/codex";
     sharedAppServerSocket =
       if graphicalEnabled && graphicalSupported then sharedAppServerSocket else null;
   };
@@ -84,10 +77,8 @@ lib.mkMerge [
   (lib.mkIf localEnabled {
     # The direct, pinned CLIs are the ordinary user commands.  Keep the
     # Intercom-specific operational entry points without letting its aliases
-    # shadow either CLI.  Keep the direct Codex package in the Home union for
-    # every local profile: Desktop consumes it as a configured CLI path but
-    # does not publish that path itself, and the union is the closure that
-    # makes ordinary `codex` available alongside Intercom.
+    # shadow either CLI. The shared Codex package also keeps ordinary `codex`
+    # available alongside the bridges.
     home.packages = [
       agentIntercomRuntime
       claudeCodePackage
@@ -153,7 +144,9 @@ lib.mkMerge [
       modes."/plugin" = "always";
     };
   })
-  (lib.optionalAttrs graphicalEnabled {
+  (lib.optionalAttrs desktopEnabled {
+    home.packages = [ claudeDesktopPackage ];
+
     programs.codexDesktopLinux = {
       enable = true;
       cliPackage = codexCliPackage;

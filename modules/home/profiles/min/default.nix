@@ -42,9 +42,9 @@ let
       if builtins.length names == 1 then builtins.head names else null
     else
       null;
-  agentIntercomLocalEnabled = builtins.any (
-    service: serviceName service == "AgentIntercomLocal"
-  ) (node.services or [ ]);
+  agentIntercomLocalEnabled = builtins.any (service: serviceName service == "AgentIntercomLocal") (
+    node.services or [ ]
+  );
   codexSkillReadDeduplicationInstruction = "Skill-read de-duplication: A pasted <skill ...>...</skill> block is complete when it has matching opening and closing <skill> tags, a skill name, a location, and non-empty body text. Treat a complete pasted skill block as already loaded for this session. Read the same skill location again only when the block is structurally missing content, the user asks to verify source or freshness, or a higher-priority instruction explicitly requires verification.";
 
   codexProjectTrust = trust_level: { inherit trust_level; };
@@ -305,7 +305,7 @@ let
   # Pi is built directly from inputs.pi-src. Direct Codex and Claude packages
   # own their normal commands; Agent Intercom exposes only distinct bridges.
   claudeCodePackage = pkgs.callPackage ../../../../packages/claude-code { inherit inputs; };
-  codexCliPackage = inputs.codex-cli.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  codexCliPackage = pkgs.callPackage ../../../../packages/codex { inherit inputs; };
   piPackage = pkgs.callPackage ../../../../packages/pi { inherit inputs; };
 
   mkRawRecoveryCommand =
@@ -449,411 +449,411 @@ in
   imports = [ ./default-opener.nix ];
 
   config = mkIf size.min {
-  fonts.fontconfig = {
-    enable = true;
-    # TODO
-    defaultFonts = {
-      monospace = [ ];
-      sansSerif = [ ];
-      serif = [ ];
-      emoji = [ ];
-    };
-  };
-
-  # Ghostty 1.3 honors GTK's primary-selection preference.  Keep the
-  # established Wayland middle-click/Shift+Insert paste behavior enabled.
-  dconf.settings."org/gnome/desktop/interface".gtk-enable-primary-paste = true;
-
-  services = {
-    dunst = {
-      enable = !size.min;
-      settings = {
-        global = {
-          geometry = "300x5-30+50";
-          transparency = 10;
-        };
-
-        urgency_normal = {
-          timeout = 10;
-        };
+    fonts.fontconfig = {
+      enable = true;
+      # TODO
+      defaultFonts = {
+        monospace = [ ];
+        sansSerif = [ ];
+        serif = [ ];
+        emoji = [ ];
       };
     };
 
-    gpg-agent = {
-      enable = true;
-      verbose = true;
-      pinentry.package = pkgs.pinentry-gnome3;
-      defaultCacheTtl = 10800;
-      maxCacheTtl = 86400;
-      defaultCacheTtlSsh = 3600;
-      maxCacheTtlSsh = 86400;
-      enableSshSupport = true;
-      sshKeys = (optional hasPubKey user.pubKeys.${node.name}.keygrip);
-    };
+    # Ghostty 1.3 honors GTK's primary-selection preference.  Keep the
+    # established Wayland middle-click/Shift+Insert paste behavior enabled.
+    dconf.settings."org/gnome/desktop/interface".gtk-enable-primary-paste = true;
 
-    mpd = {
-      enable = true;
-      musicDirectory = "~/Music";
-    };
+    services = {
+      dunst = {
+        enable = !size.min;
+        settings = {
+          global = {
+            geometry = "300x5-30+50";
+            transparency = 10;
+          };
 
-    pueue = {
-      enable = true;
-      settings = {
-        shared = { };
-        client = {
-          dark_mode = config.stylix.polarity == "dark";
-        };
-        daemon = {
-          default_parallel_tasks = 1;
+          urgency_normal = {
+            timeout = 10;
+          };
         };
       };
-    };
 
-    # swaync disabled — noctalia handles notifications natively
-    swaync.enable = false;
-  };
-
-  programs = {
-    bat = {
-      enable = true;
-      config = {
-        pager = "less -FR";
+      gpg-agent = {
+        enable = true;
+        verbose = true;
+        pinentry.package = pkgs.pinentry-gnome3;
+        defaultCacheTtl = 10800;
+        maxCacheTtl = 86400;
+        defaultCacheTtlSsh = 3600;
+        maxCacheTtlSsh = 86400;
+        enableSshSupport = true;
+        sshKeys = (optional hasPubKey user.pubKeys.${node.name}.keygrip);
       };
-    };
 
-    # Fold in the previously hand-patched ~/.ssh/config entry for the
-    # prometheus remote builder so it is declarative, not a local-only edit.
-    # `prometheus` is a short alias for the reachable builder domain; the
-    # keepalive settings hold the long-lived nix build/copy connections open.
-    # (Host-specific for now; could be derived from the cluster's NixBuilder
-    # node once a generic resolver exists.)
-    ssh = {
-      enable = true;
-      matchBlocks."prometheus.goldragon.criome prometheus" = {
-        hostname = "prometheus.goldragon.criome";
-        serverAliveInterval = 20;
-        serverAliveCountMax = 3;
+      mpd = {
+        enable = true;
+        musicDirectory = "~/Music";
       };
-    };
 
-    direnv = {
-      enable = true;
-      nix-direnv.enable = true;
-    };
-
-    ghostty = {
-      enable = true;
-      installVimSyntax = true;
-    };
-
-    fzf = {
-      enable = true;
-      defaultCommand = "fd --type f";
-      defaultOptions = [ fzfBindsString ];
-    };
-
-    git = {
-      enable = true;
-      signing = mkIf hasPubKey {
-        key = gitSigningKey;
-        signByDefault = true;
-      };
-      settings = {
-        user.email = emailAddress;
-        user.name = name;
-        pull.rebase = true;
-        init.defaultBranch = "main";
-        github.user = githubId;
-        ghq.root = "/git";
-        hub.protocol = "ssh";
-        # gas-city's bd-init script does `git config --global beads.role
-        # maintainer` if unset. ~/.config/git/config is read-only (this
-        # very file), so the write fails. Pre-set it declaratively so
-        # the script's check passes without writing.
-        beads.role = "maintainer";
-      };
-    };
-
-    gpg = {
-      enable = true;
-      settings = { };
-    };
-
-    joshuto = {
-      enable = true;
-    };
-
-    jujutsu = {
-      enable = true;
-      settings = {
-        ui = {
-          diff-instructions = false;
-          diff-formatter = [
-            "difft"
-            "--color=always"
-            "$left"
-            "$right"
-          ];
-          # Editor fallback ABORTS instead of blocking on an interactive
-          # editor. Every description-taking jj invocation must use
-          # -m '<msg>' inline. Per psyche 2026-05-26 (intent record 808)
-          # and skills/jj.md §"Descriptionless commits are forbidden".
-          # Subagents repeatedly tripped on emacsclient blocking; the
-          # /false/ shim exits non-zero so jj surfaces a clear failure
-          # instead of waiting indefinitely.
-          editor = "false";
+      pueue = {
+        enable = true;
+        settings = {
+          shared = { };
+          client = {
+            dark_mode = config.stylix.polarity == "dark";
+          };
+          daemon = {
+            default_parallel_tasks = 1;
+          };
         };
-        user = {
-          name = name;
-          email = emailAddress;
+      };
+
+      # swaync disabled — noctalia handles notifications natively
+      swaync.enable = false;
+    };
+
+    programs = {
+      bat = {
+        enable = true;
+        config = {
+          pager = "less -FR";
         };
+      };
+
+      # Fold in the previously hand-patched ~/.ssh/config entry for the
+      # prometheus remote builder so it is declarative, not a local-only edit.
+      # `prometheus` is a short alias for the reachable builder domain; the
+      # keepalive settings hold the long-lived nix build/copy connections open.
+      # (Host-specific for now; could be derived from the cluster's NixBuilder
+      # node once a generic resolver exists.)
+      ssh = {
+        enable = true;
+        matchBlocks."prometheus.goldragon.criome prometheus" = {
+          hostname = "prometheus.goldragon.criome";
+          serverAliveInterval = 20;
+          serverAliveCountMax = 3;
+        };
+      };
+
+      direnv = {
+        enable = true;
+        nix-direnv.enable = true;
+      };
+
+      ghostty = {
+        enable = true;
+        installVimSyntax = true;
+      };
+
+      fzf = {
+        enable = true;
+        defaultCommand = "fd --type f";
+        defaultOptions = [ fzfBindsString ];
+      };
+
+      git = {
+        enable = true;
         signing = mkIf hasPubKey {
-          behavior = "own";
-          backend = "gpg";
           key = gitSigningKey;
+          signByDefault = true;
+        };
+        settings = {
+          user.email = emailAddress;
+          user.name = name;
+          pull.rebase = true;
+          init.defaultBranch = "main";
+          github.user = githubId;
+          ghq.root = "/git";
+          hub.protocol = "ssh";
+          # gas-city's bd-init script does `git config --global beads.role
+          # maintainer` if unset. ~/.config/git/config is read-only (this
+          # very file), so the write fails. Pre-set it declaratively so
+          # the script's check passes without writing.
+          beads.role = "maintainer";
         };
       };
-    };
 
-    lapce = {
-      enable = true;
-      plugins = [ ];
-      settings = {
-        core = {
-          modal = true;
-          color-theme = if config.stylix.polarity == "dark" then "Lapce Dark" else "Lapce Light";
-        };
-        editor = {
-          font-family = "Iosevka Nerd Font";
-          font-size = 16;
-          bracket-pair-colorization = true;
-          highlight-matching-brackets = true;
-        };
-        ui = {
-          open-editors-visible = false;
-          font-size = 14;
-        };
-      };
-    };
-
-    bottom = {
-      enable = true;
-      settings = { };
-    };
-
-    starship = {
-      enable = true;
-    };
-
-    zsh = {
-      enable = true;
-      dotDir = "${config.xdg.configHome}/zsh";
-      history = {
-        ignoreDups = true;
-        expireDuplicatesFirst = true;
+      gpg = {
+        enable = true;
+        settings = { };
       };
 
-      defaultKeymap = "viins";
+      joshuto = {
+        enable = true;
+      };
 
+      jujutsu = {
+        enable = true;
+        settings = {
+          ui = {
+            diff-instructions = false;
+            diff-formatter = [
+              "difft"
+              "--color=always"
+              "$left"
+              "$right"
+            ];
+            # Editor fallback ABORTS instead of blocking on an interactive
+            # editor. Every description-taking jj invocation must use
+            # -m '<msg>' inline. Per psyche 2026-05-26 (intent record 808)
+            # and skills/jj.md §"Descriptionless commits are forbidden".
+            # Subagents repeatedly tripped on emacsclient blocking; the
+            # /false/ shim exits non-zero so jj surfaces a clear failure
+            # instead of waiting indefinitely.
+            editor = "false";
+          };
+          user = {
+            name = name;
+            email = emailAddress;
+          };
+          signing = mkIf hasPubKey {
+            behavior = "own";
+            backend = "gpg";
+            key = gitSigningKey;
+          };
+        };
+      };
+
+      lapce = {
+        enable = true;
+        plugins = [ ];
+        settings = {
+          core = {
+            modal = true;
+            color-theme = if config.stylix.polarity == "dark" then "Lapce Dark" else "Lapce Light";
+          };
+          editor = {
+            font-family = "Iosevka Nerd Font";
+            font-size = 16;
+            bracket-pair-colorization = true;
+            highlight-matching-brackets = true;
+          };
+          ui = {
+            open-editors-visible = false;
+            font-size = 14;
+          };
+        };
+      };
+
+      bottom = {
+        enable = true;
+        settings = { };
+      };
+
+      starship = {
+        enable = true;
+      };
+
+      zsh = {
+        enable = true;
+        dotDir = "${config.xdg.configHome}/zsh";
+        history = {
+          ignoreDups = true;
+          expireDuplicatesFirst = true;
+        };
+
+        defaultKeymap = "viins";
+
+        sessionVariables = {
+          RSYNC_OLD_ARGS = 1;
+          QT_QPA_PLATFORM = "wayland";
+        };
+
+        shellAliases = {
+          tsync = "rsync --progress --recursive";
+          nsync = "rsync --checksum --progress --recursive";
+          dsync = "rsync --checksum --progress --recursive --delete";
+        };
+
+        initContent =
+          builtins.readFile ../../nonNix/zshrc
+          + ''
+            if [[ $options[zle] = on ]]; then
+            . ${pkgs.zsh-fzf-tab}/share/fzf-tab/fzf-tab.zsh
+            fi
+          ''
+          + (optionalString useColemak (builtins.readFile ../../nonNix/colemak.zsh));
+      };
+
+      wofi = {
+        enable = true;
+      };
+
+      zoxide.enable = true;
+    };
+
+    home = {
       sessionVariables = {
-        RSYNC_OLD_ARGS = 1;
-        QT_QPA_PLATFORM = "wayland";
+        CLAUDE_CODE_DISABLE_WORKFLOWS = "1";
+        ENABLE_CLAUDEAI_MCP_SERVERS = "false";
       };
 
-      shellAliases = {
-        tsync = "rsync --progress --recursive";
-        nsync = "rsync --checksum --progress --recursive";
-        dsync = "rsync --checksum --progress --recursive --delete";
-      };
-
-      initContent =
-        builtins.readFile ../../nonNix/zshrc
-        + ''
-          if [[ $options[zle] = on ]]; then
-          . ${pkgs.zsh-fzf-tab}/share/fzf-tab/fzf-tab.zsh
-          fi
-        ''
-        + (optionalString useColemak (builtins.readFile ../../nonNix/colemak.zsh));
-    };
-
-    wofi = {
-      enable = true;
-    };
-
-    zoxide.enable = true;
-  };
-
-  home = {
-    sessionVariables = {
-      CLAUDE_CODE_DISABLE_WORKFLOWS = "1";
-      ENABLE_CLAUDEAI_MCP_SERVERS = "false";
-    };
-
-    packages =
-      fontPackages
-      ++ nixpkgsPackages
-      ++ deploymentPackages
-      ++ AIPackages
-      ++ [
-        nordvpnSeed
-        pkgs.wl-gammarelay-rs
-        # chroma daemon + CLI live in the chroma module
-        # (modules/home/profiles/min/chroma.nix); it owns the
-        # warmth + brightness paths now.
-      ];
-
-    file = {
-      ".config/IJHack/QtPass.conf".text = ''
-        [General]
-        autoclearSeconds=20
-        passwordLength=32
-        useTrayIcon=false
-        hideContent=false
-        hidePassword=true
-        clipBoardType=1
-        hideOnClose=false
-        passExecutable=${waylandPass}/bin/pass
-        passTemplate=login\nurl
-        pwgenExecutable=${pkgs.pwgen}/bin/pwgen
-        startMinimized=false
-        templateAllFields=false
-        useAutoclear=true
-        useTrayIcon=false
-        version=${pkgs.qtpass.version}
-      '';
-
-      ".config/broot/conf.toml".text = brootConfig;
-
-      ".codex/non-orchestrator.config.toml".text = ''
-        developer_instructions = ${toJSON codexSkillReadDeduplicationInstruction}
-        model = "gpt-5.6-terra"
-        model_reasoning_effort = "xhigh"
-      '';
-
-      ".codex/agents/default.toml".text = codexBuiltinAgentFiles.default;
-      ".codex/agents/worker.toml".text = codexBuiltinAgentFiles.worker;
-      ".codex/agents/explorer.toml".text = codexBuiltinAgentFiles.explorer;
-    };
-
-    # Hexis intentionally preserves undeclared user keys. Remove the retired
-    # Codex V1 spelling before its managed merge snapshots the live config.
-    activation.removeDeprecatedCodexCollab = lib.hm.dag.entryBefore [ "mergeCodexConfig" ] ''
-      if [ -f "$HOME/.codex/config.toml" ] && [ "$( ${pkgs.yq-go}/bin/yq -p toml -o json '.features | has("collab")' "$HOME/.codex/config.toml" )" = true ]; then
-        ${pkgs.yq-go}/bin/yq -p toml -o toml -i 'del(.features.collab)' "$HOME/.codex/config.toml"
-      fi
-    '';
-
-    activation.mergeCodexConfig = inputs.hexis.lib.mkManagedConfig {
-      inherit lib pkgs hexis;
-      file = "$HOME/.codex/config.toml";
-      declared = codexConfig;
-      modes = {
-        "/model" = "always";
-        "/model_reasoning_effort" = "always";
-        "/agents/default_subagent_model" = "always";
-        "/agents/default_subagent_reasoning_effort" = "always";
-        "/tui/model_availability_nux" = "always";
-        "/tui/theme" = "once";
-      };
-    };
-  };
-
-  # programs.pi-mentci block dropped 2026-04-25 — pi-mentci itself
-  # dropped from CriomOS-home flake.nix inputs.
-
-  systemd = {
-    user.services = {
-      xdg-desktop-portal-gnome = {
-        Unit = {
-          Description = "Portal service (GNOME implementation)";
-          PartOf = [ "graphical-session.target" ];
-          After = [ "graphical-session.target" ];
-        };
-        Service = {
-          ExecStart = "${pkgs.xdg-desktop-portal-gnome}/libexec/xdg-desktop-portal-gnome";
-          Restart = "on-failure";
-        };
-        Install.WantedBy = [ "graphical-session.target" ];
-      };
-
-      wl-gammarelay-rs = {
-        Unit = {
-          Description = "DBus interface for display temperature, brightness and gamma control";
-          PartOf = [ "graphical-session.target" ];
-          # `graphical-session-pre.target` rather than `.target`:
-          # avoids the cycle that the (now-retired) nightshift-sync
-          # chain produced — see archive incident a415e3e
-          # (2026-04-26 zeus). chroma-daemon is `After =
-          # wl-gammarelay-rs.service`, which keeps the dependency
-          # graph walking one direction only.
-          After = [ "graphical-session-pre.target" ];
-        };
-        Service = {
-          ExecStart = "${pkgs.wl-gammarelay-rs}/bin/wl-gammarelay-rs";
-          Restart = "on-failure";
-        };
-        Install.WantedBy = [ "graphical-session.target" ];
-      };
-
-      # The three nightshift-* services and the brightness shell
-      # were retired when chroma landed; the daemon owns those
-      # paths now. See modules/home/profiles/min/chroma.nix.
-    };
-  };
-
-  xdg = {
-    portal = {
-      enable = true;
-      extraPortals = with pkgs; [
-        xdg-desktop-portal-gnome
-        xdg-desktop-portal-gtk
-      ];
-      config.common = {
-        default = [
-          "gnome"
-          "gtk"
+      packages =
+        fontPackages
+        ++ nixpkgsPackages
+        ++ deploymentPackages
+        ++ AIPackages
+        ++ [
+          nordvpnSeed
+          pkgs.wl-gammarelay-rs
+          # chroma daemon + CLI live in the chroma module
+          # (modules/home/profiles/min/chroma.nix); it owns the
+          # warmth + brightness paths now.
         ];
-        "org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
+
+      file = {
+        ".config/IJHack/QtPass.conf".text = ''
+          [General]
+          autoclearSeconds=20
+          passwordLength=32
+          useTrayIcon=false
+          hideContent=false
+          hidePassword=true
+          clipBoardType=1
+          hideOnClose=false
+          passExecutable=${waylandPass}/bin/pass
+          passTemplate=login\nurl
+          pwgenExecutable=${pkgs.pwgen}/bin/pwgen
+          startMinimized=false
+          templateAllFields=false
+          useAutoclear=true
+          useTrayIcon=false
+          version=${pkgs.qtpass.version}
+        '';
+
+        ".config/broot/conf.toml".text = brootConfig;
+
+        ".codex/non-orchestrator.config.toml".text = ''
+          developer_instructions = ${toJSON codexSkillReadDeduplicationInstruction}
+          model = "gpt-5.6-terra"
+          model_reasoning_effort = "xhigh"
+        '';
+
+        ".codex/agents/default.toml".text = codexBuiltinAgentFiles.default;
+        ".codex/agents/worker.toml".text = codexBuiltinAgentFiles.worker;
+        ".codex/agents/explorer.toml".text = codexBuiltinAgentFiles.explorer;
+      };
+
+      # Hexis intentionally preserves undeclared user keys. Remove the retired
+      # Codex V1 spelling before its managed merge snapshots the live config.
+      activation.removeDeprecatedCodexCollab = lib.hm.dag.entryBefore [ "mergeCodexConfig" ] ''
+        if [ -f "$HOME/.codex/config.toml" ] && [ "$( ${pkgs.yq-go}/bin/yq -p toml -o json '.features | has("collab")' "$HOME/.codex/config.toml" )" = true ]; then
+          ${pkgs.yq-go}/bin/yq -p toml -o toml -i 'del(.features.collab)' "$HOME/.codex/config.toml"
+        fi
+      '';
+
+      activation.mergeCodexConfig = inputs.hexis.lib.mkManagedConfig {
+        inherit lib pkgs hexis;
+        file = "$HOME/.codex/config.toml";
+        declared = codexConfig;
+        modes = {
+          "/model" = "always";
+          "/model_reasoning_effort" = "always";
+          "/agents/default_subagent_model" = "always";
+          "/agents/default_subagent_reasoning_effort" = "always";
+          "/tui/model_availability_nux" = "always";
+          "/tui/theme" = "once";
+        };
       };
     };
 
-    configFile = {
-      "fontconfig/conf.d/10-CriomOS-fonts-paths.conf".text = mkFontConf;
+    # programs.pi-mentci block dropped 2026-04-25 — pi-mentci itself
+    # dropped from CriomOS-home flake.nix inputs.
 
-    };
-
-    configFile."handlr/handlr.toml".text = ''
-      expand_wildcards = true
-    '';
-
-    mimeApps = {
-      enable = true;
-      defaultApplications =
-        let
-          defaultMailer = "evolution.desktop";
-          defaultAudioPlayer = "mpv.desktop";
-        in
-        {
-          "audio/x-m4b" = defaultAudioPlayer;
-          "application/zip" = "org.gnome.FileRoller.desktop";
-
-          "x-scheme-handler/tg" = "org.telegram.desktop.desktop";
-          "x-scheme-handler/tonsite" = "org.telegram.desktop.desktop";
-
-          "application/epub+zip" = "calibre-ebook-viewer.desktop";
-          "application/pdf" = "org.pwmt.zathura-pdf-mupdf.desktop";
-
-          "x-scheme-handler/mailto" = defaultMailer;
-          "x-scheme-handler/news" = defaultMailer;
-          "x-scheme-handler/snews" = defaultMailer;
-          "x-scheme-handler/nntp" = defaultMailer;
-          "x-scheme-handler/feed" = defaultMailer;
-          "message/rfc822" = defaultMailer;
-          "application/rss+xml" = defaultMailer;
-          "application/x-extension-rss" = defaultMailer;
+    systemd = {
+      user.services = {
+        xdg-desktop-portal-gnome = {
+          Unit = {
+            Description = "Portal service (GNOME implementation)";
+            PartOf = [ "graphical-session.target" ];
+            After = [ "graphical-session.target" ];
+          };
+          Service = {
+            ExecStart = "${pkgs.xdg-desktop-portal-gnome}/libexec/xdg-desktop-portal-gnome";
+            Restart = "on-failure";
+          };
+          Install.WantedBy = [ "graphical-session.target" ];
         };
+
+        wl-gammarelay-rs = {
+          Unit = {
+            Description = "DBus interface for display temperature, brightness and gamma control";
+            PartOf = [ "graphical-session.target" ];
+            # `graphical-session-pre.target` rather than `.target`:
+            # avoids the cycle that the (now-retired) nightshift-sync
+            # chain produced — see archive incident a415e3e
+            # (2026-04-26 zeus). chroma-daemon is `After =
+            # wl-gammarelay-rs.service`, which keeps the dependency
+            # graph walking one direction only.
+            After = [ "graphical-session-pre.target" ];
+          };
+          Service = {
+            ExecStart = "${pkgs.wl-gammarelay-rs}/bin/wl-gammarelay-rs";
+            Restart = "on-failure";
+          };
+          Install.WantedBy = [ "graphical-session.target" ];
+        };
+
+        # The three nightshift-* services and the brightness shell
+        # were retired when chroma landed; the daemon owns those
+        # paths now. See modules/home/profiles/min/chroma.nix.
+      };
     };
 
-  };
+    xdg = {
+      portal = {
+        enable = true;
+        extraPortals = with pkgs; [
+          xdg-desktop-portal-gnome
+          xdg-desktop-portal-gtk
+        ];
+        config.common = {
+          default = [
+            "gnome"
+            "gtk"
+          ];
+          "org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
+        };
+      };
+
+      configFile = {
+        "fontconfig/conf.d/10-CriomOS-fonts-paths.conf".text = mkFontConf;
+
+      };
+
+      configFile."handlr/handlr.toml".text = ''
+        expand_wildcards = true
+      '';
+
+      mimeApps = {
+        enable = true;
+        defaultApplications =
+          let
+            defaultMailer = "evolution.desktop";
+            defaultAudioPlayer = "mpv.desktop";
+          in
+          {
+            "audio/x-m4b" = defaultAudioPlayer;
+            "application/zip" = "org.gnome.FileRoller.desktop";
+
+            "x-scheme-handler/tg" = "org.telegram.desktop.desktop";
+            "x-scheme-handler/tonsite" = "org.telegram.desktop.desktop";
+
+            "application/epub+zip" = "calibre-ebook-viewer.desktop";
+            "application/pdf" = "org.pwmt.zathura-pdf-mupdf.desktop";
+
+            "x-scheme-handler/mailto" = defaultMailer;
+            "x-scheme-handler/news" = defaultMailer;
+            "x-scheme-handler/snews" = defaultMailer;
+            "x-scheme-handler/nntp" = defaultMailer;
+            "x-scheme-handler/feed" = defaultMailer;
+            "message/rfc822" = defaultMailer;
+            "application/rss+xml" = defaultMailer;
+            "application/x-extension-rss" = defaultMailer;
+          };
+      };
+
+    };
   };
 }

@@ -1,7 +1,7 @@
 {
   inputs,
   pkgs,
-  codexCliPackage ? inputs.codex-cli.packages.${pkgs.stdenv.hostPlatform.system}.default,
+  codexCliPackage ? pkgs.callPackage ../codex { inherit inputs; },
   codexRawCommand ? "${codexCliPackage}/bin/codex",
   sharedAppServerSocket ? null,
   ...

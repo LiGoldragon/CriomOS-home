@@ -67,13 +67,11 @@ let
   flakeFile = ../../flake.nix;
   flakeLock = ../../flake.lock;
   claudeCodePackage = pkgs.callPackage ../../packages/claude-code { inherit inputs; };
-  codexCliPackage = inputs.codex-cli.packages.${system}.default;
+  codexCliPackage = pkgs.callPackage ../../packages/codex { inherit inputs; };
 in
 assert localHomeConfiguration.home.file ? ".pi/agent/packages/agent-intercom-pi";
 assert localHomeConfiguration.home.file ? ".pi/agent/packages/agent-intercom-orchestrator";
-assert builtins.any (
-  package: pkgs.lib.hasInfix "criomos-codex-direct" (toString package)
-) localHomeConfiguration.home.packages;
+assert builtins.elem codexCliPackage localHomeConfiguration.home.packages;
 assert builtins.elem claudeCodePackage localHomeConfiguration.home.packages;
 assert !(builtins.elem agentIntercom localHomeConfiguration.home.packages);
 assert !(noLocalHomeConfiguration.home.file ? ".pi/agent/packages/agent-intercom-pi");

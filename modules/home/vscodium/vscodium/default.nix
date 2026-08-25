@@ -14,7 +14,7 @@ let
   inherit (user) size;
   codiumPackage = pkgs.callPackage ../../../../packages/vscodium-casual { };
   claudeCodePackage = pkgs.callPackage ../../../../packages/claude-code { inherit inputs; };
-  codexCliPackage = inputs.codex-cli.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  codexCliPackage = pkgs.callPackage ../../../../packages/codex { inherit inputs; };
   agentIntercomLocal = builtins.any (
     service:
     if builtins.isString service then

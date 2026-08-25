@@ -5,7 +5,7 @@ let
   system = pkgs.stdenv.hostPlatform.system;
   agentIntercom = pkgs.callPackage ../../packages/agent-intercom { inherit inputs; };
   claudeCodePackage = pkgs.callPackage ../../packages/claude-code { inherit inputs; };
-  codexCliPackage = inputs.codex-cli.packages.${system}.default;
+  codexCliPackage = pkgs.callPackage ../../packages/codex { inherit inputs; };
   piPackage = pkgs.callPackage ../../packages/pi { inherit inputs; };
   agentProfilePath = pkgs.symlinkJoin {
     name = "ai-agent-profile-path";
@@ -155,7 +155,7 @@ pkgs.runCommand "ai-agent-launch-orchestration"
       grep -F ${claudeCodePackage}/bin/claude ${agentProfilePath}/bin/cci
       ! grep -F ${agentProfilePath}/bin/claude ${agentProfilePath}/bin/cci
       test "$(readlink -f ${agentProfilePath}/bin/pi)" = "$(readlink -f ${piPackage}/bin/pi)"
-      test "$(${codexCliPackage}/bin/codex --version)" = "codex-cli 0.149.1"
+      test "$(${codexCliPackage}/bin/codex --version)" = "codex-cli 0.149.0"
       test "$(${claudeCodePackage}/bin/claude --version)" = "2.1.241 (Claude Code)"
 
       grep -F 'This source map does not grant tool permission' ${piPackage}/lib/pi-monorepo/packages/coding-agent/dist/core/system-prompt.js

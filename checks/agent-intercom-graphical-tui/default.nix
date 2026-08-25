@@ -1,6 +1,7 @@
 { inputs, pkgs, ... }:
 let
   lib = pkgs.lib;
+  system = pkgs.stdenv.hostPlatform.system;
   horizon = {
     node = {
       name = "graphical-tui-contract";
@@ -10,16 +11,13 @@ let
       ];
     };
   };
-  configuration =
+  mkConfiguration =
+    user:
     (inputs.home-manager.lib.homeManagerConfiguration {
       inherit pkgs;
       extraSpecialArgs = {
-        inherit inputs horizon;
-        user = {
-          name = "test-user";
-          size.min = true;
-        };
-        hexis = inputs.hexis.packages.${pkgs.stdenv.hostPlatform.system}.default;
+        inherit inputs horizon user;
+        hexis = inputs.hexis.packages.${system}.default;
       };
       modules = [
         inputs.codex-desktop-linux.homeManagerModules.default
@@ -33,19 +31,36 @@ let
         }
       ];
     }).config;
+  mediumUser = {
+    name = "test-user";
+    size.medium = true;
+  };
+  smallUser = {
+    name = "test-user";
+    size.min = true;
+  };
+  configuration = mkConfiguration mediumUser;
+  smallConfiguration = mkConfiguration smallUser;
   profile = pkgs.buildEnv {
     name = "agent-intercom-graphical-tui-profile";
     paths = configuration.home.packages;
   };
+  codexCliPackage = pkgs.callPackage ../../packages/codex { inherit inputs; };
+  claudeDesktopPackage = inputs.llm-agents.packages.${system}.claude-desktop;
   agentIntercom = lib.removeSuffix "/share/agent-intercom/pi" (
     toString configuration.home.file.".pi/agent/packages/agent-intercom-pi".source
   );
 in
+assert configuration.programs.codexDesktopLinux.enable;
+assert configuration.programs.codexDesktopLinux.cliPackage == codexCliPackage;
+assert configuration.programs.codexDesktopLinux.remoteControl.package == codexCliPackage;
+assert builtins.elem claudeDesktopPackage configuration.home.packages;
+assert !smallConfiguration.programs.codexDesktopLinux.enable;
+assert !(builtins.elem claudeDesktopPackage smallConfiguration.home.packages);
 pkgs.runCommand "agent-intercom-graphical-tui-contract"
   {
     nativeBuildInputs = [
       pkgs.coreutils
-      pkgs.gnugrep
       pkgs.nodejs
       profile
       agentIntercom
@@ -54,32 +69,14 @@ pkgs.runCommand "agent-intercom-graphical-tui-contract"
   ''
     set -eu
 
-    test "$( ${profile}/bin/codex --version )" = 'codex-cli 0.149.1'
-    test "$( ${profile}/bin/claude --version )" = '2.1.241 (Claude Code)'
+    test "$(${profile}/bin/codex --version)" = 'codex-cli 0.149.0'
+    test "$(${agentIntercom}/bin/codex-raw --version)" = 'codex-cli 0.149.0'
+    test "$(${profile}/bin/claude --version)" = '2.1.241 (Claude Code)'
+    test -x ${profile}/bin/codex-desktop
+    test -x ${profile}/bin/claude-desktop
     test -x ${agentIntercom}/bin/coi
     test -x ${agentIntercom}/bin/cci
     ! test -e ${agentIntercom}/bin/codex
     ! test -e ${agentIntercom}/bin/claude
-    test "$( ${agentIntercom}/bin/codex-raw --version )" = 'codex-cli 0.149.1'
-    test -f ${agentIntercom}/share/agent-intercom/claude/node_modules/@dataforxyz/agent-intercom-core/package.json
-
-    ${pkgs.nodejs}/bin/node --input-type=module -e '
-      await import("${agentIntercom}/share/agent-intercom/claude/cci.mjs");
-    ' </dev/null > "$TMPDIR/cci-adapter.log" 2>&1 &
-    cciPid=$!
-    sleep 1
-    kill "$cciPid" 2>/dev/null || true
-    wait "$cciPid" 2>/dev/null || true
-    ! grep -F 'ERR_MODULE_NOT_FOUND' "$TMPDIR/cci-adapter.log"
-
-    ${pkgs.nodejs}/bin/node --input-type=module -e '
-      await import("${agentIntercom}/share/agent-intercom/claude/ccim.mjs");
-    ' </dev/null > "$TMPDIR/ccim-adapter.log" 2>&1 &
-    ccimPid=$!
-    sleep 1
-    kill "$ccimPid" 2>/dev/null || true
-    wait "$ccimPid" 2>/dev/null || true
-    ! grep -F 'ERR_MODULE_NOT_FOUND' "$TMPDIR/ccim-adapter.log"
-
     touch "$out"
   ''

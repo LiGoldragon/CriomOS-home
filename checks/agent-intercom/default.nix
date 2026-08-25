@@ -4,7 +4,7 @@ let
   graphicalAgentIntercom = pkgs.callPackage ../../packages/agent-intercom {
     inherit inputs;
     codexCliPackage = directCodexCliPackage;
-    codexRawCommand = "${codexCliPackage}/libexec/codex";
+    codexRawCommand = "${codexCliPackage}/bin/codex";
     sharedAppServerSocket = "unix://\${XDG_RUNTIME_DIR}/codex-intercom-app-server.sock";
   };
   pi = inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.pi;
@@ -42,7 +42,7 @@ let
         inherit inputs horizon;
         user = {
           name = "test-user";
-          size.min = true;
+          size.medium = true;
         };
         hexis = inputs.hexis.packages.${pkgs.stdenv.hostPlatform.system}.default;
       };
@@ -69,7 +69,7 @@ let
   desktopModuleSource = "${inputs.codex-desktop-linux}/nix/home-manager-module.nix";
   coiSource = "${inputs.agent-intercom-codex-src}/codex/coi.ts";
   coiSharedAppServerPatch = ../../packages/agent-intercom/coi-shared-app-server.patch;
-  codexCliPackage = inputs.codex-cli.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  codexCliPackage = pkgs.callPackage ../../packages/codex { inherit inputs; };
   claudeCodePackage = pkgs.callPackage ../../packages/claude-code { inherit inputs; };
   directCodexCliPackage = graphicalHomeConfiguration.programs.codexDesktopLinux.cliPackage;
   graphicalProfilePath = pkgs.buildEnv {
@@ -96,8 +96,7 @@ assert graphicalHomeConfiguration.programs.codexDesktopLinux.remoteControl.enabl
 assert
   graphicalHomeConfiguration.programs.codexDesktopLinux.remoteControl.listen
   == "unix://\${XDG_RUNTIME_DIR}/codex-intercom-app-server.sock";
-assert packageName directCodexCliPackage == "criomos-codex-direct";
-assert directCodexCliPackage != codexCliPackage;
+assert directCodexCliPackage == codexCliPackage;
 assert
   graphicalHomeConfiguration.programs.codexDesktopLinux.remoteControl.package
   == directCodexCliPackage;
@@ -130,13 +129,13 @@ pkgs.runCommand "agent-intercom-local-home-contract"
     test -x ${agentIntercom}/bin/coi
     test -x ${graphicalAgentIntercom}/bin/coi
     test -x ${graphicalAgentIntercom}/bin/codex-raw
-    test "$( ${graphicalAgentIntercom}/bin/codex-raw --version )" = 'codex-cli 0.149.1'
+    test "$( ${graphicalAgentIntercom}/bin/codex-raw --version )" = 'codex-cli 0.149.0'
     test -x ${directCodexCliPackage}/bin/codex
     test -x ${graphicalProfilePath}/bin/codex
-    test "$( ${graphicalProfilePath}/bin/codex --version )" = 'codex-cli 0.149.1'
+    test "$( ${graphicalProfilePath}/bin/codex --version )" = 'codex-cli 0.149.0'
     test -x ${graphicalProfilePath}/bin/claude
     test "$( ${graphicalProfilePath}/bin/claude --version )" = '2.1.241 (Claude Code)'
-    test "$(readlink -f ${directCodexCliPackage}/bin/codex)" = "$(readlink -f ${codexCliPackage}/libexec/codex)"
+    test "$(readlink -f ${directCodexCliPackage}/bin/codex)" = "$(readlink -f ${codexCliPackage}/bin/codex)"
     ! test -e ${agentIntercom}/bin/codex
     test -x ${agentIntercom}/bin/codex-raw
     test -x ${agentIntercom}/bin/cci
