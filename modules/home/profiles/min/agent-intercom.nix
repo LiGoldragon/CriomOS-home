@@ -147,6 +147,14 @@ lib.mkMerge [
   (lib.optionalAttrs desktopEnabled {
     home.packages = [ claudeDesktopPackage ];
 
+    # The package owns the Claude desktop entry.  Link that exact entry into
+    # the active XDG applications directory so the `claude://` OAuth callback
+    # is discoverable by the desktop MIME database.  The shared Home desktop
+    # database activation hook refreshes its cache after link generation.
+    xdg.dataFile."applications/claude-desktop.desktop".source =
+      "${claudeDesktopPackage}/share/applications/claude-desktop.desktop";
+    xdg.mimeApps.defaultApplications."x-scheme-handler/claude" = "claude-desktop.desktop";
+
     programs.codexDesktopLinux = {
       enable = true;
       cliPackage = codexCliPackage;
