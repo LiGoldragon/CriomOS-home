@@ -75,8 +75,18 @@ def connect(socket_path):
     connection.sendall(request)
     response = receive_until(connection, b"\r\n\r\n")
     accept = base64.b64encode(hashlib.sha1((websocket_key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").encode()).digest()).decode()
-    normalized_response = response.lower()
-    if b"http/1.1 101" not in normalized_response or f"sec-websocket-accept: {accept}".encode().lower() not in normalized_response:
+    response_lines = response.split(b"\r\n")
+    status = response_lines[0].split(b" ", 2)
+    headers = {}
+    for line in response_lines[1:]:
+        name, separator, value = line.partition(b":")
+        if separator:
+            headers[name.strip().lower()] = value.strip()
+    if (
+        len(status) < 2
+        or status[1] != b"101"
+        or headers.get(b"sec-websocket-accept") != accept.encode()
+    ):
         raise RuntimeError("app-server rejected the websocket upgrade")
     return connection
 
