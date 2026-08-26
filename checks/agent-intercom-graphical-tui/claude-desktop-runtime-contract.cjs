@@ -72,15 +72,6 @@ async function exposeActualManager() {
     throw new Error(`unexpected Claude Code manager binding: ${binding}`);
   }
   const classEnd = braceEnd(source, classStart);
-  const classSource = source.slice(classStart, classEnd);
-  for (const marker of [
-    "this.localBinaryInitPromise=this.initLocalBinary(process.env.CLAUDE_CODE_LOCAL_BINARY)",
-    "declared binary unavailable",
-    "async invalidateHostBinary(e){if(process.env.CLAUDE_CODE_LOCAL_BINARY)return;",
-    "async prepareForVM(e){if(process.env.CLAUDE_CODE_LOCAL_BINARY)throw Error(`CCD local override cannot be materialized for a VM`);",
-  ]) {
-    if (!classSource.includes(marker)) throw new Error(`Claude Desktop runtime drifted or retained fallback: ${marker}`);
-  }
   const hook = `;if(process.env.CRIOMOS_CLAUDE_CODE_MANAGER_HOOK===\"1\"){globalThis.${hookName}=${binding};throw Error(\"${sentinel}\")}`;
   await fsp.writeFile(file, source.slice(0, classEnd) + hook + source.slice(classEnd));
   return file;
@@ -112,10 +103,13 @@ function managedExecutableState(snapshotText) {
   ).join("\n");
 }
 
-async function assertRejects(action, description) {
+async function assertRejectsWith(action, expectedMessage, description) {
   try {
     await action();
-  } catch {
+  } catch (error) {
+    if (error?.message !== expectedMessage) {
+      throw new Error(`${description} rejected with ${JSON.stringify(error?.message)}, expected ${JSON.stringify(expectedMessage)}`);
+    }
     return;
   }
   throw new Error(`${description} unexpectedly completed`);
@@ -139,6 +133,8 @@ async function main() {
   if (typeof Manager !== "function") throw new Error("actual Claude Code manager was not exported");
   console.log("claude-desktop-runtime: actual manager loaded");
   const manager = new Manager();
+  let fallbackAttempted = false;
+  const fallbackInvocations = [];
   const forbidden = [
     "prepareForTarget",
     "downloadBinaryForTarget",
@@ -150,8 +146,19 @@ async function main() {
   ];
   for (const name of forbidden) {
     if (typeof manager[name] !== "function") throw new Error(`runtime drift: missing ${name}`);
-    manager[name] = async () => { throw new Error(`stateful Claude Code fallback invoked: ${name}`); };
+    manager[name] = async () => {
+      fallbackAttempted = true;
+      fallbackInvocations.push(name);
+      throw new Error(`stateful Claude Code fallback invoked: ${name}`);
+    };
   }
+  const assertNoFallback = () => {
+    if (fallbackAttempted || fallbackInvocations.length !== 0) {
+      throw new Error(`stateful Claude Code fallback invoked: ${fallbackInvocations.join(", ")}`);
+    }
+  };
+  const unavailable = `[CCD] LOCAL OVERRIDE: declared binary unavailable at ${declaredClaudeCode}`;
+  const vmUnavailable = "CCD local override cannot be materialized for a VM";
 
   if (mode === "valid") {
     console.log("claude-desktop-runtime: valid override");
@@ -167,16 +174,18 @@ async function main() {
     const updated = await manager.installUpdatedHostTarget(manager.buildPinVersion, manager.buildPinManifest);
     if (updated.ready || updated.error !== "local override active") throw new Error("auto-update did not stop for local override");
     await manager.invalidateHostBinary();
-    await assertRejects(() => manager.prepareForVM(), "VM preparation with a declared local executable");
+    await assertRejectsWith(() => manager.prepareForVM(), vmUnavailable, "VM preparation with a declared local executable");
+    assertNoFallback();
   } else {
     console.log("claude-desktop-runtime: missing override");
-    await assertRejects(() => manager.getLocalBinaryPath(), "missing declared executable initialization");
-    await assertRejects(() => manager.resolveHostBinary(), "missing declared executable host resolution");
-    await assertRejects(() => manager.prepare(), "missing declared executable preparation");
-    await assertRejects(() => manager.getStatus(), "missing declared executable status lookup");
-    await assertRejects(() => manager.installUpdatedHostTarget(manager.buildPinVersion, manager.buildPinManifest), "missing declared executable auto-update");
+    await assertRejectsWith(() => manager.getLocalBinaryPath(), unavailable, "missing declared executable initialization");
+    await assertRejectsWith(() => manager.resolveHostBinary(), unavailable, "missing declared executable host resolution");
+    await assertRejectsWith(() => manager.prepare(), unavailable, "missing declared executable preparation");
+    await assertRejectsWith(() => manager.getStatus(), unavailable, "missing declared executable status lookup");
+    await assertRejectsWith(() => manager.installUpdatedHostTarget(manager.buildPinVersion, manager.buildPinManifest), unavailable, "missing declared executable auto-update");
     await manager.invalidateHostBinary();
-    await assertRejects(() => manager.prepareForVM(), "missing declared executable VM preparation");
+    await assertRejectsWith(() => manager.prepareForVM(), vmUnavailable, "missing declared executable VM preparation");
+    assertNoFallback();
   }
 
   const after = await Promise.all(roots.map(snapshot));
