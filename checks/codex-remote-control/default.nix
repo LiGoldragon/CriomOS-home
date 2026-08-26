@@ -69,7 +69,7 @@ pkgs.runCommand "codex-remote-control-contract"
     set -eu
 
     cli_home="$TMPDIR/cli-home"
-    mkdir -p "$cli_home"
+    mkdir -p "$cli_home/.codex"
     test "$(HOME="$cli_home" CODEX_HOME="$cli_home/.codex" ${profile}/bin/codex --version)" = "codex-cli ${codexCliPackage.version}"
     test "$(HOME="$cli_home" CODEX_HOME="$cli_home/.codex" ${agentIntercomPackage}/bin/codex-raw --version)" = "codex-cli ${codexCliPackage.version}"
 
