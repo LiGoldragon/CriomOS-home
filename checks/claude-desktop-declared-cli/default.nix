@@ -18,7 +18,6 @@ pkgs.runCommand "claude-desktop-declared-cli-contract"
       pkgs.coreutils
       pkgs.dbus
       pkgs.nodejs
-      pkgs.xauth
       pkgs.xvfb
     ];
   }
@@ -51,13 +50,22 @@ pkgs.runCommand "claude-desktop-declared-cli-contract"
         "$test_desktop/lib/claude-desktop/resources/app.asar"
     }
 
+    ${pkgs.xvfb}/bin/Xvfb :99 -screen 0 1024x768x24 -nolisten tcp &
+    xvfb_pid=$!
+    trap 'kill "$xvfb_pid"' EXIT
+    for attempt in $(seq 1 20); do
+      test -S /tmp/.X11-unix/X99 && break
+      sleep 0.1
+    done
+    test -S /tmp/.X11-unix/X99
+
     echo 'claude-desktop-declared-cli: valid override'
     prepare_test_app valid
     runtime_root="$TMPDIR/claude-desktop-runtime"
     mkdir -p "$runtime_root/home" "$runtime_root/config" "$runtime_root/data" "$runtime_root/cache"
     timeout --kill-after=5s 60s dbus-run-session \
       --config-file=${pkgs.dbus}/share/dbus-1/session.conf \
-      xvfb-run -a env \
+      env DISPLAY=:99 \
       HOME="$runtime_root/home" \
       XDG_CONFIG_HOME="$runtime_root/config" \
       XDG_DATA_HOME="$runtime_root/data" \
@@ -74,7 +82,7 @@ pkgs.runCommand "claude-desktop-declared-cli-contract"
     mkdir -p "$missing_runtime_root/home" "$missing_runtime_root/config" "$missing_runtime_root/data" "$missing_runtime_root/cache"
     timeout --kill-after=5s 60s dbus-run-session \
       --config-file=${pkgs.dbus}/share/dbus-1/session.conf \
-      xvfb-run -a env \
+      env DISPLAY=:99 \
       HOME="$missing_runtime_root/home" \
       XDG_CONFIG_HOME="$missing_runtime_root/config" \
       XDG_DATA_HOME="$missing_runtime_root/data" \
