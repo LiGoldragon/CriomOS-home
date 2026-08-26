@@ -175,7 +175,9 @@ async function main() {
 
   const after = await Promise.all(roots.map(snapshot));
   if (before.some((value, index) => value !== after[index])) {
-    throw new Error("Claude Desktop mutated HOME or XDG state while resolving the declared executable");
+    const changes = roots.map((root, index) => ({ root, before: before[index], after: after[index] }))
+      .filter((change) => change.before !== change.after);
+    throw new Error(`Claude Desktop mutated HOME or XDG state while resolving the declared executable: ${JSON.stringify(changes)}`);
   }
 }
 
