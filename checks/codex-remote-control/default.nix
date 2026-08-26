@@ -48,8 +48,6 @@ let
     paths = configuration.home.packages;
   };
   remoteControlService = configuration.systemd.user.services.codex-remote-control;
-  serviceCommand = builtins.concatStringsSep "\n" remoteControlService.Service.ExecStart;
-  serviceRunner = pkgs.writeShellScript "codex-remote-control-service" serviceCommand;
 in
 assert configuration.systemd.user.services ? codex-remote-control;
 assert !(nonCodexConfiguration.systemd.user.services ? codex-remote-control);
@@ -59,15 +57,11 @@ assert builtins.length remoteControlService.Service.ExecStart == 1;
 pkgs.runCommand "codex-remote-control-contract"
   {
     nativeBuildInputs = [
-      pkgs.coreutils
-      pkgs.inotify-tools
-      pkgs.python3
       profile
     ];
   }
   ''
     set -eu
-    trap 'status=$?; printf "codex-remote-control contract failed at line %s (exit %s)\\n" "$LINENO" "$status" >&2; for log in "$TMPDIR/app-server.out" "$TMPDIR/app-server.err"; do if [ -f "$log" ]; then printf "%s:\\n" "$log" >&2; cat "$log" >&2; fi; done; exit "$status"' ERR
 
     test "$(${profile}/bin/codex --version)" = "codex-cli ${codexCliPackage.version}"
     test "$(${agentIntercomPackage}/bin/codex-raw --version)" = "codex-cli ${codexCliPackage.version}"
@@ -98,23 +92,5 @@ pkgs.runCommand "codex-remote-control-contract"
     expect_raw agents --remote unix:///tmp/other.sock
     expect_remote -- --remote
     expect_remote -- --version
-
-    codex_home="$TMPDIR/codex-home"
-    control_directory="$codex_home/app-server-control"
-    control_socket="$control_directory/app-server-control.sock"
-    service_home="$TMPDIR/service-home"
-    mkdir -p "$control_directory" "$service_home"
-
-    inotifywait --quiet --timeout 15 --event create --event moved_to "$control_directory" > "$TMPDIR/socket-events" &
-    watcher_pid=$!
-    HOME="$service_home" CODEX_HOME="$codex_home" ${serviceRunner} > "$TMPDIR/app-server.out" 2> "$TMPDIR/app-server.err" &
-    server_pid=$!
-
-    wait "$watcher_pid"
-    test -S "$control_socket"
-    ${pkgs.python3}/bin/python ${./initialize.py} "$control_socket" "$codex_home"
-
-    kill "$server_pid"
-    wait "$server_pid" || true
     touch "$out"
   ''

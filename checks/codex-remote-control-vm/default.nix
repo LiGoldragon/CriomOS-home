@@ -1,0 +1,73 @@
+{ inputs, pkgs, ... }:
+let
+  system = pkgs.stdenv.hostPlatform.system;
+  codexRemoteControlModule = ../../modules/home/profiles/min/agent-intercom.nix;
+  testUser = "codex-remote-control-test";
+  testHome = "/home/${testUser}";
+  testUid = 1000;
+  hmConfiguration =
+    (inputs.home-manager.lib.homeManagerConfiguration {
+      inherit pkgs;
+      extraSpecialArgs = {
+        inherit inputs;
+        user = {
+          name = testUser;
+          size.min = true;
+        };
+        hexis = inputs.hexis.packages.${system}.default;
+        horizon.node.services = [ ];
+      };
+      modules = [
+        codexRemoteControlModule
+        {
+          home = {
+            username = testUser;
+            homeDirectory = testHome;
+            stateVersion = "26.05";
+          };
+        }
+      ];
+    }).config;
+  service = hmConfiguration.systemd.user.services.codex-remote-control;
+  socket = "${testHome}/.codex/app-server-control/app-server-control.sock";
+in
+assert service.Service.UMask == "0077";
+assert service.Service.Restart == "always";
+assert builtins.length service.Service.ExecStart == 1;
+pkgs.nixosTest {
+  name = "codex-remote-control-vm";
+  nodes.machine =
+    { ... }:
+    {
+      users.groups.${testUser}.gid = testUid;
+      users.users.${testUser} = {
+        isNormalUser = true;
+        uid = testUid;
+        group = testUser;
+        home = testHome;
+        createHome = true;
+        linger = true;
+      };
+
+      environment.systemPackages = [ pkgs.python3 ];
+      environment.etc."codex-remote-control-initialize.py".source = ../codex-remote-control/initialize.py;
+
+      systemd.user.services.codex-remote-control = {
+        description = service.Unit.Description;
+        wantedBy = service.Install.WantedBy;
+        serviceConfig = service.Service;
+      };
+    };
+  testScript = ''
+    start_all()
+    machine.wait_for_unit("user@${toString testUid}.service")
+    machine.wait_until_succeeds("systemctl --user --machine=${testUser}@ is-active codex-remote-control.service")
+    machine.succeed("systemctl --user --machine=${testUser}@ show codex-remote-control.service -p UMask --value | grep -x 0077")
+    machine.succeed("test -S ${socket}")
+    machine.succeed("test \"$(stat -c %a ${socket})\" = 600")
+    machine.succeed("python3 /etc/codex-remote-control-initialize.py ${socket} ${testHome}/.codex")
+    machine.succeed("systemctl --user --machine=${testUser}@ restart codex-remote-control.service")
+    machine.wait_until_succeeds("systemctl --user --machine=${testUser}@ is-active codex-remote-control.service")
+    machine.succeed("python3 /etc/codex-remote-control-initialize.py ${socket} ${testHome}/.codex")
+  '';
+}

@@ -577,6 +577,9 @@
           codex-remote-control = checkPkgs.callPackage ./checks/codex-remote-control {
             inherit inputs;
           };
+          codex-remote-control-vm = checkPkgs.callPackage ./checks/codex-remote-control-vm {
+            inherit inputs;
+          };
         }
       ) derivationChecks;
 
