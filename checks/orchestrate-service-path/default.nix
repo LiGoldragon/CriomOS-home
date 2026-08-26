@@ -102,8 +102,8 @@ else
     test -S ${lib.escapeShellArg metaSocketPath}
 
     claimed_path=${lib.escapeShellArg "${homeDirectory}/claimed"}
-    lock='Lock { lock_id: LockId(1), lock_name: LockName("home-nexus-check"), flow_id: FlowId("home-nexus-check"), lock_paths: LockPaths([LockPath("'"$claimed_path"'")]), lock_reason: LockReason("Home Nexus check") }'
-    registration="Lock.{home-nexus-check home-nexus-check [$claimed_path] (Home Nexus check)}"
+    lock='Lock { lock_id: LockId(1), lock_name: LockName("home-nexus-check"), flow_id: FlowId("home-nexus-check"), lock_paths: LockPaths([LockPath("'"$claimed_path"'")]), lock_reason: LockReason("home-nexus-check") }'
+    registration="Lock.{home-nexus-check home-nexus-check [$claimed_path] home-nexus-check}"
     registered="$(${orchestrateProfilePackage}/bin/orchestrate "$registration")"
     test "$registered" = "Locked($lock)"
     observed="$(${orchestrateProfilePackage}/bin/orchestrate 'Observe.Locks')"
