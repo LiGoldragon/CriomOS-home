@@ -63,11 +63,12 @@ pkgs.testers.nixosTest {
     machine.wait_for_unit("user@${toString testUid}.service")
     machine.wait_until_succeeds("systemctl --user --machine=${testUser}@ is-active codex-remote-control.service")
     machine.succeed("systemctl --user --machine=${testUser}@ show codex-remote-control.service -p UMask --value | grep -x 0077")
-    machine.succeed("test -S ${socket}")
+    machine.wait_until_succeeds("test -S ${socket}")
     machine.succeed("test \"$(stat -c %a ${socket})\" = 600")
-    machine.succeed("python3 /etc/codex-remote-control-initialize.py ${socket} ${testHome}/.codex")
+    machine.wait_until_succeeds("python3 /etc/codex-remote-control-initialize.py ${socket} ${testHome}/.codex")
     machine.succeed("systemctl --user --machine=${testUser}@ restart codex-remote-control.service")
     machine.wait_until_succeeds("systemctl --user --machine=${testUser}@ is-active codex-remote-control.service")
-    machine.succeed("python3 /etc/codex-remote-control-initialize.py ${socket} ${testHome}/.codex")
+    machine.wait_until_succeeds("test -S ${socket}")
+    machine.wait_until_succeeds("python3 /etc/codex-remote-control-initialize.py ${socket} ${testHome}/.codex")
   '';
 }

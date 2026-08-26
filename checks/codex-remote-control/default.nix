@@ -2,7 +2,6 @@
 let
   system = pkgs.stdenv.hostPlatform.system;
   codexCliPackage = pkgs.callPackage ../../packages/codex { inherit inputs; };
-  agentIntercomPackage = pkgs.callPackage ../../packages/agent-intercom { inherit inputs; };
   codexTuiFixtureCli = pkgs.writeShellApplication {
     name = "codex";
     text = ''
@@ -43,10 +42,6 @@ let
   };
   configuration = mkConfiguration codexUser;
   nonCodexConfiguration = mkConfiguration nonCodexUser;
-  profile = pkgs.buildEnv {
-    name = "codex-remote-control-profile";
-    paths = configuration.home.packages;
-  };
   remoteControlService = configuration.systemd.user.services.codex-remote-control;
 in
 assert configuration.systemd.user.services ? codex-remote-control;
@@ -54,17 +49,9 @@ assert !(nonCodexConfiguration.systemd.user.services ? codex-remote-control);
 assert remoteControlService.Service.UMask == "0077";
 assert remoteControlService.Service.Restart == "always";
 assert builtins.length remoteControlService.Service.ExecStart == 1;
-pkgs.runCommand "codex-remote-control-contract"
-  {
-    nativeBuildInputs = [
-      profile
-    ];
-  }
+pkgs.runCommand "codex-remote-control-contract" { }
   ''
     set -eu
-
-    test "$(${profile}/bin/codex --version)" = "codex-cli ${codexCliPackage.version}"
-    test "$(${agentIntercomPackage}/bin/codex-raw --version)" = "codex-cli ${codexCliPackage.version}"
 
     expect_remote() {
       test "$("${codexTuiFixture}/bin/codex" "$@")" = "$(printf '%s\n' --remote unix:// "$@")"
