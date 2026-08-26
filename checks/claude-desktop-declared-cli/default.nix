@@ -16,51 +16,70 @@ pkgs.runCommand "claude-desktop-declared-cli-contract"
     nativeBuildInputs = [
       pkgs.asar
       pkgs.coreutils
+      pkgs.dbus
+      pkgs.nodejs
+      pkgs.xauth
+      pkgs.xvfb
     ];
   }
   ''
     set -eu
 
-    extracted_app="$TMPDIR/claude-desktop-app"
+    prepare_test_app() {
+      test_desktop="$TMPDIR/claude-desktop-$1"
+      test_app="$TMPDIR/claude-desktop-app-$1"
+      cp -a ${claudeDesktopPackage}/. "$test_desktop"
+      chmod -R u+w "$test_desktop"
+      ${pkgs.asar}/bin/asar extract \
+        ${claudeDesktopPackage}/lib/claude-desktop/resources/app.asar \
+        "$test_app"
+      ${pkgs.nodejs}/bin/node -e '
+        const fs = require("node:fs");
+        const path = require("node:path");
+        const app = process.argv[1];
+        const packagePath = path.join(app, "package.json");
+        const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
+        packageJson.main = "criomos-runtime-bootstrap.cjs";
+        fs.writeFileSync(packagePath, JSON.stringify(packageJson));
+        fs.writeFileSync(
+          path.join(app, "criomos-runtime-bootstrap.cjs"),
+          "require(process.env.CRIOMOS_CLAUDE_DESKTOP_RUNTIME_CONTRACT)\\n",
+        );
+      ' "$test_app"
+      ${pkgs.asar}/bin/asar pack \
+        "$test_app" \
+        "$test_desktop/lib/claude-desktop/resources/app.asar"
+    }
+
     echo 'claude-desktop-declared-cli: valid override'
-    ${pkgs.asar}/bin/asar extract \
-      ${claudeDesktopPackage}/lib/claude-desktop/resources/app.asar \
-      "$extracted_app"
+    prepare_test_app valid
     runtime_root="$TMPDIR/claude-desktop-runtime"
     mkdir -p "$runtime_root/home" "$runtime_root/config" "$runtime_root/data" "$runtime_root/cache"
-    timeout --kill-after=5s 60s env \
+    timeout --kill-after=5s 60s dbus-run-session xvfb-run -a env \
       HOME="$runtime_root/home" \
       XDG_CONFIG_HOME="$runtime_root/config" \
       XDG_DATA_HOME="$runtime_root/data" \
       XDG_CACHE_HOME="$runtime_root/cache" \
-      ELECTRON_RUN_AS_NODE=1 \
-      CRIOMOS_CLAUDE_CODE_MANAGER_HOOK=1 \
-      ${claudeDesktopPackage}/bin/claude-desktop \
-      ${../agent-intercom-graphical-tui/claude-desktop-runtime-contract.cjs} \
-      "$extracted_app" \
-      ${claudeCodePackage}/bin/claude \
-      valid
+      CRIOMOS_CLAUDE_DESKTOP_RUNTIME_CONTRACT=${../agent-intercom-graphical-tui/claude-desktop-runtime-contract.cjs} \
+      CRIOMOS_CLAUDE_DESKTOP_TEST_APP="$test_app" \
+      CRIOMOS_CLAUDE_DESKTOP_TEST_MODE=valid \
+      CLAUDE_CODE_LOCAL_BINARY=${claudeCodePackage}/bin/claude \
+      "$test_desktop/lib/claude-desktop/claude-desktop"
 
-    missing_runtime_root="$TMPDIR/claude-desktop-runtime-missing"
-    missing_extracted_app="$TMPDIR/claude-desktop-app-missing"
     echo 'claude-desktop-declared-cli: missing override'
+    prepare_test_app missing
+    missing_runtime_root="$TMPDIR/claude-desktop-runtime-missing"
     mkdir -p "$missing_runtime_root/home" "$missing_runtime_root/config" "$missing_runtime_root/data" "$missing_runtime_root/cache"
-    ${pkgs.asar}/bin/asar extract \
-      ${claudeDesktopPackage}/lib/claude-desktop/resources/app.asar \
-      "$missing_extracted_app"
-    timeout --kill-after=5s 60s env \
+    timeout --kill-after=5s 60s dbus-run-session xvfb-run -a env \
       HOME="$missing_runtime_root/home" \
       XDG_CONFIG_HOME="$missing_runtime_root/config" \
       XDG_DATA_HOME="$missing_runtime_root/data" \
       XDG_CACHE_HOME="$missing_runtime_root/cache" \
-      ELECTRON_RUN_AS_NODE=1 \
-      CRIOMOS_CLAUDE_CODE_MANAGER_HOOK=1 \
+      CRIOMOS_CLAUDE_DESKTOP_RUNTIME_CONTRACT=${../agent-intercom-graphical-tui/claude-desktop-runtime-contract.cjs} \
+      CRIOMOS_CLAUDE_DESKTOP_TEST_APP="$test_app" \
+      CRIOMOS_CLAUDE_DESKTOP_TEST_MODE=missing \
       CLAUDE_CODE_LOCAL_BINARY="$missing_runtime_root/missing-claude" \
-      ${claudeDesktopPackage}/lib/claude-desktop/claude-desktop \
-      ${../agent-intercom-graphical-tui/claude-desktop-runtime-contract.cjs} \
-      "$missing_extracted_app" \
-      "$missing_runtime_root/missing-claude" \
-      missing
+      "$test_desktop/lib/claude-desktop/claude-desktop"
 
     echo 'claude-desktop-declared-cli: passed'
     touch "$out"

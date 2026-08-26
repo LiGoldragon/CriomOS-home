@@ -2,15 +2,18 @@ const crypto = require("node:crypto");
 const fsp = require("node:fs/promises");
 const path = require("node:path");
 
-const [appDirectory, declaredClaudeCode, mode] = process.argv.slice(2);
+const appDirectory = process.env.CRIOMOS_CLAUDE_DESKTOP_TEST_APP;
+const declaredClaudeCode = process.env.CLAUDE_CODE_LOCAL_BINARY;
+const mode = process.env.CRIOMOS_CLAUDE_DESKTOP_TEST_MODE;
+const electron = require("electron");
 const hookName = "__CRIOMOS_CLAUDE_CODE_MANAGER";
 const sentinel = "CRIOMOS_CLAUDE_CODE_MANAGER_EXPORTED";
 
 if (!appDirectory || !declaredClaudeCode || !["valid", "missing"].includes(mode)) {
   throw new Error("expected app directory, declared Claude Code executable, and valid or missing mode");
 }
-if (!process.versions.electron || process.env.ELECTRON_RUN_AS_NODE !== "1") {
-  throw new Error("Claude Desktop runtime contract must execute with the packaged Electron run-as-node runtime");
+if (!process.versions.electron || !electron.app) {
+  throw new Error("Claude Desktop runtime contract must execute inside the packaged Electron main process");
 }
 if (process.env.CLAUDE_CODE_LOCAL_BINARY !== declaredClaudeCode) {
   throw new Error("Claude Desktop did not receive exactly the declared Claude Code executable");
@@ -171,10 +174,14 @@ async function main() {
   }
 }
 
-main().then(
-  () => process.exit(0),
+electron.app.whenReady().then(main).then(
+  () => {
+    electron.app.quit();
+    process.exit(0);
+  },
   (error) => {
     console.error(error?.stack || error);
+    electron.app.quit();
     process.exit(1);
   },
 );
