@@ -36,7 +36,9 @@ let
   codexCliPackage = pkgs.callPackage ../../../../packages/codex { inherit inputs; };
   claudeCodePackage = pkgs.callPackage ../../../../packages/claude-code { inherit inputs; };
   claudeDesktopPackage = inputs.llm-agents.packages.${homeSystem}.claude-desktop;
-  chatgptPackage = inputs.llm-agents.packages.${homeSystem}.chatgpt;
+  chatgptPackage = inputs.llm-agents.packages.${homeSystem}.chatgpt.override {
+    commandLineArgs = "--ozone-platform=wayland";
+  };
   chatgptWithSharedCodex = pkgs.symlinkJoin {
     name = "chatgpt-with-shared-codex-cli";
     paths = [ chatgptPackage ];
