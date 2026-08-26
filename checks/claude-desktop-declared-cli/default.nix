@@ -80,6 +80,7 @@ pkgs.runCommand "claude-desktop-declared-cli-contract"
       CRIOMOS_CLAUDE_DESKTOP_RUNTIME_CONTRACT=${../agent-intercom-graphical-tui/claude-desktop-runtime-contract.cjs} \
       CRIOMOS_CLAUDE_DESKTOP_TEST_APP="$test_app" \
       CRIOMOS_CLAUDE_DESKTOP_TEST_MODE=valid \
+      CLAUDE_ENABLE_LOGGING=1 \
       CLAUDE_CODE_LOCAL_BINARY=${claudeCodePackage}/bin/claude \
       "$test_desktop/lib/claude-desktop/claude-desktop" \
       --disable-gpu \
@@ -99,6 +100,7 @@ pkgs.runCommand "claude-desktop-declared-cli-contract"
       CRIOMOS_CLAUDE_DESKTOP_RUNTIME_CONTRACT=${../agent-intercom-graphical-tui/claude-desktop-runtime-contract.cjs} \
       CRIOMOS_CLAUDE_DESKTOP_TEST_APP="$test_app" \
       CRIOMOS_CLAUDE_DESKTOP_TEST_MODE=missing \
+      CLAUDE_ENABLE_LOGGING=1 \
       CLAUDE_CODE_LOCAL_BINARY="$missing_runtime_root/missing-claude" \
       "$test_desktop/lib/claude-desktop/claude-desktop" \
       --disable-gpu \
