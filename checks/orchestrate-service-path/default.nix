@@ -22,7 +22,12 @@ let
   };
 
   moduleConfiguration =
-    if moduleResult.config ? content then moduleResult.config.content else moduleResult.config;
+    if moduleResult ? config && moduleResult.config ? content then
+      moduleResult.config.content
+    else if moduleResult ? content then
+      moduleResult.content
+    else
+      moduleResult;
   service = moduleConfiguration.systemd.user.services.orchestrate-nexus.Service;
   orchestrateProfilePackage = builtins.head moduleConfiguration.home.packages;
   orchestratePackage = inputs.orchestrate.packages.${system}.default;
