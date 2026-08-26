@@ -14,7 +14,6 @@ let
   inherit (user) size;
   codiumPackage = pkgs.callPackage ../../../../packages/vscodium-casual { };
   claudeCodePackage = pkgs.callPackage ../../../../packages/claude-code { inherit inputs; };
-  codexCliPackage = pkgs.callPackage ../../../../packages/codex { inherit inputs; };
   agentIntercomLocal = builtins.any (
     service:
     if builtins.isString service then
@@ -327,7 +326,6 @@ lib.mkIf size.medium {
   ]
   ++ lib.optionals (!agentIntercomLocal) [
     claudeCodePackage
-    codexCliPackage
   ];
 
   home.activation.bootstrapMutableClaudeCodeExtension = lib.hm.dag.entryBefore [ "linkGeneration" ] ''

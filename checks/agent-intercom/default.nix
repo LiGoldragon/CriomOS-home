@@ -72,6 +72,41 @@ let
     }).config;
   localHomeConfiguration = mkHomeConfiguration localHorizon;
   noLocalHomeConfiguration = mkHomeConfiguration noLocalHorizon;
+  # This is deliberately a generic medium Home profile rather than a host or
+  # user fixture.  It combines the normal Codex TUI owner (Agent Intercom)
+  # with VSCodium and builds the generated activation package, which realizes
+  # Home Manager's `home-manager-path`.  Thus a second package claiming
+  # `bin/codex` fails here as it would in an embedded user home.
+  vscodiumHomeConfiguration =
+    (inputs.home-manager.lib.homeManagerConfiguration {
+      inherit pkgs;
+      extraSpecialArgs = {
+        inherit inputs;
+        horizon = noLocalHorizon;
+        user = {
+          name = "test-user";
+          preferredEditor = "Emacs";
+          size = {
+            min = true;
+            medium = true;
+          };
+        };
+        hexis = inputs.hexis.packages.${pkgs.stdenv.hostPlatform.system}.default;
+        textScale.codiumZoom = 0;
+      };
+      modules = [
+        agentIntercomModule
+        vscodiumModule
+        {
+          home = {
+            username = "test-user";
+            homeDirectory = "/home/test-user";
+            stateVersion = "26.05";
+          };
+        }
+      ];
+    }).config;
+  vscodiumActivationPackage = vscodiumHomeConfiguration.home.activationPackage;
   graphicalWithoutLocalRejected = builtins.tryEval (
     (mkHomeConfiguration graphicalWithoutLocalHorizon).activationPackage
   );
@@ -100,6 +135,7 @@ pkgs.runCommand "agent-intercom-local-home-contract"
       pkgs.gnugrep
       pkgs.nodejs
       profile
+      vscodiumActivationPackage
     ];
   }
   ''
@@ -110,6 +146,7 @@ pkgs.runCommand "agent-intercom-local-home-contract"
     test "$( ${agentIntercom}/bin/codex-raw --version )" = 'codex-cli ${codexCliPackage.version}'
     test -x ${profile}/bin/codex
     test "$( ${profile}/bin/codex --version )" = 'codex-cli ${codexCliPackage.version}'
+    test -x ${vscodiumActivationPackage}/home-path/bin/codex
     test -x ${profile}/bin/claude
     test "$( ${profile}/bin/claude --version )" = '${claudeCodePackage.version} (Claude Code)'
     ! test -e ${agentIntercom}/bin/codex
