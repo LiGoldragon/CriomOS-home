@@ -67,7 +67,7 @@ pkgs.runCommand "codex-remote-control-contract"
   }
   ''
     set -eu
-    trap 'status=$?; printf "codex-remote-control contract failed at line %s (exit %s)\\n" "$LINENO" "$status" >&2; exit "$status"' ERR
+    trap 'status=$?; printf "codex-remote-control contract failed at line %s (exit %s)\\n" "$LINENO" "$status" >&2; for log in "$TMPDIR/app-server.out" "$TMPDIR/app-server.err"; do if [ -f "$log" ]; then printf "%s:\\n" "$log" >&2; cat "$log" >&2; fi; done; exit "$status"' ERR
 
     test "$(${profile}/bin/codex --version)" = "codex-cli ${codexCliPackage.version}"
     test "$(${agentIntercomPackage}/bin/codex-raw --version)" = "codex-cli ${codexCliPackage.version}"
