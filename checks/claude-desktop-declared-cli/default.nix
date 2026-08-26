@@ -9,6 +9,13 @@ let
     claudeDesktopPackage = inputs.llm-agents.packages.${system}.claude-desktop;
     inherit claudeCodePackage;
   };
+  missingClaudeCodePackage = pkgs.runCommand "missing-declared-claude-code" { } ''
+    mkdir -p "$out"
+  '';
+  missingClaudeDesktopPackage = homePkgs.claudeDesktopWithDeclaredClaudeCode {
+    claudeDesktopPackage = inputs.llm-agents.packages.${system}.claude-desktop;
+    claudeCodePackage = missingClaudeCodePackage;
+  };
 in
 assert claudeDesktopPackage.passthru.declaredClaudeCode == claudeCodePackage;
 pkgs.runCommand "claude-desktop-declared-cli-contract"
@@ -25,12 +32,14 @@ pkgs.runCommand "claude-desktop-declared-cli-contract"
     set -eu
 
     prepare_test_app() {
-      test_desktop="$TMPDIR/claude-desktop-$1"
-      test_app="$TMPDIR/claude-desktop-app-$1"
-      cp -a ${claudeDesktopPackage}/. "$test_desktop"
+      source_desktop="$1"
+      name="$2"
+      test_desktop="$TMPDIR/claude-desktop-$name"
+      test_app="$TMPDIR/claude-desktop-app-$name"
+      cp -a "$source_desktop"/. "$test_desktop"
       chmod -R u+w "$test_desktop"
       ${pkgs.asar}/bin/asar extract \
-        ${claudeDesktopPackage}/lib/claude-desktop/resources/app.asar \
+        "$source_desktop/lib/claude-desktop/resources/app.asar" \
         "$test_app"
       ${pkgs.nodejs}/bin/node -e '
         const fs = require("node:fs");
@@ -67,7 +76,7 @@ pkgs.runCommand "claude-desktop-declared-cli-contract"
     test -S /tmp/.X11-unix/X99
 
     echo 'claude-desktop-declared-cli: valid override'
-    prepare_test_app valid
+    prepare_test_app ${claudeDesktopPackage} valid
     runtime_root="$TMPDIR/claude-desktop-runtime"
     mkdir -p "$runtime_root/home" "$runtime_root/config" "$runtime_root/data" "$runtime_root/cache"
     timeout --kill-after=5s 60s dbus-run-session \
@@ -80,14 +89,14 @@ pkgs.runCommand "claude-desktop-declared-cli-contract"
       CRIOMOS_CLAUDE_DESKTOP_RUNTIME_CONTRACT=${../agent-intercom-graphical-tui/claude-desktop-runtime-contract.cjs} \
       CRIOMOS_CLAUDE_DESKTOP_TEST_APP="$test_app" \
       CRIOMOS_CLAUDE_DESKTOP_TEST_MODE=valid \
+      CRIOMOS_DECLARED_CLAUDE_CODE=${claudeCodePackage}/bin/claude \
       CLAUDE_ENABLE_LOGGING=1 \
-      CLAUDE_CODE_LOCAL_BINARY=${claudeCodePackage}/bin/claude \
       "$test_desktop/lib/claude-desktop/claude-desktop" \
       --disable-gpu \
       --disable-software-rasterizer
 
     echo 'claude-desktop-declared-cli: missing override'
-    prepare_test_app missing
+    prepare_test_app ${missingClaudeDesktopPackage} missing
     missing_runtime_root="$TMPDIR/claude-desktop-runtime-missing"
     mkdir -p "$missing_runtime_root/home" "$missing_runtime_root/config" "$missing_runtime_root/data" "$missing_runtime_root/cache"
     timeout --kill-after=5s 60s dbus-run-session \
@@ -100,8 +109,8 @@ pkgs.runCommand "claude-desktop-declared-cli-contract"
       CRIOMOS_CLAUDE_DESKTOP_RUNTIME_CONTRACT=${../agent-intercom-graphical-tui/claude-desktop-runtime-contract.cjs} \
       CRIOMOS_CLAUDE_DESKTOP_TEST_APP="$test_app" \
       CRIOMOS_CLAUDE_DESKTOP_TEST_MODE=missing \
+      CRIOMOS_DECLARED_CLAUDE_CODE=${missingClaudeCodePackage}/bin/claude \
       CLAUDE_ENABLE_LOGGING=1 \
-      CLAUDE_CODE_LOCAL_BINARY="$missing_runtime_root/missing-claude" \
       "$test_desktop/lib/claude-desktop/claude-desktop" \
       --disable-gpu \
       --disable-software-rasterizer

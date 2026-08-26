@@ -3,7 +3,7 @@ const fsp = require("node:fs/promises");
 const path = require("node:path");
 
 const appDirectory = process.env.CRIOMOS_CLAUDE_DESKTOP_TEST_APP;
-const declaredClaudeCode = process.env.CLAUDE_CODE_LOCAL_BINARY;
+const declaredClaudeCode = process.env.CRIOMOS_DECLARED_CLAUDE_CODE;
 const mode = process.env.CRIOMOS_CLAUDE_DESKTOP_TEST_MODE;
 const electron = require("electron");
 const hookName = "__CRIOMOS_CLAUDE_CODE_MANAGER";
@@ -17,8 +17,8 @@ if (!appDirectory || !declaredClaudeCode || !["valid", "missing"].includes(mode)
 if (!process.versions.electron || !electron.app) {
   throw new Error("Claude Desktop runtime contract must execute inside the packaged Electron main process");
 }
-if (process.env.CLAUDE_CODE_LOCAL_BINARY !== declaredClaudeCode) {
-  throw new Error("Claude Desktop did not receive exactly the declared Claude Code executable");
+if (process.env.CLAUDE_CODE_LOCAL_BINARY !== undefined) {
+  throw new Error("Claude Desktop boot manager unexpectedly inherited the launcher-only CLI environment");
 }
 
 function braceEnd(source, start) {

@@ -70,7 +70,8 @@ const replacements = [
 ];
 
 const constructorMarker = "process.env.CLAUDE_CODE_LOCAL_BINARY}";
-const constructorReplacement = "process.env.CLAUDE_CODE_LOCAL_BINARY&&(this.localBinaryInitPromise=this.initLocalBinary(process.env.CLAUDE_CODE_LOCAL_BINARY))}";
+const declaredClaudeCodeLiteral = JSON.stringify(declaredClaudeCode);
+const constructorReplacement = `this.localBinaryOverridePath=${declaredClaudeCodeLiteral},this.localBinaryInitPromise=this.initLocalBinary(this.localBinaryOverridePath)}`;
 let constructorPatched = false;
 for (const file of files) {
   const source = await readFile(file, "utf8");
@@ -98,8 +99,8 @@ for (const [marker, replacement] of replacements) {
 }
 
 for (const [marker, prefix] of [
-  ["async invalidateHostBinary(e){", "if(process.env.CLAUDE_CODE_LOCAL_BINARY)return;"],
-  ["async prepareForVM(e){", "if(process.env.CLAUDE_CODE_LOCAL_BINARY)throw Error(`CCD local override cannot be materialized for a VM`);"],
+  ["async invalidateHostBinary(e){", "if(this.localBinaryOverridePath)return;"],
+  ["async prepareForVM(e){", "if(this.localBinaryOverridePath)throw Error(`CCD local override cannot be materialized for a VM`);"],
 ]) {
   let patched = false;
   for (const file of files) {
