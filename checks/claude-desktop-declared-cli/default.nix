@@ -42,7 +42,7 @@ pkgs.runCommand "claude-desktop-declared-cli-contract"
         fs.writeFileSync(packagePath, JSON.stringify(packageJson));
         fs.writeFileSync(
           path.join(app, "criomos-runtime-bootstrap.cjs"),
-          "require(process.env.CRIOMOS_CLAUDE_DESKTOP_RUNTIME_CONTRACT)\n",
+          "require(\"./.vite/build/index.pre.js\"); require(process.env.CRIOMOS_CLAUDE_DESKTOP_RUNTIME_CONTRACT)\n",
         );
       ' "$test_app"
       ${pkgs.asar}/bin/asar pack \
