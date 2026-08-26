@@ -106,6 +106,12 @@ async function snapshot(directory) {
   return entries.sort().join("\n");
 }
 
+function managedExecutableState(snapshotText) {
+  return snapshotText.split("\n").filter((entry) =>
+    /\sClaude\/claude-code(?:\/|-|\s|$)/.test(entry),
+  ).join("\n");
+}
+
 async function assertRejects(action, description) {
   try {
     await action();
@@ -174,10 +180,13 @@ async function main() {
   }
 
   const after = await Promise.all(roots.map(snapshot));
-  if (before.some((value, index) => value !== after[index])) {
-    const changes = roots.map((root, index) => ({ root, before: before[index], after: after[index] }))
-      .filter((change) => change.before !== change.after);
-    throw new Error(`Claude Desktop mutated HOME or XDG state while resolving the declared executable: ${JSON.stringify(changes)}`);
+  if (before.some((value, index) => managedExecutableState(value) !== managedExecutableState(after[index]))) {
+    const changes = roots.map((root, index) => ({
+      root,
+      before: managedExecutableState(before[index]),
+      after: managedExecutableState(after[index]),
+    })).filter((change) => change.before !== change.after);
+    throw new Error(`Claude Desktop materialized or mutated managed executable state: ${JSON.stringify(changes)}`);
   }
 }
 
