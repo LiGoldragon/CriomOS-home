@@ -4,9 +4,16 @@ pkgs.writeShellApplication {
   text = ''
     arguments=("$@")
     explicit_remote=0
+    option_parsing=1
 
     for argument in "''${arguments[@]}"; do
+      if [ "$option_parsing" = 0 ]; then
+        continue
+      fi
       case "$argument" in
+        --)
+          option_parsing=0
+          ;;
         --remote|--remote=*)
           explicit_remote=1
           ;;
@@ -43,7 +50,7 @@ pkgs.writeShellApplication {
           fi
           exec ${codexCliPackage}/bin/codex --remote unix:// "''${arguments[@]}"
           ;;
-        agents|exec|review|login|logout|mcp|plugin|mcp-server|app-server|remote-control|completion|update|doctor|sandbox|apply|queue|archive|delete|migrate-rollouts|unarchive|cloud|features|help)
+        exec|review|login|logout|mcp|plugin|mcp-server|app-server|remote-control|completion|update|doctor|sandbox|apply|queue|archive|delete|migrate-rollouts|unarchive|cloud|features|help)
           exec ${codexCliPackage}/bin/codex "''${arguments[@]}"
           ;;
         *)

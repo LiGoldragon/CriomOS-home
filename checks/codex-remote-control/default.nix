@@ -68,8 +68,10 @@ pkgs.runCommand "codex-remote-control-contract"
   ''
     set -eu
 
-    test "$( ${profile}/bin/codex --version )" = "codex-cli ${codexCliPackage.version}"
-    test "$( ${agentIntercomPackage}/bin/codex-raw --version )" = "codex-cli ${codexCliPackage.version}"
+    cli_home="$TMPDIR/cli-home"
+    mkdir -p "$cli_home"
+    test "$(HOME="$cli_home" CODEX_HOME="$cli_home/.codex" ${profile}/bin/codex --version)" = "codex-cli ${codexCliPackage.version}"
+    test "$(HOME="$cli_home" CODEX_HOME="$cli_home/.codex" ${agentIntercomPackage}/bin/codex-raw --version)" = "codex-cli ${codexCliPackage.version}"
 
     expect_remote() {
       test "$("${codexTuiFixture}/bin/codex" "$@")" = "$(printf '%s\n' --remote unix:// "$@")"
@@ -82,20 +84,24 @@ pkgs.runCommand "codex-remote-control-contract"
     expect_remote --ask-for-approval never --sandbox workspace-write "fresh prompt"
     expect_remote -c 'model="gpt-5.6-terra"' resume thread-id
     expect_remote fork thread-id
+    expect_remote agents
     expect_raw exec "one-shot task"
     expect_raw app-server proxy
     expect_raw login
     expect_raw --remote unix:///tmp/other.sock resume thread-id
     expect_raw resume --remote unix:///tmp/other.sock thread-id
+    expect_raw agents --remote unix:///tmp/other.sock
+    expect_remote -- --remote
 
     codex_home="$TMPDIR/codex-home"
     control_directory="$codex_home/app-server-control"
     control_socket="$control_directory/app-server-control.sock"
-    mkdir -p "$control_directory"
+    service_home="$TMPDIR/service-home"
+    mkdir -p "$control_directory" "$service_home"
 
     inotifywait --quiet --timeout 15 --event create --event moved_to "$control_directory" > "$TMPDIR/socket-events" &
     watcher_pid=$!
-    HOME="$TMPDIR/home" CODEX_HOME="$codex_home" ${serviceRunner} > "$TMPDIR/app-server.out" 2> "$TMPDIR/app-server.err" &
+    HOME="$service_home" CODEX_HOME="$codex_home" ${serviceRunner} > "$TMPDIR/app-server.out" 2> "$TMPDIR/app-server.err" &
     server_pid=$!
 
     wait "$watcher_pid"
