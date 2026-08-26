@@ -34,7 +34,7 @@ in
 assert service.Service.UMask == "0077";
 assert service.Service.Restart == "always";
 assert builtins.length service.Service.ExecStart == 1;
-pkgs.nixosTest {
+pkgs.testers.nixosTest {
   name = "codex-remote-control-vm";
   nodes.machine =
     { ... }:
