@@ -67,6 +67,7 @@ else
     test -x "${orchestratePackage}/bin/orchestrate-nexus"
     test -x "${orchestrateProfilePackage}/bin/orchestrate"
     test -x "${orchestrateProfilePackage}/bin/meta-orchestrate"
+    test -x "${orchestratePackage}/bin/orchestrate-upgrade-preflight"
     test ! -e "${orchestrateProfilePackage}/bin/orchestrate-daemon"
     test ! -e "${orchestratePackage}/bin/orchestrate-write-configuration"
 
@@ -77,6 +78,10 @@ else
     legacy_store="$XDG_STATE_HOME/orchestrate/orchestrate.sema"
     mkdir -p "$(dirname "$legacy_store")"
     touch "$legacy_store"
+    test ! -e ${lib.escapeShellArg "${stateDirectory}/orchestrate-nexus.sema"}
+    preflight="$(${orchestratePackage}/bin/orchestrate-upgrade-preflight)"
+    test "$preflight" = 'active legacy PathLock rows: 0'
+    test ! -e ${lib.escapeShellArg "${stateDirectory}/orchestrate-nexus.sema"}
 
     "${service.ExecStart}" > "$TMPDIR/orchestrate-nexus.log" 2>&1 &
     nexus_pid=$!
@@ -92,11 +97,16 @@ else
     test -S ${lib.escapeShellArg metaSocketPath}
 
     claimed_path=${lib.escapeShellArg "${homeDirectory}/claimed"}
-    registration="PathLock.{home-nexus-check [$claimed_path] (Home Nexus check)}"
+    lock='Lock { lock_id: LockId(1), lock_name: LockName("home-nexus-check"), flow_id: FlowId("home-nexus-check"), lock_paths: LockPaths([LockPath("'"$claimed_path"'")]), lock_reason: LockReason("Home Nexus check") }'
+    registration="Lock.{home-nexus-check home-nexus-check [$claimed_path] (Home Nexus check)}"
     registered="$(${orchestrateProfilePackage}/bin/orchestrate "$registration")"
-    test "$registered" = "PathLockRegistered.{home-nexus-check [$claimed_path] (Home Nexus check)}"
-    released="$(${orchestrateProfilePackage}/bin/orchestrate 'PathLockRelease.{home-nexus-check}')"
-    test "$released" = 'PathLockReleased.{home-nexus-check}'
+    test "$registered" = "Locked($lock)"
+    observed="$(${orchestrateProfilePackage}/bin/orchestrate 'Observe.Locks')"
+    test "$observed" = "Observed(Locks(LockSnapshot { locks: Locks([$lock]) }))"
+    released="$(${orchestrateProfilePackage}/bin/orchestrate 'Release.{1}')"
+    test "$released" = "Released($lock)"
+    observed_empty="$(${orchestrateProfilePackage}/bin/orchestrate 'Observe.Locks')"
+    test "$observed_empty" = 'Observed(Locks(LockSnapshot { locks: Locks([]) }))'
     configured="$(${orchestrateProfilePackage}/bin/meta-orchestrate 'Configure.{${ordinarySocketPath} ${metaSocketPath}}')"
     test "$configured" = 'Configured.{${ordinarySocketPath} ${metaSocketPath}}'
 
