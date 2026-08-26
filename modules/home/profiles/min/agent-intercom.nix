@@ -1,13 +1,14 @@
 {
+  config,
   inputs,
   lib,
   pkgs,
   horizon,
-  user,
   hexis,
   ...
 }:
 let
+  profileUser = ((horizon.users or { }).${config.home.username} or { });
   serviceName =
     service:
     if builtins.isString service then
@@ -25,7 +26,7 @@ let
 
   localEnabled = hasCapability "AgentIntercomLocal";
   graphicalEnabled = hasCapability "AgentIntercomGraphical";
-  mediumEnabled = user.size.medium or false;
+  mediumEnabled = profileUser.size.medium or false;
   desktopEnabled = graphicalEnabled && mediumEnabled;
   # Only the projected capability, which is an early special argument, decides
   # whether the Desktop option block exists below.  The package-set platform
@@ -156,7 +157,7 @@ lib.mkMerge [
       modes."/plugin" = "always";
     };
   })
-  (lib.mkIf (user.size.min or false) {
+  (lib.mkIf (profileUser.size.min or false) {
     # Codex's app-server is the single owner of every normal terminal TUI
     # session.  Its default Unix socket is local to the user, while remote
     # control reaches the phone through Codex's authenticated relay.
@@ -173,7 +174,7 @@ lib.mkMerge [
       Install.WantedBy = [ "default.target" ];
     };
   })
-  (lib.optionalAttrs desktopEnabled {
+  (lib.mkIf desktopEnabled {
     home.packages = [
       claudeDesktopPackage
       chatgptWithSharedCodex

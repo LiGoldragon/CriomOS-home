@@ -15,6 +15,7 @@ let
       criomeDomainName = "edge.invalid";
     };
     exNodes = { };
+    users.${remoteUser.name} = remoteUser;
   };
   localPersonaHorizon = {
     node = remoteHorizon.node // {

@@ -10,12 +10,14 @@ let
       inherit pkgs;
       extraSpecialArgs = {
         inherit inputs;
-        user = {
-          name = testUser;
-          size.min = true;
-        };
         hexis = inputs.hexis.packages.${system}.default;
-        horizon.node.services = [ ];
+        horizon = {
+          node.services = [ ];
+          users.${testUser} = {
+            name = testUser;
+            size.min = true;
+          };
+        };
       };
       modules = [
         codexRemoteControlModule

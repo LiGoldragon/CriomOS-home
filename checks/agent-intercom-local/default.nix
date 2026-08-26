@@ -12,18 +12,30 @@ let
   agentIntercomModule = ../../modules/home/profiles/min/agent-intercom.nix;
   agentIntercomPackage = ../../packages/agent-intercom/default.nix;
   localHorizon = {
+    users.test-user = {
+      name = "test-user";
+      size.min = true;
+    };
     node = {
       name = "local";
       services = [ { AgentIntercomLocal = { }; } ];
     };
   };
   noLocalHorizon = {
+    users.test-user = {
+      name = "test-user";
+      size.min = true;
+    };
     node = {
       name = "headless";
       services = [ ];
     };
   };
   graphicalHorizon = {
+    users.test-user = {
+      name = "test-user";
+      size.min = true;
+    };
     node = {
       name = "unsupported-graphical";
       services = [

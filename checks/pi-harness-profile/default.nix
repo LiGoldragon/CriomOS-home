@@ -30,6 +30,10 @@ let
           services = [ { AgentIntercomLocal = { }; } ];
         };
         exNodes = { };
+        users.pi-runtime-test = {
+          name = "pi-runtime-test";
+          size.min = true;
+        };
       };
       user.size.min = true;
     };

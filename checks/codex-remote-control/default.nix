@@ -17,9 +17,12 @@ let
     (inputs.home-manager.lib.homeManagerConfiguration {
       inherit pkgs;
       extraSpecialArgs = {
-        inherit inputs user;
+        inherit inputs;
         hexis = inputs.hexis.packages.${system}.default;
-        horizon.node.services = [ ];
+        horizon = {
+          node.services = [ ];
+          users.${user.name} = user;
+        };
       };
       modules = [
         codexRemoteControlModule
@@ -42,10 +45,46 @@ let
   };
   configuration = mkConfiguration codexUser;
   nonCodexConfiguration = mkConfiguration nonCodexUser;
+  embeddedUserName = "embedded-codex-test";
+  embeddedHorizon = {
+    node.services = [ ];
+    users.${embeddedUserName} = {
+      name = embeddedUserName;
+      size.min = true;
+    };
+  };
+  embeddedConfiguration = inputs.nixpkgs.lib.nixosSystem {
+    inherit system;
+    modules = [
+      inputs.home-manager.nixosModules.home-manager
+      {
+        system.stateVersion = "26.05";
+        users.users.${embeddedUserName}.isNormalUser = true;
+        home-manager = {
+          useGlobalPkgs = true;
+          extraSpecialArgs = {
+            inherit inputs pkgs;
+            horizon = embeddedHorizon;
+            hexis = inputs.hexis.packages.${system}.default;
+          };
+          sharedModules = [ codexRemoteControlModule ];
+          users.${embeddedUserName} = {
+            _module.args.user = embeddedHorizon.users.${embeddedUserName};
+            home = {
+              username = embeddedUserName;
+              homeDirectory = "/home/${embeddedUserName}";
+              stateVersion = "26.05";
+            };
+          };
+        };
+      }
+    ];
+  };
   remoteControlService = configuration.systemd.user.services.codex-remote-control;
 in
 assert configuration.systemd.user.services ? codex-remote-control;
 assert !(nonCodexConfiguration.systemd.user.services ? codex-remote-control);
+assert embeddedConfiguration.config.home-manager.users.${embeddedUserName}.systemd.user.services ? codex-remote-control;
 assert remoteControlService.Service.UMask == "0077";
 assert remoteControlService.Service.Restart == "always";
 assert builtins.length remoteControlService.Service.ExecStart == 1;

@@ -3,7 +3,7 @@ let
   lib = pkgs.lib;
   system = pkgs.stdenv.hostPlatform.system;
   homePkgs = pkgs.extend (pkgs.lib.composeManyExtensions (import ../../overlays { inherit inputs; }));
-  horizon = {
+  baseHorizon = {
     node = {
       name = "graphical-tui-contract";
       services = [
@@ -17,8 +17,11 @@ let
     (inputs.home-manager.lib.homeManagerConfiguration {
       pkgs = homePkgs;
       extraSpecialArgs = {
-        inherit inputs horizon user;
+        inherit inputs user;
         hexis = inputs.hexis.packages.${system}.default;
+        horizon = baseHorizon // {
+          users.test-user = user;
+        };
       };
       modules = [
         ../../modules/home/profiles/min/agent-intercom.nix

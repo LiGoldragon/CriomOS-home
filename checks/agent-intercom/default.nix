@@ -6,18 +6,39 @@ let
   agentIntercomPackage = ../../packages/agent-intercom/default.nix;
   vscodiumModule = ../../modules/home/vscodium/vscodium/default.nix;
   localHorizon = {
+    users.test-user = {
+      name = "test-user";
+      size = {
+        min = true;
+        medium = true;
+      };
+    };
     node = {
       name = "node";
       services = [ { AgentIntercomLocal = { }; } ];
     };
   };
   noLocalHorizon = {
+    users.test-user = {
+      name = "test-user";
+      size = {
+        min = true;
+        medium = true;
+      };
+    };
     node = {
       name = "headless";
       services = [ ];
     };
   };
   graphicalWithoutLocalHorizon = {
+    users.test-user = {
+      name = "test-user";
+      size = {
+        min = true;
+        medium = true;
+      };
+    };
     node = {
       name = "invalid-graphical";
       services = [ { AgentIntercomGraphical = { }; } ];
