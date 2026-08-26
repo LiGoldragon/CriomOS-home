@@ -31,7 +31,10 @@ let
         inherit inputs horizon;
         user = {
           name = "test-user";
-          size.medium = true;
+          size = {
+            min = true;
+            medium = true;
+          };
         };
         hexis = inputs.hexis.packages.${pkgs.stdenv.hostPlatform.system}.default;
       };

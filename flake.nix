@@ -574,6 +574,9 @@
           agent-intercom-graphical-tui = checkPkgs.callPackage ./checks/agent-intercom-graphical-tui {
             inherit inputs;
           };
+          codex-remote-control = checkPkgs.callPackage ./checks/codex-remote-control {
+            inherit inputs;
+          };
         }
       ) derivationChecks;
 

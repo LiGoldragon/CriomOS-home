@@ -349,8 +349,7 @@ let
     pkgs.llama-cpp
     (pkgs.callPackage ../../../../packages/gws { inherit inputs; })
     (pkgs.callPackage ../../../../packages/playwright-cli { })
-  ]
-  ++ optional (!agentIntercomLocalEnabled) codexCliPackage;
+  ];
 
   nixpkgsPackages =
     with pkgs;

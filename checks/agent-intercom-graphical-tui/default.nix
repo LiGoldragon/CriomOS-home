@@ -33,7 +33,10 @@ let
     }).config;
   mediumUser = {
     name = "test-user";
-    size.medium = true;
+    size = {
+      min = true;
+      medium = true;
+    };
   };
   smallUser = {
     name = "test-user";
@@ -76,7 +79,7 @@ assert !(smallConfiguration.xdg.dataFile ? "applications/claude-desktop.desktop"
 assert !(smallConfiguration.xdg.mimeApps.defaultApplications ? "x-scheme-handler/claude");
 assert !(smallConfiguration.xdg.dataFile ? "applications/chatgpt.desktop");
 assert !(smallConfiguration.xdg.mimeApps.defaultApplications ? "x-scheme-handler/codex");
-assert !(configuration.systemd.user.services ? codex-remote-control);
+assert configuration.systemd.user.services ? codex-remote-control;
 assert !(configuration.systemd.user.services ? agent-intercom-codex-bridge);
 pkgs.runCommand "agent-intercom-graphical-tui-contract"
   {

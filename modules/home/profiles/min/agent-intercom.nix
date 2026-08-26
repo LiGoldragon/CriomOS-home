@@ -34,6 +34,7 @@ let
   homeSystem = pkgs.stdenv.hostPlatform.system;
   graphicalSupported = homeSystem == "x86_64-linux";
   codexCliPackage = pkgs.callPackage ../../../../packages/codex { inherit inputs; };
+  codexTui = pkgs.callPackage ../../../../packages/codex/tui.nix { inherit codexCliPackage; };
   claudeCodePackage = pkgs.callPackage ../../../../packages/claude-code { inherit inputs; };
   claudeDesktopPackage = pkgs.claudeDesktopWithDeclaredClaudeCode {
     claudeDesktopPackage = inputs.llm-agents.packages.${homeSystem}.claude-desktop;
@@ -94,7 +95,6 @@ lib.mkMerge [
     home.packages = [
       agentIntercomRuntime
       claudeCodePackage
-      codexCliPackage
     ];
 
     home.file = {
@@ -154,6 +154,23 @@ lib.mkMerge [
         plugin = [ "${agentIntercom}/share/agent-intercom/opencode/dist/tui.mjs" ];
       };
       modes."/plugin" = "always";
+    };
+  })
+  (lib.mkIf (user.size.min or false) {
+    # Codex's app-server is the single owner of every normal terminal TUI
+    # session.  Its default Unix socket is local to the user, while remote
+    # control reaches the phone through Codex's authenticated relay.
+    home.packages = [ codexTui ];
+
+    systemd.user.services.codex-remote-control = {
+      Unit.Description = "Codex Remote Control app-server";
+      Service = {
+        ExecStart = "${codexCliPackage}/bin/codex app-server --remote-control --listen unix://";
+        UMask = "0077";
+        Restart = "on-failure";
+        RestartSec = "2s";
+      };
+      Install.WantedBy = [ "default.target" ];
     };
   })
   (lib.optionalAttrs desktopEnabled {

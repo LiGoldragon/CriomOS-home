@@ -71,7 +71,7 @@ let
 in
 assert localHomeConfiguration.home.file ? ".pi/agent/packages/agent-intercom-pi";
 assert localHomeConfiguration.home.file ? ".pi/agent/packages/agent-intercom-orchestrator";
-assert builtins.elem codexCliPackage localHomeConfiguration.home.packages;
+assert localHomeConfiguration.systemd.user.services ? codex-remote-control;
 assert builtins.elem claudeCodePackage localHomeConfiguration.home.packages;
 assert !(builtins.elem agentIntercom localHomeConfiguration.home.packages);
 assert !(noLocalHomeConfiguration.home.file ? ".pi/agent/packages/agent-intercom-pi");
