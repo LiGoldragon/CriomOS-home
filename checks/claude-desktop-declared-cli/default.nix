@@ -42,7 +42,7 @@ pkgs.runCommand "claude-desktop-declared-cli-contract"
         fs.writeFileSync(packagePath, JSON.stringify(packageJson));
         fs.writeFileSync(
           path.join(app, "criomos-runtime-bootstrap.cjs"),
-          "require(process.env.CRIOMOS_CLAUDE_DESKTOP_RUNTIME_CONTRACT)\\n",
+          "require(process.env.CRIOMOS_CLAUDE_DESKTOP_RUNTIME_CONTRACT)\n",
         );
       ' "$test_app"
       ${pkgs.asar}/bin/asar pack \
@@ -74,7 +74,9 @@ pkgs.runCommand "claude-desktop-declared-cli-contract"
       CRIOMOS_CLAUDE_DESKTOP_TEST_APP="$test_app" \
       CRIOMOS_CLAUDE_DESKTOP_TEST_MODE=valid \
       CLAUDE_CODE_LOCAL_BINARY=${claudeCodePackage}/bin/claude \
-      "$test_desktop/lib/claude-desktop/claude-desktop"
+      "$test_desktop/lib/claude-desktop/claude-desktop" \
+      --disable-gpu \
+      --disable-software-rasterizer
 
     echo 'claude-desktop-declared-cli: missing override'
     prepare_test_app missing
@@ -91,7 +93,9 @@ pkgs.runCommand "claude-desktop-declared-cli-contract"
       CRIOMOS_CLAUDE_DESKTOP_TEST_APP="$test_app" \
       CRIOMOS_CLAUDE_DESKTOP_TEST_MODE=missing \
       CLAUDE_CODE_LOCAL_BINARY="$missing_runtime_root/missing-claude" \
-      "$test_desktop/lib/claude-desktop/claude-desktop"
+      "$test_desktop/lib/claude-desktop/claude-desktop" \
+      --disable-gpu \
+      --disable-software-rasterizer
 
     echo 'claude-desktop-declared-cli: passed'
     touch "$out"

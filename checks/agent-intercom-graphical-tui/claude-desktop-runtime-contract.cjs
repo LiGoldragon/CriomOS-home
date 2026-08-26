@@ -9,6 +9,8 @@ const electron = require("electron");
 const hookName = "__CRIOMOS_CLAUDE_CODE_MANAGER";
 const sentinel = "CRIOMOS_CLAUDE_CODE_MANAGER_EXPORTED";
 
+console.log("claude-desktop-runtime: bootstrap");
+
 if (!appDirectory || !declaredClaudeCode || !["valid", "missing"].includes(mode)) {
   throw new Error("expected app directory, declared Claude Code executable, and valid or missing mode");
 }
@@ -129,6 +131,7 @@ async function main() {
   }
   const Manager = globalThis[hookName];
   if (typeof Manager !== "function") throw new Error("actual Claude Code manager was not exported");
+  console.log("claude-desktop-runtime: actual manager loaded");
   const manager = new Manager();
   const forbidden = [
     "prepareForTarget",
@@ -145,6 +148,7 @@ async function main() {
   }
 
   if (mode === "valid") {
+    console.log("claude-desktop-runtime: valid override");
     if (await manager.getLocalBinaryPath() !== declaredClaudeCode) throw new Error("local override did not resolve the exact declared executable");
     const resolution = await manager.resolveHostBinary();
     if (resolution.path !== declaredClaudeCode || resolution.resolution !== "local_override") {
@@ -159,6 +163,7 @@ async function main() {
     await manager.invalidateHostBinary();
     await assertRejects(() => manager.prepareForVM(), "VM preparation with a declared local executable");
   } else {
+    console.log("claude-desktop-runtime: missing override");
     await assertRejects(() => manager.getLocalBinaryPath(), "missing declared executable initialization");
     await assertRejects(() => manager.resolveHostBinary(), "missing declared executable host resolution");
     await assertRejects(() => manager.prepare(), "missing declared executable preparation");
@@ -174,7 +179,10 @@ async function main() {
   }
 }
 
-electron.app.whenReady().then(main).then(
+electron.app.whenReady().then(() => {
+  console.log("claude-desktop-runtime: app ready");
+  return main();
+}).then(
   () => {
     electron.app.quit();
     process.exit(0);
