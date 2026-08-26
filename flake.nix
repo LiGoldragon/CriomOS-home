@@ -532,6 +532,9 @@
           orchestrate-service-path = checkPkgs.callPackage ./checks/orchestrate-service-path {
             inherit inputs;
           };
+          orchestrate-wrapper-fallback = checkPkgs.callPackage ./checks/orchestrate-wrapper-fallback {
+            inherit inputs;
+          };
           message-service-path = checkPkgs.callPackage ./checks/message-service-path { inherit inputs; };
           pi-criomos-package-load = checkPkgs.callPackage ./checks/pi-criomos-package-load {
             inherit inputs;
