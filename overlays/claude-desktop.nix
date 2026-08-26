@@ -1,6 +1,5 @@
 { inputs }:
-final: prev:
-{
+final: prev: {
   claudeDesktopWithDeclaredClaudeCode =
     {
       claudeDesktopPackage,
@@ -10,7 +9,6 @@ final: prev:
       {
         nativeBuildInputs = [
           prev.asar
-          prev.makeWrapper
           prev.nodejs
         ];
         passthru.declaredClaudeCode = claudeCodePackage;
@@ -26,7 +24,7 @@ final: prev:
           ${claudeCodePackage}/bin/claude
         rm "$app_asar"
         ${prev.asar}/bin/asar pack "$extracted_app" "$app_asar"
-        wrapProgram "$out/bin/claude-desktop" \
-          --set CLAUDE_CODE_LOCAL_BINARY ${claudeCodePackage}/bin/claude
+        substituteInPlace "$out/bin/claude-desktop" \
+          --replace-fail "${claudeDesktopPackage}" "$out"
       '';
 }

@@ -568,6 +568,9 @@
           claude-desktop-declared-cli = checkPkgs.callPackage ./checks/claude-desktop-declared-cli {
             inherit inputs;
           };
+          claude-desktop-launcher-linkage = checkPkgs.callPackage ./checks/claude-desktop-launcher-linkage {
+            inherit inputs;
+          };
           agent-intercom-graphical-tui = checkPkgs.callPackage ./checks/agent-intercom-graphical-tui {
             inherit inputs;
           };
