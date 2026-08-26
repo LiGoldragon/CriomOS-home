@@ -79,16 +79,40 @@ async function exposeActualManager() {
 
 async function snapshot(directory) {
   const entries = [];
+  const disappeared = (error) => error?.code === "ENOENT";
   async function visit(relative) {
     const absolute = path.join(directory, relative);
-    const stat = await fsp.lstat(absolute);
+    let stat;
+    try {
+      stat = await fsp.lstat(absolute);
+    } catch (error) {
+      if (disappeared(error)) return;
+      throw error;
+    }
     if (stat.isDirectory()) {
       entries.push(`d ${relative}`);
-      for (const child of await fsp.readdir(absolute)) await visit(path.join(relative, child));
+      let children;
+      try {
+        children = await fsp.readdir(absolute);
+      } catch (error) {
+        if (disappeared(error)) return;
+        throw error;
+      }
+      for (const child of children) await visit(path.join(relative, child));
     } else if (stat.isSymbolicLink()) {
-      entries.push(`l ${relative} ${await fsp.readlink(absolute)}`);
+      try {
+        entries.push(`l ${relative} ${await fsp.readlink(absolute)}`);
+      } catch (error) {
+        if (disappeared(error)) return;
+        throw error;
+      }
     } else if (stat.isFile()) {
-      entries.push(`f ${relative} ${stat.mode.toString(8)} ${crypto.createHash("sha256").update(await fsp.readFile(absolute)).digest("hex")}`);
+      try {
+        entries.push(`f ${relative} ${stat.mode.toString(8)} ${crypto.createHash("sha256").update(await fsp.readFile(absolute)).digest("hex")}`);
+      } catch (error) {
+        if (disappeared(error)) return;
+        throw error;
+      }
     } else {
       entries.push(`o ${relative}`);
     }
