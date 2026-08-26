@@ -19,6 +19,7 @@ final: prev:
         cp -a ${claudeDesktopPackage}/. "$out"
         app_asar="$out/lib/claude-desktop/resources/app.asar"
         extracted_app="$TMPDIR/app"
+        chmod u+w "$out/lib/claude-desktop/resources" "$app_asar"
         ${prev.asar}/bin/asar extract "$app_asar" "$extracted_app"
         ${prev.nodejs}/bin/node ${./patch-claude-desktop-runtime.mjs} \
           "$extracted_app" \
