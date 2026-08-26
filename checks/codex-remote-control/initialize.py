@@ -60,8 +60,7 @@ def receive_frame(connection):
     return payload
 
 
-def main():
-    socket_path, codex_home = sys.argv[1:]
+def connect(socket_path):
     websocket_key = base64.b64encode(os.urandom(16)).decode()
     request = (
         "GET / HTTP/1.1\r\n"
@@ -78,12 +77,15 @@ def main():
     accept = base64.b64encode(hashlib.sha1((websocket_key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").encode()).digest()).decode()
     if b"HTTP/1.1 101" not in response or f"Sec-WebSocket-Accept: {accept}".encode() not in response:
         raise RuntimeError("app-server rejected the websocket upgrade")
+    return connection
 
+
+def initialize(connection, request_id, codex_home):
     send_frame(
         connection,
         json.dumps(
             {
-                "id": 1,
+                "id": request_id,
                 "method": "initialize",
                 "params": {"clientInfo": {"name": "criomos-home-check", "version": "1"}},
             }
@@ -91,11 +93,18 @@ def main():
     )
     while True:
         message = json.loads(receive_frame(connection))
-        if message.get("id") == 1:
+        if message.get("id") == request_id:
             if message.get("result", {}).get("codexHome") != codex_home:
                 raise RuntimeError("initialize reported a different CODEX_HOME")
             break
     send_frame(connection, json.dumps({"method": "initialized", "params": {}}).encode())
+
+
+def main():
+    socket_path, codex_home = sys.argv[1:]
+    connections = [connect(socket_path), connect(socket_path)]
+    for request_id, connection in enumerate(connections, start=1):
+        initialize(connection, request_id, codex_home)
 
 
 if __name__ == "__main__":

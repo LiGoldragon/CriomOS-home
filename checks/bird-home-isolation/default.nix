@@ -2,6 +2,7 @@
 let
   system = pkgs.stdenv.hostPlatform.system;
   piModelsModule = ../../modules/home/profiles/min/pi-models.nix;
+  agentIntercomModule = ../../modules/home/profiles/min/agent-intercom.nix;
   orchestrateModule = ../../modules/home/profiles/min/orchestrate.nix;
   spiritModule = ../../modules/home/profiles/min/spirit.nix;
 
@@ -95,6 +96,7 @@ let
 
   remoteConfiguration = mkHome remoteHorizon { } [
     piModelsModule
+    agentIntercomModule
     orchestrateModule
     spiritModule
   ];
@@ -121,6 +123,7 @@ assert
     builtins.filter (name: pkgs.lib.hasPrefix "mergePi" name) (builtins.attrNames remoteActivation)
   ) == 8;
 assert remoteConfiguration.config.systemd.user.services ? orchestrate-nexus;
+assert remoteConfiguration.config.systemd.user.services ? codex-remote-control;
 assert !(remoteConfiguration.config.systemd.user.services ? spirit-judge);
 assert !(remoteConfiguration.config.systemd.user.services ? spirit-daemon);
 assert orchestrateConfiguration.config.systemd.user.services ? orchestrate-nexus;

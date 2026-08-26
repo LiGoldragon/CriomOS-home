@@ -167,7 +167,7 @@ lib.mkMerge [
       Service = {
         ExecStart = "${codexCliPackage}/bin/codex app-server --remote-control --listen unix://";
         UMask = "0077";
-        Restart = "on-failure";
+        Restart = "always";
         RestartSec = "2s";
       };
       Install.WantedBy = [ "default.target" ];

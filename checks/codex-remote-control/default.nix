@@ -48,11 +48,14 @@ let
     paths = configuration.home.packages;
   };
   remoteControlService = configuration.systemd.user.services.codex-remote-control;
-  serviceRunner = pkgs.writeShellScript "codex-remote-control-service" remoteControlService.Service.ExecStart;
+  serviceCommand = builtins.concatStringsSep "\n" remoteControlService.Service.ExecStart;
+  serviceRunner = pkgs.writeShellScript "codex-remote-control-service" serviceCommand;
 in
 assert configuration.systemd.user.services ? codex-remote-control;
 assert !(nonCodexConfiguration.systemd.user.services ? codex-remote-control);
 assert remoteControlService.Service.UMask == "0077";
+assert remoteControlService.Service.Restart == "always";
+assert builtins.length remoteControlService.Service.ExecStart == 1;
 pkgs.runCommand "codex-remote-control-contract"
   {
     nativeBuildInputs = [
@@ -83,6 +86,7 @@ pkgs.runCommand "codex-remote-control-contract"
     expect_raw app-server proxy
     expect_raw login
     expect_raw --remote unix:///tmp/other.sock resume thread-id
+    expect_raw resume --remote unix:///tmp/other.sock thread-id
 
     codex_home="$TMPDIR/codex-home"
     control_directory="$codex_home/app-server-control"
