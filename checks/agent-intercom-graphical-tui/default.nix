@@ -2,9 +2,7 @@
 let
   lib = pkgs.lib;
   system = pkgs.stdenv.hostPlatform.system;
-  homePkgs = pkgs.extend (
-    pkgs.lib.composeManyExtensions (import ../../overlays { inherit inputs; })
-  );
+  homePkgs = pkgs.extend (pkgs.lib.composeManyExtensions (import ../../overlays { inherit inputs; }));
   horizon = {
     node = {
       name = "graphical-tui-contract";
@@ -88,6 +86,7 @@ pkgs.runCommand "agent-intercom-graphical-tui-contract"
       pkgs.gnugrep
       pkgs.nodejs
       pkgs.asar
+      pkgs.gnused
       pkgs.xdg-utils
       profile
       agentIntercom
@@ -204,7 +203,10 @@ pkgs.runCommand "agent-intercom-graphical-tui-contract"
     grep -E '^Exec=.*chatgpt' ${chatgptEntry}
     grep -F 'x-scheme-handler/codex' ${chatgptEntry}
     test -x ${chatgptLauncher}/bin/chatgpt
-    grep -F '${chatgptPackage}/bin/chatgpt' ${chatgptLauncher}/bin/chatgpt
+    ! grep -F '${chatgptPackage}/bin/chatgpt' ${chatgptLauncher}/bin/chatgpt
+    chatgpt_wrapped_path="$(sed -n -E 's|.*(/nix/store/[^ ]+/bin/chatgpt).*|\1|p' ${chatgptLauncher}/bin/chatgpt | head -n 1)"
+    test -n "$chatgpt_wrapped_path"
+    grep -F -- '--ozone-platform=wayland' "$chatgpt_wrapped_path"
     grep -F 'CODEX_CLI_PATH' ${chatgptLauncher}/bin/chatgpt
     grep -F '${codexCliPackage}/bin/codex' ${chatgptLauncher}/bin/chatgpt
 
