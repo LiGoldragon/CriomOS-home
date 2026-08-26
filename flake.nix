@@ -172,12 +172,10 @@
     aggregator.inputs.nixpkgs.follows = "nixpkgs";
     aggregator.inputs.crane.follows = "crane";
 
-    # Orchestrate — multi-agent claim/coordination daemon for the `primary`
-    # workspace. The 0.20.0 state-only boundary takes its Sema store and three
-    # Unix sockets as direct argv, refuses host worktree scaffolding, and keeps
-    # Observe/Query as pure store projections. The Home service supplies the
-    # co-resident messenger socket only; no router is deployed.
-    orchestrate.url = "github:LiGoldragon/orchestrate/b14355577286e56902d085ad4e1bf2654a55931e";
+    # Orchestrate Nexus — per-user path-reservation Nexus. Its executable owns
+    # the default fresh Sema store and its ordinary/meta XDG sockets; Home
+    # supplies lifecycle and client socket bindings without a bootstrap frame.
+    orchestrate.url = "github:LiGoldragon/orchestrate/5b4954224185b868dd96da58fb688637eea5db97";
     orchestrate.inputs.nixpkgs.follows = "nixpkgs";
 
     # Message — the messenger: stateful local messaging daemon owning the

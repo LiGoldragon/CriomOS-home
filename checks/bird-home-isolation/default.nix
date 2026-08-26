@@ -98,7 +98,7 @@ let
     orchestrateModule
     spiritModule
   ];
-  localOrchestrateConfiguration = mkHome localPersonaHorizon { orchestrate = fakeOrchestrate; } [
+  orchestrateConfiguration = mkHome remoteHorizon { orchestrate = fakeOrchestrate; } [
     orchestrateModule
   ];
   localSpiritConfiguration = mkHome localPersonaHorizon {
@@ -120,10 +120,10 @@ assert
   builtins.length (
     builtins.filter (name: pkgs.lib.hasPrefix "mergePi" name) (builtins.attrNames remoteActivation)
   ) == 8;
-assert !(remoteConfiguration.config.systemd.user.services ? orchestrate-daemon);
+assert remoteConfiguration.config.systemd.user.services ? orchestrate-nexus;
 assert !(remoteConfiguration.config.systemd.user.services ? spirit-judge);
 assert !(remoteConfiguration.config.systemd.user.services ? spirit-daemon);
-assert localOrchestrateConfiguration.config.systemd.user.services ? orchestrate-daemon;
+assert orchestrateConfiguration.config.systemd.user.services ? orchestrate-nexus;
 assert localSpiritConfiguration.config.systemd.user.services ? spirit-judge;
 assert localSpiritConfiguration.config.systemd.user.services ? spirit-daemon;
 pkgs.runCommand "bird-home-role-isolation" { } ''

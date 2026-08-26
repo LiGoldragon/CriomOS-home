@@ -1815,17 +1815,17 @@
         "rust-build": "rust-build_3"
       },
       "locked": {
-        "lastModified": 1786575211,
-        "narHash": "sha256-X6VnINIkmHojbgVFULs7C4bEP0zq+/SMBAvb+lA5F4Y=",
+        "lastModified": 1787745565,
+        "narHash": "sha256-h2E2vNg39zeM0ceLccRyUavCo1nSC+dZfPnznH4vcZA=",
         "owner": "LiGoldragon",
         "repo": "orchestrate",
-        "rev": "b14355577286e56902d085ad4e1bf2654a55931e",
+        "rev": "5b4954224185b868dd96da58fb688637eea5db97",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "orchestrate",
-        "rev": "b14355577286e56902d085ad4e1bf2654a55931e",
+        "rev": "5b4954224185b868dd96da58fb688637eea5db97",
         "type": "github"
       }
     },

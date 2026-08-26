@@ -5,65 +5,55 @@ let
   system = pkgs.stdenv.hostPlatform.system;
   orchestrateModule = ../../modules/home/profiles/min/orchestrate.nix;
 
-  homeDirectory = "/build/orchestrate-service-home";
+  homeDirectory = "/build/orchestrate-nexus-home";
   stateHome = "${homeDirectory}/.local/state";
-  stateDirectory = "${stateHome}/orchestrate";
-  runtimeDirectory = "/build/orchestrate-service-runtime";
-  workspaceRoot = "${homeDirectory}/primary";
-  gitIndexRoot = "/git/github.com/LiGoldragon";
-  messengerSocketPath = "%t/message/message.sock";
+  stateDirectory = "${stateHome}/orchestrate-nexus";
+  runtimeDirectory = "/build/orchestrate-nexus-runtime";
+  nexusRuntimeDirectory = "${runtimeDirectory}/orchestrate-nexus";
+  ordinarySocketPath = "${nexusRuntimeDirectory}/orchestrate.sock";
+  metaSocketPath = "${nexusRuntimeDirectory}/meta-orchestrate.sock";
 
   moduleResult = import orchestrateModule {
     inherit inputs lib pkgs;
     config = {
       home.homeDirectory = homeDirectory;
       xdg.stateHome = stateHome;
-      criomosHome.orchestrate.enable = true;
     };
-    horizon.node.services = [
-      {
-        PersonaDevelopment.capabilities = [ ];
-      }
-    ];
-    user.size.min = true;
   };
 
   moduleConfiguration =
     if moduleResult.config ? content then moduleResult.config.content else moduleResult.config;
-  service = moduleConfiguration.systemd.user.services.orchestrate-daemon.Service;
+  service = moduleConfiguration.systemd.user.services.orchestrate-nexus.Service;
   orchestrateProfilePackage = builtins.head moduleConfiguration.home.packages;
   orchestratePackage = inputs.orchestrate.packages.${system}.default;
-  expectedExecStart = "${orchestratePackage}/bin/orchestrate-daemon ${stateDirectory}/orchestrate.sema %t/orchestrate/orchestrate.sock %t/orchestrate/orchestrate-owner.sock %t/orchestrate/orchestrate-upgrade.sock ${workspaceRoot} ${gitIndexRoot} messenger=${messengerSocketPath}";
-  daemonExecStart = lib.replaceStrings [ "%t" ] [ runtimeDirectory ] service.ExecStart;
-
   assertions = [
     {
-      condition = service.StateDirectory == "orchestrate";
-      message = "the daemon service must own its XDG state directory.";
+      condition = service.StateDirectory == "orchestrate-nexus";
+      message = "Orchestrate Nexus must own its fresh state directory.";
     }
     {
-      condition = service.RuntimeDirectory == "orchestrate";
-      message = "the daemon service must own its runtime directory.";
+      condition = service.StateDirectoryMode == "0700";
+      message = "Orchestrate Nexus state must be owner-only.";
+    }
+    {
+      condition = service.RuntimeDirectory == "orchestrate-nexus";
+      message = "Orchestrate Nexus must own its runtime directory.";
     }
     {
       condition = service.RuntimeDirectoryMode == "0700";
-      message = "the daemon runtime directory must be owner-only.";
+      message = "Orchestrate Nexus runtime must be owner-only.";
+    }
+    {
+      condition = service.ExecStart == "${orchestratePackage}/bin/orchestrate-nexus";
+      message = "Orchestrate Nexus must start with its zero-argument default configuration.";
     }
     {
       condition = !(service ? ExecStartPre);
-      message = "the removed configuration writer must not be an ExecStartPre step.";
+      message = "Orchestrate Nexus must not use a bootstrap writer or configuration file.";
     }
     {
       condition = builtins.length moduleConfiguration.home.packages == 1;
-      message = "the profile must contain only the current Orchestrate package wrapper.";
-    }
-    {
-      condition = !(service ? Environment);
-      message = "the state-only daemon service must not carry a VCS PATH.";
-    }
-    {
-      condition = service.ExecStart == expectedExecStart;
-      message = "the daemon service must render the exact direct startup argv.";
+      message = "Home must install one Orchestrate client wrapper package.";
     }
   ];
   failures = builtins.filter (assertion: !assertion.condition) assertions;
@@ -71,50 +61,44 @@ in
 if failures != [ ] then
   throw (lib.concatMapStringsSep "\n" (assertion: assertion.message) failures)
 else
-  pkgs.runCommand "orchestrate-service-path" { nativeBuildInputs = [ pkgs.coreutils ]; } ''
+  pkgs.runCommand "orchestrate-nexus-service-path" { nativeBuildInputs = [ pkgs.coreutils ]; } ''
     set -eu
 
-    test -x "${orchestratePackage}/bin/orchestrate-daemon"
+    test -x "${orchestratePackage}/bin/orchestrate-nexus"
+    test -x "${orchestrateProfilePackage}/bin/orchestrate"
+    test -x "${orchestrateProfilePackage}/bin/meta-orchestrate"
+    test ! -e "${orchestrateProfilePackage}/bin/orchestrate-daemon"
     test ! -e "${orchestratePackage}/bin/orchestrate-write-configuration"
-    test ! -e "${orchestrateProfilePackage}/bin/orchestrate-write-configuration"
 
-    state_directory=${lib.escapeShellArg stateDirectory}
-    runtime_directory=${lib.escapeShellArg runtimeDirectory}
-    workspace_root=${lib.escapeShellArg workspaceRoot}
-    git_index_root=${lib.escapeShellArg gitIndexRoot}
-    test ! -e "$state_directory"
-    test ! -e "$runtime_directory"
-    test ! -e "$workspace_root"
-    test ! -e "$git_index_root"
-    mkdir -p "$state_directory" "$runtime_directory"
+    export HOME=${lib.escapeShellArg homeDirectory}
+    export XDG_STATE_HOME=${lib.escapeShellArg stateHome}
+    export XDG_RUNTIME_DIR=${lib.escapeShellArg runtimeDirectory}
+    mkdir -p "$XDG_STATE_HOME" "$XDG_RUNTIME_DIR"
+    legacy_store="$XDG_STATE_HOME/orchestrate/orchestrate.sema"
+    mkdir -p "$(dirname "$legacy_store")"
+    touch "$legacy_store"
 
-    # This is the service's evaluated argv after systemd expands %t. Check the
-    # complete vector before using it to launch the pinned daemon in this
-    # isolated Nix build sandbox.
-    set -- ${daemonExecStart}
-    test "$#" -eq 8
-    test "$1" = "${orchestratePackage}/bin/orchestrate-daemon"
-    test "$2" = "$state_directory/orchestrate.sema"
-    test "$3" = "$runtime_directory/orchestrate/orchestrate.sock"
-    test "$4" = "$runtime_directory/orchestrate/orchestrate-owner.sock"
-    test "$5" = "$runtime_directory/orchestrate/orchestrate-upgrade.sock"
-    test "$6" = "$workspace_root"
-    test "$7" = "$git_index_root"
-    test "$8" = "messenger=$runtime_directory/message/message.sock"
-
-    "$@" > "$TMPDIR/orchestrate-daemon.log" 2>&1 &
-    daemon_pid=$!
-    trap 'kill "$daemon_pid" 2>/dev/null || true; wait "$daemon_pid" 2>/dev/null || true' EXIT
+    "${service.ExecStart}" > "$TMPDIR/orchestrate-nexus.log" 2>&1 &
+    nexus_pid=$!
+    trap 'kill "$nexus_pid" 2>/dev/null || true; wait "$nexus_pid" 2>/dev/null || true' EXIT
     for attempt in $(seq 1 100); do
-      test -S "$3" && test -S "$4" && test -S "$5" && break
+      test -S ${lib.escapeShellArg ordinarySocketPath} && test -S ${lib.escapeShellArg metaSocketPath} && break
       sleep 0.05
     done
-    kill -0 "$daemon_pid"
-    test -S "$3"
-    test -S "$4"
-    test -S "$5"
-    test ! -e "$workspace_root"
-    test ! -e "$git_index_root"
+    kill -0 "$nexus_pid"
+    test -f ${lib.escapeShellArg "${stateDirectory}/orchestrate-nexus.sema"}
+    test -f "$legacy_store"
+    test -S ${lib.escapeShellArg ordinarySocketPath}
+    test -S ${lib.escapeShellArg metaSocketPath}
+
+    claimed_path=${lib.escapeShellArg "${homeDirectory}/claimed"}
+    registration="PathLock.{home-nexus-check [$claimed_path] (Home Nexus check)}"
+    registered="$(${orchestrateProfilePackage}/bin/orchestrate "$registration")"
+    test "$registered" = "PathLockRegistered.{home-nexus-check [$claimed_path] (Home Nexus check)}"
+    released="$(${orchestrateProfilePackage}/bin/orchestrate 'PathLockRelease.{home-nexus-check}')"
+    test "$released" = 'PathLockReleased.{home-nexus-check}'
+    configured="$(${orchestrateProfilePackage}/bin/meta-orchestrate 'Configure.{${ordinarySocketPath} ${metaSocketPath}}')"
+    test "$configured" = 'Configured.{${ordinarySocketPath} ${metaSocketPath}}'
 
     touch "$out"
   ''
