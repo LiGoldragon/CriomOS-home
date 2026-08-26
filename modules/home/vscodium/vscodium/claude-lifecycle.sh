@@ -133,13 +133,13 @@ link_missing() {
 root_is_stale_managed_extension() {
   stale_root="$1"
   # A stale automatic root retains the containing extension output.  Require
-  # that precise shape as well as a valid, different Claude version before
-  # replacing it; an arbitrary store path at a managed-looking filename is
-  # not authority to remove anything.
+  # an authenticated Anthropic Claude output, but distinguish it by provider
+  # output rather than semver: a rebuilt VSIX may keep its extension version
+  # while Home moves the stable target. An arbitrary store path at a
+  # managed-looking filename is not authority to remove anything.
   stale_output="$(@READLINK@ -f "$stale_root" 2>/dev/null || true)"
   valid_target "$stale_output" || return 1
-  stale_version="$(@JQ@ -er '.version | strings' "$stale_output/extension/package.json" 2>/dev/null || true)"
-  valid_version "$stale_version" && [ "$stale_version" != "$version" ]
+  [ "$stale_output" != "$target" ] && claude_extension_target "$stale_output/extension"
 }
 stale_managed_root_is_replaceable() {
   root="$1" root_target="$2"
@@ -716,7 +716,7 @@ reconcile() {
     fi
   fi
   root="$root_dir/$desired"
-  register_root "$root" "$target" || return 0
+  register_root "$root" "$target" || replace_stale_managed_root "$root" "$target" || return 0
   prior_entries="$manifest_prior_entries"
   if [ "$dry" -eq 1 ]; then printf '+ atomic manifest update\n'; return 0; fi
   tmp_manifest="$manifest.tmp.$$"

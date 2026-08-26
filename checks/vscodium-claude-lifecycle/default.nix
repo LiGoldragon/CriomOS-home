@@ -180,23 +180,23 @@ let
   launcher = pkgs.writeShellScript "criomos-codium-launch-fixture" (builtins.readFile launcherSource);
   extA = pkgs.runCommand "claude-extension-fixture-a" { } ''
     mkdir -p $out/extension
-    printf '{"version":"2.1.215"}\n' > $out/extension/package.json
+    printf '{"name":"claude-code","publisher":"Anthropic","version":"2.1.215"}\n' > $out/extension/package.json
   '';
   extB = pkgs.runCommand "claude-extension-fixture-b" { } ''
     mkdir -p $out/extension
-    printf '{"version":"2.1.215"}\n' > $out/extension/package.json
+    printf '{"name":"claude-code","publisher":"Anthropic","version":"2.1.215"}\n' > $out/extension/package.json
   '';
   extC = pkgs.runCommand "claude-extension-fixture-c" { } ''
     mkdir -p $out/extension
-    printf '{"version":"2.1.214"}\n' > $out/extension/package.json
+    printf '{"name":"claude-code","publisher":"Anthropic","version":"2.1.214"}\n' > $out/extension/package.json
   '';
   extD = pkgs.runCommand "claude-extension-fixture-d" { } ''
     mkdir -p $out/extension
-    printf '{"version":"2.1.220"}\n' > $out/extension/package.json
+    printf '{"name":"claude-code","publisher":"Anthropic","version":"2.1.220"}\n' > $out/extension/package.json
   '';
   extE = pkgs.runCommand "claude-extension-fixture-e" { } ''
     mkdir -p $out/extension
-    printf '{"version":"2.1.223"}\n' > $out/extension/package.json
+    printf '{"name":"claude-code","publisher":"Anthropic","version":"2.1.223"}\n' > $out/extension/package.json
   '';
   contradictoryDeclaredVersion = "2.1.226";
   contradictoryLinkVersion = "2.1.223";
@@ -265,7 +265,7 @@ assert builtins.any (
   extension: extension.version == "26.5818.61809"
 ) vscodeConfig.profiles.default.extensions;
 assert builtins.any (
-  extension: extension.version == "2.1.241"
+  extension: extension.version == "2.1.246"
 ) vscodeConfig.profiles.default.extensions;
 assert activation.bootstrapMutableClaudeCodeExtension.before == [ "linkGeneration" ];
 assert builtins.match ".*--bootstrap.*" activation.bootstrapMutableClaudeCodeExtension.data != null;
@@ -284,7 +284,7 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
   test "$(
     ${pkgs.unzip}/bin/unzip -p ${inputs.claude-code-vsix} extension/package.json \
       | ${pkgs.jq}/bin/jq -er .version
-  )" = 2.1.241
+  )" = 2.1.246
   test "$(
     ${pkgs.unzip}/bin/unzip -p ${inputs.claude-code-vsix} extension/package.json \
       | ${pkgs.jq}/bin/jq -er '.engines.vscode'
@@ -970,6 +970,7 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
     rm "$ext/anthropic.claude-code"; ln -s ${extBPath} "$ext/anthropic.claude-code"
     CRIOMOS_VSCODIUM_EXTENSIONS_DIR="$ext" CRIOMOS_VSCODIUM_STATE_DIR="$state" CRIOMOS_VSCODIUM_GCROOT_DIR="$roots" "${lifecycle}" --activate
     test "$(readlink -f "$ext/anthropic.claude-code-2.1.215-linux-x64")" = "$(readlink -f ${extBPath})"
+    test "$(readlink -f "$roots/anthropic.claude-code-2.1.215-linux-x64")" = "$(readlink -f ${extB})"
     rm "$ext/anthropic.claude-code-2.1.215-linux-x64"
     mkdir "$ext/anthropic.claude-code-2.1.215-linux-x64"
     CRIOMOS_VSCODIUM_EXTENSIONS_DIR="$ext" CRIOMOS_VSCODIUM_STATE_DIR="$state" CRIOMOS_VSCODIUM_GCROOT_DIR="$roots" "${lifecycle}" --activate >/dev/null 2>&1 || true
