@@ -28,7 +28,7 @@ pkgs.runCommand "claude-desktop-declared-cli-contract"
       "$extracted_app"
     runtime_root="$TMPDIR/claude-desktop-runtime"
     mkdir -p "$runtime_root/home" "$runtime_root/config" "$runtime_root/data" "$runtime_root/cache"
-    timeout 60s env \
+    timeout --kill-after=5s 60s env \
       HOME="$runtime_root/home" \
       XDG_CONFIG_HOME="$runtime_root/config" \
       XDG_DATA_HOME="$runtime_root/data" \
@@ -48,7 +48,7 @@ pkgs.runCommand "claude-desktop-declared-cli-contract"
     ${pkgs.asar}/bin/asar extract \
       ${claudeDesktopPackage}/lib/claude-desktop/resources/app.asar \
       "$missing_extracted_app"
-    timeout 60s env \
+    timeout --kill-after=5s 60s env \
       HOME="$missing_runtime_root/home" \
       XDG_CONFIG_HOME="$missing_runtime_root/config" \
       XDG_DATA_HOME="$missing_runtime_root/data" \
