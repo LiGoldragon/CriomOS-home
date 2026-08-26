@@ -84,8 +84,6 @@ pkgs.runCommand "agent-intercom-graphical-tui-contract"
       pkgs.coreutils
       pkgs.desktop-file-utils
       pkgs.gnugrep
-      pkgs.nodejs
-      pkgs.asar
       pkgs.gnused
       pkgs.xdg-utils
       profile
@@ -109,44 +107,6 @@ pkgs.runCommand "agent-intercom-graphical-tui-contract"
     test -f ${claudeDesktopEntry}
     grep -Fx 'Exec=claude-desktop %U' ${claudeDesktopEntry}
     grep -Fx 'MimeType=x-scheme-handler/claude' ${claudeDesktopEntry}
-
-    extracted_app="$TMPDIR/claude-desktop-app"
-    ${pkgs.asar}/bin/asar extract \
-      ${claudeDesktopPackage}/lib/claude-desktop/resources/app.asar \
-      "$extracted_app"
-    ${pkgs.gnugrep}/bin/grep -Fq 'CLAUDE_CODE_LOCAL_BINARY' ${claudeDesktopPackage}/bin/claude-desktop
-    runtime_root="$TMPDIR/claude-desktop-runtime"
-    mkdir -p "$runtime_root/home" "$runtime_root/config" "$runtime_root/data" "$runtime_root/cache"
-    HOME="$runtime_root/home" \
-      XDG_CONFIG_HOME="$runtime_root/config" \
-      XDG_DATA_HOME="$runtime_root/data" \
-      XDG_CACHE_HOME="$runtime_root/cache" \
-      ELECTRON_RUN_AS_NODE=1 \
-      CRIOMOS_CLAUDE_CODE_MANAGER_HOOK=1 \
-      ${claudeDesktopPackage}/bin/claude-desktop \
-      ${./claude-desktop-runtime-contract.cjs} \
-      "$extracted_app" \
-      ${claudeCodePackage}/bin/claude \
-      valid
-
-    missing_runtime_root="$TMPDIR/claude-desktop-runtime-missing"
-    missing_extracted_app="$TMPDIR/claude-desktop-app-missing"
-    mkdir -p "$missing_runtime_root/home" "$missing_runtime_root/config" "$missing_runtime_root/data" "$missing_runtime_root/cache"
-    ${pkgs.asar}/bin/asar extract \
-      ${claudeDesktopPackage}/lib/claude-desktop/resources/app.asar \
-      "$missing_extracted_app"
-    HOME="$missing_runtime_root/home" \
-      XDG_CONFIG_HOME="$missing_runtime_root/config" \
-      XDG_DATA_HOME="$missing_runtime_root/data" \
-      XDG_CACHE_HOME="$missing_runtime_root/cache" \
-      ELECTRON_RUN_AS_NODE=1 \
-      CRIOMOS_CLAUDE_CODE_MANAGER_HOOK=1 \
-      CLAUDE_CODE_LOCAL_BINARY="$missing_runtime_root/missing-claude" \
-      ${claudeDesktopPackage}/lib/claude-desktop/claude-desktop \
-      ${./claude-desktop-runtime-contract.cjs} \
-      "$missing_extracted_app" \
-      "$missing_runtime_root/missing-claude" \
-      missing
 
     test -f ${chatgptEntry}
     grep -E '^Exec=.*chatgpt' ${chatgptEntry}
