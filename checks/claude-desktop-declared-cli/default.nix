@@ -40,6 +40,13 @@ pkgs.runCommand "claude-desktop-declared-cli-contract"
         const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
         packageJson.main = "criomos-runtime-bootstrap.cjs";
         fs.writeFileSync(packagePath, JSON.stringify(packageJson));
+        const prePath = path.join(app, ".vite", "build", "index.pre.js");
+        const preSource = fs.readFileSync(prePath, "utf8");
+        const preMain = "require(\"./index.js\")";
+        if (preSource.split(preMain).length !== 2) {
+          throw new Error("expected exactly one Claude Desktop pre-entry main hand-off");
+        }
+        fs.writeFileSync(prePath, preSource.replace(preMain, "void 0"));
         fs.writeFileSync(
           path.join(app, "criomos-runtime-bootstrap.cjs"),
           "require(\"./.vite/build/index.pre.js\"); require(process.env.CRIOMOS_CLAUDE_DESKTOP_RUNTIME_CONTRACT)\n",
