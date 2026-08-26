@@ -131,7 +131,7 @@
     # llm-agents keeps its own nixpkgs: its package set follows fast
     # tool packaging and currently needs newer pnpm attributes than the
     # profile-wide nixpkgs pin provides.
-    llm-agents.url = "github:numtide/llm-agents.nix/ed38c11e34e72199025ab70dc0042d78ef4c64cd";
+    llm-agents.url = "github:numtide/llm-agents.nix/76b78a399417964e9133aed0c0a9493616c3508e";
     # Agent harness managers.  Herdr supplies its official tagged flake;
     # Orca remains packaged in its dedicated repository and Home consumes
     # only that pinned package output.

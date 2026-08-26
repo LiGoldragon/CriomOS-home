@@ -197,8 +197,12 @@ explicitly raw upstream CLIs, preventing wrapper recursion. `codex-raw`,
 The maintained Codex Desktop integration and Claude Desktop are installed only
 for medium graphical Agent Intercom profiles. Home's single `llm-agents`
 Codex derivation supplies terminal, Desktop, Agent Intercom, and editor paths.
-Claude Desktop keeps its package-managed embedded runtime; Home has no
-external-runtime override.
+Claude Desktop is a declarative derivative whose every local Code session
+resolves to Home's same pinned `claudeCodePackage` executable. Home activates
+Desktop's built-in local-override branch and makes a declared executable
+failure terminal before the ordinary resolver or downloader can run. The
+declared executable is the only executable identity; its absence fails through
+the session launch instead of falling back to mutable user state.
 
 A Nix utility fetches Hugging Face models by URL or query, mirroring
 `nix-prefetch-url`: it prefetches via the Hugging Face CLI, hashes, and

@@ -35,7 +35,10 @@ let
   graphicalSupported = homeSystem == "x86_64-linux";
   codexCliPackage = pkgs.callPackage ../../../../packages/codex { inherit inputs; };
   claudeCodePackage = pkgs.callPackage ../../../../packages/claude-code { inherit inputs; };
-  claudeDesktopPackage = inputs.llm-agents.packages.${homeSystem}.claude-desktop;
+  claudeDesktopPackage = pkgs.claudeDesktopWithDeclaredClaudeCode {
+    claudeDesktopPackage = inputs.llm-agents.packages.${homeSystem}.claude-desktop;
+    inherit claudeCodePackage;
+  };
   chatgptPackage = inputs.llm-agents.packages.${homeSystem}.chatgpt.override {
     commandLineArgs = "--ozone-platform=wayland";
   };
