@@ -22,12 +22,14 @@ pkgs.runCommand "claude-desktop-declared-cli-contract"
     set -eu
 
     extracted_app="$TMPDIR/claude-desktop-app"
+    echo 'claude-desktop-declared-cli: valid override'
     ${pkgs.asar}/bin/asar extract \
       ${claudeDesktopPackage}/lib/claude-desktop/resources/app.asar \
       "$extracted_app"
     runtime_root="$TMPDIR/claude-desktop-runtime"
     mkdir -p "$runtime_root/home" "$runtime_root/config" "$runtime_root/data" "$runtime_root/cache"
-    HOME="$runtime_root/home" \
+    timeout 60s env \
+      HOME="$runtime_root/home" \
       XDG_CONFIG_HOME="$runtime_root/config" \
       XDG_DATA_HOME="$runtime_root/data" \
       XDG_CACHE_HOME="$runtime_root/cache" \
@@ -41,11 +43,13 @@ pkgs.runCommand "claude-desktop-declared-cli-contract"
 
     missing_runtime_root="$TMPDIR/claude-desktop-runtime-missing"
     missing_extracted_app="$TMPDIR/claude-desktop-app-missing"
+    echo 'claude-desktop-declared-cli: missing override'
     mkdir -p "$missing_runtime_root/home" "$missing_runtime_root/config" "$missing_runtime_root/data" "$missing_runtime_root/cache"
     ${pkgs.asar}/bin/asar extract \
       ${claudeDesktopPackage}/lib/claude-desktop/resources/app.asar \
       "$missing_extracted_app"
-    HOME="$missing_runtime_root/home" \
+    timeout 60s env \
+      HOME="$missing_runtime_root/home" \
       XDG_CONFIG_HOME="$missing_runtime_root/config" \
       XDG_DATA_HOME="$missing_runtime_root/data" \
       XDG_CACHE_HOME="$missing_runtime_root/cache" \
@@ -58,5 +62,6 @@ pkgs.runCommand "claude-desktop-declared-cli-contract"
       "$missing_runtime_root/missing-claude" \
       missing
 
+    echo 'claude-desktop-declared-cli: passed'
     touch "$out"
   ''
