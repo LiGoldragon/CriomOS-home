@@ -62,7 +62,6 @@ function prefixOne(source, marker, prefix) {
 }
 
 await collect(appDirectory);
-const literal = JSON.stringify(declaredClaudeCode);
 const replacements = [
   [
     "async initLocalBinary(e){",

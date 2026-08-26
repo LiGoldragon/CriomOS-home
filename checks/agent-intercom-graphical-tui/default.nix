@@ -115,89 +115,38 @@ pkgs.runCommand "agent-intercom-graphical-tui-contract"
       ${claudeDesktopPackage}/lib/claude-desktop/resources/app.asar \
       "$extracted_app"
     ${pkgs.gnugrep}/bin/grep -Fq 'CLAUDE_CODE_LOCAL_BINARY' ${claudeDesktopPackage}/bin/claude-desktop
-    CLAUDE_CODE_PATH='${claudeCodePackage}/bin/claude' \
-      ${pkgs.nodejs}/bin/node - "$extracted_app" <<'NODE'
-    const { readFile, readdir } = require("node:fs/promises");
-    const { join } = require("node:path");
+    runtime_root="$TMPDIR/claude-desktop-runtime"
+    mkdir -p "$runtime_root/home" "$runtime_root/config" "$runtime_root/data" "$runtime_root/cache"
+    HOME="$runtime_root/home" \
+      XDG_CONFIG_HOME="$runtime_root/config" \
+      XDG_DATA_HOME="$runtime_root/data" \
+      XDG_CACHE_HOME="$runtime_root/cache" \
+      ELECTRON_RUN_AS_NODE=1 \
+      CRIOMOS_CLAUDE_CODE_MANAGER_HOOK=1 \
+      ${claudeDesktopPackage}/bin/claude-desktop \
+      ${./claude-desktop-runtime-contract.cjs} \
+      "$extracted_app" \
+      ${claudeCodePackage}/bin/claude \
+      valid
 
-    const [appDirectory] = process.argv.slice(2);
-    const declaredClaudeCode = process.env.CLAUDE_CODE_PATH;
-    const files = [];
-    async function collect(directory) {
-      for (const entry of await readdir(directory, { withFileTypes: true })) {
-        const entryPath = join(directory, entry.name);
-        if (entry.isDirectory()) await collect(entryPath);
-        else if (entry.isFile() && entry.name.endsWith(".js")) files.push(entryPath);
-      }
-    }
-    function method(source, marker) {
-      const start = source.indexOf(marker);
-      if (start < 0 || source.indexOf(marker, start + marker.length) >= 0) {
-        throw new Error("expected one patched method: " + marker);
-      }
-      let depth = 0;
-      let quote = null;
-      let escaped = false;
-      const bodyStart = source.indexOf("{", start);
-      for (let index = bodyStart; index < source.length; index += 1) {
-        const character = source[index];
-        if (quote) {
-          if (escaped) escaped = false;
-          else if (character === "\\") escaped = true;
-          else if (character === quote) quote = null;
-          continue;
-        }
-        if (character === "'" || character === '"' || character === "`") {
-          quote = character;
-          continue;
-        }
-        if (character === "{") depth += 1;
-        if (character === "}" && --depth === 0) return source.slice(start, index + 1);
-      }
-      throw new Error("unterminated method: " + marker);
-    }
-    await collect(appDirectory);
-    const sources = await Promise.all(files.map((file) => readFile(file, "utf8")));
-    const binarySource = sources.find((source) => source.includes("async initLocalBinary(e){"));
-    if (!binarySource.includes("this.localBinaryInitPromise=this.initLocalBinary(process.env.CLAUDE_CODE_LOCAL_BINARY)")) {
-      throw new Error("Claude Desktop did not activate its local Claude Code override");
-    }
-    const init = Function("y", "u", "F", "return (" + method(binarySource, "async initLocalBinary(e){").replace(/^async [^(]+/, "async function") + ")")(
-      { default: { access: async (path) => { if (path !== declaredClaudeCode) throw new Error("unexpected binary"); } } },
-      { constants: { X_OK: 1 } },
-      { warn: () => {} },
-    );
-    const resolved = Function("return (" + method(binarySource, "async resolveHostBinary(){").replace(/^async [^(]+/, "async function") + ")")();
-    const state = {};
-    await init.call(state, declaredClaudeCode);
-    const resolution = await resolved.call({ getLocalBinaryPath: async () => state.localBinaryPath });
-    if (state.localBinaryPath !== declaredClaudeCode || resolution.path !== declaredClaudeCode || resolution.resolution !== "local_override") {
-      throw new Error("Claude Desktop did not resolve the declared Claude Code executable");
-    }
-    const failingInit = Function("y", "u", "F", "return (" + method(binarySource, "async initLocalBinary(e){").replace(/^async [^(]+/, "async function") + ")")(
-      { default: { access: async () => { throw new Error("missing"); } } },
-      { constants: { X_OK: 1 } },
-      { warn: () => {} },
-    );
-    await failingInit.call({}, declaredClaudeCode).then(
-      () => { throw new Error("Claude Desktop retained a stateful binary fallback"); },
-      () => {},
-    );
-    const invalidation = method(binarySource, "async invalidateHostBinary(e){");
-    const vmPreparation = method(binarySource, "async prepareForVM(e){");
-    if (!invalidation.startsWith("async invalidateHostBinary(e){if(process.env.CLAUDE_CODE_LOCAL_BINARY)return;") ||
-        !vmPreparation.startsWith("async prepareForVM(e){if(process.env.CLAUDE_CODE_LOCAL_BINARY)throw Error(")) {
-      throw new Error("Claude Desktop retained a stateful executable fallback");
-    }
-    process.env.CLAUDE_CODE_LOCAL_BINARY = declaredClaudeCode;
-    const invalidate = Function("return (" + invalidation.replace(/^async [^(]+/, "async function") + ")")();
-    const prepareForVM = Function("return (" + vmPreparation.replace(/^async [^(]+/, "async function") + ")")();
-    await invalidate.call({});
-    await prepareForVM.call({}).then(
-      () => { throw new Error("Claude Desktop would materialize its override for a VM"); },
-      () => {},
-    );
-    NODE
+    missing_runtime_root="$TMPDIR/claude-desktop-runtime-missing"
+    missing_extracted_app="$TMPDIR/claude-desktop-app-missing"
+    mkdir -p "$missing_runtime_root/home" "$missing_runtime_root/config" "$missing_runtime_root/data" "$missing_runtime_root/cache"
+    ${pkgs.asar}/bin/asar extract \
+      ${claudeDesktopPackage}/lib/claude-desktop/resources/app.asar \
+      "$missing_extracted_app"
+    HOME="$missing_runtime_root/home" \
+      XDG_CONFIG_HOME="$missing_runtime_root/config" \
+      XDG_DATA_HOME="$missing_runtime_root/data" \
+      XDG_CACHE_HOME="$missing_runtime_root/cache" \
+      ELECTRON_RUN_AS_NODE=1 \
+      CRIOMOS_CLAUDE_CODE_MANAGER_HOOK=1 \
+      CLAUDE_CODE_LOCAL_BINARY="$missing_runtime_root/missing-claude" \
+      ${claudeDesktopPackage}/lib/claude-desktop/claude-desktop \
+      ${./claude-desktop-runtime-contract.cjs} \
+      "$missing_extracted_app" \
+      "$missing_runtime_root/missing-claude" \
+      missing
 
     test -f ${chatgptEntry}
     grep -E '^Exec=.*chatgpt' ${chatgptEntry}

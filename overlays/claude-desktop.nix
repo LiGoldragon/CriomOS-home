@@ -10,6 +10,7 @@ final: prev:
       {
         nativeBuildInputs = [
           prev.asar
+          prev.makeWrapper
           prev.nodejs
         ];
         passthru.declaredClaudeCode = claudeCodePackage;
