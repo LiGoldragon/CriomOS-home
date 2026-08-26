@@ -4,6 +4,7 @@ pkgs.writeShellApplication {
   text = ''
     arguments=("$@")
     explicit_remote=0
+    raw_invocation=0
     option_parsing=1
 
     for argument in "''${arguments[@]}"; do
@@ -17,8 +18,15 @@ pkgs.writeShellApplication {
         --remote|--remote=*)
           explicit_remote=1
           ;;
+        --version|-V|--help|-h)
+          raw_invocation=1
+          ;;
       esac
     done
+
+    if [ "$raw_invocation" = 1 ]; then
+      exec ${codexCliPackage}/bin/codex "''${arguments[@]}"
+    fi
 
     while [ "$#" -gt 0 ]; do
       case "$1" in

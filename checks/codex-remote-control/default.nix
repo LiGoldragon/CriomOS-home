@@ -68,8 +68,8 @@ pkgs.runCommand "codex-remote-control-contract"
   ''
     set -eu
 
-    ${profile}/bin/codex --version >/dev/null
-    ${agentIntercomPackage}/bin/codex-raw --version >/dev/null
+    test "$(${profile}/bin/codex --version)" = "codex-cli ${codexCliPackage.version}"
+    test "$(${agentIntercomPackage}/bin/codex-raw --version)" = "codex-cli ${codexCliPackage.version}"
 
     expect_remote() {
       test "$("${codexTuiFixture}/bin/codex" "$@")" = "$(printf '%s\n' --remote unix:// "$@")"
@@ -83,6 +83,12 @@ pkgs.runCommand "codex-remote-control-contract"
     expect_remote -c 'model="gpt-5.6-terra"' resume thread-id
     expect_remote fork thread-id
     expect_remote agents
+    expect_raw --version
+    expect_raw -V
+    expect_raw --help
+    expect_raw -h
+    expect_raw help
+    expect_raw resume --help
     expect_raw exec "one-shot task"
     expect_raw app-server proxy
     expect_raw login
@@ -90,6 +96,7 @@ pkgs.runCommand "codex-remote-control-contract"
     expect_raw resume --remote unix:///tmp/other.sock thread-id
     expect_raw agents --remote unix:///tmp/other.sock
     expect_remote -- --remote
+    expect_remote -- --version
 
     codex_home="$TMPDIR/codex-home"
     control_directory="$codex_home/app-server-control"
