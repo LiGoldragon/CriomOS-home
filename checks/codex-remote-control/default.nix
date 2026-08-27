@@ -84,39 +84,49 @@ let
 in
 assert configuration.systemd.user.services ? codex-remote-control;
 assert !(nonCodexConfiguration.systemd.user.services ? codex-remote-control);
-assert embeddedConfiguration.config.home-manager.users.${embeddedUserName}.systemd.user.services ? codex-remote-control;
+assert
+  embeddedConfiguration.config.home-manager.users.${embeddedUserName}.systemd.user.services
+  ? codex-remote-control;
 assert remoteControlService.Service.UMask == "0077";
 assert remoteControlService.Service.Restart == "always";
 assert builtins.length remoteControlService.Service.ExecStart == 1;
-pkgs.runCommand "codex-remote-control-contract" { }
-  ''
-    set -eu
+pkgs.runCommand "codex-remote-control-contract" { } ''
+  set -eu
 
-    expect_remote() {
-      test "$("${codexTuiFixture}/bin/codex" "$@")" = "$(printf '%s\n' --remote unix:// "$@")"
-    }
-    expect_raw() {
-      test "$("${codexTuiFixture}/bin/codex" "$@")" = "$(printf '%s\n' "$@")"
-    }
-    expect_remote "fresh prompt"
-    expect_remote --profile mobile --model gpt-5.6-terra "fresh prompt"
-    expect_remote --ask-for-approval never --sandbox workspace-write "fresh prompt"
-    expect_remote -c 'model="gpt-5.6-terra"' resume thread-id
-    expect_remote fork thread-id
-    expect_remote agents
-    expect_raw --version
-    expect_raw -V
-    expect_raw --help
-    expect_raw -h
-    expect_raw help
-    expect_raw resume --help
-    expect_raw exec "one-shot task"
-    expect_raw app-server proxy
-    expect_raw login
-    expect_raw --remote unix:///tmp/other.sock resume thread-id
-    expect_raw resume --remote unix:///tmp/other.sock thread-id
-    expect_raw agents --remote unix:///tmp/other.sock
-    expect_remote -- --remote
-    expect_remote -- --version
-    touch "$out"
-  ''
+  expect_remote() {
+    test "$("${codexTuiFixture}/bin/codex" "$@")" = "$(printf '%s\n' --remote unix:// "$@")"
+  }
+  expect_raw() {
+    test "$("${codexTuiFixture}/bin/codex" "$@")" = "$(printf '%s\n' "$@")"
+  }
+  expect_rejected() {
+    if "${codexTuiFixture}/bin/codex" "$@" >/dev/null 2>&1; then
+      echo "unexpectedly accepted raw app-server lifecycle: $*" >&2
+      exit 1
+    fi
+  }
+  expect_remote "fresh prompt"
+  expect_remote --profile mobile --model gpt-5.6-terra "fresh prompt"
+  expect_remote --ask-for-approval never --sandbox workspace-write "fresh prompt"
+  expect_remote -c 'model="gpt-5.6-terra"' resume thread-id
+  expect_remote fork thread-id
+  expect_remote agents
+  expect_raw --version
+  expect_raw -V
+  expect_raw --help
+  expect_raw -h
+  expect_raw help
+  expect_raw resume --help
+  expect_raw exec "one-shot task"
+  expect_raw app-server proxy
+  expect_raw app-server daemon version
+  expect_rejected app-server --remote-control --listen unix://
+  expect_rejected app-server daemon start
+  expect_raw login
+  expect_raw --remote unix:///tmp/other.sock resume thread-id
+  expect_raw resume --remote unix:///tmp/other.sock thread-id
+  expect_raw agents --remote unix:///tmp/other.sock
+  expect_remote -- --remote
+  expect_remote -- --version
+  touch "$out"
+''

@@ -552,6 +552,7 @@
             inherit inputs;
           };
           codex-tui = checkPkgs.callPackage ./checks/codex-tui { };
+          codex-desktop-gate = checkPkgs.callPackage ./checks/codex-desktop-gate { };
           yt-dlp = checkPkgs.callPackage ./checks/yt-dlp {
             inherit inputs;
             homePkgs = pkgs;

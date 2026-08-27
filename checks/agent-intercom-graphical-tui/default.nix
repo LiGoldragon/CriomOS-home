@@ -52,6 +52,9 @@ let
     paths = configuration.home.packages;
   };
   codexCliPackage = homePkgs.callPackage ../../packages/codex { inherit inputs; };
+  codexDesktopGate = homePkgs.callPackage ../../packages/codex/desktop-gate.nix {
+    inherit codexCliPackage;
+  };
   claudeCodePackage = homePkgs.callPackage ../../packages/claude-code { inherit inputs; };
   claudeDesktopPackage = homePkgs.claudeDesktopWithDeclaredClaudeCode {
     claudeDesktopPackage = inputs.llm-agents.packages.${system}.claude-desktop;
@@ -100,7 +103,7 @@ pkgs.runCommand "agent-intercom-graphical-tui-contract"
     set -eu
 
     test "$(${profile}/bin/codex --version)" = 'codex-cli ${codexCliPackage.version}'
-    test "$(${agentIntercom}/bin/codex-raw --version)" = 'codex-cli ${codexCliPackage.version}'
+    test "$(${profile}/bin/direct-codex --version)" = 'codex-cli ${codexCliPackage.version}'
     test "$(${profile}/bin/claude --version)" = '${claudeCodePackage.version} (Claude Code)'
     test -x ${profile}/bin/chatgpt
     ! test -e ${profile}/bin/codex-desktop
@@ -122,8 +125,12 @@ pkgs.runCommand "agent-intercom-graphical-tui-contract"
     chatgpt_wrapped_path="$(sed -n -E 's|.*(/nix/store/[^ ]+/bin/chatgpt).*|\1|p' ${chatgptLauncher}/bin/chatgpt | head -n 1)"
     test -n "$chatgpt_wrapped_path"
     grep -F -- '--ozone-platform=wayland' "$chatgpt_wrapped_path"
-    grep -F 'CODEX_CLI_PATH' ${chatgptLauncher}/bin/chatgpt
-    grep -F '${codexCliPackage}/bin/codex' ${chatgptLauncher}/bin/chatgpt
+    grep -F 'CODEX_APP_SERVER_USE_LOCAL_DAEMON' ${chatgptLauncher}/bin/chatgpt
+    grep -F 'unset CODEX_CLI_PATH' ${chatgptLauncher}/bin/chatgpt
+    grep -F 'unset CODEX_APP_SERVER_FORCE_CLI' ${chatgptLauncher}/bin/chatgpt
+    resources_codex="$(find ${chatgptLauncher} -type l -path '*/resources/codex' -print -quit)"
+    test -n "$resources_codex"
+    test "$(readlink "$resources_codex")" = '${codexDesktopGate}/bin/codex'
 
     xdg_test="$TMPDIR/xdg"
     mkdir -p "$xdg_test/data/applications" "$xdg_test/config" "$xdg_test/home"

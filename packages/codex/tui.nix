@@ -84,7 +84,19 @@ pkgs.writeShellApplication {
           fi
           remote_tui --remote unix:// "''${arguments[@]}"
           ;;
-        exec|review|login|logout|mcp|plugin|mcp-server|app-server|remote-control|completion|update|doctor|sandbox|apply|queue|archive|delete|migrate-rollouts|unarchive|cloud|features|help)
+        app-server)
+          shift
+          case "$1:$2" in
+            daemon:version|proxy:*|schema:*)
+              exec ${codexCliPackage}/bin/codex "''${arguments[@]}"
+              ;;
+            *)
+              printf '%s\\n' 'CriomOS codex: app-server lifecycle is owned by codex-remote-control; use direct-codex only for raw recovery' >&2
+              exit 126
+              ;;
+          esac
+          ;;
+        exec|review|login|logout|mcp|plugin|mcp-server|remote-control|completion|update|doctor|sandbox|apply|queue|archive|delete|migrate-rollouts|unarchive|cloud|features|help)
           exec ${codexCliPackage}/bin/codex "''${arguments[@]}"
           ;;
         *)

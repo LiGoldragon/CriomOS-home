@@ -36,6 +36,13 @@ let
   graphicalSupported = homeSystem == "x86_64-linux";
   codexCliPackage = pkgs.callPackage ../../../../packages/codex { inherit inputs; };
   codexTui = pkgs.callPackage ../../../../packages/codex/tui.nix { inherit codexCliPackage; };
+  codexDesktopGate = pkgs.callPackage ../../../../packages/codex/desktop-gate.nix {
+    inherit codexCliPackage;
+  };
+  directCodex = pkgs.writeShellApplication {
+    name = "direct-codex";
+    text = ''exec ${codexCliPackage}/bin/codex "$@"'';
+  };
   claudeCodePackage = pkgs.callPackage ../../../../packages/claude-code { inherit inputs; };
   claudeDesktopPackage = pkgs.claudeDesktopWithDeclaredClaudeCode {
     claudeDesktopPackage = inputs.llm-agents.packages.${homeSystem}.claude-desktop;
@@ -44,14 +51,20 @@ let
   chatgptPackage = inputs.llm-agents.packages.${homeSystem}.chatgpt.override {
     commandLineArgs = "--ozone-platform=wayland";
   };
-  chatgptWithSharedCodex = pkgs.symlinkJoin {
-    name = "chatgpt-with-shared-codex-cli";
-    paths = [ chatgptPackage ];
+  chatgptWithDesktopGate = pkgs.callPackage ../../../../packages/codex/chatgpt.nix {
+    inherit chatgptPackage codexDesktopGate;
+  };
+  chatgptWithLocalDaemon = pkgs.symlinkJoin {
+    name = "chatgpt-with-local-codex-daemon";
+    paths = [ chatgptWithDesktopGate ];
     nativeBuildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
       rm "$out/bin/chatgpt"
-      makeWrapper ${chatgptPackage}/bin/chatgpt "$out/bin/chatgpt" \
-        --set CODEX_CLI_PATH ${codexCliPackage}/bin/codex
+      makeWrapper ${chatgptWithDesktopGate}/bin/chatgpt "$out/bin/chatgpt" \
+        --set CODEX_APP_SERVER_USE_LOCAL_DAEMON 1 \
+        --unset CODEX_CLI_PATH \
+        --unset CODEX_APP_SERVER_FORCE_CLI \
+        --unset CODEX_APP_SERVER_CLI_COMMAND
     '';
   };
   # The shared package is the sole Codex derivation for the terminal,
@@ -96,6 +109,7 @@ lib.mkMerge [
       agentIntercomRuntime
       claudeCodePackage
       codexTui
+      directCodex
     ];
 
     home.file = {
@@ -177,7 +191,7 @@ lib.mkMerge [
   (lib.mkIf desktopEnabled {
     home.packages = [
       claudeDesktopPackage
-      chatgptWithSharedCodex
+      chatgptWithLocalDaemon
     ];
 
     # The package owns the Claude desktop entry.  Link that exact entry into
@@ -192,7 +206,7 @@ lib.mkMerge [
     # the active XDG applications directory and use its executable wrapper so
     # the GUI and terminal both use the sole shared Codex derivation.
     xdg.dataFile."applications/chatgpt.desktop".source =
-      "${chatgptWithSharedCodex}/share/applications/chatgpt.desktop";
+      "${chatgptWithLocalDaemon}/share/applications/chatgpt.desktop";
     xdg.mimeApps.defaultApplications."x-scheme-handler/codex" = "chatgpt.desktop";
   })
 ]
