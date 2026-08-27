@@ -156,11 +156,11 @@ pkgs.runCommand "agent-intercom-local-family-contract"
     assert_output explicit-overrides "$explicit_actual" "$explicit_expected"
 
     sandbox_actual="$(cd "$first_directory" && ${codexTuiFixture}/bin/codex --sandbox read-only sandbox-override)"
-    sandbox_expected="$(printf '%s\\n' --cd "$first_directory" --ask-for-approval never --sandbox read-only sandbox-override)"
+    sandbox_expected="$(printf '%s\\n' --cd "$first_directory" --ask-for-approval never --remote unix:// --sandbox read-only sandbox-override)"
     assert_output sandbox-override "$sandbox_actual" "$sandbox_expected"
 
     approval_actual="$(cd "$first_directory" && ${codexTuiFixture}/bin/codex -a on-request approval-override)"
-    approval_expected="$(printf '%s\\n' --cd "$first_directory" --sandbox danger-full-access -a on-request approval-override)"
+    approval_expected="$(printf '%s\\n' --cd "$first_directory" --sandbox danger-full-access --remote unix:// -a on-request approval-override)"
     assert_output approval-override "$approval_actual" "$approval_expected"
 
     raw_actual="$(cd "$first_directory" && ${codexTuiFixture}/bin/codex exec one-shot)"
