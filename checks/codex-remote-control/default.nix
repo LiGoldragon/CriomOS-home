@@ -1,14 +1,15 @@
 { inputs, pkgs, ... }:
 let
   system = pkgs.stdenv.hostPlatform.system;
-  codexCliPackage = pkgs.callPackage ../../packages/codex { inherit inputs; };
+  codexCliPackage = pkgs.callPackage ../../owned-agents/codex { inherit inputs; };
+  corePackagesModule = ../../modules/home/core-packages.nix;
   codexTuiFixtureCli = pkgs.writeShellApplication {
     name = "codex";
     text = ''
       printf '%s\n' "$@"
     '';
   };
-  codexTuiFixture = pkgs.callPackage ../../packages/codex/tui.nix {
+  codexTuiFixture = pkgs.callPackage ../../owned-agents/codex/tui.nix {
     codexCliPackage = codexTuiFixtureCli;
   };
   codexRemoteControlModule = ../../modules/home/profiles/min/agent-intercom.nix;
@@ -25,6 +26,7 @@ let
         };
       };
       modules = [
+        corePackagesModule
         codexRemoteControlModule
         {
           home = {
@@ -67,7 +69,10 @@ let
             horizon = embeddedHorizon;
             hexis = inputs.hexis.packages.${system}.default;
           };
-          sharedModules = [ codexRemoteControlModule ];
+          sharedModules = [
+            corePackagesModule
+            codexRemoteControlModule
+          ];
           users.${embeddedUserName} = {
             _module.args.user = embeddedHorizon.users.${embeddedUserName};
             home = {
@@ -94,7 +99,19 @@ pkgs.runCommand "codex-remote-control-contract" { } ''
   set -eu
 
   expect_remote() {
-    test "$("${codexTuiFixture}/bin/codex" "$@")" = "$(printf '%s\n' --remote unix:// "$@")"
+    test "$("${codexTuiFixture}/bin/codex" "$@")" = "$({
+      printf '%s\n' \
+        --cd "$PWD" \
+        --sandbox danger-full-access \
+        --ask-for-approval never \
+        --remote unix:// \
+        "$@"
+    })"
+  }
+  expect_remote_with_overrides() {
+    test "$("${codexTuiFixture}/bin/codex" "$@")" = "$({
+      printf '%s\n' --cd "$PWD" --remote unix:// "$@"
+    })"
   }
   expect_raw() {
     test "$("${codexTuiFixture}/bin/codex" "$@")" = "$(printf '%s\n' "$@")"
@@ -107,7 +124,7 @@ pkgs.runCommand "codex-remote-control-contract" { } ''
   }
   expect_remote "fresh prompt"
   expect_remote --profile mobile --model gpt-5.6-terra "fresh prompt"
-  expect_remote --ask-for-approval never --sandbox workspace-write "fresh prompt"
+  expect_remote_with_overrides --ask-for-approval never --sandbox workspace-write "fresh prompt"
   expect_remote -c 'model="gpt-5.6-terra"' resume thread-id
   expect_remote fork thread-id
   expect_remote agents
@@ -118,14 +135,14 @@ pkgs.runCommand "codex-remote-control-contract" { } ''
   expect_raw help
   expect_raw resume --help
   expect_raw exec "one-shot task"
-  expect_raw app-server proxy
+  expect_rejected app-server proxy
   expect_raw app-server daemon version
   expect_rejected app-server --remote-control --listen unix://
   expect_rejected app-server daemon start
   expect_raw login
-  expect_raw --remote unix:///tmp/other.sock resume thread-id
-  expect_raw resume --remote unix:///tmp/other.sock thread-id
-  expect_raw agents --remote unix:///tmp/other.sock
+  expect_rejected --remote unix:///tmp/other.sock resume thread-id
+  expect_rejected resume --remote unix:///tmp/other.sock thread-id
+  expect_rejected agents --remote unix:///tmp/other.sock
   expect_remote -- --remote
   expect_remote -- --version
   touch "$out"

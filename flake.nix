@@ -82,9 +82,8 @@
     # Open VSX catalogue is deliberately not the update authority here:
     # Codium marketplace checks are disabled, and its catalogue cadence can
     # otherwise leave the sidebar behind the TUI.  For a coordinated Codex
-    # refresh, update llm-agents with this URL, run
-    # `nix flake update codex-chatgpt-vsix`, and run the VSCodium lifecycle
-    # check before deploying.
+    # refresh, update this URL, run `nix flake update codex-chatgpt-vsix`, and
+    # run the VSCodium lifecycle check before deploying.
     codex-chatgpt-vsix = {
       type = "file";
       url = "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/openai/vsextensions/chatgpt/26.5818.61809/vspackage";
@@ -124,14 +123,9 @@
     hexis.url = "github:LiGoldragon/hexis";
     hexis.inputs.nixpkgs.follows = "nixpkgs";
 
-    # AI coding agents (daily refreshes) — Li uses claude-code + Codex
-    # 12h/day, regression dropped them in the 2026-04-25 trim.  Codex's
-    # sidebar companion is the versioned `codex-chatgpt-vsix` input above;
-    # update the two inputs together.
-    # llm-agents keeps its own nixpkgs: its package set follows fast
-    # tool packaging and currently needs newer pnpm attributes than the
-    # profile-wide nixpkgs pin provides.
-    llm-agents.url = "github:numtide/llm-agents.nix/76b78a399417964e9133aed0c0a9493616c3508e";
+    # AI coding agents are owned by the local package constructors under
+    # `packages/{codex,claude-code,chatgpt,claude-desktop}`. Keep independent
+    # VSIX inputs versioned separately from those package derivations.
     # Agent harness managers.  Herdr supplies its official tagged flake;
     # Orca remains packaged in its dedicated repository and Home consumes
     # only that pinned package output.
@@ -442,24 +436,130 @@
   outputs =
     inputs:
     let
-      bp = inputs.blueprint { inherit inputs; };
       coreModule = bp.homeModules.default;
       horizon = inputs.horizon.horizon;
       lib = inputs.nixpkgs.lib;
-      packageOverlays = import ./overlays { inherit inputs; };
+      packageOverlays = [
+        inputs.pkgs.inputs.nix-vscode-extensions.overlays.default
+      ]
+      ++ (import ./overlays { inherit inputs; });
       pkgs = inputs.pkgs.pkgs.extend (lib.composeManyExtensions packageOverlays);
+      # Blueprint's default package set deliberately has no unfree policy.
+      # Keep the producer's proprietary package allowance explicit and narrow:
+      # only the four owned AI derivation names may pass package metadata
+      # evaluation. This set is used only to construct the local package
+      # outputs; it does not alter the profile-wide package policy.
+      ownedUnfreeNames = [
+        "claude-code"
+        "claude-desktop"
+        "chatgpt"
+        "chatgpt-unwrapped"
+      ];
+      ownedUnfreePredicate = package: lib.elem (lib.getName package) ownedUnfreeNames;
+      # Blueprint constructs its auto-imported package/check graph before it
+      # hands control back to this flake. Give that functor the same narrow
+      # policy used by the explicit Home outputs, so its four owned package
+      # domains see the intended metadata without making unrelated unfree
+      # packages available.
+      bp = inputs.blueprint {
+        inherit inputs;
+        systems = [
+          "x86_64-linux"
+          "aarch64-linux"
+        ];
+        nixpkgs = {
+          config.allowUnfreePredicate = ownedUnfreePredicate;
+          overlays = packageOverlays;
+        };
+      };
+      # Blueprint's `pkgs` is native to the current evaluation system.  Manual
+      # checks for the other published systems must use the corresponding
+      # CriomOS-pkgs universe (including its open-vsx overlay), then receive
+      # Home's package overlays on top of that exact set.
+      mkCriomOSPkgsForSystem =
+        targetSystem:
+        let
+          criomOSPkgs = import "${inputs.pkgs}/flake.nix" {
+            self = inputs.pkgs;
+            nixpkgs = inputs.nixpkgs;
+            system = {
+              system = targetSystem;
+            };
+            nix-vscode-extensions = inputs.pkgs.inputs.nix-vscode-extensions;
+          };
+        in
+        criomOSPkgs.pkgs.extend (lib.composeManyExtensions packageOverlays);
+      checkPkgsForSystem =
+        targetSystem:
+        if targetSystem == pkgs.stdenv.hostPlatform.system then
+          pkgs
+        else
+          mkCriomOSPkgsForSystem targetSystem;
+      ownedPackagesForSystem =
+        system:
+        let
+          ownedPkgs = import inputs.nixpkgs {
+            inherit system;
+            config.allowUnfreePredicate = ownedUnfreePredicate;
+            overlays = packageOverlays;
+          };
+          ownedAgentPackages = import ./lib/owned-agent-packages.nix {
+            pkgs = ownedPkgs;
+            inherit inputs;
+            chatgptCommandLineArgs = "--ozone-platform=wayland";
+          };
+          basePackages = {
+            codex = ownedAgentPackages.codexPackage;
+            claude-code = ownedAgentPackages.claudeCodePackage;
+          };
+        in
+        basePackages
+        // lib.optionalAttrs (lib.hasSuffix "-linux" system) {
+          chatgpt = ownedAgentPackages.chatgptPackage;
+          claude-desktop = ownedAgentPackages.claudeDesktopPackage;
+        }
+        // lib.optionalAttrs (lib.elem system agentIntercomSystems) {
+          agent-intercom = ownedPkgs.callPackage ./packages/agent-intercom {
+            inherit inputs;
+            claudeCodePackage = ownedAgentPackages.claudeCodePackage;
+            codexCliPackage = ownedAgentPackages.codexPackage;
+          };
+        };
+      ownedPackageSystems = [
+        "x86_64-linux"
+        "aarch64-linux"
+        "aarch64-darwin"
+      ];
       agentIntercomSystems = [
         "x86_64-linux"
         "aarch64-linux"
+      ];
+      ownedCheckNames = [
+        "agent-intercom"
+        "agent-intercom-graphical-tui"
+        "agent-intercom-local"
+        "ai-agent-launch-orchestration"
+        "claude-desktop-declared-cli"
+        "claude-desktop-egl-linkage"
+        "claude-desktop-launcher-linkage"
+        "claude-remote-control"
+        "codex-desktop-gate"
+        "codex-remote-control"
+        "codex-remote-control-vm"
+        "codex-tui"
       ];
       agentIntercomSupported = system: lib.elem system agentIntercomSystems;
       agentIntercomGraphicalSupported = system: system == "x86_64-linux";
       projectPackages = builtins.mapAttrs (
         system: packages:
+        let
+          systemPackages =
+            if lib.elem system ownedPackageSystems then packages // ownedPackagesForSystem system else packages;
+        in
         if agentIntercomSupported system then
-          packages
+          systemPackages
         else
-          builtins.removeAttrs packages [ "agent-intercom" ]
+          builtins.removeAttrs systemPackages [ "agent-intercom" ]
       ) bp.packages;
       blueprintGeneratedChecks =
         system:
@@ -489,14 +589,14 @@
             name: value:
             lib.isDerivation value
             && (!lib.hasPrefix "pkgs-" name || builtins.hasAttr name (packageCheckNames _system))
-          ) checks
+          ) (builtins.removeAttrs checks ownedCheckNames)
         else
           blueprintGeneratedChecks _system
       ) (bp.checks or { });
       projectChecks = builtins.mapAttrs (
         _system: checks:
         let
-          checkPkgs = import inputs.nixpkgs { system = _system; };
+          checkPkgs = checkPkgsForSystem _system;
         in
         checks
         // {
@@ -544,22 +644,28 @@
           spirit-deployment = checkPkgs.callPackage ./checks/spirit-deployment { inherit inputs; };
           aggregator-deployment = checkPkgs.callPackage ./checks/aggregator-deployment { inherit inputs; };
           vscodium-casual = checkPkgs.callPackage ./checks/vscodium-casual { };
-          vscodium-claude-lifecycle = checkPkgs.callPackage ./checks/vscodium-claude-lifecycle {
-            inherit inputs;
-          };
+          owned-agent-updater = checkPkgs.callPackage ./checks/owned-agent-updater { inherit inputs; };
           system-projection-boundary = checkPkgs.callPackage ./checks/system-projection-boundary { };
           main-contract-pins = checkPkgs.callPackage ./checks/main-contract-pins {
             inherit inputs;
           };
           codex-tui = checkPkgs.callPackage ./checks/codex-tui { };
           codex-desktop-gate = checkPkgs.callPackage ./checks/codex-desktop-gate { };
+          claude-remote-control = checkPkgs.callPackage ./checks/claude-remote-control {
+            inherit inputs;
+          };
           yt-dlp = checkPkgs.callPackage ./checks/yt-dlp {
             inherit inputs;
-            homePkgs = pkgs;
+            homePkgs = checkPkgs;
           };
         }
         // lib.optionalAttrs (agentIntercomSupported _system) {
           agent-intercom-local = checkPkgs.callPackage ./checks/agent-intercom-local { inherit inputs; };
+        }
+        // lib.optionalAttrs (_system == "x86_64-linux") {
+          vscodium-claude-lifecycle = checkPkgs.callPackage ./checks/vscodium-claude-lifecycle {
+            inherit inputs;
+          };
         }
         // lib.optionalAttrs (agentIntercomGraphicalSupported _system) {
           pi-harness-profile = checkPkgs.callPackage ./checks/pi-harness-profile { inherit inputs; };
@@ -594,6 +700,10 @@
           inherit pkgs;
           extraSpecialArgs = {
             inherit horizon user;
+            ownedAgentPackages = import ./lib/owned-agent-packages.nix {
+              inherit pkgs inputs;
+              chatgptCommandLineArgs = "--ozone-platform=wayland";
+            };
           };
           modules = [
             inputs.self.homeModules.default
@@ -652,6 +762,12 @@
           # `inputs.hexis.packages.${pkgs.stdenv.hostPlatform.system}.default`
           # at every call site.
           _module.args.hexis = lib.mkForce inputs.hexis.packages.${pkgs.stdenv.hostPlatform.system}.default;
+          _module.args.ownedAgentPackages = lib.mkForce (
+            import ./lib/owned-agent-packages.nix {
+              inherit pkgs inputs;
+              chatgptCommandLineArgs = "--ozone-platform=wayland";
+            }
+          );
         };
     };
 }

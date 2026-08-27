@@ -22,6 +22,21 @@ path, the native-mode launch environment, and daemon WebSocket reconnects. They
 do not yet drive the Electron GUI through a graphical Desktop connection; that
 final GUI-native smoke remains a deployment-time observation boundary.
 
+## Persistent Claude Remote Control
+
+Every minimum Home profile now owns a persistent `claude-remote-control`
+service. It starts `claude remote-control` using the Home directory by default
+and `--spawn=same-dir`; a deployment may configure an absolute working root and
+the `worktree` or `session` spawn mode without baking a machine-specific path
+into Home. Closing Claude Desktop or the browser/mobile client must not stop
+the service.
+
+Claude Desktop, browser, and mobile operate through Anthropic's authenticated
+relay. The local terminal has no supported thin-client attachment to this
+owner, and normal Claude TUI launches deliberately do not set
+`remoteControlAtStartup`. This change adds no Home-managed listener, tunnel,
+or relay credentials.
+
 ## Orchestrate 0.25.0 Lock contract
 
 This is a breaking ordinary-socket cutover from `PathLock` registration to

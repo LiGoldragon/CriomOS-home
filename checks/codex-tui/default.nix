@@ -6,7 +6,7 @@ let
       printf '%s\\n' "$@"
     '';
   };
-  codexTuiFixture = pkgs.callPackage ../../packages/codex/tui.nix {
+  codexTuiFixture = pkgs.callPackage ../../owned-agents/codex/tui.nix {
     codexCliPackage = codexTuiFixtureCli;
   };
 in
@@ -50,6 +50,11 @@ pkgs.runCommand "codex-tui-launch-contract" { nativeBuildInputs = [ pkgs.coreuti
 
   raw_actual="$(cd "$first_directory" && ${codexTuiFixture}/bin/codex exec one-shot)"
   assert_output raw-subcommand "$raw_actual" "$(printf '%s\\n' exec one-shot)"
+
+  if ${codexTuiFixture}/bin/codex --remote unix:///tmp/other.sock resume thread-id >/dev/null 2>&1; then
+    echo 'accepted an unmanaged Codex app-server route' >&2
+    exit 1
+  fi
 
   touch "$out"
 ''

@@ -1,9 +1,15 @@
 { inputs, pkgs, ... }:
 let
-  agentIntercom = pkgs.callPackage ../../packages/agent-intercom { inherit inputs; };
+  ownedAgentPackages = import ../../lib/owned-agent-packages.nix { inherit inputs pkgs; };
+  codexCliPackage = ownedAgentPackages.codexPackage;
+  claudeCodePackage = ownedAgentPackages.claudeCodePackage;
+  agentIntercom = pkgs.callPackage ../../packages/agent-intercom {
+    inherit inputs codexCliPackage claudeCodePackage;
+  };
   pi = inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.pi;
   agentIntercomModule = ../../modules/home/profiles/min/agent-intercom.nix;
   agentIntercomPackage = ../../packages/agent-intercom/default.nix;
+  minProfileModule = ../../modules/home/profiles/min/default.nix;
   vscodiumModule = ../../modules/home/vscodium/vscodium/default.nix;
   localHorizon = {
     users.test-user = {
@@ -49,7 +55,7 @@ let
     (inputs.home-manager.lib.homeManagerConfiguration {
       inherit pkgs;
       extraSpecialArgs = {
-        inherit inputs horizon;
+        inherit inputs horizon ownedAgentPackages;
         user = {
           name = "test-user";
           size = {
@@ -60,6 +66,8 @@ let
         hexis = inputs.hexis.packages.${pkgs.stdenv.hostPlatform.system}.default;
       };
       modules = [
+        ({ ... }: { _module.args.ownedAgentPackages = ownedAgentPackages; })
+        ../../modules/home/core-packages.nix
         agentIntercomModule
         {
           home = {
@@ -81,7 +89,7 @@ let
     (inputs.home-manager.lib.homeManagerConfiguration {
       inherit pkgs;
       extraSpecialArgs = {
-        inherit inputs;
+        inherit inputs ownedAgentPackages;
         horizon = noLocalHorizon;
         user = {
           name = "test-user";
@@ -95,6 +103,8 @@ let
         textScale.codiumZoom = 0;
       };
       modules = [
+        ({ ... }: { _module.args.ownedAgentPackages = ownedAgentPackages; })
+        ../../modules/home/core-packages.nix
         agentIntercomModule
         vscodiumModule
         {
@@ -111,8 +121,6 @@ let
     (mkHomeConfiguration graphicalWithoutLocalHorizon).activationPackage
   );
   flakeFile = ../../flake.nix;
-  codexCliPackage = pkgs.callPackage ../../packages/codex { inherit inputs; };
-  claudeCodePackage = pkgs.callPackage ../../packages/claude-code { inherit inputs; };
   profile = pkgs.buildEnv {
     name = "agent-intercom-local-profile";
     paths = localHomeConfiguration.home.packages;
@@ -140,6 +148,7 @@ pkgs.runCommand "agent-intercom-local-home-contract"
   }
   ''
     set -eu
+    mkdir -p "$out"
 
     test -x ${agentIntercom}/bin/coi
     test -x ${agentIntercom}/bin/codex-raw
@@ -189,7 +198,10 @@ pkgs.runCommand "agent-intercom-local-home-contract"
     grep -F 'CLAUDE_INTERCOM_CLAUDE_COMMAND' ${agentIntercomPackage}
     ! grep -F 'sharedAppServerSocket' ${agentIntercomPackage}
     ! grep -F 'coi-shared-app-server.patch' ${agentIntercomPackage}
-    ! grep -F 'codex-desktop-linux' ${flakeFile}
-    ${pkgs.gnugrep}/bin/grep -F 'ed38c11e34e72199025ab70dc0042d78ef4c64cd' ${flakeFile}
-    ${pkgs.gnugrep}/bin/grep -F 'github:numtide/llm-agents.nix' ${flakeFile}
+    ! grep -F 'llm-agents.url' ${flakeFile}
+    ${pkgs.gnugrep}/bin/grep -F 'owned-agent-packages.nix' ${flakeFile}
+    # Raw recovery is not conditional on AgentIntercomLocal: the normal
+    # minimum profile owns it for every user, including this no-Local fixture.
+    grep -F 'directCodex = mkRawRecoveryCommand "direct-codex" codexCliPackage "codex";' ${minProfileModule}
+    grep -F '    directCodex' ${minProfileModule}
   ''

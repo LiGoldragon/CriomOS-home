@@ -5,6 +5,7 @@
   horizon,
   user,
   hexis,
+  config,
   ...
 }:
 let
@@ -21,7 +22,11 @@ let
   pi-subagents = pkgs.callPackage ../../../../packages/pi-subagents {
     inherit inputs;
   };
-  agent-intercom = pkgs.callPackage ../../../../packages/agent-intercom { inherit inputs; };
+  agent-intercom = pkgs.callPackage ../../../../packages/agent-intercom {
+    inherit inputs;
+    codexCliPackage = config.criomos.corePackages.codex;
+    claudeCodePackage = config.criomos.corePackages.claude;
+  };
   pi-continue = pkgs.callPackage ../../../../packages/pi-continue { inherit inputs; };
   pi-session-namer = pkgs.callPackage ../../../../packages/pi-session-namer { inherit inputs; };
   piPackageHomePath = "$HOME/.local/share/criomos/pi/package";

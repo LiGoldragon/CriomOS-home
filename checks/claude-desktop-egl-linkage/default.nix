@@ -1,12 +1,9 @@
 { inputs, pkgs, ... }:
 let
-  system = pkgs.stdenv.hostPlatform.system;
-  homePkgs = pkgs.extend (pkgs.lib.composeManyExtensions (import ../../overlays { inherit inputs; }));
-  claudeCodePackage = homePkgs.callPackage ../../packages/claude-code { inherit inputs; };
-  claudeDesktopPackage = homePkgs.claudeDesktopWithDeclaredClaudeCode {
-    claudeDesktopPackage = inputs.llm-agents.packages.${system}.claude-desktop;
-    inherit claudeCodePackage;
-  };
+  homePkgs = pkgs;
+  ownedAgentPackages = import ../../lib/owned-agent-packages.nix { inherit inputs pkgs; };
+  claudeCodePackage = ownedAgentPackages.claudeCodePackage;
+  claudeDesktopPackage = ownedAgentPackages.claudeDesktopPackage;
   eglLoaderSource = pkgs.writeText "claude-desktop-egl-loader.c" ''
     #define _GNU_SOURCE
     #include <dlfcn.h>

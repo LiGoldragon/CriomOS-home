@@ -1,19 +1,13 @@
 { inputs, pkgs, ... }:
 let
-  system = pkgs.stdenv.hostPlatform.system;
-  homePkgs = pkgs.extend (
-    pkgs.lib.composeManyExtensions (import ../../overlays { inherit inputs; })
-  );
-  claudeCodePackage = homePkgs.callPackage ../../packages/claude-code { inherit inputs; };
-  claudeDesktopPackage = homePkgs.claudeDesktopWithDeclaredClaudeCode {
-    claudeDesktopPackage = inputs.llm-agents.packages.${system}.claude-desktop;
-    inherit claudeCodePackage;
-  };
+  homePkgs = pkgs;
+  ownedAgentPackages = import ../../lib/owned-agent-packages.nix { inherit inputs pkgs; };
+  claudeCodePackage = ownedAgentPackages.claudeCodePackage;
+  claudeDesktopPackage = ownedAgentPackages.claudeDesktopPackage;
   missingClaudeCodePackage = pkgs.runCommand "missing-declared-claude-code" { } ''
     mkdir -p "$out"
   '';
-  missingClaudeDesktopPackage = homePkgs.claudeDesktopWithDeclaredClaudeCode {
-    claudeDesktopPackage = inputs.llm-agents.packages.${system}.claude-desktop;
+  missingClaudeDesktopPackage = homePkgs.callPackage ../../owned-agents/claude-desktop {
     claudeCodePackage = missingClaudeCodePackage;
   };
 in

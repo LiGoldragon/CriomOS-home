@@ -3,9 +3,18 @@
 let
   minProfileModule = ../../modules/home/profiles/min/default.nix;
   system = pkgs.stdenv.hostPlatform.system;
-  agentIntercom = pkgs.callPackage ../../packages/agent-intercom { inherit inputs; };
-  claudeCodePackage = pkgs.callPackage ../../packages/claude-code { inherit inputs; };
-  codexCliPackage = pkgs.callPackage ../../packages/codex { inherit inputs; };
+  ownedAgentPackages = import ../../lib/owned-agent-packages.nix {
+    inherit inputs pkgs;
+    chatgptCommandLineArgs = "--ozone-platform=wayland";
+  };
+  inherit (ownedAgentPackages)
+    codexPackage
+    claudeCodePackage
+    ;
+  codexCliPackage = codexPackage;
+  agentIntercom = pkgs.callPackage ../../packages/agent-intercom {
+    inherit inputs codexCliPackage claudeCodePackage;
+  };
   piPackage = pkgs.callPackage ../../packages/pi { inherit inputs; };
   agentProfilePath = pkgs.symlinkJoin {
     name = "ai-agent-profile-path";
@@ -155,8 +164,8 @@ pkgs.runCommand "ai-agent-launch-orchestration"
       grep -F ${claudeCodePackage}/bin/claude ${agentProfilePath}/bin/cci
       ! grep -F ${agentProfilePath}/bin/claude ${agentProfilePath}/bin/cci
       test "$(readlink -f ${agentProfilePath}/bin/pi)" = "$(readlink -f ${piPackage}/bin/pi)"
-      test "$(${codexCliPackage}/bin/codex --version)" = "codex-cli 0.149.1"
-      test "$(${claudeCodePackage}/bin/claude --version)" = "2.1.246 (Claude Code)"
+      test "$(${codexCliPackage}/bin/codex --version)" = "codex-cli ${codexCliPackage.version}"
+      test "$(${claudeCodePackage}/bin/claude --version)" = "${claudeCodePackage.version} (Claude Code)"
 
       grep -F 'This source map does not grant tool permission' ${piPackage}/lib/pi-monorepo/packages/coding-agent/dist/core/system-prompt.js
       grep -F 'does not override project, role, skill, system, developer, or user instructions' ${piPackage}/lib/pi-monorepo/packages/coding-agent/dist/core/system-prompt.js

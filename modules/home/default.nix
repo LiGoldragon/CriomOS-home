@@ -30,6 +30,7 @@
   # CriomOS-home's own flake inputs (the wrapper overrides
   # _module.args.inputs).
   imports = [
+    ./core-packages.nix
     ./text-scale.nix
     ./visual-theme.nix
     ./desktop-database.nix
@@ -40,6 +41,7 @@
     # and graphical capabilities from projected Horizon services; no node
     # identity, remote transport, or credential controls it.
     ./profiles/min/agent-intercom.nix
+    ./profiles/min/claude-remote-control.nix
     # Sibling .nix files in profiles/min/ are individual HM modules, not
     # imported transitively by the directory import (Nix only auto-loads
     # default.nix). Archive's homeModule/default.nix listed each one

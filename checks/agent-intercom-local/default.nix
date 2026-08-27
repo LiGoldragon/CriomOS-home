@@ -1,13 +1,18 @@
 { inputs, pkgs, ... }:
 let
   system = pkgs.stdenv.hostPlatform.system;
+  ownedAgentPackages = import ../../lib/owned-agent-packages.nix { inherit inputs pkgs; };
+  codexCliPackage = ownedAgentPackages.codexPackage;
+  claudeCodePackage = ownedAgentPackages.claudeCodePackage;
   esbuildCompanion =
     {
       x86_64-linux = "linux-x64";
       aarch64-linux = "linux-arm64";
     }
     .${system};
-  agentIntercom = pkgs.callPackage ../../packages/agent-intercom { inherit inputs; };
+  agentIntercom = pkgs.callPackage ../../packages/agent-intercom {
+    inherit inputs codexCliPackage claudeCodePackage;
+  };
   pi = inputs.self.packages.${system}.pi;
   agentIntercomModule = ../../modules/home/profiles/min/agent-intercom.nix;
   agentIntercomPackage = ../../packages/agent-intercom/default.nix;
@@ -53,6 +58,7 @@ let
           inputs
           horizon
           system
+          ownedAgentPackages
           ;
         user = {
           name = "test-user";
@@ -61,6 +67,8 @@ let
         hexis = inputs.hexis.packages.${system}.default;
       };
       modules = [
+        ({ ... }: { _module.args.ownedAgentPackages = ownedAgentPackages; })
+        ../../modules/home/core-packages.nix
         agentIntercomModule
         {
           home = {
@@ -82,16 +90,14 @@ let
   );
   flakeFile = ../../flake.nix;
   flakeLock = ../../flake.lock;
-  claudeCodePackage = pkgs.callPackage ../../packages/claude-code { inherit inputs; };
-  codexCliPackage = pkgs.callPackage ../../packages/codex { inherit inputs; };
-  codexTui = pkgs.callPackage ../../packages/codex/tui.nix { inherit codexCliPackage; };
+  codexTui = pkgs.callPackage ../../owned-agents/codex/tui.nix { inherit codexCliPackage; };
   codexTuiFixtureCli = pkgs.writeShellApplication {
     name = "codex";
     text = ''
       printf '%s\\n' "$@"
     '';
   };
-  codexTuiFixture = pkgs.callPackage ../../packages/codex/tui.nix {
+  codexTuiFixture = pkgs.callPackage ../../owned-agents/codex/tui.nix {
     codexCliPackage = codexTuiFixtureCli;
   };
 in

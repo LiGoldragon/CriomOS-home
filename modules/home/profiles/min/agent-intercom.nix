@@ -34,25 +34,19 @@ let
   # list recurses through Home Manager's `_module.args.pkgs`.
   homeSystem = pkgs.stdenv.hostPlatform.system;
   graphicalSupported = homeSystem == "x86_64-linux";
-  codexCliPackage = pkgs.callPackage ../../../../packages/codex { inherit inputs; };
-  codexTui = pkgs.callPackage ../../../../packages/codex/tui.nix { inherit codexCliPackage; };
-  codexDesktopGate = pkgs.callPackage ../../../../packages/codex/desktop-gate.nix {
+  codexCliPackage = config.criomos.corePackages.codex;
+  codexTui = pkgs.callPackage ../../../../owned-agents/codex/tui.nix { inherit codexCliPackage; };
+  codexDesktopGate = pkgs.callPackage ../../../../owned-agents/codex/desktop-gate.nix {
     inherit codexCliPackage;
   };
-  directCodex = pkgs.writeShellApplication {
-    name = "direct-codex";
-    text = ''exec ${codexCliPackage}/bin/codex "$@"'';
-  };
-  claudeCodePackage = pkgs.callPackage ../../../../packages/claude-code { inherit inputs; };
-  claudeDesktopPackage = pkgs.claudeDesktopWithDeclaredClaudeCode {
-    claudeDesktopPackage = inputs.llm-agents.packages.${homeSystem}.claude-desktop;
+  claudeCodePackage = config.criomos.corePackages.claude;
+  claudeDesktopPackage = pkgs.callPackage ../../../../owned-agents/claude-desktop {
     inherit claudeCodePackage;
   };
-  chatgptPackage = inputs.llm-agents.packages.${homeSystem}.chatgpt.override {
+  chatgptWithDesktopGate = pkgs.callPackage ../../../../owned-agents/chatgpt {
+    codexPackage = codexCliPackage;
+    inherit codexDesktopGate;
     commandLineArgs = "--ozone-platform=wayland";
-  };
-  chatgptWithDesktopGate = pkgs.callPackage ../../../../packages/codex/chatgpt.nix {
-    inherit chatgptPackage codexDesktopGate;
   };
   chatgptWithLocalDaemon = pkgs.symlinkJoin {
     name = "chatgpt-with-local-codex-daemon";
@@ -70,7 +64,7 @@ let
   # The shared package is the sole Codex derivation for the terminal,
   # Desktop, Agent Intercom, and editor paths.
   agentIntercom = pkgs.callPackage ../../../../packages/agent-intercom {
-    inherit inputs codexCliPackage;
+    inherit inputs codexCliPackage claudeCodePackage;
     codexRawCommand = "${codexCliPackage}/bin/codex";
   };
   # Agent Intercom owns its operational entry points (`coi`, `cci`, MCP
@@ -109,7 +103,6 @@ lib.mkMerge [
       agentIntercomRuntime
       claudeCodePackage
       codexTui
-      directCodex
     ];
 
     home.file = {
@@ -195,7 +188,7 @@ lib.mkMerge [
     ];
 
     # The package owns the Claude desktop entry.  Link that exact entry into
-    # the active XDG applications directory so the `claude://` OAuth callback
+    # the active XDG applications directory so the `claude://` callback
     # is discoverable by the desktop MIME database.  The shared Home desktop
     # database activation hook refreshes its cache after link generation.
     xdg.dataFile."applications/claude-desktop.desktop".source =

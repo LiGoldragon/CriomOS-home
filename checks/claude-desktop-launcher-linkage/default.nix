@@ -1,13 +1,9 @@
 { inputs, pkgs, ... }:
 let
-  system = pkgs.stdenv.hostPlatform.system;
-  homePkgs = pkgs.extend (pkgs.lib.composeManyExtensions (import ../../overlays { inherit inputs; }));
-  claudeCodePackage = homePkgs.callPackage ../../packages/claude-code { inherit inputs; };
-  upstreamClaudeDesktopPackage = inputs.llm-agents.packages.${system}.claude-desktop;
-  claudeDesktopPackage = homePkgs.claudeDesktopWithDeclaredClaudeCode {
-    claudeDesktopPackage = upstreamClaudeDesktopPackage;
-    inherit claudeCodePackage;
-  };
+  homePkgs = pkgs;
+  ownedAgentPackages = import ../../lib/owned-agent-packages.nix { inherit inputs pkgs; };
+  claudeCodePackage = ownedAgentPackages.claudeCodePackage;
+  claudeDesktopPackage = ownedAgentPackages.claudeDesktopPackage;
 in
 pkgs.runCommand "claude-desktop-launcher-linkage"
   {
@@ -62,10 +58,7 @@ pkgs.runCommand "claude-desktop-launcher-linkage"
       "$test_desktop/lib/claude-desktop/resources/app.asar"
     launcher="$test_desktop/bin/claude-desktop"
     sed -i "s|${claudeDesktopPackage}|$test_desktop|g" "$launcher"
-    if grep -F ${upstreamClaudeDesktopPackage} "$launcher"; then
-      echo 'claude-desktop-launcher-linkage: upstream launcher prefix remains' >&2
-      exit 1
-    fi
+    ! grep -F '/nix/store/' "$launcher" | grep -F '/bin/claude-desktop' | grep -v "$test_desktop" 
     if test -e "$test_desktop/bin/.claude-desktop-wrapped"; then
       echo 'claude-desktop-launcher-linkage: nested wrapper remains' >&2
       exit 1

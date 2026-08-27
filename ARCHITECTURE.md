@@ -195,14 +195,26 @@ explicitly raw upstream CLIs, preventing wrapper recursion. `codex-raw`,
 `claude-raw`, `direct-codex`, and `direct-claude` are recovery/debug-only.
 
 The maintained Codex Desktop integration and Claude Desktop are installed only
-for medium graphical Agent Intercom profiles. Home's single `llm-agents`
-Codex derivation supplies terminal, Desktop, Agent Intercom, and editor paths.
+for medium graphical Agent Intercom profiles. Home's canonical
+`criomos.corePackages.codex` derivation supplies terminal, Desktop, Agent
+Intercom, and editor paths; `criomos.corePackages.claude` does the same for
+Claude Code consumers.
 Claude Desktop is a declarative derivative whose every local Code session
 resolves to Home's same pinned `claudeCodePackage` executable. Home activates
 Desktop's built-in local-override branch and makes a declared executable
 failure terminal before the ordinary resolver or downloader can run. The
 declared executable is the only executable identity; its absence fails through
 the session launch instead of falling back to mutable user state.
+
+`claude-remote-control` user service is a persistent Claude session owner for
+every minimum Home profile. It starts with the user home as its portable
+default root (or an explicitly configured absolute root) and a typed
+`same-dir`, `worktree`, or `session` spawn mode; it does not hardwire any
+machine-specific checkout. Claude Desktop, the browser, and mobile control
+those sessions through Anthropic's authenticated relay, so this declaration
+does not add a local network listener, tunnel, or alternate privacy boundary.
+The local Claude terminal is deliberately not a thin client for that owner;
+there is no `remoteControlAtStartup` policy on per-TUI launches.
 
 A Nix utility fetches Hugging Face models by URL or query, mirroring
 `nix-prefetch-url`: it prefetches via the Hugging Face CLI, hashes, and

@@ -9,17 +9,33 @@ pkgs.writeShellApplication {
     explicit_approval=0
     raw_invocation=0
     option_parsing=1
+    remote_value_next=0
+    invalid_remote=0
 
     for argument in "''${arguments[@]}"; do
       if [ "$option_parsing" = 0 ]; then
+        continue
+      fi
+      if [ "$remote_value_next" = 1 ]; then
+        if [ "$argument" != "unix://" ]; then
+          invalid_remote=1
+        fi
+        remote_value_next=0
         continue
       fi
       case "$argument" in
         --)
           option_parsing=0
           ;;
-        --remote|--remote=*)
+        --remote)
           explicit_remote=1
+          remote_value_next=1
+          ;;
+        --remote=unix://)
+          explicit_remote=1
+          ;;
+        --remote=*|--remote-auth-token-env|--remote-auth-token-env=*)
+          invalid_remote=1
           ;;
         -C|--cd|-C?*|--cd=*)
           explicit_cd=1
@@ -35,6 +51,11 @@ pkgs.writeShellApplication {
           ;;
       esac
     done
+
+    if [ "$invalid_remote" = 1 ] || [ "$remote_value_next" = 1 ]; then
+      printf '%s\n' 'CriomOS codex: normal TUIs attach only to the managed unix:// app-server' >&2
+      exit 126
+    fi
 
     if [ "$raw_invocation" = 1 ]; then
       exec ${codexCliPackage}/bin/codex "''${arguments[@]}"
@@ -87,7 +108,10 @@ pkgs.writeShellApplication {
         app-server)
           shift
           case "$1:$2" in
-            daemon:version|proxy:*|schema:*)
+            # `daemon version` is an observational health probe.  Every
+            # session-creating, proxying, and schema-writing app-server route
+            # remains owned by the persistent codex-remote-control service.
+            daemon:version)
               exec ${codexCliPackage}/bin/codex "''${arguments[@]}"
               ;;
             *)

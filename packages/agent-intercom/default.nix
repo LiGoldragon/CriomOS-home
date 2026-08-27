@@ -1,7 +1,8 @@
 {
   inputs,
   pkgs,
-  codexCliPackage ? pkgs.callPackage ../codex { inherit inputs; },
+  codexCliPackage ? pkgs.callPackage ../../owned-agents/codex { inherit inputs; },
+  claudeCodePackage ? pkgs.callPackage ../../owned-agents/claude-code { inherit inputs; },
   codexRawCommand ? "${codexCliPackage}/bin/codex",
   ...
 }:
@@ -18,7 +19,6 @@ else
   let
     system = pkgs.stdenv.hostPlatform.system;
     piPackage = inputs.self.packages.${system}.pi;
-    claudeCodePackage = pkgs.callPackage ../claude-code { inherit inputs; };
     esbuildCompanion =
       {
         x86_64-linux = {
@@ -72,6 +72,10 @@ else
       ln -s ../.pi-deps/get-tsconfig "${packageRoot}/node_modules/get-tsconfig"
       ln -s ../.pi-deps/resolve-pkg-maps "${packageRoot}/node_modules/resolve-pkg-maps"
       ln -s ../../.pi-deps/esbuild-${esbuildCompanion.packageName} "${packageRoot}/node_modules/@esbuild/${esbuildCompanion.packageName}"
+      # The protected-provider test and generated broker use TypeScript through
+      # tsx at runtime. Keep that resolver in the immutable package tree so it
+      # never falls back to a workspace or user installation.
+      ln -s ${pkgs.typescript}/lib/node_modules/typescript "${packageRoot}/node_modules/typescript"
       cp -R ${agentIntercomCore}/. "${packageRoot}/node_modules/@dataforxyz/agent-intercom-core"
     '';
 

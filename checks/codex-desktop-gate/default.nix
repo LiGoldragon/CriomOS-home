@@ -3,12 +3,12 @@ let
   fakeRawCodex = pkgs.writeShellApplication {
     name = "codex";
     text = ''
-      printf '%s\\n' "$@" >> "$CODEX_GATE_CHILD_LOG"
-      printf 'CODEX_HOME=%s\\n' "$CODEX_HOME" >> "$CODEX_GATE_CHILD_LOG"
+      printf '%s\n' "$@" >> "$CODEX_GATE_CHILD_LOG"
+      printf 'CODEX_HOME=%s\n' "$CODEX_HOME" >> "$CODEX_GATE_CHILD_LOG"
       printf 'raw:%s\\n' "$*"
     '';
   };
-  gate = pkgs.callPackage ../../packages/codex/desktop-gate.nix {
+  gate = pkgs.callPackage ../../owned-agents/codex/desktop-gate.nix {
     codexCliPackage = fakeRawCodex;
   };
 in

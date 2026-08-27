@@ -305,9 +305,9 @@ let
   # Pi is built directly from inputs.pi-src. The Codex TUI launcher preserves
   # its caller's directory when attaching to the shared app-server; raw
   # recovery commands and Agent Intercom bridges retain the pinned clients.
-  claudeCodePackage = pkgs.callPackage ../../../../packages/claude-code { inherit inputs; };
-  codexCliPackage = pkgs.callPackage ../../../../packages/codex { inherit inputs; };
-  codexTui = pkgs.callPackage ../../../../packages/codex/tui.nix { inherit codexCliPackage; };
+  claudeCodePackage = config.criomos.corePackages.claude;
+  codexCliPackage = config.criomos.corePackages.codex;
+  codexTui = pkgs.callPackage ../../../../owned-agents/codex/tui.nix { inherit codexCliPackage; };
   piPackage = pkgs.callPackage ../../../../packages/pi { inherit inputs; };
 
   mkRawRecoveryCommand =

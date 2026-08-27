@@ -2,6 +2,8 @@
 
 let
   system = pkgs.stdenv.hostPlatform.system;
+  ownedAgentPackages = import ../../lib/owned-agent-packages.nix { inherit inputs pkgs; };
+  ownedAgentModule = { ... }: { _module.args.ownedAgentPackages = ownedAgentPackages; };
   pi = inputs.self.packages.${system}.pi;
   pi-criomos = inputs.self.packages.${system}.pi-criomos;
   pi-linkup = inputs.self.packages.${system}.pi-linkup;
@@ -20,7 +22,7 @@ let
   piRuntimeHome = inputs.home-manager.lib.homeManagerConfiguration {
     inherit pkgs;
     extraSpecialArgs = {
-      inherit inputs;
+      inherit inputs ownedAgentPackages;
       hexis = inputs.hexis.packages.${system}.default;
       horizon = {
         node = {
@@ -38,7 +40,9 @@ let
       user.size.min = true;
     };
     modules = [
+      ../../modules/home/core-packages.nix
       piModelsModule
+      ownedAgentModule
       agentIntercomModule
       {
         home = {

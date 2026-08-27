@@ -1,6 +1,7 @@
 {
   pkgs,
   lib,
+  config,
   user,
   inputs,
   horizon ? {
@@ -13,7 +14,7 @@
 let
   inherit (user) size;
   codiumPackage = pkgs.callPackage ../../../../packages/vscodium-casual { };
-  claudeCodePackage = pkgs.callPackage ../../../../packages/claude-code { inherit inputs; };
+  claudeCodePackage = config.criomos.corePackages.claude;
   agentIntercomLocal = builtins.any (
     service:
     if builtins.isString service then

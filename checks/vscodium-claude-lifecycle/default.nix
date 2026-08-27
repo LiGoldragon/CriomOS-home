@@ -1,15 +1,18 @@
 { inputs, pkgs, ... }:
 
 let
-  homePkgs = import inputs.nixpkgs {
-    inherit (pkgs.stdenv.hostPlatform) system;
-    config.allowUnfree = true;
-    overlays = [ inputs.pkgs.inputs.nix-vscode-extensions.overlays.default ];
+  # The flake supplies this check with the per-system CriomOS-pkgs universe;
+  # keeping that exact set here preserves repository overlays and policy.
+  homePkgs = pkgs;
+  ownedAgentPackages = import ../../lib/owned-agent-packages.nix {
+    pkgs = homePkgs;
+    inherit inputs;
   };
+  ownedAgentModule = { ... }: { _module.args.ownedAgentPackages = ownedAgentPackages; };
   homeConfiguration = inputs.home-manager.lib.homeManagerConfiguration {
     pkgs = homePkgs;
     extraSpecialArgs = {
-      inherit inputs;
+      inherit inputs ownedAgentPackages;
       hexis = homePkgs.writeShellScriptBin "hexis-fixture" "exit 0";
       textScale.codiumZoom = 0;
       user = {
@@ -18,6 +21,8 @@ let
       };
     };
     modules = [
+      ../../modules/home/core-packages.nix
+      ownedAgentModule
       ../../modules/home/vscodium/vscodium
       {
         home.username = "vscodium-check";

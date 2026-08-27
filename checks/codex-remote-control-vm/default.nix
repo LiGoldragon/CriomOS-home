@@ -1,8 +1,12 @@
 { inputs, pkgs, ... }:
 let
   system = pkgs.stdenv.hostPlatform.system;
-  codexCliPackage = pkgs.callPackage ../../packages/codex { inherit inputs; };
+  codexCliPackage = pkgs.callPackage ../../owned-agents/codex { inherit inputs; };
+  codexDesktopGate = pkgs.callPackage ../../owned-agents/codex/desktop-gate.nix {
+    inherit codexCliPackage;
+  };
   codexRemoteControlModule = ../../modules/home/profiles/min/agent-intercom.nix;
+  corePackagesModule = ../../modules/home/core-packages.nix;
   testUser = "codex-remote-control-test";
   testHome = "/home/${testUser}";
   testUid = 1000;
@@ -21,6 +25,7 @@ let
         };
       };
       modules = [
+        corePackagesModule
         codexRemoteControlModule
         {
           home = {
@@ -55,6 +60,7 @@ pkgs.testers.nixosTest {
       environment.systemPackages = [
         pkgs.python3
         codexCliPackage
+        codexDesktopGate
       ];
       environment.etc."codex-remote-control-initialize.py".source = ../codex-remote-control/initialize.py;
 
@@ -72,6 +78,7 @@ pkgs.testers.nixosTest {
     machine.wait_until_succeeds("test -S ${socket}")
     machine.succeed("test \"$(stat -c %a ${socket})\" = 600")
     machine.succeed("su -s /bin/sh -c 'CODEX_HOME=${testHome}/.codex codex app-server daemon version' ${testUser}")
+    machine.succeed("su -s /bin/sh -c 'CODEX_HOME=${testHome}/.codex ${codexDesktopGate}/bin/codex app-server daemon version' ${testUser}")
     machine.wait_until_succeeds("python3 /etc/codex-remote-control-initialize.py ${socket} ${testHome}/.codex")
     machine.succeed("systemctl --user --machine=${testUser}@ is-active codex-remote-control.service")
     machine.succeed("test -S ${socket}")
