@@ -551,6 +551,7 @@
           main-contract-pins = checkPkgs.callPackage ./checks/main-contract-pins {
             inherit inputs;
           };
+          codex-tui = checkPkgs.callPackage ./checks/codex-tui { };
           yt-dlp = checkPkgs.callPackage ./checks/yt-dlp {
             inherit inputs;
             homePkgs = pkgs;
