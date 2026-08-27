@@ -5,6 +5,8 @@ pkgs.writeShellApplication {
     arguments=("$@")
     explicit_remote=0
     explicit_cd=0
+    explicit_sandbox=0
+    explicit_approval=0
     raw_invocation=0
     option_parsing=1
 
@@ -22,6 +24,12 @@ pkgs.writeShellApplication {
         -C|--cd|-C?*|--cd=*)
           explicit_cd=1
           ;;
+        -s|--sandbox|-s?*|--sandbox=*)
+          explicit_sandbox=1
+          ;;
+        -a|--ask-for-approval|-a?*|--ask-for-approval=*)
+          explicit_approval=1
+          ;;
         --version|-V|--help|-h)
           raw_invocation=1
           ;;
@@ -33,10 +41,17 @@ pkgs.writeShellApplication {
     fi
 
     remote_tui() {
-      if [ "$explicit_cd" = 1 ]; then
-        exec ${codexCliPackage}/bin/codex "$@"
+      remote_arguments=()
+      if [ "$explicit_cd" = 0 ]; then
+        remote_arguments+=(--cd "$PWD")
       fi
-      exec ${codexCliPackage}/bin/codex --cd "$PWD" "$@"
+      if [ "$explicit_sandbox" = 0 ]; then
+        remote_arguments+=(--sandbox danger-full-access)
+      fi
+      if [ "$explicit_approval" = 0 ]; then
+        remote_arguments+=(--ask-for-approval never)
+      fi
+      exec ${codexCliPackage}/bin/codex "''${remote_arguments[@]}" "$@"
     }
 
     while [ "$#" -gt 0 ]; do

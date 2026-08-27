@@ -135,16 +135,24 @@ pkgs.runCommand "agent-intercom-local-family-contract"
     mkdir -p "$first_directory" "$second_directory" "$explicit_directory"
 
     first_actual="$(cd "$first_directory" && ${codexTuiFixture}/bin/codex --remote unix:// first)"
-    first_expected="$(printf '%s\\n' --cd "$first_directory" --remote unix:// first)"
+    first_expected="$(printf '%s\\n' --cd "$first_directory" --sandbox danger-full-access --ask-for-approval never --remote unix:// first)"
     test "$first_actual" = "$first_expected"
 
     second_actual="$(cd "$second_directory" && ${codexTuiFixture}/bin/codex second)"
-    second_expected="$(printf '%s\\n' --cd "$second_directory" --remote unix:// second)"
+    second_expected="$(printf '%s\\n' --cd "$second_directory" --sandbox danger-full-access --ask-for-approval never --remote unix:// second)"
     test "$second_actual" = "$second_expected"
 
-    explicit_actual="$(cd "$first_directory" && ${codexTuiFixture}/bin/codex --remote unix:// --cd "$explicit_directory" explicit)"
-    explicit_expected="$(printf '%s\\n' --remote unix:// --cd "$explicit_directory" explicit)"
+    explicit_actual="$(cd "$first_directory" && ${codexTuiFixture}/bin/codex --remote unix:// --cd "$explicit_directory" --sandbox workspace-write --ask-for-approval on-request explicit)"
+    explicit_expected="$(printf '%s\\n' --remote unix:// --cd "$explicit_directory" --sandbox workspace-write --ask-for-approval on-request explicit)"
     test "$explicit_actual" = "$explicit_expected"
+
+    sandbox_actual="$(cd "$first_directory" && ${codexTuiFixture}/bin/codex --sandbox read-only sandbox-override)"
+    sandbox_expected="$(printf '%s\\n' --cd "$first_directory" --ask-for-approval never --sandbox read-only sandbox-override)"
+    test "$sandbox_actual" = "$sandbox_expected"
+
+    approval_actual="$(cd "$first_directory" && ${codexTuiFixture}/bin/codex -a on-request approval-override)"
+    approval_expected="$(printf '%s\\n' --cd "$first_directory" --sandbox danger-full-access -a on-request approval-override)"
+    test "$approval_actual" = "$approval_expected"
 
     raw_actual="$(cd "$first_directory" && ${codexTuiFixture}/bin/codex exec one-shot)"
     test "$raw_actual" = "$(printf '%s\\n' exec one-shot)"
