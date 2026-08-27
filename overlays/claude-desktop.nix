@@ -10,6 +10,7 @@ final: prev: {
         nativeBuildInputs = [
           prev.asar
           prev.nodejs
+          prev.patchelf
         ];
         passthru.declaredClaudeCode = claudeCodePackage;
       }
@@ -26,5 +27,7 @@ final: prev: {
         ${prev.asar}/bin/asar pack "$extracted_app" "$app_asar"
         substituteInPlace "$out/bin/claude-desktop" \
           --replace-fail "${claudeDesktopPackage}" "$out"
+        patchelf --add-rpath ${prev.libglvnd}/lib \
+          "$out/lib/claude-desktop/libGLESv2.so"
       '';
 }
