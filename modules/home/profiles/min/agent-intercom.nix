@@ -89,13 +89,13 @@ lib.mkMerge [
     ];
   }
   (lib.mkIf localEnabled {
-    # The direct, pinned CLIs are the ordinary user commands.  Keep the
-    # Intercom-specific operational entry points without letting its aliases
-    # shadow either CLI. The shared Codex package also keeps ordinary `codex`
-    # available alongside the bridges.
+    # The Codex TUI launcher keeps its caller's working directory when it
+    # attaches to the shared app-server. Keep Intercom-specific operational
+    # entry points without letting their aliases shadow ordinary commands.
     home.packages = [
       agentIntercomRuntime
       claudeCodePackage
+      codexTui
     ];
 
     home.file = {

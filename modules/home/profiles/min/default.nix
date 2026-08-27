@@ -302,10 +302,12 @@ let
     ssh-to-age
   ];
 
-  # Pi is built directly from inputs.pi-src. Direct Codex and Claude packages
-  # own their normal commands; Agent Intercom exposes only distinct bridges.
+  # Pi is built directly from inputs.pi-src. The Codex TUI launcher preserves
+  # its caller's directory when attaching to the shared app-server; raw
+  # recovery commands and Agent Intercom bridges retain the pinned clients.
   claudeCodePackage = pkgs.callPackage ../../../../packages/claude-code { inherit inputs; };
   codexCliPackage = pkgs.callPackage ../../../../packages/codex { inherit inputs; };
+  codexTui = pkgs.callPackage ../../../../packages/codex/tui.nix { inherit codexCliPackage; };
   piPackage = pkgs.callPackage ../../../../packages/pi { inherit inputs; };
 
   mkRawRecoveryCommand =
@@ -349,7 +351,8 @@ let
     pkgs.llama-cpp
     (pkgs.callPackage ../../../../packages/gws { inherit inputs; })
     (pkgs.callPackage ../../../../packages/playwright-cli { })
-  ];
+  ]
+  ++ optional (!agentIntercomLocalEnabled) codexTui;
 
   nixpkgsPackages =
     with pkgs;

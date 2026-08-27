@@ -73,6 +73,10 @@ let
     }).config;
   localHomeConfiguration = mkHomeConfiguration localHorizon;
   noLocalHomeConfiguration = mkHomeConfiguration noLocalHorizon;
+  profile = pkgs.buildEnv {
+    name = "agent-intercom-local-profile";
+    paths = localHomeConfiguration.home.packages;
+  };
   graphicalOnArmRejected = builtins.tryEval (
     (mkHomeConfiguration graphicalHorizon).activationPackage
   );
@@ -80,10 +84,22 @@ let
   flakeLock = ../../flake.lock;
   claudeCodePackage = pkgs.callPackage ../../packages/claude-code { inherit inputs; };
   codexCliPackage = pkgs.callPackage ../../packages/codex { inherit inputs; };
+  codexTui = pkgs.callPackage ../../packages/codex/tui.nix { inherit codexCliPackage; };
+  codexTuiFixtureCli = pkgs.writeShellApplication {
+    name = "codex";
+    text = ''
+      printf '%s\\n' "$@"
+    '';
+  };
+  codexTuiFixture = pkgs.callPackage ../../packages/codex/tui.nix {
+    codexCliPackage = codexTuiFixtureCli;
+  };
 in
 assert localHomeConfiguration.home.file ? ".pi/agent/packages/agent-intercom-pi";
 assert localHomeConfiguration.home.file ? ".pi/agent/packages/agent-intercom-orchestrator";
 assert localHomeConfiguration.systemd.user.services ? codex-remote-control;
+assert builtins.elem codexTui localHomeConfiguration.home.packages;
+assert !(builtins.elem codexCliPackage localHomeConfiguration.home.packages);
 assert builtins.elem claudeCodePackage localHomeConfiguration.home.packages;
 assert !(builtins.elem agentIntercom localHomeConfiguration.home.packages);
 assert !(noLocalHomeConfiguration.home.file ? ".pi/agent/packages/agent-intercom-pi");
@@ -96,6 +112,7 @@ pkgs.runCommand "agent-intercom-local-family-contract"
       pkgs.gnugrep
       pkgs.jq
       pkgs.nodejs
+      profile
     ];
   }
   ''
@@ -109,6 +126,28 @@ pkgs.runCommand "agent-intercom-local-family-contract"
     done
     ! test -e ${agentIntercom}/bin/codex
     ! test -e ${agentIntercom}/bin/claude
+    test -x ${profile}/bin/codex
+    test "$( ${profile}/bin/codex --version )" = 'codex-cli ${codexCliPackage.version}'
+
+    first_directory="$TMPDIR/first-directory"
+    second_directory="$TMPDIR/second-directory"
+    explicit_directory="$TMPDIR/explicit-directory"
+    mkdir -p "$first_directory" "$second_directory" "$explicit_directory"
+
+    first_actual="$(cd "$first_directory" && ${codexTuiFixture}/bin/codex --remote unix:// first)"
+    first_expected="$(printf '%s\\n' --cd "$first_directory" --remote unix:// first)"
+    test "$first_actual" = "$first_expected"
+
+    second_actual="$(cd "$second_directory" && ${codexTuiFixture}/bin/codex second)"
+    second_expected="$(printf '%s\\n' --cd "$second_directory" --remote unix:// second)"
+    test "$second_actual" = "$second_expected"
+
+    explicit_actual="$(cd "$first_directory" && ${codexTuiFixture}/bin/codex --remote unix:// --cd "$explicit_directory" explicit)"
+    explicit_expected="$(printf '%s\\n' --remote unix:// --cd "$explicit_directory" explicit)"
+    test "$explicit_actual" = "$explicit_expected"
+
+    raw_actual="$(cd "$first_directory" && ${codexTuiFixture}/bin/codex exec one-shot)"
+    test "$raw_actual" = "$(printf '%s\\n' exec one-shot)"
     for artifact in \
       pi/index.ts \
       orchestrator/src/agent-fleet-cli.mjs \
