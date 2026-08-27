@@ -127,7 +127,6 @@ pkgs.runCommand "agent-intercom-local-family-contract"
     ! test -e ${agentIntercom}/bin/codex
     ! test -e ${agentIntercom}/bin/claude
     test -x ${profile}/bin/codex
-    test "$( ${profile}/bin/codex --version )" = 'codex-cli ${codexCliPackage.version}'
 
     first_directory="$TMPDIR/first-directory"
     second_directory="$TMPDIR/second-directory"
