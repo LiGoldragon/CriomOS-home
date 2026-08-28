@@ -514,10 +514,12 @@
           };
         in
         basePackages
-        // lib.optionalAttrs (lib.hasSuffix "-linux" system) {
-          chatgpt = ownedAgentPackages.chatgptPackage;
-          claude-desktop = ownedAgentPackages.claudeDesktopPackage;
-        }
+        //
+          lib.optionalAttrs (ownedAgentPackages ? chatgptPackage && ownedAgentPackages ? claudeDesktopPackage)
+            {
+              chatgpt = ownedAgentPackages.chatgptPackage;
+              claude-desktop = ownedAgentPackages.claudeDesktopPackage;
+            }
         // lib.optionalAttrs (lib.elem system agentIntercomSystems) {
           agent-intercom = ownedPkgs.callPackage ./packages/agent-intercom {
             inherit inputs;
@@ -536,8 +538,7 @@
       ];
       ownedCheckNames = [
         "agent-intercom"
-        "agent-intercom-graphical-tui"
-        "agent-intercom-local"
+        "desktop-app-support"
         "ai-agent-launch-orchestration"
         "claude-desktop-declared-cli"
         "claude-desktop-egl-linkage"
@@ -549,7 +550,12 @@
         "codex-tui"
       ];
       agentIntercomSupported = system: lib.elem system agentIntercomSystems;
-      agentIntercomGraphicalSupported = system: system == "x86_64-linux";
+      desktopAppSupported =
+        system:
+        let
+          packages = ownedPackagesForSystem system;
+        in
+        packages ? chatgpt && packages ? claude-desktop;
       projectPackages = builtins.mapAttrs (
         system: packages:
         let
@@ -579,12 +585,12 @@
             value = true;
           }) (builtins.attrNames (projectPackages.${system} or { }))
         );
-      # Blueprint imports every check before it can inspect platforms. Keep the
-      # Desktop witness out of Arm evaluation, then add the Arm-safe Local
-      # witness explicitly below alongside the generic check surface.
+      # Blueprint imports every check before it can inspect platform metadata.
+      # Select desktop-app checks from the actual owned package outputs rather
+      # than a shared architecture predicate.
       derivationChecks = builtins.mapAttrs (
         _system: checks:
-        if agentIntercomGraphicalSupported _system then
+        if desktopAppSupported _system then
           lib.filterAttrs (
             name: value:
             lib.isDerivation value
@@ -660,19 +666,14 @@
           };
         }
         // lib.optionalAttrs (agentIntercomSupported _system) {
-          agent-intercom-local = checkPkgs.callPackage ./checks/agent-intercom-local { inherit inputs; };
+          agent-intercom = checkPkgs.callPackage ./checks/agent-intercom { inherit inputs; };
         }
         // lib.optionalAttrs (_system == "x86_64-linux") {
           vscodium-claude-lifecycle = checkPkgs.callPackage ./checks/vscodium-claude-lifecycle {
             inherit inputs;
           };
         }
-        // lib.optionalAttrs (agentIntercomGraphicalSupported _system) {
-          pi-harness-profile = checkPkgs.callPackage ./checks/pi-harness-profile { inherit inputs; };
-          ai-agent-launch-orchestration = checkPkgs.callPackage ./checks/ai-agent-launch-orchestration {
-            inherit inputs;
-          };
-          agent-intercom = checkPkgs.callPackage ./checks/agent-intercom { inherit inputs; };
+        // lib.optionalAttrs (desktopAppSupported _system) {
           claude-desktop-declared-cli = checkPkgs.callPackage ./checks/claude-desktop-declared-cli {
             inherit inputs;
           };
@@ -682,7 +683,13 @@
           claude-desktop-egl-linkage = checkPkgs.callPackage ./checks/claude-desktop-egl-linkage {
             inherit inputs;
           };
-          agent-intercom-graphical-tui = checkPkgs.callPackage ./checks/agent-intercom-graphical-tui {
+          desktop-app-support = checkPkgs.callPackage ./checks/desktop-app-support {
+            inherit inputs;
+          };
+        }
+        // lib.optionalAttrs (_system == "x86_64-linux") {
+          pi-harness-profile = checkPkgs.callPackage ./checks/pi-harness-profile { inherit inputs; };
+          ai-agent-launch-orchestration = checkPkgs.callPackage ./checks/ai-agent-launch-orchestration {
             inherit inputs;
           };
           codex-remote-control = checkPkgs.callPackage ./checks/codex-remote-control {

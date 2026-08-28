@@ -37,9 +37,10 @@
     ./base.nix
     ./profiles/min
     ./profiles/min/pi-models.nix
-    # Agent Intercom adapters are host-local. The module selects the local
-    # and graphical capabilities from projected Horizon services; no node
-    # identity, remote transport, or credential controls it.
+    # Agent Intercom adapters are user-local. They do not depend on a node
+    # service; generic Edge plus medium profile capability selects optional
+    # desktop-app support, with no node identity, remote transport, or
+    # credential control.
     ./profiles/min/agent-intercom.nix
     ./profiles/min/claude-remote-control.nix
     # Sibling .nix files in profiles/min/ are individual HM modules, not

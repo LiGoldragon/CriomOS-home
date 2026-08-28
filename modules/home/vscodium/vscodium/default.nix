@@ -4,9 +4,6 @@
   config,
   user,
   inputs,
-  horizon ? {
-    node.services = [ ];
-  },
   hexis,
   textScale,
   ...
@@ -15,13 +12,6 @@ let
   inherit (user) size;
   codiumPackage = pkgs.callPackage ../../../../packages/vscodium-casual { };
   claudeCodePackage = config.criomos.corePackages.claude;
-  agentIntercomLocal = builtins.any (
-    service:
-    if builtins.isString service then
-      service == "AgentIntercomLocal"
-    else
-      builtins.isAttrs service && builtins.hasAttr "AgentIntercomLocal" service
-  ) (horizon.node.services or [ ]);
 
   lifecycleSource = pkgs.replaceVars ./claude-lifecycle.sh {
     COREUTILS = "${pkgs.coreutils}";
@@ -319,13 +309,10 @@ lib.mkIf size.medium {
   # All keys default to `ensure` mode here — declared overlays the
   # defaults, user overrides survive at sibling keys (the
   # `[python].wordWrap`-clobber case the old helper got wrong).
-  # Without the opt-in local Agent Intercom capability, the ordinary command
-  # names must be the upstream CLIs.  Agent Intercom owns its wrappers only
-  # when Horizon explicitly projects that capability.
+  # VSCodium owns its direct Claude Code dependency. Agent Intercom packages
+  # distinct wrapper names, so it neither replaces nor gates this CLI.
   home.packages = [
     codiumClaudeLifecycle
-  ]
-  ++ lib.optionals (!agentIntercomLocal) [
     claudeCodePackage
   ];
 

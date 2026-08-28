@@ -7,7 +7,7 @@
   ...
 }:
 # Blueprint evaluates package outputs for every exposed system. Avoid resolving
-# the local Agent Intercom family's Linux inputs on unsupported systems.
+# the Agent Intercom family's Linux inputs on unsupported systems.
 if
   !(builtins.elem pkgs.stdenv.hostPlatform.system [
     "x86_64-linux"

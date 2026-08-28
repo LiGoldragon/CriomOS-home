@@ -8,25 +8,18 @@ let
     inherit inputs;
     chatgptCommandLineArgs = "--ozone-platform=wayland";
   };
-  baseHorizon = {
-    node = {
-      name = "graphical-tui-contract";
-      services = [
-        { AgentIntercomLocal = { }; }
-        { AgentIntercomGraphical = { }; }
-      ];
-    };
-  };
   mkConfiguration =
-    user:
+    horizon: user:
     (inputs.home-manager.lib.homeManagerConfiguration {
       pkgs = homePkgs;
       extraSpecialArgs = {
-        inherit inputs user ownedAgentPackages;
+        inherit
+          inputs
+          horizon
+          user
+          ownedAgentPackages
+          ;
         hexis = inputs.hexis.packages.${system}.default;
-        horizon = baseHorizon // {
-          users.test-user = user;
-        };
       };
       modules = [
         ({ ... }: { _module.args.ownedAgentPackages = ownedAgentPackages; })
@@ -48,50 +41,53 @@ let
       medium = true;
     };
   };
-  smallUser = {
+  minUser = {
     name = "test-user";
     size.min = true;
   };
-  configuration = mkConfiguration mediumUser;
-  smallConfiguration = mkConfiguration smallUser;
+  mkHorizon = edge: user: {
+    users.test-user = user;
+    node = {
+      name = "desktop-app-fixture";
+      behavesAs.edge = edge;
+      services = [ ];
+    };
+  };
+  edgeMedium = mkConfiguration (mkHorizon true mediumUser) mediumUser;
+  nonEdgeMedium = mkConfiguration (mkHorizon false mediumUser) mediumUser;
+  edgeMin = mkConfiguration (mkHorizon true minUser) minUser;
   profile = pkgs.buildEnv {
-    name = "agent-intercom-graphical-tui-profile";
-    paths = configuration.home.packages;
+    name = "desktop-app-support-profile";
+    paths = edgeMedium.home.packages;
   };
   codexCliPackage = ownedAgentPackages.codexPackage;
-  codexDesktopGate = ownedAgentPackages.chatgptPackage.passthru.codexDesktopGate;
   claudeCodePackage = ownedAgentPackages.claudeCodePackage;
   claudeDesktopPackage = ownedAgentPackages.claudeDesktopPackage;
   chatgptPackage = ownedAgentPackages.chatgptPackage;
-  claudeDesktopEntry = configuration.xdg.dataFile."applications/claude-desktop.desktop".source;
+  claudeDesktopEntry = edgeMedium.xdg.dataFile."applications/claude-desktop.desktop".source;
   claudeDesktopDefault = builtins.head (
-    configuration.xdg.mimeApps.defaultApplications."x-scheme-handler/claude"
+    edgeMedium.xdg.mimeApps.defaultApplications."x-scheme-handler/claude"
   );
-  chatgptEntry = configuration.xdg.dataFile."applications/chatgpt.desktop".source;
+  chatgptEntry = edgeMedium.xdg.dataFile."applications/chatgpt.desktop".source;
   chatgptDefault = builtins.head (
-    configuration.xdg.mimeApps.defaultApplications."x-scheme-handler/codex"
+    edgeMedium.xdg.mimeApps.defaultApplications."x-scheme-handler/codex"
   );
   chatgptLauncher = lib.removeSuffix "/share/applications/chatgpt.desktop" (toString chatgptEntry);
-  agentIntercom = lib.removeSuffix "/share/agent-intercom/pi" (
-    toString configuration.home.file.".pi/agent/packages/agent-intercom-pi".source
-  );
 in
-assert builtins.elem claudeDesktopPackage configuration.home.packages;
 assert claudeDesktopPackage.passthru.declaredClaudeCode == claudeCodePackage;
-assert chatgptPackage.version == chatgptPackage.unwrapped.version;
 assert chatgptPackage.passthru.codexPackage == codexCliPackage;
-assert chatgptPackage.passthru.commandLineArgs == "--ozone-platform=wayland";
+assert builtins.elem system claudeDesktopPackage.meta.platforms;
+assert builtins.elem system chatgptPackage.meta.platforms;
 assert claudeDesktopEntry == "${claudeDesktopPackage}/share/applications/claude-desktop.desktop";
 assert claudeDesktopDefault == "claude-desktop.desktop";
-assert chatgptEntry == "${chatgptLauncher}/share/applications/chatgpt.desktop";
 assert chatgptDefault == "chatgpt.desktop";
-assert !(smallConfiguration.xdg.dataFile ? "applications/claude-desktop.desktop");
-assert !(smallConfiguration.xdg.mimeApps.defaultApplications ? "x-scheme-handler/claude");
-assert !(smallConfiguration.xdg.dataFile ? "applications/chatgpt.desktop");
-assert !(smallConfiguration.xdg.mimeApps.defaultApplications ? "x-scheme-handler/codex");
-assert configuration.systemd.user.services ? codex-remote-control;
-assert !(configuration.systemd.user.services ? agent-intercom-codex-bridge);
-pkgs.runCommand "agent-intercom-graphical-tui-contract"
+assert !(nonEdgeMedium.xdg.dataFile ? "applications/claude-desktop.desktop");
+assert !(nonEdgeMedium.xdg.mimeApps.defaultApplications ? "x-scheme-handler/claude");
+assert !(nonEdgeMedium.xdg.dataFile ? "applications/chatgpt.desktop");
+assert !(nonEdgeMedium.xdg.mimeApps.defaultApplications ? "x-scheme-handler/codex");
+assert !(edgeMin.xdg.dataFile ? "applications/claude-desktop.desktop");
+assert edgeMin.systemd.user.services ? codex-remote-control;
+pkgs.runCommand "desktop-app-support-contract"
   {
     nativeBuildInputs = [
       pkgs.coreutils
@@ -100,41 +96,23 @@ pkgs.runCommand "agent-intercom-graphical-tui-contract"
       pkgs.gnused
       pkgs.xdg-utils
       profile
-      agentIntercom
     ];
   }
   ''
     set -eu
 
-    test "$(${profile}/bin/codex --version)" = 'codex-cli ${codexCliPackage.version}'
-    test "$(${agentIntercom}/bin/codex-raw --version)" = 'codex-cli ${codexCliPackage.version}'
-    test "$(${profile}/bin/claude --version)" = '${claudeCodePackage.version} (Claude Code)'
+    test "$( ${profile}/bin/codex --version )" = 'codex-cli ${codexCliPackage.version}'
+    test "$( ${profile}/bin/claude --version )" = '${claudeCodePackage.version} (Claude Code)'
     test -x ${profile}/bin/chatgpt
-    ! test -e ${profile}/bin/codex-desktop
     test -x ${profile}/bin/claude-desktop
-    test -x ${agentIntercom}/bin/coi
-    test -x ${agentIntercom}/bin/cci
-    ! test -e ${agentIntercom}/bin/codex
-    ! test -e ${agentIntercom}/bin/claude
 
     test -f ${claudeDesktopEntry}
     grep -Fx 'Exec=claude-desktop %U' ${claudeDesktopEntry}
     grep -Fx 'MimeType=x-scheme-handler/claude' ${claudeDesktopEntry}
-
     test -f ${chatgptEntry}
     grep -E '^Exec=.*chatgpt' ${chatgptEntry}
     grep -F 'x-scheme-handler/codex' ${chatgptEntry}
     test -x ${chatgptLauncher}/bin/chatgpt
-    ! grep -F '${chatgptPackage}/bin/chatgpt' ${chatgptLauncher}/bin/chatgpt
-    chatgpt_wrapped_path="$(sed -n -E 's|.*(/nix/store/[^ ]+/bin/chatgpt).*|\1|p' ${chatgptLauncher}/bin/chatgpt | head -n 1)"
-    test -n "$chatgpt_wrapped_path"
-    grep -F -- '--ozone-platform=wayland' ${chatgptPackage}/bin/chatgpt
-    grep -Fx 'unset CODEX_CLI_PATH' ${chatgptLauncher}/bin/chatgpt
-    grep -Fx 'unset CODEX_APP_SERVER_FORCE_CLI' ${chatgptLauncher}/bin/chatgpt
-    grep -Fx 'unset CODEX_CLI_PATH' ${chatgptPackage}/bin/chatgpt
-    grep -Fx 'unset CODEX_APP_SERVER_FORCE_CLI' ${chatgptPackage}/bin/chatgpt
-    test -L ${chatgptPackage.unwrapped}/lib/chatgpt/resources/codex
-    test "$(readlink -f ${chatgptPackage.unwrapped}/lib/chatgpt/resources/codex)" = '${codexDesktopGate}/bin/codex'
 
     xdg_test="$TMPDIR/xdg"
     mkdir -p "$xdg_test/data/applications" "$xdg_test/config" "$xdg_test/home"

@@ -80,7 +80,7 @@ pkgs.runCommand "claude-desktop-declared-cli-contract"
       XDG_CONFIG_HOME="$runtime_root/config" \
       XDG_DATA_HOME="$runtime_root/data" \
       XDG_CACHE_HOME="$runtime_root/cache" \
-      CRIOMOS_CLAUDE_DESKTOP_RUNTIME_CONTRACT=${../agent-intercom-graphical-tui/claude-desktop-runtime-contract.cjs} \
+      CRIOMOS_CLAUDE_DESKTOP_RUNTIME_CONTRACT=${../desktop-app-support/claude-desktop-runtime-contract.cjs} \
       CRIOMOS_CLAUDE_DESKTOP_TEST_APP="$test_app" \
       CRIOMOS_CLAUDE_DESKTOP_TEST_MODE=valid \
       CRIOMOS_DECLARED_CLAUDE_CODE=${claudeCodePackage}/bin/claude \
@@ -100,7 +100,7 @@ pkgs.runCommand "claude-desktop-declared-cli-contract"
       XDG_CONFIG_HOME="$missing_runtime_root/config" \
       XDG_DATA_HOME="$missing_runtime_root/data" \
       XDG_CACHE_HOME="$missing_runtime_root/cache" \
-      CRIOMOS_CLAUDE_DESKTOP_RUNTIME_CONTRACT=${../agent-intercom-graphical-tui/claude-desktop-runtime-contract.cjs} \
+      CRIOMOS_CLAUDE_DESKTOP_RUNTIME_CONTRACT=${../desktop-app-support/claude-desktop-runtime-contract.cjs} \
       CRIOMOS_CLAUDE_DESKTOP_TEST_APP="$test_app" \
       CRIOMOS_CLAUDE_DESKTOP_TEST_MODE=missing \
       CRIOMOS_DECLARED_CLAUDE_CODE=${missingClaudeCodePackage}/bin/claude \
