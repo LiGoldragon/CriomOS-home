@@ -44,12 +44,12 @@ final GUI-native smoke remains a deployment-time observation boundary.
 
 ## Persistent Claude Remote Control
 
-Every minimum Home profile now owns a persistent `claude-remote-control`
-service. It starts `claude remote-control` using the Home directory by default
-and `--spawn=same-dir`; a deployment may configure an absolute working root and
-the `worktree` or `session` spawn mode without baking a machine-specific path
-into Home. Closing Claude Desktop or the browser/mobile client must not stop
-the service.
+Every enabled minimum Home profile now requires an explicit, absolute non-home
+`criomos.claudeRemoteControl.workingDirectory` before it creates the persistent
+`claude-remote-control` service. It uses `--spawn=same-dir`; the consumer's
+per-user projection owns the working root and may select the `worktree` or
+`session` spawn mode without baking a machine-specific path into Home. Closing
+Claude Desktop or the browser/mobile client must not stop the service.
 
 Claude Desktop, browser, and mobile operate through Anthropic's authenticated
 relay. The local terminal has no supported thin-client attachment to this

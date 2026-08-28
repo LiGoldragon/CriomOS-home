@@ -27,27 +27,28 @@ let
         overrides
       ];
     }).config;
-  defaultConfiguration = mkConfiguration { };
-  service = defaultConfiguration.systemd.user.services.claude-remote-control;
-  customConfiguration = mkConfiguration {
+  unsetConfiguration = mkConfiguration { };
+  homeRootConfiguration = mkConfiguration {
+    criomos.claudeRemoteControl.workingDirectory = "/home/claude-remote-control-test";
+  };
+  ownerConfiguration = mkConfiguration {
     criomos.claudeRemoteControl = {
-      workingDirectory = "/var/lib/claude-worktree";
-      spawn = "worktree";
+      workingDirectory = "/srv/claude-remote-control-owner";
+      spawn = "same-dir";
     };
   };
-  customService = customConfiguration.systemd.user.services.claude-remote-control;
+  service = ownerConfiguration.systemd.user.services.claude-remote-control;
 in
-assert defaultConfiguration.systemd.user.services ? claude-remote-control;
-assert service.Service.WorkingDirectory == "/home/claude-remote-control-test";
+assert !(builtins.tryEval unsetConfiguration.home.activationPackage).success;
+assert !(builtins.tryEval homeRootConfiguration.home.activationPackage).success;
+assert ownerConfiguration.systemd.user.services ? claude-remote-control;
+assert service.Service.WorkingDirectory == "/srv/claude-remote-control-owner";
 assert service.Service.Restart == "always";
 assert service.Service.UMask == "0077";
-assert customService.Service.WorkingDirectory == "/var/lib/claude-worktree";
 pkgs.runCommand "claude-remote-control-contract" { } ''
   set -eu
-  default_exec='${builtins.head service.Service.ExecStart}'
-  custom_exec='${builtins.head customService.Service.ExecStart}'
-  test "$default_exec" = '${fixtureClaude}/bin/claude remote-control --spawn=same-dir'
-  test "$custom_exec" = '${fixtureClaude}/bin/claude remote-control --spawn=worktree'
+  owner_exec='${builtins.head service.Service.ExecStart}'
+  test "$owner_exec" = '${fixtureClaude}/bin/claude remote-control --spawn=same-dir'
   working_directory="$TMPDIR/working-directory"
   mkdir -p "$working_directory"
   test "$(cd "$working_directory" && ${fixtureClaude}/bin/claude remote-control --spawn=same-dir)" \

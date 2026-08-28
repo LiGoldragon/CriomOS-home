@@ -8,14 +8,19 @@
 }:
 let
   enabled = user.size.min or false;
+  workingDirectory = config.criomos.claudeRemoteControl.workingDirectory;
+  hasTrustedWorkingDirectory =
+    workingDirectory != null
+    && lib.hasPrefix "/" workingDirectory
+    && workingDirectory != config.home.homeDirectory;
 in
 {
   options.criomos.claudeRemoteControl = {
     workingDirectory = lib.mkOption {
-      type = lib.types.str;
-      default = config.home.homeDirectory;
-      defaultText = lib.literalExpression "config.home.homeDirectory";
-      description = "Directory rooted by the persistent Claude Remote Control owner.";
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      defaultText = lib.literalExpression "null";
+      description = "Explicit trusted directory rooted by the persistent Claude Remote Control owner.";
     };
 
     spawn = lib.mkOption {
@@ -32,23 +37,25 @@ in
   config = lib.mkIf enabled {
     assertions = [
       {
-        assertion = lib.hasPrefix "/" config.criomos.claudeRemoteControl.workingDirectory;
-        message = "Claude Remote Control workingDirectory must be absolute.";
+        assertion = hasTrustedWorkingDirectory;
+        message = "Enabled Claude Remote Control requires an explicit absolute workingDirectory that is not the account home.";
       }
     ];
 
     # Claude owns its authenticated relay and browser/mobile/Desktop clients.
     # A local Claude TUI cannot attach to this server as a thin client.
-    systemd.user.services.claude-remote-control = {
-      Unit.Description = "Claude Remote Control session owner";
-      Service = {
-        WorkingDirectory = config.criomos.claudeRemoteControl.workingDirectory;
-        ExecStart = "${config.criomos.corePackages.claude}/bin/claude remote-control --spawn=${config.criomos.claudeRemoteControl.spawn}";
-        UMask = "0077";
-        Restart = "always";
-        RestartSec = "2s";
+    systemd.user.services = lib.mkIf hasTrustedWorkingDirectory {
+      claude-remote-control = {
+        Unit.Description = "Claude Remote Control session owner";
+        Service = {
+          WorkingDirectory = workingDirectory;
+          ExecStart = "${config.criomos.corePackages.claude}/bin/claude remote-control --spawn=${config.criomos.claudeRemoteControl.spawn}";
+          UMask = "0077";
+          Restart = "always";
+          RestartSec = "2s";
+        };
+        Install.WantedBy = [ "default.target" ];
       };
-      Install.WantedBy = [ "default.target" ];
     };
   };
 }
