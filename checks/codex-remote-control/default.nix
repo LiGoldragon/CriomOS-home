@@ -139,6 +139,7 @@ pkgs.runCommand "codex-remote-control-contract" { } ''
   expect_raw app-server daemon version
   expect_rejected app-server --remote-control --listen unix://
   expect_rejected app-server daemon start
+  expect_rejected remote-control start
   expect_raw login
   expect_rejected --remote unix:///tmp/other.sock resume thread-id
   expect_rejected resume --remote unix:///tmp/other.sock thread-id
