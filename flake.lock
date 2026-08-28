@@ -451,25 +451,25 @@
     "claude-code-vsix": {
       "flake": false,
       "locked": {
-        "narHash": "sha256-o8uXDYYW3HbSzz8+BNhZu0OTCeYQpU60AFGV/Ld557I=",
+        "narHash": "sha256-a3FrHLJjuufrX74Pc+TtkcjWxnTHZ2e98sPxd+SbBdg=",
         "type": "file",
-        "url": "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/anthropic/vsextensions/claude-code/2.1.246/vspackage"
+        "url": "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/anthropic/vsextensions/claude-code/2.1.250/vspackage"
       },
       "original": {
         "type": "file",
-        "url": "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/anthropic/vsextensions/claude-code/2.1.246/vspackage"
+        "url": "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/anthropic/vsextensions/claude-code/2.1.250/vspackage"
       }
     },
     "codex-chatgpt-vsix": {
       "flake": false,
       "locked": {
-        "narHash": "sha256-hESdRToDjMdHQZJyPn+NoUjHosEh351UzgCkNNC0Mvw=",
+        "narHash": "sha256-iFkj4ZUx+TtNm8u9w1la7YSezLoXQnAvj02KsHBgjQc=",
         "type": "file",
-        "url": "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/openai/vsextensions/chatgpt/26.5818.61809/vspackage"
+        "url": "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/openai/vsextensions/chatgpt/26.5825.32147/vspackage"
       },
       "original": {
         "type": "file",
-        "url": "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/openai/vsextensions/chatgpt/26.5818.61809/vspackage"
+        "url": "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/openai/vsextensions/chatgpt/26.5825.32147/vspackage"
       }
     },
     "crane": {

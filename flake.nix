@@ -73,7 +73,7 @@
     # gate entirely.
     claude-code-vsix = {
       type = "file";
-      url = "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/anthropic/vsextensions/claude-code/2.1.246/vspackage";
+      url = "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/anthropic/vsextensions/claude-code/2.1.250/vspackage";
       flake = false;
     };
 
@@ -86,7 +86,7 @@
     # run the VSCodium lifecycle check before deploying.
     codex-chatgpt-vsix = {
       type = "file";
-      url = "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/openai/vsextensions/chatgpt/26.5818.61809/vspackage";
+      url = "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/openai/vsextensions/chatgpt/26.5825.32147/vspackage";
       flake = false;
     };
 
