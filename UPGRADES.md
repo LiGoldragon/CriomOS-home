@@ -4,8 +4,10 @@
 
 This generation makes the per-user `codex-remote-control` service the only
 normal Codex thread writer. Terminal `codex`, ChatGPT Desktop, and the phone
-are clients of its Unix WebSocket socket. Closing a terminal or Desktop window
-detaches that client; it must not be used to stop the service.
+are clients of its control socket. ChatGPT Desktop reaches it only through its
+packaged bare `app-server` stdio endpoint, which transparently proxies to the
+existing per-user socket; it cannot start a second owner. Closing a terminal or
+Desktop window detaches that client; it must not be used to stop the service.
 
 Before activating, stop any manually started Codex app-server process. After
 activation, confirm `systemctl --user is-active codex-remote-control` and run
