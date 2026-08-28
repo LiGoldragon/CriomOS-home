@@ -16,6 +16,8 @@ its pinned package, then restart the unit; do not start a second app-server.
 `direct-codex` is the explicit raw recovery escape. It bypasses the normal
 client-routing guard and can create a separate writer, so use it only to repair
 or diagnose a failed managed service. It is not a normal terminal entry point.
+Ordinary `codex remote-control …` now exits 126 for the same reason; it cannot
+start an ephemeral private owner beside the managed socket.
 
 The packaged checks exercise the gate, its actual Electron `resources/codex`
 path, the native-mode launch environment, and daemon WebSocket reconnects. They

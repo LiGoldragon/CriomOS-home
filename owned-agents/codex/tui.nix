@@ -120,7 +120,11 @@ pkgs.writeShellApplication {
               ;;
           esac
           ;;
-        exec|review|login|logout|mcp|plugin|mcp-server|remote-control|completion|update|doctor|sandbox|apply|queue|archive|delete|migrate-rollouts|unarchive|cloud|features|help)
+        remote-control)
+          printf '%s\n' 'CriomOS codex: remote-control is owned by codex-remote-control; use direct-codex only for raw recovery' >&2
+          exit 126
+          ;;
+        exec|review|login|logout|mcp|plugin|mcp-server|completion|update|doctor|sandbox|apply|queue|archive|delete|migrate-rollouts|unarchive|cloud|features|help)
           exec ${codexCliPackage}/bin/codex "''${arguments[@]}"
           ;;
         *)

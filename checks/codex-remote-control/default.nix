@@ -122,6 +122,14 @@ pkgs.runCommand "codex-remote-control-contract" { } ''
       exit 1
     fi
   }
+  expect_owner_guard() {
+    set +e
+    output="$("${codexTuiFixture}/bin/codex" "$@" 2>&1)"
+    status=$?
+    set -e
+    test "$status" = 126
+    test "$output" = 'CriomOS codex: remote-control is owned by codex-remote-control; use direct-codex only for raw recovery'
+  }
   expect_remote "fresh prompt"
   expect_remote --profile mobile --model gpt-5.6-terra "fresh prompt"
   expect_remote_with_overrides --ask-for-approval never --sandbox workspace-write "fresh prompt"
@@ -139,7 +147,7 @@ pkgs.runCommand "codex-remote-control-contract" { } ''
   expect_raw app-server daemon version
   expect_rejected app-server --remote-control --listen unix://
   expect_rejected app-server daemon start
-  expect_rejected remote-control start
+  expect_owner_guard remote-control start
   expect_raw login
   expect_rejected --remote unix:///tmp/other.sock resume thread-id
   expect_rejected resume --remote unix:///tmp/other.sock thread-id
