@@ -9,7 +9,7 @@ const electron = require("electron");
 const hookName = "__CRIOMOS_CLAUDE_CODE_MANAGER";
 const sentinel = "CRIOMOS_CLAUDE_CODE_MANAGER_EXPORTED";
 
-console.log("claude-desktop-runtime: bootstrap");
+console.log("desktop-app-support: Claude runtime bootstrap");
 
 if (!appDirectory || !declaredClaudeCode || !["valid", "missing"].includes(mode)) {
   throw new Error("expected app directory, declared Claude Code executable, and valid or missing mode");

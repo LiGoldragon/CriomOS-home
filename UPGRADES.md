@@ -1,5 +1,21 @@
 # Upgrades
 
+## Agent Intercom service-gate removal
+
+This generation removes the two retired Agent Intercom node-service gates.
+Agent Intercom wrappers, Pi adapters, MCP registration, and OpenCode plugins
+are now available in every Home profile, while ordinary `codex` and `claude`
+remain separately owned by their canonical pinned packages. There is no
+compatibility service declaration to retain or migrate.
+
+Desktop-app support is independently selected only when the projected node
+behaves as Edge, the user has cumulative medium capability, and the package
+is actually available for the target platform. There is no shared
+architecture gate. Keep the Horizon producer and the CriomOS consumer on
+their matching removal revisions before activating this Home generation. A
+non-Edge or minimum-only profile deliberately receives no Claude/ChatGPT
+Desktop handlers; `codex-remote-control` remains a minimum profile service.
+
 ## Unified Codex app-server clients
 
 This generation makes the per-user `codex-remote-control` service the only

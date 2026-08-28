@@ -9,31 +9,12 @@
 }:
 let
   profileUser = ((horizon.users or { }).${config.home.username} or { });
-  serviceName =
-    service:
-    if builtins.isString service then
-      service
-    else if builtins.isAttrs service then
-      let
-        names = builtins.attrNames service;
-      in
-      if builtins.length names == 1 then builtins.head names else null
-    else
-      null;
-
-  hasCapability =
-    name: builtins.any (service: serviceName service == name) (horizon.node.services or [ ]);
-
-  localEnabled = hasCapability "AgentIntercomLocal";
-  graphicalEnabled = hasCapability "AgentIntercomGraphical";
   mediumEnabled = profileUser.size.medium or false;
-  desktopEnabled = graphicalEnabled && mediumEnabled;
-  # Only the projected capability, which is an early special argument, decides
-  # whether the Desktop option block exists below.  The package-set platform
-  # guard remains a later assertion: forcing it while constructing the module
-  # list recurses through Home Manager's `_module.args.pkgs`.
-  homeSystem = pkgs.stdenv.hostPlatform.system;
-  graphicalSupported = homeSystem == "x86_64-linux";
+  edgeEnabled = ((horizon.node.behavesAs or { }).edge or false);
+  # Desktop selection is generic projected Edge ownership plus cumulative user
+  # size. Individual desktop derivations declare their own availability; this
+  # module has no architecture, node-service, or node-identity gate.
+  desktopEnabled = edgeEnabled && mediumEnabled;
   codexCliPackage = config.criomos.corePackages.codex;
   codexTui = pkgs.callPackage ../../../../owned-agents/codex/tui.nix { inherit codexCliPackage; };
   codexDesktopGate = pkgs.callPackage ../../../../owned-agents/codex/desktop-gate.nix {
@@ -69,7 +50,7 @@ let
   };
   # Agent Intercom owns its operational entry points (`coi`, `cci`, MCP
   # servers, and fleet tools), but normal shell commands must remain the
-  # pinned upstream CLIs.  In a graphical profile the Desktop module also
+  # pinned upstream CLIs. In an Edge medium profile the Desktop module also
   # supplies `codex`. The producer never exports normal command names; this
   # runtime view hides only explicit raw recovery commands from the user union.
   agentIntercomRuntime = pkgs.symlinkJoin {
@@ -84,21 +65,11 @@ let
 in
 lib.mkMerge [
   {
-    assertions = [
-      {
-        assertion = !graphicalEnabled || localEnabled;
-        message = "graphical Agent Intercom requires local Agent Intercom";
-      }
-      {
-        assertion = !graphicalEnabled || graphicalSupported;
-        message = "graphical Agent Intercom requires x86_64-linux Desktop support";
-      }
-    ];
-  }
-  (lib.mkIf localEnabled {
     # The Codex TUI launcher keeps its caller's working directory when it
     # attaches to the shared app-server. Keep Intercom-specific operational
-    # entry points without letting their aliases shadow ordinary commands.
+    # entry points available without letting their aliases shadow ordinary
+    # commands. These wrappers and their local integration do not require a
+    # node-service gate.
     home.packages = [
       agentIntercomRuntime
       claudeCodePackage
@@ -163,7 +134,7 @@ lib.mkMerge [
       };
       modes."/plugin" = "always";
     };
-  })
+  }
   (lib.mkIf (profileUser.size.min or false) {
     # Codex's app-server is the single owner of every normal terminal TUI
     # session.  Its default Unix socket is local to the user, while remote

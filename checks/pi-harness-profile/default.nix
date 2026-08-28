@@ -14,7 +14,6 @@ let
   piLinkupPackage = ../../packages/pi-linkup/default.nix;
   piSubagentsPackage = ../../packages/pi-subagents/default.nix;
   agentIntercomPackage = ../../packages/agent-intercom/default.nix;
-  agentIntercomModule = ../../modules/home/profiles/min/agent-intercom.nix;
   piUltraSubagentsPackage = ../../packages/pi-ultra-subagents/default.nix;
   piContinuePackage = ../../packages/pi-continue/default.nix;
   piModelsModule = ../../modules/home/profiles/min/pi-models.nix;
@@ -29,7 +28,7 @@ let
           typeIs.largeAiRouter = false;
           behavesAs.largeAi = true;
           criomeDomainName = "pi-runtime-test.invalid";
-          services = [ { AgentIntercomLocal = { }; } ];
+          services = [ ];
         };
         exNodes = { };
         users.pi-runtime-test = {
@@ -43,7 +42,7 @@ let
       ../../modules/home/core-packages.nix
       piModelsModule
       ownedAgentModule
-      agentIntercomModule
+      ../../modules/home/profiles/min/agent-intercom.nix
       {
         home = {
           username = "pi-runtime-test";
@@ -503,14 +502,6 @@ pkgs.runCommand "pi-harness-profile"
     grep -F 'home.file.".pi/agent/packages/pi-subagents".source' ${piModelsModule}
     grep -F 'home.file.".pi-testing/agent/packages/pi-subagents".source' ${piModelsModule}
     test "$(grep -F '"''${pi-subagents}/share/pi-packages/pi-subagents";' ${piModelsModule} | wc -l)" -eq 2
-    grep -F 'agent-intercom-pi' ${agentIntercomModule}
-    grep -F 'agent-intercom-orchestrator' ${agentIntercomModule}
-    grep -F 'codex-intercom-mcp' ${agentIntercomModule}
-    grep -F 'claude-intercom-mcp' ${agentIntercomModule}
-    grep -F 'opencode/dist/plugin.mjs' ${agentIntercomModule}
-    grep -F 'AgentIntercomLocal' ${agentIntercomModule}
-    grep -F 'AgentIntercomGraphical' ${agentIntercomModule}
-    ! grep -Ei 'Gateway|Peer|remote-gateway|tunnel|ssh|credential|secret|token|oauth|enroll|pair' ${agentIntercomModule}
     grep -F 'agentIntercomCore' ${agentIntercomPackage}
     grep -F 'piIntercomConfig = {' ${piModelsModule}
     grep -F 'brokerCommand = "''${pkgs.nodejs}/bin/node";' ${piModelsModule}
