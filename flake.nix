@@ -732,6 +732,12 @@
       checks = projectChecks;
       apps = builtins.mapAttrs (system: _: bp.apps.${system} or { }) projectPackages;
 
+      # Consumers need the exact overlay-applied package set without forcing a
+      # standalone Home configuration.  A concrete user projection can supply
+      # required per-user policy that the generic Home output deliberately
+      # cannot know.
+      legacyPackages.${pkgs.stdenv.hostPlatform.system} = pkgs;
+
       homeConfigurations = builtins.mapAttrs mkHomeConfiguration horizon.users;
 
       # Wrap blueprint's auto-discovered homeModules.default so that:
