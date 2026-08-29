@@ -48,18 +48,13 @@ cat > "$XDG_CONFIG_HOME/emacs-ignis-themes/chroma-test-overlay-theme.el" <<'EOF'
 (provide-theme 'chroma-test-overlay)
 EOF
 
-cat > "$XDG_CONFIG_HOME/chroma/config.dotos" <<'EOF'
-(Config
-  (Theme
-    (Concerns Terminal)
-    (Palettes
-      (Dark (Base00 #000000) (Base01 #111111) (Base02 #222222) (Base03 #333333) (Base04 #444444) (Base05 #dddddd) (Base06 #eeeeee) (Base07 #ffffff) (Base08 #ff0000) (Base09 #ff8800) (Base0A #ffff00) (Base0B #00ff00) (Base0C #00ffff) (Base0D #0000ff) (Base0E #ff00ff) (Base0F #aa0000))
-      (Light (Base00 #f4f0e8) (Base01 #e8e0d8) (Base02 #ddd5ce) (Base03 #887a70) (Base04 #6a5e55) (Base05 #3d3530) (Base06 #2a2420) (Base07 #1a1510) (Base08 #cc0044) (Base09 #d06600) (Base0A #b89000) (Base0B #1a8a30) (Base0C #9930cc) (Base0D #b03080) (Base0E #8822bb) (Base0F #cc3355)))
-    (Adapters)
-    (FontPointSize 12)
-    (Schedule (Manual Light)))
-  (Warmth (Schedule (Manual Neutral)))
-  (Brightness (Schedule (Manual Bright))))
+cat > "$XDG_CONFIG_HOME/chroma/config.datom" <<'EOF'
+{{[Terminal]
+  {{#000000 #111111 #222222 #333333 #444444 #dddddd #eeeeee #ffffff #ff0000 #ff8800 #ffff00 #00ff00 #00ffff #0000ff #ff00ff #aa0000}
+   {#f4f0e8 #e8e0d8 #ddd5ce #887a70 #6a5e55 #3d3530 #2a2420 #1a1510 #cc0044 #d06600 #b89000 #1a8a30 #9930cc #b03080 #8822bb #cc3355}}
+  None Some.12 None None Manual.Light}
+ {Manual.Neutral}
+ {Manual.Bright}}
 EOF
 
 export CHROMA_SANDBOX_FAKE_GAMMA_READY="$test_root/gamma-ready"
@@ -132,7 +127,7 @@ status_is_applied 0
 assert_emacs_state ignis-light ignis-dark '#faf5f0' nil
 
 emacsclient --socket-name "$emacs_socket_name" --eval "(load-theme 'chroma-test-overlay t)" >/dev/null
-chroma 'SetTheme.(Dark)' >/dev/null
+chroma 'SetTheme.{Dark}' >/dev/null
 await_event
 status_is_applied 1
 assert_emacs_state ignis-dark ignis-light '#000000' t
@@ -146,7 +141,7 @@ await_event
 status_is_applied 1
 assert_emacs_state ignis-dark ignis-light '#000000' t
 
-chroma 'SetTheme.(Light)' >/dev/null
+chroma 'SetTheme.{Light}' >/dev/null
 await_event
 status_is_applied 2
 assert_emacs_state ignis-light ignis-dark '#faf5f0' t

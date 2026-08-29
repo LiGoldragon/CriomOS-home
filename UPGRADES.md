@@ -1,5 +1,23 @@
 # Upgrades
 
+## Chroma 0.3.1 Datomic configuration cutover
+
+This generation pins Chroma `0.3.1` at
+`1b626d9dc325459be6c825d0c5a59a7d245d1edd`. Chroma now reads only the
+schema-authored, positional `$XDG_CONFIG_HOME/chroma/config.datom`; the
+legacy `config.dotos` is removed during Home activation. The Home module
+projects the same concerns, palettes, adapters, template paths, Pi control,
+font size, schedules, and defaults into the current Datomic `Config` anatomy.
+The legacy solar labels are projected to their typed minute values: extremely
+early/very early/early/on time/late/very late/extremely late become
+`-120/-60/-30/0/30/60/120`.
+
+Activate the complete Home generation. Do not run a pre-0.3 Chroma daemon
+against `config.datom`, and do not retain or manually convert a Dotos config:
+the declarative Home source owns the canonical file and removes the obsolete
+one. A rollback is likewise a complete previous Home generation, which
+recreates its matching configuration before starting its matching Chroma.
+
 ## Orchestrate 0.26.0 WireContract cutover
 
 This Home generation pins Orchestrate commit

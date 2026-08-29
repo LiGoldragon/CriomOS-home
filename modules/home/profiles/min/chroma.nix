@@ -21,28 +21,48 @@ let
   dark = config.lib.stylix.colors.withHashtag;
   light = (config.stylix.base16.mkSchemeAttrs visualTheme.lightBase16Scheme).withHashtag;
 
-  mkChromaPalette = name: colors: ''
-    (${name}
-      (Base00 ${colors.base00})
-      (Base01 ${colors.base01})
-      (Base02 ${colors.base02})
-      (Base03 ${colors.base03})
-      (Base04 ${colors.base04})
-      (Base05 ${colors.base05})
-      (Base06 ${colors.base06})
-      (Base07 ${colors.base07})
-      (Base08 ${colors.base08})
-      (Base09 ${colors.base09})
-      (Base0A ${colors.base0A})
-      (Base0B ${colors.base0B})
-      (Base0C ${colors.base0C})
-      (Base0D ${colors.base0D})
-      (Base0E ${colors.base0E})
-      (Base0F ${colors.base0F}))
+  mkChromaPalette = colors: ''
+    {
+      ${colors.base00}
+      ${colors.base01}
+      ${colors.base02}
+      ${colors.base03}
+      ${colors.base04}
+      ${colors.base05}
+      ${colors.base06}
+      ${colors.base07}
+      ${colors.base08}
+      ${colors.base09}
+      ${colors.base0A}
+      ${colors.base0B}
+      ${colors.base0C}
+      ${colors.base0D}
+      ${colors.base0E}
+      ${colors.base0F}
+    }
   '';
 
-  darkPalette = mkChromaPalette "Dark" dark;
-  lightPalette = mkChromaPalette "Light" light;
+  darkPalette = mkChromaPalette dark;
+  lightPalette = mkChromaPalette light;
+
+  solarOffsetMinutes =
+    timing:
+    if timing == "ExtremelyEarly" then
+      -120
+    else if timing == "VeryEarly" then
+      -60
+    else if timing == "Early" then
+      -30
+    else if timing == "OnTime" then
+      0
+    else if timing == "Late" then
+      30
+    else if timing == "VeryLate" then
+      60
+    else if timing == "ExtremelyLate" then
+      120
+    else
+      throw "Chroma's legacy solar timing ${timing} has no Datomic offset.";
 
   mkGhosttyPaletteLines =
     {
@@ -105,36 +125,36 @@ let
   };
 
   defaultConfig = ''
-    (Config
-      (Theme
-        (Concerns Terminal Desktop Ghostty Pi)
-        (Palettes
-    ${darkPalette}
-    ${lightPalette})
-        (Adapters (Dconf ${pkgs.dconf}/bin/dconf))
-        (FontPointSize ${toString fontPt})
-        (GhosttyConfigTemplates
-          (Dark ${ghosttyDarkConfig})
-          (Light ${ghosttyLightConfig}))
-        (PiThemeControl
-          (RegistryDirectory (RuntimeRelative chroma/pi-live-theme.d))
-          (ConnectTimeoutMillis 100)
-          (WriteTimeoutMillis 100))
-        (Schedule
-          (Waypoint (Sunrise ${lightThemeSwitchTiming}) Light)
-          (Waypoint (Sunset ${darkThemeSwitchTiming}) Dark)
-          (Default Dark)))
-      (Warmth
-        (Schedule
-          (Waypoint (CivilDawn (SignedMinutes -30))
-                    (Level Cold)
-                    (Ramp (Minutes 30)))
-          (Waypoint (CivilDusk (SignedMinutes -60))
-                    (Level Warmest)
-                    (Ramp (Minutes 60)))
-          (Default Neutral)))
-      (Brightness
-        (Schedule (Manual Bright))))
+    {
+      {
+        [Terminal Desktop Ghostty Pi]
+        {
+          ${darkPalette}
+          ${lightPalette}
+        }
+        Some.${pkgs.dconf}/bin/dconf
+        Some.${toString fontPt}
+        Some.{${ghosttyDarkConfig} ${ghosttyLightConfig}}
+        Some.{RuntimeRelative.chroma/pi-live-theme.d Some.100 Some.100}
+        Scheduled.{
+          [
+            {Sunrise.${toString (solarOffsetMinutes lightThemeSwitchTiming)} Light}
+            {Sunset.${toString (solarOffsetMinutes darkThemeSwitchTiming)} Dark}
+          ]
+          Dark
+        }
+      }
+      {
+        Scheduled.{
+          [
+            {CivilDawn.-30 Cold Minutes.30}
+            {CivilDusk.-60 Warmest Minutes.60}
+          ]
+          Neutral
+        }
+      }
+      {Manual.Bright}
+    }
   '';
 
 in
@@ -176,13 +196,11 @@ mkIf (size.min && behavesAs.edge) {
       next_config="$(${pkgs.coreutils}/bin/mktemp)"
       cat > "$next_config" << 'CHROMA_DEFAULT_CONFIG'
     ${defaultConfig}CHROMA_DEFAULT_CONFIG
-      if [ ! -f "$config_dir/config.dotos" ] \
-        || grep -Eq 'ApplyCommand|ApplyTargets|Legacy|\.ya?ml|GhosttyConfigSources' "$config_dir/config.dotos" \
-        || ! grep -q 'GhosttyConfigTemplates' "$config_dir/config.dotos" \
-        || ! grep -q 'PiThemeControl' "$config_dir/config.dotos" \
-        || ! ${pkgs.diffutils}/bin/cmp -s "$next_config" "$config_dir/config.dotos"; then
-        ${pkgs.coreutils}/bin/cp "$next_config" "$config_dir/config.dotos"
+      if [ ! -f "$config_dir/config.datom" ] \
+        || ! ${pkgs.diffutils}/bin/cmp -s "$next_config" "$config_dir/config.datom"; then
+        ${pkgs.coreutils}/bin/cp "$next_config" "$config_dir/config.datom"
       fi
+      ${pkgs.coreutils}/bin/rm -f "$config_dir/config.dotos"
       ${pkgs.coreutils}/bin/rm -f "$next_config"
   '';
 }
