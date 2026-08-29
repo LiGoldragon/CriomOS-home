@@ -1,5 +1,38 @@
 # Upgrades
 
+## Orchestrate 0.26.0 WireContract cutover
+
+This Home generation pins Orchestrate commit
+`dadd537bbd2ed2ffc5260fffc5735f9f020cc774` (0.26.0). It is a coordinated
+breaking ordinary and meta socket replacement: ordinary frames are generated
+WireContract `1/6` frames and privileged frames are `2/5` frames. Install the
+Nexus and both client wrappers as one Home generation; no legacy envelope,
+parser, or text compatibility path remains.
+
+Before activation, verify the target user, source revision, and Lojix
+transport identify the same deployment target. The 0.25 Nexus must be stopped
+before the read-only candidate can open its existing Sema store. Run
+`orchestrate-upgrade-preflight` with the same XDG state and runtime roots as
+the service, and proceed only on `active legacy PathLock rows: 0`. A running
+0.25 process correctly makes this preflight fail with its database lock held;
+that is not permission to bypass the preflight.
+
+The schema version, Sema families, hashes, configuration, complete Lock facts,
+and ID allocator are unchanged. Keep
+`$XDG_STATE_HOME/orchestrate-nexus/orchestrate-nexus.sema` in place. Do not
+move or import the retired `$XDG_STATE_HOME/orchestrate/` store. After the
+declarative Home activation, verify both sockets, `Observe.Locks`, a complete
+Lock, the typed duplicate-name refusal, and Release by returned ID. Verify the
+meta Configure reply separately; a configuration change still binds only on a
+later restart.
+
+For rollback, activate the previously pinned 0.25 Home generation as one
+generation, including its matching ordinary and meta wrappers. The durable
+schema is shared, so no data conversion or store restore is needed. Do not
+mix a 0.25 client with a 0.26 Nexus (or conversely), and do not roll back if a
+subsequent release has changed the declared Sema schema without a separately
+approved migration review.
+
 ## Agent Intercom service-gate removal
 
 This generation removes the two retired Agent Intercom node-service gates.
