@@ -272,6 +272,19 @@ in
           ];
           open-floating = false;
         }
+        {
+          # Wispr's transparent Status surface becomes focused when it stops
+          # ignoring pointer events.  Keep the global focus style for every
+          # other window, but never paint or outline this exact lifecycle.
+          matches = [
+            {
+              app-id = "^wispr-flow$";
+              title = "^(Status|Flow Status Indicator)$";
+            }
+          ];
+          draw-border-with-background = false;
+          focus-ring.enable = false;
+        }
       ];
 
       spawn-at-startup = [

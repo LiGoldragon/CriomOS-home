@@ -107,7 +107,7 @@
     # The packaging recipe is public and immutable; its proprietary payload is
     # a separate local input.  The locked NAR hash identifies the exact
     # user-supplied installer without committing, hosting, or redistributing it.
-    wispr-flow-linux.url = "github:LiGoldragon/wispr-flow-linux?rev=11b2ee0a411f89daedbbff5bd22b640f6a1ddb9a";
+    wispr-flow-linux.url = "github:LiGoldragon/wispr-flow-linux?rev=fbb71248567f28ab66b23ada44760fcae8e11d9b";
     wispr-flow-linux.inputs.nixpkgs.follows = "nixpkgs";
     wispr-flow-installer = {
       url = "path:/home/li/.local/share/wispr-flow-installer/wispr-flow-setup-1.6.7.exe";
@@ -636,6 +636,7 @@
           };
           bird-home-isolation = checkPkgs.callPackage ./checks/bird-home-isolation { inherit inputs; };
           desktop-shell-launch = checkPkgs.callPackage ./checks/desktop-shell-launch { inherit inputs; };
+          wispr-status-niri-rule = checkPkgs.callPackage ./checks/wispr-status-niri-rule { inherit inputs; };
           noctalia-settings-composition = checkPkgs.callPackage ./checks/noctalia-settings-composition {
             inherit inputs;
           };
