@@ -104,6 +104,16 @@
     listener.inputs.nixpkgs.follows = "nixpkgs";
     listener.inputs.crane.follows = "crane";
 
+    # The packaging recipe is public and immutable; its proprietary payload is
+    # a separate local input.  The locked NAR hash identifies the exact
+    # user-supplied installer without committing, hosting, or redistributing it.
+    wispr-flow-linux.url = "github:LiGoldragon/wispr-flow-linux?rev=5a73a4be482d4cb6686352bb963801845c001db9";
+    wispr-flow-linux.inputs.nixpkgs.follows = "nixpkgs";
+    wispr-flow-installer = {
+      url = "path:/home/li/.local/share/wispr-flow-installer/wispr-flow-setup-1.6.7.exe";
+      flake = false;
+    };
+
     # `annas` — Anna's Archive book/article search + download CLI. Upstream
     # (iosifache/annas-mcp) has no flake; consumed as non-flake source and
     # built inline via buildGoModule in modules/home/profiles/med/cli-tools.nix.

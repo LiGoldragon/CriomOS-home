@@ -55,6 +55,7 @@
     ./profiles/min/niri.nix
     ./profiles/min/ui-priority.nix
     ./profiles/min/dictation.nix
+    ./profiles/min/wispr-flow.nix
     ./profiles/min/spirit.nix
     # Aggregator — supervises the local transcript/evidence recovery daemon
     # and installs wrappers with the same user-scoped configuration path.
