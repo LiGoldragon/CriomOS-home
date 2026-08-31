@@ -91,6 +91,32 @@ lib.mkMerge [
       modes."/mcp_servers/agent-intercom" = "always";
     };
 
+    # Hexis v1 walks declared object leaves. A legacy Claude project entry
+    # recorded as a scalar therefore blocks its leaf-only trust write: it is
+    # an intermediate path segment, not an object. Canonicalize only that
+    # one legacy entry before Hexis owns the trust leaf; existing project
+    # objects and all unrelated Claude state remain untouched.
+    home.activation.canonicalizeClaudeWorkspaceTrust =
+      lib.hm.dag.entryBefore [ "mergeAgentIntercomClaudeMcp" ]
+        ''
+          claude_config="$HOME/.claude.json"
+          workspace=${lib.escapeShellArg primaryWorkspace}
+          if [ -f "$claude_config" ]; then
+            if ${pkgs.jq}/bin/jq -e --arg workspace "$workspace" '
+              (.projects | type) == "object"
+              and .projects[$workspace] != null
+              and (.projects[$workspace] | type) != "object"
+            ' "$claude_config" >/dev/null; then
+              temporary_config="$(${pkgs.coreutils}/bin/mktemp "$claude_config.XXXXXX")"
+              ${pkgs.jq}/bin/jq --arg workspace "$workspace" \
+                '.projects[$workspace] = { hasTrustDialogAccepted: true }' \
+                "$claude_config" > "$temporary_config"
+              ${pkgs.coreutils}/bin/chmod --reference="$claude_config" "$temporary_config"
+              ${pkgs.coreutils}/bin/mv "$temporary_config" "$claude_config"
+            fi
+          fi
+        '';
+
     home.activation.mergeAgentIntercomClaudeMcp = inputs.hexis.lib.mkManagedConfig {
       inherit lib pkgs hexis;
       file = "$HOME/.claude.json";
