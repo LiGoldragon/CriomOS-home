@@ -68,6 +68,15 @@ def verified_fingerprints(output: str) -> set[str]:
     }
 
 
+def same_release_content(from_inrelease: bytes, release: bytes) -> bool:
+    """Accept the APT transport's optional final newline, and nothing else."""
+    return (
+        from_inrelease == release
+        or from_inrelease + b"\n" == release
+        or release + b"\n" == from_inrelease
+    )
+
+
 def verify_repository(gpg: str, gpgv: str, key_file: Path) -> str:
     """Verify both the clear-signed and detached official APT metadata."""
     with tempfile.TemporaryDirectory(prefix="claude-desktop-updater-") as directory:
@@ -134,7 +143,7 @@ def verify_repository(gpg: str, gpgv: str, key_file: Path) -> str:
             raise RuntimeError(
                 "Claude Desktop Release signer changed; explicit trust change required"
             )
-        if release_from_inrelease.read_bytes() != release:
+        if not same_release_content(release_from_inrelease.read_bytes(), release):
             raise ValueError("Claude Desktop InRelease and Release contents differ")
         return release.decode()
 

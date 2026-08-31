@@ -91,6 +91,7 @@ pkgs.runCommand "desktop-app-support-contract"
   {
     nativeBuildInputs = [
       pkgs.coreutils
+      pkgs.binutils
       pkgs.desktop-file-utils
       pkgs.gnugrep
       pkgs.gnused
@@ -113,6 +114,10 @@ pkgs.runCommand "desktop-app-support-contract"
     grep -E '^Exec=.*chatgpt' ${chatgptEntry}
     grep -F 'x-scheme-handler/codex' ${chatgptEntry}
     test -x ${chatgptLauncher}/bin/chatgpt
+    grep -F 'CODEX_APP_SERVER_USE_LOCAL_DAEMON=1' ${chatgptLauncher}/bin/chatgpt
+    grep -F 'unset CODEX_APP_TOOLS_PIPE_PATH' ${chatgptLauncher}/bin/chatgpt
+    test ! -e ${chatgptPackage.passthru.unwrapped}/lib/chatgpt/resources/codex
+    strings ${chatgptPackage.passthru.unwrapped}/lib/chatgpt/resources/app.asar | grep -Fx 'getConfigOverrides:()=>[]'
 
     xdg_test="$TMPDIR/xdg"
     mkdir -p "$xdg_test/data/applications" "$xdg_test/config" "$xdg_test/home"

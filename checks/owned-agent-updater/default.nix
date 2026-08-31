@@ -28,6 +28,7 @@ pkgs.runCommand "owned-agent-updater-negative-path"
 
 
     chatgpt = load("chatgpt_updater", "${../../owned-agents/chatgpt/update.py}")
+    codex = load("codex_updater", "${../../owned-agents/codex/update.py}")
     claude_desktop = load("claude_desktop_updater", "${../../owned-agents/claude-desktop/update.py}")
     chatgpt_key = Path("${../../owned-agents/chatgpt/openai-archive-key.asc}")
 
@@ -55,6 +56,21 @@ pkgs.runCommand "owned-agent-updater-negative-path"
         b"not an OpenPGP clear-signed release", chatgpt_key,
         "${pkgs.gnupg}/bin/gpg", "${pkgs.gnupg}/bin/gpgv"
     ))
+
+    # Codex follows the latest stable upstream release rather than moving a
+    # declarative profile onto a vendor prerelease channel.
+    original_fetch_json = codex.fetch_json
+    codex.fetch_json = lambda _url: [
+        {"tag_name": "rust-v0.152.0-alpha.5", "prerelease": True},
+        {"tag_name": "rust-v0.151.0"},
+    ]
+    try:
+        assert codex.latest_version() == "0.151.0"
+    finally:
+        codex.fetch_json = original_fetch_json
+
+    assert claude_desktop.same_release_content(b"release", b"release\n")
+    assert not claude_desktop.same_release_content(b"release-a", b"release-b\n")
 
     with tempfile.TemporaryDirectory(prefix="owned-agent-updater-check-") as directory:
         root = Path(directory)

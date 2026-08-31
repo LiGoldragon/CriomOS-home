@@ -3,10 +3,7 @@
   # Blueprint auto-imports this expression as a standalone package. Runtime
   # Home consumers use the canonical factory's explicit object.
   codexPackage ? pkgs.callPackage ../codex { },
-  codexDesktopGate ? pkgs.callPackage ../codex/desktop-gate.nix {
-    codexCliPackage = codexPackage;
-  },
-  chatgpt-unwrapped ? pkgs.callPackage ./unwrapped.nix { inherit codexPackage codexDesktopGate; },
+  chatgpt-unwrapped ? pkgs.callPackage ./unwrapped.nix { },
   commandLineArgs ? "",
 }:
 
@@ -34,14 +31,14 @@ stdenvNoCC.mkDerivation {
       --set CODEX_APP_SERVER_USE_LOCAL_DAEMON 1 \
       --unset CODEX_CLI_PATH \
       --unset CODEX_APP_SERVER_FORCE_CLI \
-      --unset CODEX_APP_SERVER_CLI_COMMAND
+      --unset CODEX_APP_SERVER_CLI_COMMAND \
+      --unset CODEX_APP_TOOLS_PIPE_PATH
     ln -s ${chatgpt-unwrapped}/share "$out/share"
     runHook postInstall
   '';
   passthru = {
     category = "AI Coding Agents";
     inherit codexPackage;
-    inherit codexDesktopGate;
     unwrapped = chatgpt-unwrapped;
     inherit commandLineArgs;
     updater = mkUpdater {

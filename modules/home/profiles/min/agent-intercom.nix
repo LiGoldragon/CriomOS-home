@@ -144,6 +144,7 @@ lib.mkMerge [
     systemd.user.services.codex-remote-control = {
       Unit.Description = "Codex Remote Control app-server";
       Service = {
+        WorkingDirectory = "/home/li/primary";
         ExecStart = "${codexCliPackage}/bin/codex app-server --remote-control --listen unix://";
         UMask = "0077";
         Restart = "always";

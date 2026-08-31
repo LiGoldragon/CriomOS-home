@@ -554,7 +554,6 @@
         "claude-desktop-egl-linkage"
         "claude-desktop-launcher-linkage"
         "claude-remote-control"
-        "codex-desktop-gate"
         "codex-remote-control"
         "codex-remote-control-vm"
         "codex-tui"
@@ -667,7 +666,6 @@
             inherit inputs;
           };
           codex-tui = checkPkgs.callPackage ./checks/codex-tui { };
-          codex-desktop-gate = checkPkgs.callPackage ./checks/codex-desktop-gate { };
           claude-remote-control = checkPkgs.callPackage ./checks/claude-remote-control {
             inherit inputs;
           };

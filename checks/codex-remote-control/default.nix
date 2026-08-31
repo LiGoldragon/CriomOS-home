@@ -94,6 +94,7 @@ assert
   ? codex-remote-control;
 assert remoteControlService.Service.UMask == "0077";
 assert remoteControlService.Service.Restart == "always";
+assert remoteControlService.Service.WorkingDirectory == "/home/li/primary";
 assert builtins.length remoteControlService.Service.ExecStart == 1;
 pkgs.runCommand "codex-remote-control-contract" { } ''
   set -eu

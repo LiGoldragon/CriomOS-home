@@ -38,6 +38,8 @@ RUSTY_V8_PLATFORMS = {
 def latest_version() -> str:
     releases = fetch_json("https://api.github.com/repos/openai/codex/releases?per_page=30")
     for release in releases:
+        if release.get("draft") or release.get("prerelease"):
+            continue
         tag = release.get("tag_name", "")
         match = re.fullmatch(r"rust-v(.+)", tag)
         if match:

@@ -33,9 +33,19 @@ COPY_PLUGINS_WRITABLE = (
     ),
 )
 
+# The native local-daemon branch is used only when no startup configuration
+# overrides are supplied.  Desktop's codex_app override creates its private
+# Electron App Tools pipe and forces an embedded stdio server, so the shared
+# owner is never reached.  Keep the call site but make its override list empty.
+SHARED_APP_SERVER = (
+    re.compile(rb"getConfigOverrides:\(\)=>[\w$]+\([\w$]+\)"),
+    lambda _m: b"getConfigOverrides:()=>[]",
+)
+
 PATCHES: list[tuple[re.Pattern[bytes], Callable[[re.Match[bytes]], bytes]]] = [
     SKIP_PROCESS_REPORT,
     COPY_PLUGINS_WRITABLE,
+    SHARED_APP_SERVER,
 ]
 
 
