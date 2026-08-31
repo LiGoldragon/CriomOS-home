@@ -1,9 +1,19 @@
 id = "criomos/listener-level"
 name = "Listener Level"
-version = "1.0.0"
+version = "1.1.0"
 plugin_api = 23
 author = "CriomOS"
 description = "Shows Listener recording status and microphone level in the Noctalia bar."
 [[widget]]
 id = "level"
 entry = "level.luau"
+
+[[panel]]
+id = "transcript"
+entry = "transcript-panel.luau"
+width = 520
+height = 220
+placement = "floating"
+position = "top_center"
+dismiss_on_outside_click = false
+keyboard_focus = "none"

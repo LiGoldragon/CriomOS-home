@@ -14,6 +14,9 @@ let
   listenerLevelWidget = pkgs.replaceVars ./noctalia-plugins/listener-level/level.luau {
     SOCAT = "${pkgs.socat}/bin/socat";
   };
+  listenerTranscriptPanel = pkgs.replaceVars ./noctalia-plugins/listener-level/transcript-panel.luau {
+    SOCAT = "${pkgs.socat}/bin/socat";
+  };
 in
 lib.mkIf behavesAs.edge {
   home.packages = [ pkgs.libnotify ];
@@ -127,6 +130,9 @@ lib.mkIf behavesAs.edge {
     "noctalia/plugins/listener-level/plugin.toml".source =
       ./noctalia-plugins/listener-level/plugin.toml;
     "noctalia/plugins/listener-level/level.luau".source = listenerLevelWidget;
+    "noctalia/plugins/listener-level/TranscriptState.luau".source =
+      ./noctalia-plugins/listener-level/TranscriptState.luau;
+    "noctalia/plugins/listener-level/transcript-panel.luau".source = listenerTranscriptPanel;
   };
 
   services.mako = {

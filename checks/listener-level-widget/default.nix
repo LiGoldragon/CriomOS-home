@@ -4,6 +4,9 @@ let
   renderedWidget = pkgs.replaceVars ../../modules/home/profiles/min/noctalia-plugins/listener-level/level.luau {
     SOCAT = "${pkgs.socat}/bin/socat";
   };
+  renderedTranscriptPanel = pkgs.replaceVars ../../modules/home/profiles/min/noctalia-plugins/listener-level/transcript-panel.luau {
+    SOCAT = "${pkgs.socat}/bin/socat";
+  };
 in
 
 pkgs.runCommand "listener-level-widget" { } ''
@@ -11,8 +14,13 @@ pkgs.runCommand "listener-level-widget" { } ''
 
   widget=${../../modules/home/profiles/min/noctalia-plugins/listener-level/level.luau}
   renderedWidget=${renderedWidget}
+  renderedTranscriptPanel=${renderedTranscriptPanel}
   manifest=${../../modules/home/profiles/min/noctalia-plugins/listener-level/plugin.toml}
   sfwbar=${../../modules/home/profiles/min/sfwbar.nix}
+  transcriptState=${../../modules/home/profiles/min/noctalia-plugins/listener-level/TranscriptState.luau}
+  transcriptStateTest=${./transcript_state_test.luau}
+  transcriptStreamTest=${./transcript_stream_test.py}
+  levelBehaviorTest=${./level_behavior_test.lua}
 
   ${pkgs.python3}/bin/python -c '
 import pathlib
@@ -22,7 +30,18 @@ manifest = tomllib.loads(pathlib.Path("'"$manifest"'").read_text())
 assert manifest["id"] == "criomos/listener-level"
 assert manifest["plugin_api"] == 23
 assert "dependencies" not in manifest
+assert manifest["version"] == "1.1.0"
 assert manifest["widget"] == [{"id": "level", "entry": "level.luau"}]
+assert manifest["panel"] == [{
+    "id": "transcript",
+    "entry": "transcript-panel.luau",
+    "width": 520,
+    "height": 220,
+    "placement": "floating",
+    "position": "top_center",
+    "dismiss_on_outside_click": False,
+    "keyboard_focus": "none",
+}]
 '
 
   ${pkgs.gnugrep}/bin/grep -F 'plugins.enabled = [ "criomos/listener-level" ];' "$sfwbar"
@@ -37,6 +56,7 @@ assert manifest["widget"] == [{"id": "level", "entry": "level.luau"}]
   ${pkgs.gnugrep}/bin/grep -F 'listenerLevelWidget = pkgs.replaceVars' "$sfwbar"
   ${pkgs.gnugrep}/bin/grep -F 'SOCAT = "''${pkgs.socat}/bin/socat";' "$sfwbar"
   ${pkgs.gnugrep}/bin/grep -F 'listenerLevelWidget;' "$sfwbar"
+  ${pkgs.gnugrep}/bin/grep -F 'listenerTranscriptPanel;' "$sfwbar"
   ${pkgs.gnugrep}/bin/grep -F 'home.packages = [ pkgs.libnotify ];' "$sfwbar"
   ${pkgs.gnugrep}/bin/grep -F '"app-name=Listener"' "$sfwbar"
   ${pkgs.gnugrep}/bin/grep -F 'history = 0;' "$sfwbar"
@@ -86,10 +106,23 @@ assert manifest["widget"] == [{"id": "level", "entry": "level.luau"}]
     echo 'listener-level widget must not duplicate Listener notifications' >&2
     exit 1
   fi
-  if ${pkgs.gnugrep}/bin/grep -E 'event\.(text|transcript)|transcript(Text|_text)' "$widget" >/dev/null; then
-    echo 'listener-level widget must not carry transcript text' >&2
-    exit 1
-  fi
+  ${pkgs.gnugrep}/bin/grep -F '/listener/transcript.sock' "$widget"
+  ${pkgs.gnugrep}/bin/grep -F 'noctalia.togglePanel("criomos/listener-level:transcript")' "$widget"
+  ${pkgs.gnugrep}/bin/grep -F '/listener/transcript.sock' "$renderedTranscriptPanel"
+  ${pkgs.gnugrep}/bin/grep -F '${pkgs.socat}/bin/socat -u UNIX-CONNECT:' "$renderedTranscriptPanel"
+
+  workdir=$(mktemp -d)
+  trap 'rm -rf "$workdir"' EXIT
+  cp "$transcriptState" "$workdir/TranscriptState.luau"
+  ${pkgs.gnused}/bin/sed 's|require("./TranscriptState.luau")|dofile("TranscriptState.luau")|' \
+    "$transcriptStateTest" > "$workdir/transcript_state_test.luau"
+  ${pkgs.gnused}/bin/sed 's|require("./TranscriptState.luau")|dofile("TranscriptState.luau")|' \
+    ${../../modules/home/profiles/min/noctalia-plugins/listener-level/level.luau} > "$workdir/level.lua"
+  cp "$levelBehaviorTest" "$workdir/level_behavior_test.lua"
+  ${pkgs.python3}/bin/python "$transcriptStreamTest" \
+    ${pkgs.socat}/bin/socat ${pkgs.lua5_4}/bin/lua "$workdir/transcript_state_test.luau" state
+  ${pkgs.python3}/bin/python "$transcriptStreamTest" \
+    ${pkgs.socat}/bin/socat ${pkgs.lua5_4}/bin/lua "$workdir/level_behavior_test.lua" level
 
   touch "$out"
 ''

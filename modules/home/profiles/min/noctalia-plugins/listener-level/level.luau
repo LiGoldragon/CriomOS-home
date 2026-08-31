@@ -1,4 +1,7 @@
 local listener_state = "idle"
+local TranscriptState = require("./TranscriptState.luau")
+local transcript = TranscriptState.new()
+local transcript_panel_open = false
 local microphone_level = 0.0
 local visible_microphone_level = 0.0
 local in_flight_count = 0
@@ -175,5 +178,32 @@ if runtime_directory ~= "" then
       return
     end
     consume_status_message(line)
+  end)
+
+  local transcript_socket_path = runtime_directory .. "/listener/transcript.sock"
+  local transcript_reconnect_marker = "__listener_transcript_socket_disconnected__"
+  local transcript_command = "while true; do @SOCAT@ -u UNIX-CONNECT:" .. shell_quote(transcript_socket_path)
+    .. " STDOUT; printf '%s\\n' " .. transcript_reconnect_marker .. "; sleep 1; done"
+  noctalia.runStream(transcript_command, function(line)
+    if line == transcript_reconnect_marker then
+      TranscriptState.clear(transcript)
+      if transcript_panel_open then
+        noctalia.togglePanel("criomos/listener-level:transcript")
+        transcript_panel_open = false
+      end
+      return
+    end
+
+    local accepted, kind = TranscriptState.consume(transcript, line, noctalia.json.decode)
+    if not accepted then
+      return
+    end
+    if (kind == "partial" or kind == "final") and not transcript_panel_open then
+      noctalia.togglePanel("criomos/listener-level:transcript")
+      transcript_panel_open = true
+    elseif (kind == "closed" or kind == "error") and transcript_panel_open then
+      noctalia.togglePanel("criomos/listener-level:transcript")
+      transcript_panel_open = false
+    end
   end)
 end
