@@ -9,6 +9,8 @@
 }:
 let
   profileUser = ((horizon.users or { }).${config.home.username} or { });
+  primaryWorkspace = "${config.home.homeDirectory}/primary";
+  primaryWorkspacePointer = lib.replaceStrings [ "~" "/" ] [ "~0" "~1" ] primaryWorkspace;
   mediumEnabled = profileUser.size.medium or false;
   edgeEnabled = ((horizon.node.behavesAs or { }).edge or false);
   # Desktop selection is generic projected Edge ownership plus cumulative user
@@ -96,8 +98,12 @@ lib.mkMerge [
         mcpServers.agent-intercom = {
           command = "${agentIntercom}/bin/claude-intercom-mcp";
         };
+        projects.${primaryWorkspace} = true;
       };
-      modes."/mcpServers/agent-intercom" = "always";
+      modes = {
+        "/mcpServers/agent-intercom" = "always";
+        "/projects/${primaryWorkspacePointer}" = "always";
+      };
     };
 
     home.activation.mergeAgentIntercomOpenCodeServerPlugin = inputs.hexis.lib.mkManagedConfig {
@@ -127,7 +133,7 @@ lib.mkMerge [
     systemd.user.services.codex-remote-control = {
       Unit.Description = "Codex Remote Control app-server";
       Service = {
-        WorkingDirectory = "/home/li/primary";
+        WorkingDirectory = primaryWorkspace;
         ExecStart = "${codexCliPackage}/bin/codex app-server --remote-control --listen unix://";
         UMask = "0077";
         Restart = "always";

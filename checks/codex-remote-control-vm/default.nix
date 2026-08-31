@@ -38,7 +38,7 @@ let
 in
 assert service.Service.UMask == "0077";
 assert service.Service.Restart == "always";
-assert service.Service.WorkingDirectory == "/home/li/primary";
+assert service.Service.WorkingDirectory == "${testHome}/primary";
 assert builtins.length service.Service.ExecStart == 1;
 pkgs.testers.nixosTest {
   name = "codex-remote-control-vm";
@@ -46,7 +46,7 @@ pkgs.testers.nixosTest {
     { ... }:
     {
       users.groups.${testUser}.gid = testUid;
-      systemd.tmpfiles.rules = [ "d /home/li/primary 0755 root root -" ];
+      systemd.tmpfiles.rules = [ "d ${testHome}/primary 0755 ${testUser} ${testUser} -" ];
       users.users.${testUser} = {
         isNormalUser = true;
         uid = testUid;

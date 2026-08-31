@@ -30,8 +30,8 @@ let
         codexRemoteControlModule
         {
           home = {
-            username = "codex-remote-control-test";
-            homeDirectory = "/home/codex-remote-control-test";
+            username = user.name;
+            homeDirectory = "/home/${user.name}";
             stateVersion = "26.05";
           };
         }
@@ -45,8 +45,13 @@ let
     name = "codex-remote-control-test";
     size.min = false;
   };
+  secondCodexUser = {
+    name = "codex-remote-control-second";
+    size.min = true;
+  };
   configuration = mkConfiguration codexUser;
   nonCodexConfiguration = mkConfiguration nonCodexUser;
+  secondConfiguration = mkConfiguration secondCodexUser;
   embeddedUserName = "embedded-codex-test";
   embeddedHorizon = {
     node.services = [ ];
@@ -94,7 +99,10 @@ assert
   ? codex-remote-control;
 assert remoteControlService.Service.UMask == "0077";
 assert remoteControlService.Service.Restart == "always";
-assert remoteControlService.Service.WorkingDirectory == "/home/li/primary";
+assert remoteControlService.Service.WorkingDirectory == "/home/codex-remote-control-test/primary";
+assert
+  secondConfiguration.systemd.user.services.codex-remote-control.Service.WorkingDirectory
+  == "/home/codex-remote-control-second/primary";
 assert builtins.length remoteControlService.Service.ExecStart == 1;
 pkgs.runCommand "codex-remote-control-contract" { } ''
   set -eu
