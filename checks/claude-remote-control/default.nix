@@ -39,7 +39,10 @@ let
   };
   service = ownerConfiguration.systemd.user.services.claude-remote-control;
 in
-assert !(builtins.tryEval unsetConfiguration.home.activationPackage).success;
+assert unsetConfiguration.systemd.user.services ? claude-remote-control;
+assert
+  unsetConfiguration.systemd.user.services.claude-remote-control.Service.WorkingDirectory
+  == "/home/claude-remote-control-test/primary";
 assert !(builtins.tryEval homeRootConfiguration.home.activationPackage).success;
 assert ownerConfiguration.systemd.user.services ? claude-remote-control;
 assert service.Service.WorkingDirectory == "/srv/claude-remote-control-owner";

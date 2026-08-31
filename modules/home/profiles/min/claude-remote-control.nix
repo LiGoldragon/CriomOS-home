@@ -8,6 +8,7 @@
 }:
 let
   enabled = user.size.min or false;
+  primaryWorkspace = "${config.home.homeDirectory}/primary";
   workingDirectory = config.criomos.claudeRemoteControl.workingDirectory;
   hasTrustedWorkingDirectory =
     workingDirectory != null
@@ -18,8 +19,8 @@ in
   options.criomos.claudeRemoteControl = {
     workingDirectory = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
-      default = null;
-      defaultText = lib.literalExpression "null";
+      default = primaryWorkspace;
+      defaultText = lib.literalExpression "\${config.home.homeDirectory}/primary";
       description = "Explicit trusted directory rooted by the persistent Claude Remote Control owner.";
     };
 
