@@ -83,8 +83,8 @@ pkgs.runCommand "claude-remote-control-contract" { } ''
   primary_home="$TMPDIR/primary-home"
   second_home="$TMPDIR/second-home"
   mkdir -p "$primary_home" "$second_home"
-  printf '%s' '{"preserved":{"value":"kept"},"projects":{"/existing/workspace":false}}' > "$primary_home/.claude.json"
-  printf '%s' '{"preserved":{"value":"second-kept"},"projects":{"/existing/workspace":false}}' > "$second_home/.claude.json"
+  printf '%s' '{"preserved":{"value":"kept"},"projects":{"/existing/workspace":false,"/home/claude-remote-control-test/primary":true}}' > "$primary_home/.claude.json"
+  printf '%s' '{"preserved":{"value":"second-kept"},"projects":{"/existing/workspace":false,"/home/claude-remote-control-second/primary":{"hasTrustDialogAccepted":false,"preservedProject":"second-kept"}}}' > "$second_home/.claude.json"
   DRY_RUN_CMD=
   run() { "$@"; }
   export HOME="$primary_home"
@@ -92,14 +92,16 @@ pkgs.runCommand "claude-remote-control-contract" { } ''
   ${pkgs.jq}/bin/jq -e '
     .preserved.value == "kept"
     and .projects["/existing/workspace"] == false
-    and .projects["/home/claude-remote-control-test/primary"] == true
+    and (.projects["/home/claude-remote-control-test/primary"] | type) == "object"
+    and .projects["/home/claude-remote-control-test/primary"].hasTrustDialogAccepted == true
   ' "$primary_home/.claude.json"
   export HOME="$second_home"
   ${secondTrustActivation.data}
   ${pkgs.jq}/bin/jq -e '
     .preserved.value == "second-kept"
     and .projects["/existing/workspace"] == false
-    and .projects["/home/claude-remote-control-second/primary"] == true
+    and .projects["/home/claude-remote-control-second/primary"].hasTrustDialogAccepted == true
+    and .projects["/home/claude-remote-control-second/primary"].preservedProject == "second-kept"
   ' "$second_home/.claude.json"
   touch "$out"
 ''

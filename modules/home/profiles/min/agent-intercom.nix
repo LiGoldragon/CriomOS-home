@@ -98,11 +98,11 @@ lib.mkMerge [
         mcpServers.agent-intercom = {
           command = "${agentIntercom}/bin/claude-intercom-mcp";
         };
-        projects.${primaryWorkspace} = true;
+        projects.${primaryWorkspace}.hasTrustDialogAccepted = true;
       };
       modes = {
         "/mcpServers/agent-intercom" = "always";
-        "/projects/${primaryWorkspacePointer}" = "always";
+        "/projects/${primaryWorkspacePointer}/hasTrustDialogAccepted" = "always";
       };
     };
 
