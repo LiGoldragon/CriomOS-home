@@ -270,7 +270,7 @@ assert builtins.any (
   extension: extension.version == "26.5825.32147"
 ) vscodeConfig.profiles.default.extensions;
 assert builtins.any (
-  extension: extension.version == "2.1.250"
+  extension: extension.version == "2.1.251"
 ) vscodeConfig.profiles.default.extensions;
 assert activation.bootstrapMutableClaudeCodeExtension.before == [ "linkGeneration" ];
 assert builtins.match ".*--bootstrap.*" activation.bootstrapMutableClaudeCodeExtension.data != null;
@@ -289,7 +289,7 @@ pkgs.runCommand "vscodium-claude-lifecycle-check" { } ''
   test "$(
     ${pkgs.unzip}/bin/unzip -p ${inputs.claude-code-vsix} extension/package.json \
       | ${pkgs.jq}/bin/jq -er .version
-  )" = 2.1.250
+  )" = 2.1.251
   test "$(
     ${pkgs.unzip}/bin/unzip -p ${inputs.claude-code-vsix} extension/package.json \
       | ${pkgs.jq}/bin/jq -er '.engines.vscode'
