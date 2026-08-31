@@ -17,30 +17,13 @@ let
   desktopEnabled = edgeEnabled && mediumEnabled;
   codexCliPackage = config.criomos.corePackages.codex;
   codexTui = pkgs.callPackage ../../../../owned-agents/codex/tui.nix { inherit codexCliPackage; };
-  codexDesktopGate = pkgs.callPackage ../../../../owned-agents/codex/desktop-gate.nix {
-    inherit codexCliPackage;
-  };
   claudeCodePackage = config.criomos.corePackages.claude;
   claudeDesktopPackage = pkgs.callPackage ../../../../owned-agents/claude-desktop {
     inherit claudeCodePackage;
   };
-  chatgptWithDesktopGate = pkgs.callPackage ../../../../owned-agents/chatgpt {
+  chatgpt = pkgs.callPackage ../../../../owned-agents/chatgpt {
     codexPackage = codexCliPackage;
-    inherit codexDesktopGate;
     commandLineArgs = "--ozone-platform=wayland";
-  };
-  chatgptWithLocalDaemon = pkgs.symlinkJoin {
-    name = "chatgpt-with-local-codex-daemon";
-    paths = [ chatgptWithDesktopGate ];
-    nativeBuildInputs = [ pkgs.makeWrapper ];
-    postBuild = ''
-      rm "$out/bin/chatgpt"
-      makeWrapper ${chatgptWithDesktopGate}/bin/chatgpt "$out/bin/chatgpt" \
-        --set CODEX_APP_SERVER_USE_LOCAL_DAEMON 1 \
-        --unset CODEX_CLI_PATH \
-        --unset CODEX_APP_SERVER_FORCE_CLI \
-        --unset CODEX_APP_SERVER_CLI_COMMAND
-    '';
   };
   # The shared package is the sole Codex derivation for the terminal,
   # Desktop, Agent Intercom, and editor paths.
@@ -156,7 +139,7 @@ lib.mkMerge [
   (lib.mkIf desktopEnabled {
     home.packages = [
       claudeDesktopPackage
-      chatgptWithLocalDaemon
+      chatgpt
     ];
 
     # The package owns the Claude desktop entry.  Link that exact entry into
@@ -168,10 +151,9 @@ lib.mkMerge [
     xdg.mimeApps.defaultApplications."x-scheme-handler/claude" = "claude-desktop.desktop";
 
     # The official Linux ChatGPT package owns this entry.  Keep the entry in
-    # the active XDG applications directory and use its executable wrapper so
-    # the GUI and terminal both use the sole shared Codex derivation.
+    # the active XDG applications directory and use its executable wrapper.
     xdg.dataFile."applications/chatgpt.desktop".source =
-      "${chatgptWithLocalDaemon}/share/applications/chatgpt.desktop";
+      "${chatgpt}/share/applications/chatgpt.desktop";
     xdg.mimeApps.defaultApplications."x-scheme-handler/codex" = "chatgpt.desktop";
   })
 ]
