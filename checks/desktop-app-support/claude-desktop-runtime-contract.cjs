@@ -64,15 +64,20 @@ async function exposeActualManager() {
   }
   if (matches.length !== 1) throw new Error(`expected one current Claude Code manager chunk, found ${matches.length}`);
   const { file, source, methodIndex } = matches[0];
-  const classStart = source.lastIndexOf("=class{constructor", methodIndex);
+  const namedClassStart = source.lastIndexOf("=class{constructor", methodIndex);
+  const anonymousClassStart = source.lastIndexOf("=new class{constructor", methodIndex);
+  const isAnonymousClass = anonymousClassStart > namedClassStart;
+  const classStart = isAnonymousClass ? anonymousClassStart : namedClassStart;
   if (classStart < 0) throw new Error("could not locate the actual Claude Code manager class binding");
   const bindingStart = source.lastIndexOf(",", classStart) + 1;
-  const binding = source.slice(bindingStart, source.indexOf("=class", bindingStart));
+  const classAssignment = isAnonymousClass ? "=new class" : "=class";
+  const binding = source.slice(bindingStart, source.indexOf(classAssignment, bindingStart));
   if (!/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(binding)) {
     throw new Error(`unexpected Claude Code manager binding: ${binding}`);
   }
   const classEnd = braceEnd(source, classStart);
-  const hook = `;if(process.env.CRIOMOS_CLAUDE_CODE_MANAGER_HOOK===\"1\"){globalThis.${hookName}=${binding};throw Error(\"${sentinel}\")}`;
+  const manager = isAnonymousClass ? `${binding}.constructor` : binding;
+  const hook = `;if(process.env.CRIOMOS_CLAUDE_CODE_MANAGER_HOOK===\"1\"){globalThis.${hookName}=${manager};throw Error(\"${sentinel}\")}`;
   await fsp.writeFile(file, source.slice(0, classEnd) + hook + source.slice(classEnd));
   return file;
 }
