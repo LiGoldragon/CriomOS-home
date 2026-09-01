@@ -113,6 +113,7 @@ pkgs.runCommand "desktop-app-support-contract"
       pkgs.desktop-file-utils
       pkgs.gnugrep
       pkgs.gnused
+      pkgs.jq
       pkgs.xdg-utils
       profile
     ];
@@ -146,6 +147,48 @@ pkgs.runCommand "desktop-app-support-contract"
     fi
     test "$(env -u CODEX_CLI_PATH ${chatgptCandidate} --version)" = 'codex-cli ${codexCliPackage.version}'
     strings ${chatgptPackage.passthru.unwrapped}/lib/chatgpt/resources/app.asar | grep -F 'getConfigOverrides:()=>[]'
+    strings ${chatgptPackage.passthru.unwrapped}/lib/chatgpt/resources/app.asar | grep -F 'async function JE(){return[]}'
+
+    # The Desktop client must reach the shared owner without injecting its
+    # retired private App Tools MCP server.  Exercise the same app-server
+    # operations it uses for both a new thread and a resumed rollout.
+    codex_home="$TMPDIR/codex-home"
+    mkdir -p "$codex_home"
+    coproc codex_app_server {
+      CODEX_HOME="$codex_home" DISABLE_AUTOUPDATER=1 ${codexCliPackage}/bin/codex \
+        app-server --listen stdio://
+    }
+    trap 'kill "$codex_app_server_PID" 2>/dev/null || true; wait "$codex_app_server_PID" 2>/dev/null || true' EXIT
+    codex_request() {
+      printf '%s\n' "$1" >&"''${codex_app_server[1]}"
+    }
+    codex_response() {
+      response_id="$1"
+      response_file="$2"
+      while IFS= read -r -t 20 response <&"''${codex_app_server[0]}"; do
+        if printf '%s' "$response" | jq -e ".id == $response_id and .result != null" >/dev/null; then
+          printf '%s\n' "$response" > "$response_file"
+          return 0
+        fi
+      done
+      return 1
+    }
+    codex_request '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"clientInfo":{"name":"desktop-app-support","version":"1"}}}'
+    codex_response 1 "$TMPDIR/codex-app-server-initialize.json"
+    codex_request '{"jsonrpc":"2.0","id":2,"method":"thread/start","params":{"cwd":"/tmp"}}'
+    codex_response 2 "$TMPDIR/codex-app-server-thread-start.json"
+    thread_id="$(jq -r '.result.thread.id' "$TMPDIR/codex-app-server-thread-start.json")"
+    test "$thread_id" != null
+    codex_request "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"turn/start\",\"params\":{\"threadId\":\"$thread_id\",\"input\":[]}}"
+    codex_response 3 "$TMPDIR/codex-app-server-turn-start.json"
+    jq -e '.result.turn.status == "inProgress"' "$TMPDIR/codex-app-server-turn-start.json" >/dev/null
+    codex_request "{\"jsonrpc\":\"2.0\",\"id\":4,\"method\":\"thread/resume\",\"params\":{\"threadId\":\"$thread_id\"}}"
+    codex_response 4 "$TMPDIR/codex-app-server-thread-resume.json"
+    jq -e --arg thread_id "$thread_id" '.result.thread.id == $thread_id' \
+      "$TMPDIR/codex-app-server-thread-resume.json" >/dev/null
+    kill "$codex_app_server_PID"
+    wait "$codex_app_server_PID" || true
+    trap - EXIT
 
     xdg_test="$TMPDIR/xdg"
     mkdir -p "$xdg_test/data/applications" "$xdg_test/config" "$xdg_test/home"

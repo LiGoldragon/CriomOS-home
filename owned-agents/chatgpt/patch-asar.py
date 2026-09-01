@@ -42,10 +42,25 @@ SHARED_APP_SERVER = (
     lambda _m: b"getConfigOverrides:()=>[]",
 )
 
+# Desktop separately synchronizes its bundled App Tools MCP server through
+# config/batchWrite for every local app-server connection.  That path survives
+# the resolver override above and produces a `codex_app` entry which Codex
+# 0.151.0 rejects before either a fresh thread or a resumed thread can run.
+# Desktop is an ordinary WebSocket client of the shared daemon, so it must not
+# create a private App Tools configuration at all.
+NO_APP_TOOLS_CONFIG_OVERRIDE = (
+    re.compile(
+        rb"async function (?P<name>[\w$]+)\(\{hostConfig:[\w$]+,resourcesPath:[\w$]+=process\.resourcesPath\}\)"
+        rb"\{[\s\S]*?(?=\}function [\w$]+\(e\)\{return [\w$]+\.warning\(`Codex app tools unavailable)"
+    ),
+    lambda m: b"async function " + m["name"] + b"(){return[]}",
+)
+
 PATCHES: list[tuple[re.Pattern[bytes], Callable[[re.Match[bytes]], bytes]]] = [
     SKIP_PROCESS_REPORT,
     COPY_PLUGINS_WRITABLE,
     SHARED_APP_SERVER,
+    NO_APP_TOOLS_CONFIG_OVERRIDE,
 ]
 
 
