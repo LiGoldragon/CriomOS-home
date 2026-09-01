@@ -64,6 +64,24 @@ let
   claudeCodePackage = ownedAgentPackages.claudeCodePackage;
   claudeDesktopPackage = ownedAgentPackages.claudeDesktopPackage;
   chatgptPackage = ownedAgentPackages.chatgptPackage;
+  chatgptCandidate = "${chatgptPackage.passthru.unwrapped}/lib/chatgpt/resources/codex";
+  chatgptWrapperProbeUnwrapped =
+    pkgs.runCommand "chatgpt-wrapper-probe-unwrapped"
+      {
+        passthru.version = "0";
+      }
+      ''
+        mkdir -p "$out/bin" "$out/share"
+        printf '%s\n' \
+          '#!${pkgs.runtimeShell}' \
+          'printf "%s|%s|%s|%s|%s" "''${CODEX_APP_SERVER_USE_LOCAL_DAEMON-}" "''${CODEX_CLI_PATH-}" "''${CODEX_APP_SERVER_FORCE_CLI-}" "''${CODEX_APP_SERVER_CLI_COMMAND-}" "''${CODEX_APP_TOOLS_PIPE_PATH-}" > "$CHATGPT_WRAPPER_PROBE_OUT"' \
+          > "$out/bin/chatgpt"
+        chmod +x "$out/bin/chatgpt"
+      '';
+  chatgptWrapperProbe = homePkgs.callPackage ../../owned-agents/chatgpt {
+    codexPackage = codexCliPackage;
+    chatgpt-unwrapped = chatgptWrapperProbeUnwrapped;
+  };
   claudeDesktopEntry = edgeMedium.xdg.dataFile."applications/claude-desktop.desktop".source;
   claudeDesktopDefault = builtins.head (
     edgeMedium.xdg.mimeApps.defaultApplications."x-scheme-handler/claude"
@@ -114,9 +132,19 @@ pkgs.runCommand "desktop-app-support-contract"
     grep -E '^Exec=.*chatgpt' ${chatgptEntry}
     grep -F 'x-scheme-handler/codex' ${chatgptEntry}
     test -x ${chatgptLauncher}/bin/chatgpt
-    grep -Fx "export CODEX_APP_SERVER_USE_LOCAL_DAEMON='1'" ${chatgptLauncher}/bin/chatgpt
-    grep -F 'unset CODEX_APP_TOOLS_PIPE_PATH' ${chatgptLauncher}/bin/chatgpt
-    test ! -e ${chatgptPackage.passthru.unwrapped}/lib/chatgpt/resources/codex
+    probe_output="$TMPDIR/chatgpt-wrapper-probe"
+    CODEX_CLI_PATH=must-not-select-stdio \
+      CODEX_APP_SERVER_FORCE_CLI=must-not-select-stdio \
+      CODEX_APP_SERVER_CLI_COMMAND=must-not-select-stdio \
+      CODEX_APP_TOOLS_PIPE_PATH=must-not-create-private-channel \
+      CHATGPT_WRAPPER_PROBE_OUT="$probe_output" \
+      ${chatgptWrapperProbe}/bin/chatgpt
+    test "$(< "$probe_output")" = '1||||'
+    if ! test -x ${chatgptCandidate}; then
+      echo "ChatGPT local-daemon resolver candidate is missing: ${chatgptCandidate}" >&2
+      exit 1
+    fi
+    test "$(env -u CODEX_CLI_PATH ${chatgptCandidate} --version)" = 'codex-cli ${codexCliPackage.version}'
     strings ${chatgptPackage.passthru.unwrapped}/lib/chatgpt/resources/app.asar | grep -F 'getConfigOverrides:()=>[]'
 
     xdg_test="$TMPDIR/xdg"

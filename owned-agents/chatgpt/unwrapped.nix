@@ -1,5 +1,6 @@
 {
   pkgs,
+  codexPackage ? pkgs.callPackage ../codex { },
 }:
 
 let
@@ -138,9 +139,11 @@ stdenv.mkDerivation {
   installPhase = ''
     runHook preInstall
     mkdir -p "$out/bin" "$out/lib" "$out/share"
-    # The Electron client reaches the persistent app-server directly through
-    # its local-daemon transport.  It therefore has no bundled CLI override:
-    # the service owns the only Codex server and the app is its ordinary
+    # The Electron client reaches the persistent app-server through its
+    # local-daemon transport.  That path first resolves and interrogates a
+    # CLI candidate, but CODEX_CLI_PATH would disable the local-daemon branch.
+    # Supply the managed CLI at the resolver's packaged location instead; the
+    # service still owns the only Codex server and the app remains its ordinary
     # client.
     test -d usr/lib/chatgpt
     test -d usr/lib/chatgpt/resources
@@ -149,9 +152,8 @@ stdenv.mkDerivation {
     cp -r usr/share/applications usr/share/pixmaps "$out/share/"
     ln -s ../lib/chatgpt/codex-launcher "$out/bin/chatgpt"
     mkdir -p "$out/lib/chatgpt/resources"
-    if test -e "$out/lib/chatgpt/resources/codex"; then
-      rm -rf "$out/lib/chatgpt/resources/codex"
-    fi
+    rm -f "$out/lib/chatgpt/resources/codex"
+    ln -s ${lib.getExe codexPackage} "$out/lib/chatgpt/resources/codex"
     python3 ${./patch-asar.py} "$out/lib/chatgpt/resources/app.asar"
     wrapProgram "$out/lib/chatgpt/ChatGPT" \
       "''${gappsWrapperArgs[@]}" \

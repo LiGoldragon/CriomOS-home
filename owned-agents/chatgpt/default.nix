@@ -3,7 +3,7 @@
   # Blueprint auto-imports this expression as a standalone package. Runtime
   # Home consumers use the canonical factory's explicit object.
   codexPackage ? pkgs.callPackage ../codex { },
-  chatgpt-unwrapped ? pkgs.callPackage ./unwrapped.nix { },
+  chatgpt-unwrapped ? pkgs.callPackage ./unwrapped.nix { inherit codexPackage; },
   commandLineArgs ? "",
 }:
 
