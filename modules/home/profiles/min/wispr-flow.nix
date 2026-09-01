@@ -15,8 +15,8 @@ let
     wispr-flow = wisprFlow;
   };
 in
-lib.mkIf (user.name == "li") {
-  # A paid proprietary desktop client is a personal selection, not a shared
-  # service.  It has no Home service, autostart, or keybinding declaration.
+lib.mkIf user.size.max {
+  # A paid proprietary desktop client belongs to the maximum Home profile, not
+  # to one account. It has no Home service, autostart, or keybinding declaration.
   home.packages = [ wisprFlowFhs ];
 }
