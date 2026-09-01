@@ -15,8 +15,9 @@ let
     wispr-flow = wisprFlow;
   };
 in
-lib.mkIf user.size.max {
-  # A paid proprietary desktop client belongs to the maximum Home profile, not
-  # to one account. It has no Home service, autostart, or keybinding declaration.
+lib.mkIf user.size.medium {
+  # A paid proprietary desktop client belongs to the medium Home tier, not to
+  # one account. Higher profile tiers inherit medium capability. It has no Home
+  # service, autostart, or keybinding declaration.
   home.packages = [ wisprFlowFhs ];
 }

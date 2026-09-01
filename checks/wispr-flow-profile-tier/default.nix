@@ -19,16 +19,30 @@ let
       ];
     };
 
+  belowMediumHome = mkHome {
+    name = "below-medium-profile-check";
+    size = {
+      medium = false;
+      max = false;
+    };
+  };
   mediumHome = mkHome {
     name = "medium-profile-check";
-    size.max = false;
+    size = {
+      medium = true;
+      max = false;
+    };
   };
   maximumHome = mkHome {
     name = "maximum-profile-check";
-    size.max = true;
+    size = {
+      medium = true;
+      max = true;
+    };
   };
 in
-assert mediumHome.config.home.packages == [ ];
+assert belowMediumHome.config.home.packages == [ ];
+assert builtins.length mediumHome.config.home.packages == 1;
 assert builtins.length maximumHome.config.home.packages == 1;
 pkgs.runCommand "wispr-flow-profile-tier" { } ''
   touch "$out"
