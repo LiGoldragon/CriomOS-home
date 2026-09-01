@@ -1,5 +1,9 @@
 # CriomOS-home
 
+The minimum Home profile installs the pinned `flow-id` parent-flow helper from
+`harness`. Parents claim a shared lane before their first flow artifact; child
+threads receive `FLOW_ID` and `FLOW_DIRECTORY` and do not invoke the helper.
+
 Home profile for CriomOS, as a standalone blueprint flake.
 
 Split out from legacy CriomOS so that:

@@ -295,6 +295,7 @@ let
   # recovery commands and Agent Intercom bridges retain the pinned clients.
   claudeCodePackage = config.criomos.corePackages.claude;
   codexCliPackage = config.criomos.corePackages.codex;
+  flowIdPackage = config.criomos.corePackages.flowId;
   codexTui = pkgs.callPackage ../../../../owned-agents/codex/tui.nix { inherit codexCliPackage; };
   piPackage = pkgs.callPackage ../../../../packages/pi { inherit inputs; };
 
@@ -340,6 +341,7 @@ let
     (pkgs.callPackage ../../../../packages/gws { inherit inputs; })
     (pkgs.callPackage ../../../../packages/playwright-cli { })
     codexTui
+    flowIdPackage
   ];
 
   nixpkgsPackages =

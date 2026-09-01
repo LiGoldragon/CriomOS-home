@@ -1,5 +1,13 @@
 # Upgrades
 
+## Flow identity helper
+
+After activating a generation pinned to `harness`'s `flow-id`, a parent flow
+claims its lane with `flow-id codex --flows-root /absolute/flows-root` before
+writing its first artifact. The alias is `FLOW_ID`; its lane is
+`FLOW_DIRECTORY`. Existing unmarked lanes remain collisions and are never
+overwritten. Child threads receive those parent values and do not claim lanes.
+
 ## Chroma 0.3.1 Datomic configuration cutover
 
 This generation pins Chroma `0.3.1` at

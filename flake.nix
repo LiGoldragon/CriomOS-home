@@ -104,6 +104,11 @@
     listener.inputs.nixpkgs.follows = "nixpkgs";
     listener.inputs.crane.follows = "crane";
 
+    # Harness owns parent-only flow identity claims. Home installs the pinned
+    # helper in the minimum profile beside the Codex and Claude clients.
+    harness.url = "github:LiGoldragon/harness/bbdd9d2a62c195a39663fdae53865fbbea3418d9";
+    harness.inputs.nixpkgs.follows = "nixpkgs";
+
     # The packaging recipe is public and immutable; its proprietary payload is
     # a separate local input.  The locked NAR hash identifies the exact
     # user-supplied installer without committing, hosting, or redistributing it.
@@ -661,6 +666,7 @@
           gws = checkPkgs.callPackage ./checks/gws { inherit inputs; };
           playwright-cli = checkPkgs.callPackage ./checks/playwright-cli { };
           spirit-deployment = checkPkgs.callPackage ./checks/spirit-deployment { inherit inputs; };
+          flow-id = checkPkgs.callPackage ./checks/flow-id { inherit inputs; };
           aggregator-deployment = checkPkgs.callPackage ./checks/aggregator-deployment { inherit inputs; };
           vscodium-casual = checkPkgs.callPackage ./checks/vscodium-casual { };
           owned-agent-updater = checkPkgs.callPackage ./checks/owned-agent-updater { inherit inputs; };
