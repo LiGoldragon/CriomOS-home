@@ -44,6 +44,8 @@ in
 assert belowMediumHome.config.home.packages == [ ];
 assert builtins.length mediumHome.config.home.packages == 1;
 assert builtins.length maximumHome.config.home.packages == 1;
+assert (builtins.head mediumHome.config.home.packages).drvPath != "";
+assert (builtins.head maximumHome.config.home.packages).drvPath != "";
 pkgs.runCommand "wispr-flow-profile-tier" { } ''
   touch "$out"
 ''
