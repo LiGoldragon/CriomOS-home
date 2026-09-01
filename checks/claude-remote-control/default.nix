@@ -79,11 +79,11 @@ assert service.Service.UMask == "0077";
 pkgs.runCommand "claude-remote-control-contract" { } ''
   set -eu
   owner_exec='${builtins.head service.Service.ExecStart}'
-  test "$owner_exec" = '${fixtureClaude}/bin/claude remote-control --spawn=same-dir'
+  test "$owner_exec" = '${fixtureClaude}/bin/claude remote-control --spawn=same-dir --permission-mode bypassPermissions'
   working_directory="$TMPDIR/working-directory"
   mkdir -p "$working_directory"
-  test "$(cd "$working_directory" && ${fixtureClaude}/bin/claude remote-control --spawn=same-dir)" \
-    = "$working_directory"$'\nremote-control\n--spawn=same-dir'
+  test "$(cd "$working_directory" && ${fixtureClaude}/bin/claude remote-control --spawn=same-dir --permission-mode bypassPermissions)" \
+    = "$working_directory"$'\nremote-control\n--spawn=same-dir\n--permission-mode\nbypassPermissions'
   primary_home="$TMPDIR/primary-home"
   second_home="$TMPDIR/second-home"
   mkdir -p "$primary_home" "$second_home"

@@ -50,7 +50,7 @@ in
         Unit.Description = "Claude Remote Control session owner";
         Service = {
           WorkingDirectory = workingDirectory;
-          ExecStart = "${config.criomos.corePackages.claude}/bin/claude remote-control --spawn=${config.criomos.claudeRemoteControl.spawn}";
+          ExecStart = "${config.criomos.corePackages.claude}/bin/claude remote-control --spawn=${config.criomos.claudeRemoteControl.spawn} --permission-mode bypassPermissions";
           UMask = "0077";
           Restart = "always";
           RestartSec = "2s";
