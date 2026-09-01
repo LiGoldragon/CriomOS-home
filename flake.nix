@@ -107,7 +107,7 @@
     # The packaging recipe is public and immutable; its proprietary payload is
     # a separate local input.  The locked NAR hash identifies the exact
     # user-supplied installer without committing, hosting, or redistributing it.
-    wispr-flow-linux.url = "github:LiGoldragon/wispr-flow-linux?rev=b984155cff6677b8a4bd9ead29355255eac827c3";
+    wispr-flow-linux.url = "github:LiGoldragon/wispr-flow-linux?rev=3cf180636c723073141ea6f8d7b94467125aab3a";
     wispr-flow-linux.inputs.nixpkgs.follows = "nixpkgs";
     wispr-flow-installer = {
       url = "path:/home/li/.local/share/wispr-flow-installer/wispr-flow-setup-1.6.7.exe";
