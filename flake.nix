@@ -635,6 +635,9 @@
           };
           bird-home-isolation = checkPkgs.callPackage ./checks/bird-home-isolation { inherit inputs; };
           desktop-shell-launch = checkPkgs.callPackage ./checks/desktop-shell-launch { inherit inputs; };
+          wispr-flow-profile-tier = checkPkgs.callPackage ./checks/wispr-flow-profile-tier {
+            inherit inputs;
+          };
           wispr-status-niri-rule = checkPkgs.callPackage ./checks/wispr-status-niri-rule { inherit inputs; };
           noctalia-settings-composition = checkPkgs.callPackage ./checks/noctalia-settings-composition {
             inherit inputs;
