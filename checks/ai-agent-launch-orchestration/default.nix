@@ -2,6 +2,7 @@
 
 let
   minProfileModule = ../../modules/home/profiles/min/default.nix;
+  codexPermissionDefaults = import ../../modules/home/profiles/min/codex-permission-defaults.nix;
   system = pkgs.stdenv.hostPlatform.system;
   ownedAgentPackages = import ../../lib/owned-agent-packages.nix {
     inherit inputs pkgs;
@@ -28,6 +29,7 @@ pkgs.runCommand "ai-agent-launch-orchestration"
   {
     nativeBuildInputs = [
       pkgs.gnugrep
+      pkgs.jq
       pkgs.yq-go
     ];
   }
@@ -127,12 +129,49 @@ pkgs.runCommand "ai-agent-launch-orchestration"
       codexHome="$TMPDIR/codex-home"
       mkdir -p "$codexHome"
       cat > "$codexHome/config.toml" <<'EOF'
+    approval_policy = "${codexPermissionDefaults.approval_policy}"
+    sandbox_mode = "${codexPermissionDefaults.sandbox_mode}"
+
     [agents]
     default_subagent_model = "gpt-5.6-luna"
     default_subagent_reasoning_effort = "xhigh"
     EOF
       CODEX_HOME="$codexHome" DISABLE_AUTOUPDATER=1 ${codexCliPackage}/bin/codex \
         --strict-config exec-server --listen stdio < /dev/null > "$TMPDIR/codex-agents-config.log" 2>&1
+
+      # ChatGPT Desktop creates a fresh thread through app-server rather than
+      # the terminal wrapper. Observe that route's actual thread settings so
+      # both client surfaces receive the universal full-access defaults.
+      coproc codex_app_server {
+        CODEX_HOME="$codexHome" DISABLE_AUTOUPDATER=1 ${codexCliPackage}/bin/codex \
+          app-server --listen stdio://
+      }
+      trap 'kill "$codex_app_server_PID" 2>/dev/null || true; wait "$codex_app_server_PID" 2>/dev/null || true' EXIT
+      codex_request() {
+        printf '%s\n' "$1" >&"''${codex_app_server[1]}"
+      }
+      codex_response() {
+        response_id="$1"
+        response_file="$2"
+        while IFS= read -r -t 20 response <&"''${codex_app_server[0]}"; do
+          if printf '%s' "$response" | jq -e ".id == $response_id and .result != null" >/dev/null; then
+            printf '%s\n' "$response" > "$response_file"
+            return 0
+          fi
+        done
+        return 1
+      }
+      codex_request '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"clientInfo":{"name":"criomos-check","version":"1"}}}'
+      codex_response 1 "$TMPDIR/codex-app-server-initialize.json"
+      codex_request '{"jsonrpc":"2.0","id":2,"method":"thread/start","params":{"cwd":"/tmp","ephemeral":true}}'
+      codex_response 2 "$TMPDIR/codex-app-server-thread.json"
+      jq -e '
+        .result.approvalPolicy == "never"
+        and .result.sandbox.type == "dangerFullAccess"
+      ' "$TMPDIR/codex-app-server-thread.json" >/dev/null
+      kill "$codex_app_server_PID"
+      wait "$codex_app_server_PID" || true
+      trap - EXIT
 
       # User-level role files set Terra explicitly, and the global fallback
       # protects every omission from selecting a different model.
