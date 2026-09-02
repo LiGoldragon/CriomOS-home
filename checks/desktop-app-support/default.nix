@@ -16,7 +16,9 @@ let
   chatgptPackage = ownedAgentPackages.chatgptPackage;
   chatgptUnwrapped = chatgptPackage.passthru.unwrapped;
   chatgptCompanion = "${chatgptUnwrapped}/lib/chatgpt/resources/codex";
-  chatgptWrapperProbeUnwrapped = pkgs.runCommand "chatgpt-wrapper-probe-unwrapped" { } ''
+  chatgptWrapperProbeUnwrapped = pkgs.runCommand "chatgpt-wrapper-probe-unwrapped" {
+    passthru.version = source.version;
+  } ''
     mkdir -p "$out/bin" "$out/share"
     cat > "$out/bin/chatgpt" <<'EOF'
     #!${pkgs.runtimeShell}
