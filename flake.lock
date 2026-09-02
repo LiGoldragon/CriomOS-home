@@ -1242,17 +1242,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1788307656,
-        "narHash": "sha256-folymNkOsmdAaqri6bZbkOO8KnY3O004NmsAamu4HXU=",
+        "lastModified": 1788311483,
+        "narHash": "sha256-65DsfH77vEB6cJGO+IiL3ywWXNn3lLYHtrl1S4b+U0Y=",
         "owner": "LiGoldragon",
         "repo": "harness",
-        "rev": "2d87945e5c03817995ddca7f04771e6833b8f8ad",
+        "rev": "d6f2b6f4aec158a6eb12e07ff33886ae49d2071c",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "harness",
-        "rev": "2d87945e5c03817995ddca7f04771e6833b8f8ad",
+        "rev": "d6f2b6f4aec158a6eb12e07ff33886ae49d2071c",
         "type": "github"
       }
     },

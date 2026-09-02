@@ -8,6 +8,11 @@ writing its first artifact. The alias is `FLOW_ID`; its lane is
 `FLOW_DIRECTORY`. Existing unmarked lanes remain collisions and are never
 overwritten. Child threads receive those parent values and do not claim lanes.
 
+The current `harness` pin publishes each versioned marker only after complete
+private metadata is ready under a stable private claim lock. A concurrent
+parent claim therefore cannot read a partial marker; malformed markers still
+fail closed.
+
 ## Chroma 0.3.1 Datomic configuration cutover
 
 This generation pins Chroma `0.3.1` at
