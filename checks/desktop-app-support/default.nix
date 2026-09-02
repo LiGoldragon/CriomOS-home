@@ -151,6 +151,50 @@ pkgs.runCommand "desktop-app-support-contract"
     strings ${chatgptPackage.passthru.unwrapped}/lib/chatgpt/resources/app.asar | grep -F 'getConfigOverrides:()=>[]'
     strings ${chatgptPackage.passthru.unwrapped}/lib/chatgpt/resources/app.asar | grep -F 'async function Pge(){return[]}'
 
+    # Parse the entire generated ASAR header and ask Node to parse every
+    # packed JavaScript payload. This verifies the actual packaged artifact,
+    # rather than just the small source fixture below.
+    asar_js_dir="$TMPDIR/chatgpt-asar-js"
+    mkdir -p "$asar_js_dir"
+    ${pkgs.python3}/bin/python - ${chatgptPackage.passthru.unwrapped}/lib/chatgpt/resources/app.asar "$asar_js_dir" <<'PY'
+    import json
+    import pathlib
+    import sys
+
+    asar_path = pathlib.Path(sys.argv[1])
+    output_dir = pathlib.Path(sys.argv[2])
+    blob = asar_path.read_bytes()
+    # ASAR stores the padded header size at bytes 4..8 and the JSON payload
+    # size at bytes 12..16.  The padding between JSON and payload is part of
+    # the header, so using json_size as the payload offset misaligns every
+    # extracted JavaScript file by nine bytes in this package.
+    header_size = int.from_bytes(blob[4:8], "little")
+    json_size = int.from_bytes(blob[12:16], "little")
+    header = json.loads(blob[16 : 16 + json_size])
+    payload_offset = 8 + header_size
+    paths = []
+
+    def visit(node, path=""):
+        for name, entry in node.get("files", {}).items():
+            child_path = f"{path}/{name}"
+            if "files" in entry:
+                visit(entry, child_path)
+            elif child_path.endswith(".js") and not entry.get("unpacked", False):
+                offset = payload_offset + int(entry["offset"])
+                contents = blob[offset : offset + entry["size"]]
+                assert len(contents) == entry["size"], child_path
+                destination = output_dir / f"{len(paths)}.js"
+                destination.write_bytes(contents)
+                paths.append(destination)
+
+    visit(header)
+    assert paths
+    (output_dir / "paths").write_text("\n".join(map(str, paths)) + "\n")
+    PY
+    while IFS= read -r asar_js; do
+      ${pkgs.nodejs}/bin/node --check "$asar_js"
+    done < "$asar_js_dir/paths"
+
     # Patching is byte-length preserving, so the replacement must consume the
     # original function's closing brace. Exercise the complete patch pipeline
     # on the exact matched JS shapes and ask Node to parse the result.
@@ -159,11 +203,117 @@ pkgs.runCommand "desktop-app-support-contract"
     isLinux() && process.report;
     async function ab(e,t){if(cd.default.platform===`darwin`){await ef(`/usr/bin/ditto`,[`--noqtn`,e,t]);return}if(cd.default.platform!==`win32`){await gh.default.cp(e,t,{recursive:!0,verbatimSymlinks:!0});return}}
     const connection={getConfigOverrides:()=>Pge(e)};
-    async function Pge({hostConfig:e,resourcesPath:t=process.resourcesPath}){return e}function YE(e){return ZZ.warning(`Codex app tools unavailable`)}
+    async function Pge({hostConfig:e,resourcesPath:t=process.resourcesPath}){/* ................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................ */return e}function YE(e){return ZZ.warning(`Codex app tools unavailable`)}
     EOF
     ${pkgs.python3}/bin/python ${../../owned-agents/chatgpt/patch-asar.py} "$patch_fixture"
     grep -F 'async function Pge(){return[]}' "$patch_fixture"
     ${pkgs.nodejs}/bin/node --check "$patch_fixture"
+
+    # Composer constructs a flat codex_app enabled-tools setting after the
+    # App Tools resolver has run.  The request boundary must remove that form
+    # and the equivalent nested form for start, resume, and fork over both
+    # local stdio and WebSocket, without disturbing unrelated configuration.
+    composer_fixture="$TMPDIR/chatgpt-composer-transport.js"
+    cat > "$composer_fixture" <<'EOF'
+    isLinux() && process.report;
+    async function ab(e,t){if(cd.default.platform===`darwin`){await ef(`/usr/bin/ditto`,[`--noqtn`,e,t]);return}if(cd.default.platform!==`win32`){await gh.default.cp(e,t,{recursive:!0,verbatimSymlinks:!0});return}}
+    const connection={getConfigOverrides:()=>Pge(e)};
+    async function Pge({hostConfig:e,resourcesPath:t=process.resourcesPath}){/* ................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................ */return e}function YE(e){return ZZ.warning(`Codex app tools unavailable`)}
+    function _T(e){return Nge.warning(`Codex app tools unavailable for this Core launch`,{safe:{reason:e},sensitive:{}}),[`mcp_servers.codex_app={command="",enabled=false}`]}
+    function mte(e,t,n){return e}
+    function ai(e){return!0}
+    function oi(e){return ui(e.params.config)}
+    function gte(e,t){return`''${e}.''${t}`.replaceAll(`[`,`.`).replaceAll(`]`,``).replace(/["'\s]/gu,``).replace(/\.{2,}/gu,`.`).replace(/^\.|\.$/gu,``)}
+    function li(e){return!(`id`in e)||!(`method`in e)?!1:e.method===`thread/start`||e.method===`thread/resume`||e.method===`thread/fork`}
+    function ui(e){return typeof e===`object`&&!!e&&!Array.isArray(e)}
+    function pte({getHostLifecycle:e,getExpectedThreadConfig:t,isLocalStdio:n}){if(n())return r=>n()?mte(r,li(r)&&ai(r)?e():null,t):r}
+    async function cj({config:c,effort:r,client:d}){let h={config:{...c,"mcp_servers.codex_app":{enabled:!1,command:``},model_reasoning_effort:r}};return d.startThread(h)}
+    async function h0({config:s,effort:r,client:f,sourceThreadId:c}){let v={...s,"mcp_servers.codex_app":{enabled:!1,command:``},model_reasoning_effort:r};return c==null?f.startThread({config:v}):f.forkThread({config:v})}
+    function REi(e,t){return{...e,...t}}
+    function PEn(e){return{"mcp_servers.codex_app.enabled_tools":e}}
+    function _ca(e){return{config:REi(e,PEn([`normal-composer`]))}}
+    function Rrn(e){return{method:`thread/start`,params:_ca(e)}}
+    EOF
+    composer_before_fixture="$TMPDIR/chatgpt-composer-transport-before.js"
+    cp "$composer_fixture" "$composer_before_fixture"
+    ${pkgs.nodejs}/bin/node - "$composer_before_fixture" <<'EOF'
+    const assert = require(`assert`);
+    const fs = require(`fs`);
+    const vm = require(`vm`);
+    const source = fs.readFileSync(process.argv[2], `utf8`);
+    const context = { isLinux: () => false, process, console };
+    vm.createContext(context);
+    vm.runInContext(source, context);
+    const unrelated = {
+      "features.keep": true,
+      "mcp_servers.other": { command: `keep` },
+      mcp_servers: { other: { url: `https://example.invalid/mcp` } },
+    };
+    const request = context.Rrn(unrelated);
+    assert.equal(
+      Object.hasOwn(request.params.config, `mcp_servers.codex_app.enabled_tools`),
+      true,
+      `broken normal Composer path no longer reproduces flat codex_app leak`
+    );
+    console.log(`failing-before witness: normal Composer WebSocket request leaked flat enabled_tools`);
+    EOF
+    ${pkgs.python3}/bin/python ${../../owned-agents/chatgpt/patch-asar.py} "$composer_fixture"
+    ${pkgs.nodejs}/bin/node --check "$composer_fixture"
+    ${pkgs.nodejs}/bin/node - "$composer_fixture" <<'EOF'
+    const assert = require(`assert`);
+    const fs = require(`fs`);
+    const vm = require(`vm`);
+    const source = fs.readFileSync(process.argv[2], `utf8`);
+    const context = { isLinux: () => false, process, console };
+    vm.createContext(context);
+    vm.runInContext(source, context);
+    const hasCodexApp = config => config != null && typeof config === `object` && (
+      Object.keys(config).some(key => key === `mcp_servers.codex_app` || key.startsWith(`mcp_servers.codex_app.`)) ||
+      Object.hasOwn(config.mcp_servers ?? {}, `codex_app`)
+    );
+    const unrelated = {
+      "features.keep": true,
+      "mcp_servers.other": { command: `keep` },
+      mcp_servers: { other: { url: `https://example.invalid/mcp` } },
+    };
+    const transports = [
+      [ `stdio`, true ],
+      [ `websocket`, false ],
+    ];
+    const methods = [ `thread/start`, `thread/resume`, `thread/fork` ];
+    const forms = [
+      [ `flat`, { ...unrelated, "mcp_servers.codex_app.enabled_tools": [ `private-tool` ] } ],
+      [ `nested`, { ...unrelated, mcp_servers: { ...unrelated.mcp_servers, codex_app: { enabled: false, command: `` } } } ],
+    ];
+    for (const [transport, isLocalStdio] of transports) {
+      const send = context.pte({ getHostLifecycle: () => null, getExpectedThreadConfig: () => ({}), isLocalStdio: () => isLocalStdio });
+      for (const method of methods) for (const [form, config] of forms) {
+        const request = send({ id: `''${transport}-''${method}-''${form}`, method, params: { config } });
+        assert.equal(hasCodexApp(request.params.config), false, `''${transport} ''${method} ''${form} leaked codex_app`);
+        assert.equal(request.params.config[`features.keep`], true);
+        assert.equal(request.params.config[`mcp_servers.other`].command, `keep`);
+        assert.equal(request.params.config.mcp_servers.other.url, `https://example.invalid/mcp`);
+      }
+    }
+    const websocket = context.pte({ getHostLifecycle: () => null, getExpectedThreadConfig: () => ({}), isLocalStdio: () => false });
+    const normalComposer = websocket(context.Rrn(unrelated));
+    assert.equal(hasCodexApp(normalComposer.params.config), false, `normal Composer merge leaked flat enabled_tools`);
+    assert.equal(normalComposer.params.config[`features.keep`], true);
+    const captured = [];
+    const client = {
+      startThread: async params => { captured.push(websocket({ method: `thread/start`, params })); return { thread: { id: `start` } }; },
+      forkThread: async params => { captured.push(websocket({ method: `thread/fork`, params })); return { thread: { id: `fork` } }; },
+    };
+    Promise.resolve()
+      .then(() => context.cj({ config: unrelated, effort: `low`, client }))
+      .then(() => context.h0({ config: unrelated, effort: `low`, client, sourceThreadId: null }))
+      .then(() => context.h0({ config: unrelated, effort: `low`, client, sourceThreadId: `existing` }))
+      .then(() => {
+        assert.equal(captured.length, 3);
+        for (const request of captured) assert.equal(hasCodexApp(request.params.config), false, `''${request.method} producer leaked codex_app`);
+        console.log(`composer transport request contract passed`);
+      });
+    EOF
 
     # The Desktop client must reach the shared owner without injecting its
     # retired private App Tools MCP server.  Exercise the same app-server
@@ -189,17 +339,32 @@ pkgs.runCommand "desktop-app-support-contract"
       done
       return 1
     }
+    codex_error() {
+      response_id="$1"
+      response_file="$2"
+      while IFS= read -r -t 20 response <&"''${codex_app_server[0]}"; do
+        if printf '%s' "$response" | jq -e ".id == $response_id and .error != null" >/dev/null; then
+          printf '%s\n' "$response" > "$response_file"
+          return 0
+        fi
+      done
+      return 1
+    }
     codex_request '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"clientInfo":{"name":"desktop-app-support","version":"1"}}}'
     codex_response 1 "$TMPDIR/codex-app-server-initialize.json"
-    codex_request '{"jsonrpc":"2.0","id":2,"method":"thread/start","params":{"cwd":"/tmp"}}'
-    codex_response 2 "$TMPDIR/codex-app-server-thread-start.json"
+    codex_request '{"jsonrpc":"2.0","id":2,"method":"thread/start","params":{"cwd":"/tmp","config":{"mcp_servers.codex_app":{"enabled":false,"command":""}}}}'
+    codex_error 2 "$TMPDIR/codex-app-server-invalid-codex-app.json"
+    jq -e '.error.message | contains("invalid transport in mcp_servers.codex_app")' \
+      "$TMPDIR/codex-app-server-invalid-codex-app.json" >/dev/null
+    codex_request '{"jsonrpc":"2.0","id":3,"method":"thread/start","params":{"cwd":"/tmp","config":{}}}'
+    codex_response 3 "$TMPDIR/codex-app-server-thread-start.json"
     thread_id="$(jq -r '.result.thread.id' "$TMPDIR/codex-app-server-thread-start.json")"
     test "$thread_id" != null
-    codex_request "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"turn/start\",\"params\":{\"threadId\":\"$thread_id\",\"input\":[]}}"
-    codex_response 3 "$TMPDIR/codex-app-server-turn-start.json"
+    codex_request "{\"jsonrpc\":\"2.0\",\"id\":4,\"method\":\"turn/start\",\"params\":{\"threadId\":\"$thread_id\",\"input\":[]}}"
+    codex_response 4 "$TMPDIR/codex-app-server-turn-start.json"
     jq -e '.result.turn.status == "inProgress"' "$TMPDIR/codex-app-server-turn-start.json" >/dev/null
-    codex_request "{\"jsonrpc\":\"2.0\",\"id\":4,\"method\":\"thread/resume\",\"params\":{\"threadId\":\"$thread_id\"}}"
-    codex_response 4 "$TMPDIR/codex-app-server-thread-resume.json"
+    codex_request "{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"thread/resume\",\"params\":{\"threadId\":\"$thread_id\"}}"
+    codex_response 5 "$TMPDIR/codex-app-server-thread-resume.json"
     jq -e --arg thread_id "$thread_id" '.result.thread.id == $thread_id' \
       "$TMPDIR/codex-app-server-thread-resume.json" >/dev/null
     kill "$codex_app_server_PID"
