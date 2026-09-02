@@ -106,6 +106,35 @@ path, the native-mode launch environment, and daemon WebSocket reconnects. They
 do not yet drive the Electron GUI through a graphical Desktop connection; that
 final GUI-native smoke remains a deployment-time observation boundary.
 
+## Claude Fable 5.1 and persistent Remote Control
+
+This generation moves the declared Claude Code CLI, Claude Code VSIX, and
+Claude Desktop together. Claude Code 2.1.257 introduced
+`claude-fable-5-1` and made it the current Fable picker entry, while the
+package is pinned at 2.1.258. The persistent `claude-remote-control` owner
+remains model-neutral: selecting a model is a new-session decision, not a
+global Home policy.
+
+Deploy the resulting Home revision before changing the running owner. Verify
+the installed CLI with `claude --version`, then restart only the owner with
+`systemctl --user restart claude-remote-control` when no managed session has
+an in-flight turn. A restart replaces the owner process, so attached Claude
+Desktop, browser, and mobile clients reconnect through Anthropic's relay.
+There is no process-level session preservation across that restart: defer it
+until the current work is safe to interrupt. The declaration neither rewrites
+local Claude transcript files nor migrates account-side conversation/model
+state; whether an interrupted Remote Control session can be reopened is
+Anthropic relay behavior, not a Home migration guarantee. To start a new
+terminal session with Fable, use `claude --model claude-fable-5-1`; in Claude
+Desktop, browser, and mobile, choose **Fable 5.1** from the upstream model
+picker. Fable 5.1 uses 30-day safety-monitoring retention by default; do not
+select it where that retention is unacceptable.
+
+Do not use a stateful Claude Code update or allow Desktop to download its own
+CLI. If the post-activation CLI is not the pinned version or the Remote
+Control owner does not restart, leave the previous owner stopped and repair
+the declarative generation before creating further sessions.
+
 ## Persistent Claude Remote Control
 
 Every enabled minimum Home profile now requires an explicit, absolute non-home

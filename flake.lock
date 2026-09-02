@@ -451,13 +451,13 @@
     "claude-code-vsix": {
       "flake": false,
       "locked": {
-        "narHash": "sha256-iO3xKG990t2Pz6SPGPpef0NiKqxlOzLlwoQ55CalJes=",
+        "narHash": "sha256-a79RBiFw+8XON/vQKlFY8lZKtf3SQNPATH2nieZd9yg=",
         "type": "file",
-        "url": "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/anthropic/vsextensions/claude-code/2.1.251/vspackage"
+        "url": "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/anthropic/vsextensions/claude-code/2.1.258/vspackage"
       },
       "original": {
         "type": "file",
-        "url": "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/anthropic/vsextensions/claude-code/2.1.251/vspackage"
+        "url": "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/anthropic/vsextensions/claude-code/2.1.258/vspackage"
       }
     },
     "codex-chatgpt-vsix": {
