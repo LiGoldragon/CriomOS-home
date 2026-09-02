@@ -81,6 +81,14 @@ pkgs.runCommand "desktop-app-support-contract"
       CODEX_HOME="$companion_home/codex" \
       DISABLE_AUTOUPDATER=1 \
       ${chatgptCompanion} --version | grep -E '^codex-cli [0-9]+'
+    env \
+      HOME="$companion_home/home" \
+      XDG_CONFIG_HOME="$companion_home/config" \
+      XDG_STATE_HOME="$companion_home/state" \
+      XDG_CACHE_HOME="$companion_home/cache" \
+      CODEX_HOME="$companion_home/codex" \
+      DISABLE_AUTOUPDATER=1 \
+      ${chatgptCompanion} app-server --listen stdio:// </dev/null
     if env \
       HOME="$companion_home/home" \
       XDG_CONFIG_HOME="$companion_home/config" \
