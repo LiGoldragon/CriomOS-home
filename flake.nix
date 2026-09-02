@@ -86,7 +86,7 @@
     # run the VSCodium lifecycle check before deploying.
     codex-chatgpt-vsix = {
       type = "file";
-      url = "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/openai/vsextensions/chatgpt/26.5825.32147/vspackage";
+      url = "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/openai/vsextensions/chatgpt/26.5825.51511/vspackage?targetPlatform=linux-x64";
       flake = false;
     };
 

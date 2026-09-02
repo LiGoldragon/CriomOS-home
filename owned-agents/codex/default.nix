@@ -21,7 +21,6 @@ let
     lib
     stdenv
     fetchurl
-    fetchFromGitHub
     installShellFiles
     makeWrapper
     rustPlatform
@@ -35,10 +34,8 @@ let
     inherit lib stdenv;
     inherit fetchurl;
   };
-  actualSrc = fetchFromGitHub {
-    owner = "openai";
-    repo = "codex";
-    tag = "rust-v${version}";
+  actualSrc = fetchurl {
+    url = "https://github.com/openai/codex/archive/refs/tags/rust-v${version}.tar.gz";
     inherit hash;
   };
   librustyV8Package = mkRustyV8Archive codexVersionData.librusty_v8;
@@ -48,6 +45,12 @@ rustPlatform.buildRustPackage (
     pname = "codex";
     inherit version sourceRoot;
     src = actualSrc;
+    unpackPhase = ''
+      runHook preUnpack
+      mkdir source
+      tar --extract --file "$src" --gzip --strip-components=1 --directory source
+      runHook postUnpack
+    '';
 
     cargoBuildFlags = [
       "--package"

@@ -62,10 +62,10 @@ pkgs.runCommand "owned-agent-updater-negative-path"
     original_fetch_json = codex.fetch_json
     codex.fetch_json = lambda _url: [
         {"tag_name": "rust-v0.152.0-alpha.5", "prerelease": True},
-        {"tag_name": "rust-v0.151.0"},
+        {"tag_name": "rust-v0.152.1"},
     ]
     try:
-        assert codex.latest_version() == "0.151.0"
+        assert codex.latest_version() == "0.152.1"
     finally:
         codex.fetch_json = original_fetch_json
 

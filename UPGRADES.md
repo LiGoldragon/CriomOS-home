@@ -106,6 +106,27 @@ path, the native-mode launch environment, and daemon WebSocket reconnects. They
 do not yet drive the Electron GUI through a graphical Desktop connection; that
 final GUI-native smoke remains a deployment-time observation boundary.
 
+## Codex 0.152.1 and ChatGPT Desktop 26.831.21537 persistent-owner crossing
+
+This generation advances the single declared Codex CLI to `0.152.1` and the
+official signed ChatGPT Desktop package to `26.831.21537`; the independently
+packaged Codex sidebar advances to `26.5825.51511`.  The Desktop app is still
+only a client of the existing `codex-remote-control` owner.  Its packaged
+resolver reaches the same declared Codex executable, while its private
+`codex_app` App Tools MCP producer remains disabled so it cannot create a
+private server or inject configuration rejected by the shared owner.
+
+Deploy the complete Home generation before touching the running owner. Verify
+`codex --version` reports `codex-cli 0.152.1`, and verify the Desktop package
+version through the installed package metadata.  If the currently managed
+owner must adopt the new CLI, restart only `codex-remote-control` when no
+managed session has an in-flight turn; clients reconnect through the existing
+control route.  The restart replaces the owner process, so no in-flight turn
+or process-local session state is preserved.  Do not launch a second
+app-server, use `direct-codex` as a normal client, or permit Desktop to fall
+back to a bundled resolver.  This declarative update neither changes local
+Codex transcript files nor migrates account-side conversation state.
+
 ## Claude Fable 5.1 and persistent Remote Control
 
 This generation moves the declared Claude Code CLI, Claude Code VSIX, and

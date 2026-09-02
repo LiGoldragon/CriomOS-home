@@ -104,7 +104,7 @@ def main() -> None:
     source_url = f"https://github.com/openai/codex/archive/refs/tags/{tag}.tar.gz"
     updated = {
         "version": version,
-        "hash": url_hash(source_url, unpack=True),
+        "hash": url_hash(source_url),
         "cargoHash": DUMMY_SHA256_HASH,
         "librusty_v8": rusty_v8(version, data.get("librusty_v8")),
     }

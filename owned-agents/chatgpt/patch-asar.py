@@ -45,7 +45,7 @@ SHARED_APP_SERVER = (
 # Desktop separately synchronizes its bundled App Tools MCP server through
 # config/batchWrite for every local app-server connection.  That path survives
 # the resolver override above and produces a `codex_app` entry which Codex
-# 0.151.0 rejects before either a fresh thread or a resumed thread can run.
+# 0.152.1 rejects before either a fresh thread or a resumed thread can run.
 # Desktop is an ordinary WebSocket client of the shared daemon, so it must not
 # create a private App Tools configuration at all.
 NO_APP_TOOLS_CONFIG_OVERRIDE = (
