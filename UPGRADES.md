@@ -2,11 +2,11 @@
 
 ## Flow identity helper
 
-After activating a generation pinned to `harness`'s `flow-id`, a parent flow
-claims its lane with `flow-id codex --flows-root /absolute/flows-root` before
-writing its first artifact. The alias is `FLOW_ID`; its lane is
-`FLOW_DIRECTORY`. Existing unmarked lanes remain collisions and are never
-overwritten. Child threads receive those parent values and do not claim lanes.
+After activating a generation pinned to `harness`'s `flow-id`, a parent flow claims its lane with `flow-id codex --flows-root /absolute/flows-root` or `flow-id claude --flows-root /absolute/flows-root --parent-session UUID` before writing its first artifact.
+
+Codex starts from normalized UUID characters `[23:29]`; Claude accepts only a canonical lowercase RFC 4122 UUIDv4 parent session and starts from its first six literal hexadecimal characters. The alias is `FLOW_ID`; its lane is `FLOW_DIRECTORY`. Existing unmarked lanes remain collisions and are never overwritten. Child threads receive those parent values and do not claim lanes.
+
+Claude callers with non-v4 or noncanonical parent IDs must provide the authoritative canonical UUIDv4 parent session. The Home wrapper does not infer or fall back to a Claude environment variable.
 
 The current `harness` pin publishes each versioned marker only after complete
 private metadata is ready under a stable private claim lock. A concurrent

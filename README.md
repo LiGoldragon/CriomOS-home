@@ -1,8 +1,12 @@
 # CriomOS-home
 
 The minimum Home profile installs the pinned `flow-id` parent-flow helper from
-`harness`. Parents claim a shared lane before their first flow artifact; child
-threads receive `FLOW_ID` and `FLOW_DIRECTORY` and do not invoke the helper.
+`harness`. Codex parents claim from their normalized UUID's `[23:29]`
+characters; Claude parents invoke `flow-id claude --flows-root
+ABSOLUTE_DIRECTORY --parent-session UUID` with their canonical UUIDv4 parent
+session and claim its first six literal hexadecimal characters. Both extend on
+collisions. Child threads receive `FLOW_ID` and `FLOW_DIRECTORY` and do not
+invoke the helper.
 
 Home profile for CriomOS, as a standalone blueprint flake.
 
