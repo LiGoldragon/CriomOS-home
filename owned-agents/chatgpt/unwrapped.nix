@@ -1,7 +1,4 @@
-{
-  pkgs,
-  codexPackage ? pkgs.callPackage ../codex { },
-}:
+{ pkgs }:
 
 let
   inherit (pkgs)
@@ -11,7 +8,6 @@ let
     coreutils
     dpkg
     makeWrapper
-    python3
     wrapGAppsHook3
     alsa-lib
     at-spi2-atk
@@ -139,22 +135,13 @@ stdenv.mkDerivation {
   installPhase = ''
     runHook preInstall
     mkdir -p "$out/bin" "$out/lib" "$out/share"
-    # The Electron client reaches the persistent app-server through its
-    # local-daemon transport.  That path first resolves and interrogates a
-    # CLI candidate, but CODEX_CLI_PATH would disable the local-daemon branch.
-    # Supply the managed CLI at the resolver's packaged location instead; the
-    # service still owns the only Codex server and the app remains its ordinary
-    # client.
     test -d usr/lib/chatgpt
     test -d usr/lib/chatgpt/resources
+    test -x usr/lib/chatgpt/resources/codex
     test -x usr/lib/chatgpt/codex-launcher
     cp -a usr/lib/chatgpt "$out/lib/"
     cp -r usr/share/applications usr/share/pixmaps "$out/share/"
     ln -s ../lib/chatgpt/codex-launcher "$out/bin/chatgpt"
-    mkdir -p "$out/lib/chatgpt/resources"
-    rm -f "$out/lib/chatgpt/resources/codex"
-    ln -s ${lib.getExe codexPackage} "$out/lib/chatgpt/resources/codex"
-    python3 ${./patch-asar.py} "$out/lib/chatgpt/resources/app.asar"
     wrapProgram "$out/lib/chatgpt/ChatGPT" \
       "''${gappsWrapperArgs[@]}" \
       --prefix PATH : ${

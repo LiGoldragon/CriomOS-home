@@ -80,52 +80,26 @@ their matching removal revisions before activating this Home generation. A
 non-Edge or minimum-only profile deliberately receives no Claude/ChatGPT
 Desktop handlers; `codex-remote-control` remains a minimum profile service.
 
-## Unified Codex app-server clients
+## ChatGPT Desktop stock vendor boundary
 
-This generation makes the per-user `codex-remote-control` service the only
-normal Codex thread writer. Terminal `codex`, ChatGPT Desktop, and the phone
-are clients of its control socket. ChatGPT Desktop reaches it only through its
-packaged bare `app-server` stdio endpoint, which transparently proxies to the
-existing per-user socket; it cannot start a second owner. Closing a terminal or
-Desktop window detaches that client; it must not be used to stop the service.
+This generation removes the custom ChatGPT-to-persistent-Codex crossing.
+ChatGPT Desktop now retains the vendor `app.asar` and vendor
+`resources/codex` Desktop Core byte-for-byte; it neither forces the
+local-daemon route nor clears vendor CLI/App Tools selection variables. The
+Wayland launch argument remains unchanged.
 
-Before activating, stop any manually started Codex app-server process. After
-activation, confirm `systemctl --user is-active codex-remote-control` and run
-`codex app-server daemon version`. If either fails, Desktop fails closed rather
-than falling back to a bundled or host Codex writer. Repair the managed unit or
-its pinned package, then restart the unit; do not start a second app-server.
+Deploy the complete Home generation through the normal declarative path. Do
+not patch the installed application, replace `resources/codex`, or reuse the
+retired ASAR sanitizer. A new Desktop window uses the vendor private Core;
+it is not a client of `codex-remote-control` and does not share that owner's
+process-local state.
 
-`direct-codex` is the explicit raw recovery escape. It bypasses the normal
-client-routing guard and can create a separate writer, so use it only to repair
-or diagnose a failed managed service. It is not a normal terminal entry point.
-Ordinary `codex remote-control …` now exits 126 for the same reason; it cannot
-start an ephemeral private owner beside the managed socket.
-
-The packaged checks exercise the gate, its actual Electron `resources/codex`
-path, the native-mode launch environment, and daemon WebSocket reconnects. They
-do not yet drive the Electron GUI through a graphical Desktop connection; that
-final GUI-native smoke remains a deployment-time observation boundary.
-
-## Codex 0.152.1 and ChatGPT Desktop 26.831.21537 persistent-owner crossing
-
-This generation advances the single declared Codex CLI to `0.152.1` and the
-official signed ChatGPT Desktop package to `26.831.21537`; the independently
-packaged Codex sidebar advances to `26.5825.51511`.  The Desktop app is still
-only a client of the existing `codex-remote-control` owner.  Its packaged
-resolver reaches the same declared Codex executable, while its private
-`codex_app` App Tools MCP producer remains disabled so it cannot create a
-private server or inject configuration rejected by the shared owner.
-
-Deploy the complete Home generation before touching the running owner. Verify
-`codex --version` reports `codex-cli 0.152.1`, and verify the Desktop package
-version through the installed package metadata.  If the currently managed
-owner must adopt the new CLI, restart only `codex-remote-control` when no
-managed session has an in-flight turn; clients reconnect through the existing
-control route.  The restart replaces the owner process, so no in-flight turn
-or process-local session state is preserved.  Do not launch a second
-app-server, use `direct-codex` as a normal client, or permit Desktop to fall
-back to a bundled resolver.  This declarative update neither changes local
-Codex transcript files nor migrates account-side conversation state.
+The independent persistent owner remains for terminal Codex routing and phone
+Remote Control. Agent Intercom, the VSCodium sidebar, and full-access defaults
+are unchanged. Do not restart `codex-remote-control` merely for this Desktop
+rollback. The package check compares the delivered ASAR and bundled Core with
+an independently extracted fixed-output OpenAI archive and exercises the
+generated wrapper with inherited vendor variables plus Wayland selection.
 
 ## Claude Fable 5.1 and persistent Remote Control
 

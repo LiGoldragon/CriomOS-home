@@ -11,7 +11,6 @@
 }
 // pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
   chatgptPackage = pkgs.callPackage ../owned-agents/chatgpt {
-    inherit codexPackage;
     commandLineArgs = chatgptCommandLineArgs;
   };
   claudeDesktopPackage = pkgs.callPackage ../owned-agents/claude-desktop {

@@ -24,11 +24,10 @@ let
     inherit claudeCodePackage;
   };
   chatgpt = pkgs.callPackage ../../../../owned-agents/chatgpt {
-    codexPackage = codexCliPackage;
     commandLineArgs = "--ozone-platform=wayland";
   };
-  # The shared package is the sole Codex derivation for the terminal,
-  # Desktop, Agent Intercom, and editor paths.
+  # Codex remains the shared terminal, Remote Control, Agent Intercom, and
+  # editor package. ChatGPT Desktop carries its vendor Core independently.
   agentIntercom = pkgs.callPackage ../../../../packages/agent-intercom {
     inherit inputs codexCliPackage claudeCodePackage;
     codexRawCommand = "${codexCliPackage}/bin/codex";

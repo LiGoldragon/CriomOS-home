@@ -54,12 +54,18 @@ pkgs.runCommand "desktop-app-support-contract"
     # byte equality is the relevant contract rather than a source marker.
     pristine="$TMPDIR/pristine"
     dpkg-deb -x ${pristineArchive} "$pristine"
-    cmp -s \
+    if ! cmp -s \
       "$pristine/usr/lib/chatgpt/resources/app.asar" \
-      ${chatgptUnwrapped}/lib/chatgpt/resources/app.asar
-    cmp -s \
+      ${chatgptUnwrapped}/lib/chatgpt/resources/app.asar; then
+      echo 'packaged app.asar differs from the independently extracted vendor ASAR' >&2
+      exit 1
+    fi
+    if ! cmp -s \
       "$pristine/usr/lib/chatgpt/resources/codex" \
-      ${chatgptCompanion}
+      ${chatgptCompanion}; then
+      echo 'packaged resources/codex differs from the vendor Desktop Core' >&2
+      exit 1
+    fi
     test -x ${chatgptCompanion}
 
     # Exercise the retained upstream Core in a private temporary home.  It
