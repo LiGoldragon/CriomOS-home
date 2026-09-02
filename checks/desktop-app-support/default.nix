@@ -114,6 +114,8 @@ pkgs.runCommand "desktop-app-support-contract"
       pkgs.gnugrep
       pkgs.gnused
       pkgs.jq
+      pkgs.nodejs
+      pkgs.python3
       pkgs.xdg-utils
       profile
     ];
@@ -148,6 +150,20 @@ pkgs.runCommand "desktop-app-support-contract"
     test "$(env -u CODEX_CLI_PATH ${chatgptCandidate} --version)" = 'codex-cli ${codexCliPackage.version}'
     strings ${chatgptPackage.passthru.unwrapped}/lib/chatgpt/resources/app.asar | grep -F 'getConfigOverrides:()=>[]'
     strings ${chatgptPackage.passthru.unwrapped}/lib/chatgpt/resources/app.asar | grep -F 'async function JE(){return[]}'
+
+    # Patching is byte-length preserving, so the replacement must consume the
+    # original function's closing brace. Exercise the complete patch pipeline
+    # on the exact matched JS shapes and ask Node to parse the result.
+    patch_fixture="$TMPDIR/chatgpt-asar-patch.js"
+    cat > "$patch_fixture" <<'EOF'
+    isLinux() && process.report;
+    async function ab(e,t){if(cd.default.platform===`darwin`){await ef(`/usr/bin/ditto`,[`--noqtn`,e,t]);return}if(cd.default.platform!==`win32`){await gh.default.cp(e,t,{recursive:!0,verbatimSymlinks:!0});return}}
+    const connection={getConfigOverrides:()=>ij(kl)};
+    async function JE({hostConfig:hc,resourcesPath:rp=process.resourcesPath}){return hc}function YE(e){return ZZ.warning(`Codex app tools unavailable`)}
+    EOF
+    ${pkgs.python3}/bin/python ${../../owned-agents/chatgpt/patch-asar.py} "$patch_fixture"
+    grep -F 'async function JE(){return[]}' "$patch_fixture"
+    ${pkgs.nodejs}/bin/node --check "$patch_fixture"
 
     # The Desktop client must reach the shared owner without injecting its
     # retired private App Tools MCP server.  Exercise the same app-server

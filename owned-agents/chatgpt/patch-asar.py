@@ -51,7 +51,7 @@ SHARED_APP_SERVER = (
 NO_APP_TOOLS_CONFIG_OVERRIDE = (
     re.compile(
         rb"async function (?P<name>[\w$]+)\(\{hostConfig:[\w$]+,resourcesPath:[\w$]+=process\.resourcesPath\}\)"
-        rb"\{[\s\S]*?(?=\}function [\w$]+\(e\)\{return [\w$]+\.warning\(`Codex app tools unavailable)"
+        rb"\{[\s\S]*?\}(?=function [\w$]+\(e\)\{return [\w$]+\.warning\(`Codex app tools unavailable)"
     ),
     lambda m: b"async function " + m["name"] + b"(){return[]}",
 )
