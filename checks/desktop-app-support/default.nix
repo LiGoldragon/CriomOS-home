@@ -16,6 +16,7 @@ let
   chatgptPackage = ownedAgentPackages.chatgptPackage;
   chatgptUnwrapped = chatgptPackage.passthru.unwrapped;
   chatgptCompanion = "${chatgptUnwrapped}/lib/chatgpt/resources/codex";
+  chatgptGeneratedBytecodeDirectory = ../../owned-agents/chatgpt/__pycache__;
   chatgptWrapperProbeUnwrapped = pkgs.runCommand "chatgpt-wrapper-probe-unwrapped" {
     passthru.version = source.version;
   } ''
@@ -37,6 +38,7 @@ let
     commandLineArgs = "--ozone-platform=wayland";
   };
 in
+assert !(builtins.pathExists chatgptGeneratedBytecodeDirectory);
 pkgs.runCommand "desktop-app-support-contract"
   {
     nativeBuildInputs = [
