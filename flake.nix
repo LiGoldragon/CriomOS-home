@@ -106,7 +106,7 @@
 
     # Harness owns parent-only flow identity claims. Home installs the pinned
     # helper in the minimum profile beside the Codex and Claude clients.
-    harness.url = "github:LiGoldragon/harness/363a5bec61d05a628750e00e7b03d8de7f8693a8";
+    harness.url = "github:LiGoldragon/harness/d022427938c0925e55e23dfb2d7ba470bbfea3c1";
     harness.inputs.nixpkgs.follows = "nixpkgs";
 
     # The packaging recipe is public and immutable; its proprietary payload is

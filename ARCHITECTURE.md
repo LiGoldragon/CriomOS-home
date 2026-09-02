@@ -22,8 +22,9 @@ Owns:
 - `packages/` — user-scoped packages and configurations.
 - `flow-id` — a Home-installed harness package that atomically claims the
   parent flow's shared alias and directory before parent artifacts exist. Its
-  Claude mode accepts only a canonical UUIDv4 parent session and starts from
-  that session's first six literal hexadecimal characters.
+  Claude mode accepts only a canonical lowercase RFC 4122 UUIDv4 or UUIDv5
+  parent session and starts from that session's first six literal hexadecimal
+  characters. New Claude markers retain uuid-v4 or uuid-v5.
 - `homeConfigurations` — direct Home Manager activation packages keyed
   by projected horizon users.
 - The user-facing Rust toolchain installed into profiles. Its canonical
