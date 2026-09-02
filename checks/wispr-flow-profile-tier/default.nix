@@ -1,11 +1,15 @@
 { inputs, pkgs, ... }:
 let
   wisprFlowModule = ../../modules/home/profiles/min/wispr-flow.nix;
+  profilePkgs = import inputs.nixpkgs {
+    system = pkgs.stdenv.hostPlatform.system;
+    config.allowUnfreePredicate = package: pkgs.lib.getName package == "wispr-flow";
+  };
 
   mkHome =
     user:
     inputs.home-manager.lib.homeManagerConfiguration {
-      inherit pkgs;
+      pkgs = profilePkgs;
       extraSpecialArgs = { inherit inputs user; };
       modules = [
         wisprFlowModule
@@ -41,11 +45,15 @@ let
     };
   };
 in
-assert belowMediumHome.config.home.packages == [ ];
-assert builtins.length mediumHome.config.home.packages == 1;
-assert builtins.length maximumHome.config.home.packages == 1;
-assert (builtins.head mediumHome.config.home.packages).drvPath != "";
-assert (builtins.head maximumHome.config.home.packages).drvPath != "";
+let
+  packagePaths = home: map (package: package.drvPath) home.config.home.packages;
+  belowMediumPackages = packagePaths belowMediumHome;
+  mediumPackages = packagePaths mediumHome;
+  maximumPackages = packagePaths maximumHome;
+in
+assert builtins.length (pkgs.lib.subtractLists belowMediumPackages mediumPackages) == 1;
+assert pkgs.lib.subtractLists mediumPackages belowMediumPackages == [ ];
+assert mediumPackages == maximumPackages;
 pkgs.runCommand "wispr-flow-profile-tier" { } ''
   touch "$out"
 ''
