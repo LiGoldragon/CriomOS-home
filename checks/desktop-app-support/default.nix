@@ -45,21 +45,35 @@ pkgs.runCommand "desktop-app-support-contract"
       pkgs.coreutils
       pkgs.dpkg
       pkgs.gnugrep
+      pkgs.python3
       pkgs.xdg-utils
     ];
   }
   ''
     set -eu
 
-    # This archive is fetched independently from the ChatGPT derivation.  The
-    # ASAR and its bundled Desktop Core companion are the vendor product, so
-    # byte equality is the relevant contract rather than a source marker.
+    # This archive is fetched independently from the ChatGPT derivation. The
+    # bundled Desktop Core remains byte-identical vendor product. The ASAR
+    # differs at exactly one byte-length-preserving guard: the Linux
+    # process.report access that reaches Node's witnessed Git-worker SIGILL.
     pristine="$TMPDIR/pristine"
     dpkg-deb -x ${pristineArchive} "$pristine"
-    if ! cmp -s \
-      "$pristine/usr/lib/chatgpt/resources/app.asar" \
-      ${chatgptUnwrapped}/lib/chatgpt/resources/app.asar; then
-      echo 'packaged app.asar differs from the independently extracted vendor ASAR' >&2
+    expected_asar="$TMPDIR/expected-app.asar"
+    cp "$pristine/usr/lib/chatgpt/resources/app.asar" "$expected_asar"
+    python3 - "$expected_asar" <<'PY'
+    from pathlib import Path
+    import sys
+
+    asar = Path(sys.argv[1])
+    source = asar.read_bytes()
+    target = b"isLinux() && process.report"
+    replacement = b"false /* nix:skip report */"
+    if source.count(target) != 1 or len(target) != len(replacement):
+        raise SystemExit("vendor ASAR no longer has the exact process-report guard")
+    asar.write_bytes(source.replace(target, replacement))
+    PY
+    if ! cmp -s "$expected_asar" ${chatgptUnwrapped}/lib/chatgpt/resources/app.asar; then
+      echo 'packaged app.asar differs from the vendor ASAR beyond the documented process-report guard' >&2
       exit 1
     fi
     if ! cmp -s \
