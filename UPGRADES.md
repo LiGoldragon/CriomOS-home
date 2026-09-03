@@ -81,19 +81,26 @@ their matching removal revisions before activating this Home generation. A
 non-Edge or minimum-only profile deliberately receives no Claude/ChatGPT
 Desktop handlers; `codex-remote-control` remains a minimum profile service.
 
-## ChatGPT Desktop stock vendor boundary
+## ChatGPT Desktop stock boundary with Node-report workaround
 
-This generation removes the custom ChatGPT-to-persistent-Codex crossing.
-ChatGPT Desktop now retains the vendor `app.asar` and vendor
-`resources/codex` Desktop Core byte-for-byte; it neither forces the
-local-daemon route nor clears vendor CLI/App Tools selection variables. The
-Wayland launch argument remains unchanged.
+This generation retains the stock ChatGPT Desktop boundary: its bundled
+`resources/codex` Desktop Core remains vendor byte-for-byte, and the wrapper
+neither forces the local-daemon route nor clears vendor CLI/App Tools selection
+variables. The Wayland launch argument remains unchanged.
+
+The vendor `app.asar` has one narrowly scoped, byte-length-preserving change:
+the single Linux `isLinux() && process.report` guard in `@parcel/watcher`'s
+vendored `detect-libc` helper becomes `false /* nix:skip report */`. Deployed
+stock 26.901.20858 repeatedly crashed with `SIGILL` in its Git worker at
+Node's `GetNodeReport` trap, and the guard is the sole ASAR process-report
+call. The package contract derives its expected ASAR independently from the
+signed vendor archive and rejects every difference except this one guard.
 
 Deploy the complete Home generation through the normal declarative path. Do
-not patch the installed application, replace `resources/codex`, or reuse the
-retired ASAR sanitizer. A new Desktop window uses the vendor private Core;
-it is not a client of `codex-remote-control` and does not share that owner's
-process-local state.
+not patch the installed application, replace `resources/codex`, or add any
+Desktop-to-persistent-Codex bridge. A new Desktop window uses the vendor
+private Core; it is not a client of `codex-remote-control` and does not share
+that owner's process-local state.
 
 The independent persistent owner remains for terminal Codex routing and phone
 Remote Control. Agent Intercom, the VSCodium sidebar, and full-access defaults

@@ -8,6 +8,7 @@ let
     coreutils
     dpkg
     makeWrapper
+    python3
     wrapGAppsHook3
     alsa-lib
     at-spi2-atk
@@ -65,6 +66,7 @@ stdenv.mkDerivation {
     formatelf
     dpkg
     makeWrapper
+    python3
     wrapGAppsHook3
   ];
   buildInputs = [
@@ -141,6 +143,7 @@ stdenv.mkDerivation {
     cp -a usr/lib/chatgpt "$out/lib/"
     cp -r usr/share/applications usr/share/pixmaps "$out/share/"
     ln -s ../lib/chatgpt/codex-launcher "$out/bin/chatgpt"
+    python3 ${./patch-process-report.py} "$out/lib/chatgpt/resources/app.asar"
     wrapProgram "$out/lib/chatgpt/ChatGPT" \
       "''${gappsWrapperArgs[@]}" \
       --prefix PATH : ${
