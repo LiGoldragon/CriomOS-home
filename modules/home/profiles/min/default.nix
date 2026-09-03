@@ -56,8 +56,8 @@ let
     default = codexBuiltinAgent {
       name = "default";
       description = "Default Codex collaboration agent.";
-      model = "gpt-5.6-terra";
-      effort = "high";
+      model = "gpt-5.6-luna";
+      effort = "xhigh";
     };
     worker = codexBuiltinAgent {
       name = "worker";
@@ -68,15 +68,15 @@ let
     explorer = codexBuiltinAgent {
       name = "explorer";
       description = "Codex exploration collaboration agent.";
-      model = "gpt-5.6-terra";
-      effort = "high";
+      model = "gpt-5.6-luna";
+      effort = "xhigh";
     };
   };
 
   codexConfig = codexPermissionDefaults // {
     developer_instructions = codexSkillReadDeduplicationInstruction;
-    model = "gpt-5.6-terra";
-    model_reasoning_effort = "high";
+    model = "gpt-5.6-sol";
+    model_reasoning_effort = "xhigh";
     personality = "pragmatic";
     plan_mode_reasoning_effort = "xhigh";
 
@@ -716,22 +716,16 @@ in
 
         ".config/broot/conf.toml".text = brootConfig;
 
-        ".codex/non-orchestrator.config.toml".text = ''
-          developer_instructions = ${toJSON codexSkillReadDeduplicationInstruction}
-          model = "gpt-5.6-terra"
-          model_reasoning_effort = "xhigh"
-        '';
-
         ".codex/agents/default.toml".text = codexBuiltinAgentFiles.default;
         ".codex/agents/worker.toml".text = codexBuiltinAgentFiles.worker;
         ".codex/agents/explorer.toml".text = codexBuiltinAgentFiles.explorer;
       };
 
-      # Hexis intentionally preserves undeclared user keys. Remove the retired
-      # Codex V1 spelling before its managed merge snapshots the live config.
-      activation.removeDeprecatedCodexCollab = lib.hm.dag.entryBefore [ "mergeCodexConfig" ] ''
-        if [ -f "$HOME/.codex/config.toml" ] && [ "$( ${pkgs.yq-go}/bin/yq -p toml -o json '.features | has("collab")' "$HOME/.codex/config.toml" )" = true ]; then
-          ${pkgs.yq-go}/bin/yq -p toml -o toml -i 'del(.features.collab)' "$HOME/.codex/config.toml"
+      # Hexis intentionally preserves undeclared user keys. Remove retired
+      # configuration before its managed merge snapshots the live config.
+      activation.removeStaleCodexConfiguration = lib.hm.dag.entryBefore [ "mergeCodexConfig" ] ''
+        if [ -f "$HOME/.codex/config.toml" ] && [ "$( ${pkgs.yq-go}/bin/yq -p toml -o json 'has("orchestrator") or ((.features // {}) | has("collab"))' "$HOME/.codex/config.toml" )" = true ]; then
+          ${pkgs.yq-go}/bin/yq -p toml -o toml -i 'del(.features.collab, .orchestrator)' "$HOME/.codex/config.toml"
         fi
       '';
 
