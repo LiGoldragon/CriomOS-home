@@ -92,9 +92,11 @@ The vendor `app.asar` has one narrowly scoped, byte-length-preserving change:
 the single Linux `isLinux() && process.report` guard in `@parcel/watcher`'s
 vendored `detect-libc` helper becomes `false /* nix:skip report */`. Deployed
 stock 26.901.20858 repeatedly crashed with `SIGILL` in its Git worker at
-Node's `GetNodeReport` trap, and the guard is the sole ASAR process-report
-call. The package contract derives its expected ASAR independently from the
-signed vendor archive and rejects every difference except this one guard.
+Node's diagnostic-report CFI trap. The guard is the sole ASAR process-report
+call and matches that native stack, so its exact JavaScript invocation is an
+inference rather than a dynamic trace. The package contract derives its
+expected ASAR independently from the signed vendor archive and rejects every
+difference except this one guard.
 
 Deploy the complete Home generation through the normal declarative path. Do
 not patch the installed application, replace `resources/codex`, or add any
