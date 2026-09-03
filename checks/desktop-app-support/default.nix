@@ -17,6 +17,7 @@ let
   chatgptUnwrapped = chatgptPackage.passthru.unwrapped;
   chatgptCompanion = "${chatgptUnwrapped}/lib/chatgpt/resources/codex";
   chatgptGeneratedBytecodeDirectory = ../../owned-agents/chatgpt/__pycache__;
+  chatgptRetiredPatcher = ../../owned-agents/chatgpt/patch-asar.py;
   chatgptWrapperProbeUnwrapped = pkgs.runCommand "chatgpt-wrapper-probe-unwrapped" {
     passthru.version = source.version;
   } ''
@@ -39,6 +40,7 @@ let
   };
 in
 assert !(builtins.pathExists chatgptGeneratedBytecodeDirectory);
+assert !(builtins.pathExists chatgptRetiredPatcher);
 pkgs.runCommand "desktop-app-support-contract"
   {
     nativeBuildInputs = [
