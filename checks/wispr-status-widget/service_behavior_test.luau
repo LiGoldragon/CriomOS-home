@@ -25,7 +25,7 @@ noctalia = {
   },
   state = {
     set = function(key, value)
-      assert(key == "wispr-status")
+      assert(key == "wispr-status-state")
       current = value
       writes = writes + 1
     end,

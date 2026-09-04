@@ -8,7 +8,7 @@ local last_event_ms = nil
 local function shell_quote(value)
   return "'" .. string.gsub(value, "'", "'\\''") .. "'"
 end
-local function publish() noctalia.state.set("wispr-status", State.public(status)) end
+local function publish() noctalia.state.set("wispr-status-state", State.public(status)) end
 local function unavailable()
   State.disconnect(status)
   last_event_ms = nil
