@@ -110,7 +110,7 @@
     harness.inputs.nixpkgs.follows = "nixpkgs";
 
     # The provider owns the official installer fetch and its fixed checksum.
-    wispr-flow-linux.url = "github:LiGoldragon/wispr-flow-linux?rev=6765c388e5159243072c4259e3ea082dd06f3150";
+    wispr-flow-linux.url = "github:LiGoldragon/wispr-flow-linux?rev=6b4a48f4c2e313a166bdc2306252ad486c3b6298";
     wispr-flow-linux.inputs.nixpkgs.follows = "nixpkgs";
 
     # `annas` — Anna's Archive book/article search + download CLI. Upstream
