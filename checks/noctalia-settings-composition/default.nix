@@ -1,10 +1,12 @@
 { pkgs, inputs, ... }:
 let
+  system = pkgs.stdenv.hostPlatform.system;
+  hexisPackage = inputs.hexis.packages.${system}.default;
   homeConfiguration = inputs.home-manager.lib.homeManagerConfiguration {
     inherit pkgs;
     extraSpecialArgs = {
       inherit inputs;
-      hexis = pkgs.writeShellScriptBin "hexis" "exit 0";
+      hexis = hexisPackage;
       horizon.node.behavesAs.edge = true;
     };
     modules = [
@@ -38,6 +40,14 @@ let
   noctaliaShell = inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default;
   noctaliaExecutable = pkgs.lib.getExe' noctaliaShell "noctalia";
   generatedConfig = pkgs.writeText "noctalia-settings-composition.toml" configToml;
+  activation = homeConfiguration.config.home.activation;
+  reconcileNoctaliaSettings =
+    if activation ? reconcileNoctaliaSettings then
+      activation.reconcileNoctaliaSettings.data
+    else
+      activation.reconcileNoctaliaThemeMode.data;
+  reconcileNoctaliaSettingsScript =
+    pkgs.writeShellScript "reconcile-noctalia-settings" reconcileNoctaliaSettings;
 in
 assert pkgs.lib.assertMsg (
   settings.theme.mode == "external"
@@ -112,6 +122,39 @@ assert pkgs.lib.assertMsg (
   && !(parsedConfigToml.idle ? suspendTimeout)
 ) "the generated Noctalia TOML must not retain ignored v4 idle settings";
 pkgs.runCommand "noctalia-settings-composition" { nativeBuildInputs = [ noctaliaShell ]; } ''
+  state_home="$TMPDIR/noctalia-state-home"
+  state_file="$state_home/.local/state/noctalia/settings.toml"
+  mkdir -p "$(dirname "$state_file")"
+  cat >"$state_file" <<'EOF'
+[theme]
+mode = "auto"
+
+[plugins]
+enabled = ["criomos/listener-level"]
+
+[preserved]
+value = "user-state"
+EOF
+
+  export HOME="$state_home"
+  export DRY_RUN_CMD=
+  export VERBOSE_ARG=
+  ${reconcileNoctaliaSettingsScript}
+
+  ${pkgs.python3}/bin/python - "$state_file" <<'PY'
+import pathlib
+import sys
+import tomllib
+
+settings = tomllib.loads(pathlib.Path(sys.argv[1]).read_text())
+assert settings["theme"]["mode"] == "external"
+assert settings["plugins"]["enabled"] == [
+    "criomos/wispr-status",
+    "criomos/listener-level",
+]
+assert settings["preserved"]["value"] == "user-state"
+PY
+
   validation_output="$TMPDIR/noctalia-config-validation"
   ${noctaliaExecutable} config validate ${generatedConfig} >"$validation_output" 2>&1
   ${pkgs.coreutils}/bin/cat "$validation_output"
