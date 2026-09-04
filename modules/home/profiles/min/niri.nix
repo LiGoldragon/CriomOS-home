@@ -12,6 +12,15 @@ let
   terminal = "${pkgs.ghostty}/bin/ghostty";
   noctaliaShell = inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default;
   noctaliaExecutable = lib.getExe' noctaliaShell "noctalia";
+  wisprRuntimeInputs = pkgs.callPackage "${inputs.wispr-flow-linux}/nix/runtime-inputs.nix" { };
+  wisprFlow = pkgs.callPackage "${inputs.wispr-flow-linux}/nix/wispr-flow.nix" {
+    runtimeInputs = wisprRuntimeInputs;
+    installerExe = inputs.wispr-flow-installer;
+  };
+  wisprFlowFhs = pkgs.callPackage "${inputs.wispr-flow-linux}/nix/fhs.nix" {
+    wispr-flow = wisprFlow;
+  };
+  wisprFlowStatus = "${wisprFlowFhs}/bin/wispr-flow-status";
   rescueTerminalPackage = pkgs.writeShellScriptBin "criomos-rescue-terminal" ''
     set -eu
 
@@ -272,19 +281,6 @@ in
           ];
           open-floating = false;
         }
-        {
-          # Wispr's transparent Status surface becomes focused when it stops
-          # ignoring pointer events.  Keep the global focus style for every
-          # other window, but never paint or outline this exact lifecycle.
-          matches = [
-            {
-              app-id = "^wispr-flow$";
-              title = "^(Status|Flow Status Indicator)$";
-            }
-          ];
-          draw-border-with-background = false;
-          focus-ring.enable = false;
-        }
       ];
 
       spawn-at-startup = [
@@ -417,6 +413,15 @@ in
 
         # Hotkey overlay
         "Mod+Shift+S".action = a.show-hotkey-overlay;
+      }
+      // lib.optionalAttrs (user.size.medium or false) {
+        # The app owns its own single-instance and optional XDG autostart.
+        # This compositor binding only invokes the provider's native control
+        # endpoint; it never injects or holds a key.
+        "Mod+X" = {
+          action = a.spawn wisprFlowStatus "toggle-hands-free";
+          repeat = false;
+        };
       };
 
       gestures = {

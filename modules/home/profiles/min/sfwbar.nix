@@ -17,6 +17,9 @@ let
   listenerTranscriptPanel = pkgs.replaceVars ./noctalia-plugins/listener-level/transcript-panel.luau {
     SOCAT = "${pkgs.socat}/bin/socat";
   };
+  wisprStatusService = pkgs.replaceVars ./noctalia-plugins/wispr-status/WisprStatusService.luau {
+    SOCAT = "${pkgs.socat}/bin/socat";
+  };
 in
 lib.mkIf behavesAs.edge {
   home.packages = [ pkgs.libnotify ];
@@ -49,7 +52,11 @@ lib.mkIf behavesAs.edge {
           };
         };
       };
-      plugins.enabled = [ "criomos/listener-level" ];
+      plugins.enabled = [
+        "criomos/wispr-status"
+        "criomos/listener-level"
+      ];
+      widget.wispr-status.type = "criomos/wispr-status:status";
       widget.listener-level.type = "criomos/listener-level:level";
       widget.tray.drawer = true;
       widget.battery.display_mode = "graphic";
@@ -64,6 +71,7 @@ lib.mkIf behavesAs.edge {
           "workspaces"
         ];
         end = [
+          "wispr-status"
           "listener-level"
           "tray"
           "battery"
@@ -96,6 +104,10 @@ lib.mkIf behavesAs.edge {
           enabled = true;
           sourceUrl = "https://github.com/noctalia-dev/noctalia-plugins";
         };
+        wispr-status = {
+          enabled = true;
+          sourceUrl = "https://github.com/noctalia-dev/noctalia-plugins";
+        };
         solar-time = {
           enabled = true;
           sourceUrl = "https://github.com/noctalia-dev/noctalia-plugins";
@@ -109,6 +121,7 @@ lib.mkIf behavesAs.edge {
     modes = {
       "/version" = "always";
       "/states/listener-level" = "always";
+      "/states/wispr-status" = "always";
       "/states/solar-time" = "always";
       "/states/active-network" = "always";
     };
@@ -127,6 +140,13 @@ lib.mkIf behavesAs.edge {
   };
 
   xdg.dataFile = {
+    "noctalia/plugins/wispr-status/plugin.toml".source =
+      ./noctalia-plugins/wispr-status/plugin.toml;
+    "noctalia/plugins/wispr-status/WisprStatusState.luau".source =
+      ./noctalia-plugins/wispr-status/WisprStatusState.luau;
+    "noctalia/plugins/wispr-status/WisprStatusService.luau".source = wisprStatusService;
+    "noctalia/plugins/wispr-status/BarWidget.luau".source =
+      ./noctalia-plugins/wispr-status/BarWidget.luau;
     "noctalia/plugins/listener-level/plugin.toml".source =
       ./noctalia-plugins/listener-level/plugin.toml;
     "noctalia/plugins/listener-level/level.luau".source = listenerLevelWidget;
