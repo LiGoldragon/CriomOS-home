@@ -56,7 +56,7 @@ lib.mkIf behavesAs.edge {
         "criomos/wispr-status"
         "criomos/listener-level"
       ];
-      widget.wispr-status.type = "criomos/wispr-status:status";
+      widget.wispr-status-widget.type = "criomos/wispr-status:wispr-status-widget";
       widget.listener-level.type = "criomos/listener-level:level";
       widget.tray.drawer = true;
       widget.battery.display_mode = "graphic";
@@ -71,7 +71,7 @@ lib.mkIf behavesAs.edge {
           "workspaces"
         ];
         end = [
-          "wispr-status"
+          "wispr-status-widget"
           "listener-level"
           "tray"
           "battery"

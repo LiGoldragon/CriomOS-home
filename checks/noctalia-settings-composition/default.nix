@@ -60,7 +60,7 @@ assert pkgs.lib.assertMsg (
   && settings.bar.main.center == [ "workspaces" ]
   &&
     settings.bar.main.end == [
-      "wispr-status"
+      "wispr-status-widget"
       "listener-level"
       "tray"
       "battery"
@@ -68,7 +68,7 @@ assert pkgs.lib.assertMsg (
       "brightness"
       "control-center"
     ]
-  && settings.widget.wispr-status.type == "criomos/wispr-status:status"
+  && settings.widget.wispr-status-widget.type == "criomos/wispr-status:wispr-status-widget"
   && settings.widget.listener-level.type == "criomos/listener-level:level"
   && settings.widget.tray.drawer
   && settings.widget.battery.display_mode == "graphic"

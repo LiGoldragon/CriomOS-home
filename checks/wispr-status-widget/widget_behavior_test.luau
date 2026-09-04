@@ -6,8 +6,8 @@ local interval = nil
 barWidget = { render = function(tree) latest = tree end }
 noctalia = {
   state = {
-    get = function(key) assert(key == "wispr-status"); return current end,
-    watch = function(key, callback) assert(key == "wispr-status"); watcher = callback end,
+    get = function(key) assert(key == "wispr-status-state"); return current end,
+    watch = function(key, callback) assert(key == "wispr-status-state"); watcher = callback end,
   },
   nowMs = function() return 0 end,
   setUpdateInterval = function(value) interval = value end,

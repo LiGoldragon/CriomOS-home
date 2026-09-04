@@ -6,9 +6,9 @@ author = "CriomOS"
 description = "Shows the app-owned Wispr Flow status in the Noctalia bar."
 
 [[service]]
-id = "status"
+id = "wispr-status-service"
 entry = "WisprStatusService.luau"
 
 [[widget]]
-id = "status"
+id = "wispr-status-widget"
 entry = "BarWidget.luau"

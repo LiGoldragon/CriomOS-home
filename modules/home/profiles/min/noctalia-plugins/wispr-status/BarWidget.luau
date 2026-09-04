@@ -1,4 +1,4 @@
-local current = noctalia.state.get("wispr-status") or { state = "unavailable", hands_free = false }
+local current = noctalia.state.get("wispr-status-state") or { state = "unavailable", hands_free = false }
 
 local function visual(now_ms)
   if current.state == "idle" then return "󰍬", "#e5e7eb" end
@@ -20,7 +20,7 @@ local function render(now_ms)
   })
 end
 
-noctalia.state.watch("wispr-status", function(value)
+noctalia.state.watch("wispr-status-state", function(value)
   if type(value) == "table" then current = value else current = { state = "unavailable", hands_free = false } end
   render(noctalia.nowMs())
 end)

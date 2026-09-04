@@ -643,6 +643,7 @@
           wispr-flow-profile-tier = checkPkgs.callPackage ./checks/wispr-flow-profile-tier {
             inherit inputs;
           };
+          wispr-status-widget = checkPkgs.callPackage ./checks/wispr-status-widget { inherit inputs; };
           wispr-status-niri-rule = checkPkgs.callPackage ./checks/wispr-status-niri-rule { inherit inputs; };
           noctalia-settings-composition = checkPkgs.callPackage ./checks/noctalia-settings-composition {
             inherit inputs;
