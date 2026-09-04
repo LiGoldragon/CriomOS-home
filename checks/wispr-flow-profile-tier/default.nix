@@ -60,7 +60,7 @@ in
 assert builtins.length (pkgs.lib.subtractLists belowMediumPackages mediumPackages) == 1;
 assert pkgs.lib.subtractLists mediumPackages belowMediumPackages == [ ];
 assert mediumPackages == maximumPackages;
-assert providerWispr.version == "1.6.774+criomos.3";
+assert providerWispr.version == "1.6.774+criomos.4";
 assert pkgs.lib.hasSuffix "/bin/wispr-flow-status" wisprStatus;
 pkgs.runCommand "wispr-flow-profile-tier" { } ''
   touch "$out"
