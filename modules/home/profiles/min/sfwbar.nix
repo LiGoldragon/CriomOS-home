@@ -83,15 +83,24 @@ lib.mkIf behavesAs.edge {
     };
   };
 
-  # Noctalia overlays this mutable state file after the declarative config.
-  # Reconcile only the authority boundary: legacy `auto` must not turn
-  # Noctalia back into a global colour-scheme writer, while its wallpaper
-  # palette and other user state remain untouched.
-  home.activation.reconcileNoctaliaThemeMode = inputs.hexis.lib.mkManagedConfig {
+  # Noctalia overlays this mutable state file after the declarative config and
+  # uses its enabled-plugin list while constructing the startup registry.
+  # Reconcile only those two authority boundaries; wallpaper, palette, and
+  # other user state remain untouched.
+  home.activation.reconcileNoctaliaSettings = inputs.hexis.lib.mkManagedConfig {
     inherit lib pkgs hexis;
     file = "$HOME/.local/state/noctalia/settings.toml";
-    declared.theme.mode = "external";
-    modes."/theme/mode" = "always";
+    declared = {
+      theme.mode = "external";
+      plugins.enabled = [
+        "criomos/wispr-status"
+        "criomos/listener-level"
+      ];
+    };
+    modes = {
+      "/theme/mode" = "always";
+      "/plugins/enabled" = "always";
+    };
   };
 
   home.activation.mergeNoctaliaPlugins = inputs.hexis.lib.mkManagedConfig {
@@ -140,8 +149,7 @@ lib.mkIf behavesAs.edge {
   };
 
   xdg.dataFile = {
-    "noctalia/plugins/wispr-status/plugin.toml".source =
-      ./noctalia-plugins/wispr-status/plugin.toml;
+    "noctalia/plugins/wispr-status/plugin.toml".source = ./noctalia-plugins/wispr-status/plugin.toml;
     "noctalia/plugins/wispr-status/WisprStatusState.luau".source =
       ./noctalia-plugins/wispr-status/WisprStatusState.luau;
     "noctalia/plugins/wispr-status/WisprStatusService.luau".source = wisprStatusService;
