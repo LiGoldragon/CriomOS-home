@@ -46,8 +46,7 @@ let
       activation.reconcileNoctaliaSettings.data
     else
       activation.reconcileNoctaliaThemeMode.data;
-  reconcileNoctaliaSettingsScript =
-    pkgs.writeShellScript "reconcile-noctalia-settings" reconcileNoctaliaSettings;
+  reconcileNoctaliaSettingsScript = pkgs.writeShellScript "reconcile-noctalia-settings" reconcileNoctaliaSettings;
 in
 assert pkgs.lib.assertMsg (
   settings.theme.mode == "external"
@@ -122,45 +121,45 @@ assert pkgs.lib.assertMsg (
   && !(parsedConfigToml.idle ? suspendTimeout)
 ) "the generated Noctalia TOML must not retain ignored v4 idle settings";
 pkgs.runCommand "noctalia-settings-composition" { nativeBuildInputs = [ noctaliaShell ]; } ''
-  state_home="$TMPDIR/noctalia-state-home"
-  state_file="$state_home/.local/state/noctalia/settings.toml"
-  mkdir -p "$(dirname "$state_file")"
-  cat >"$state_file" <<'EOF'
-[theme]
-mode = "auto"
+    state_home="$TMPDIR/noctalia-state-home"
+    state_file="$state_home/.local/state/noctalia/settings.toml"
+    mkdir -p "$(dirname "$state_file")"
+    cat >"$state_file" <<'EOF'
+  [theme]
+  mode = "auto"
 
-[plugins]
-enabled = ["criomos/listener-level"]
+  [plugins]
+  enabled = ["criomos/listener-level"]
 
-[preserved]
-value = "user-state"
-EOF
+  [preserved]
+  value = "user-state"
+  EOF
 
-  export HOME="$state_home"
-  export DRY_RUN_CMD=
-  export VERBOSE_ARG=
-  ${reconcileNoctaliaSettingsScript}
+    export HOME="$state_home"
+    export DRY_RUN_CMD=
+    export VERBOSE_ARG=
+    ${reconcileNoctaliaSettingsScript}
 
-  ${pkgs.python3}/bin/python - "$state_file" <<'PY'
-import pathlib
-import sys
-import tomllib
+    ${pkgs.python3}/bin/python - "$state_file" <<'PY'
+  import pathlib
+  import sys
+  import tomllib
 
-settings = tomllib.loads(pathlib.Path(sys.argv[1]).read_text())
-assert settings["theme"]["mode"] == "external"
-assert settings["plugins"]["enabled"] == [
-    "criomos/wispr-status",
-    "criomos/listener-level",
-]
-assert settings["preserved"]["value"] == "user-state"
-PY
+  settings = tomllib.loads(pathlib.Path(sys.argv[1]).read_text())
+  assert settings["theme"]["mode"] == "external"
+  assert settings["plugins"]["enabled"] == [
+      "criomos/wispr-status",
+      "criomos/listener-level",
+  ]
+  assert settings["preserved"]["value"] == "user-state"
+  PY
 
-  validation_output="$TMPDIR/noctalia-config-validation"
-  ${noctaliaExecutable} config validate ${generatedConfig} >"$validation_output" 2>&1
-  ${pkgs.coreutils}/bin/cat "$validation_output"
-  if ${pkgs.gnugrep}/bin/grep -E ':[[:space:]](idle\.|bar\.(widgets|main)\.|widget\.)[^:]*:[[:space:]]unknown setting' "$validation_output"; then
-    echo 'Noctalia validator reported an obsolete setting' >&2
-    exit 1
-  fi
-  touch "$out"
+    validation_output="$TMPDIR/noctalia-config-validation"
+    ${noctaliaExecutable} config validate ${generatedConfig} >"$validation_output" 2>&1
+    ${pkgs.coreutils}/bin/cat "$validation_output"
+    if ${pkgs.gnugrep}/bin/grep -E ':[[:space:]](idle\.|bar\.(widgets|main)\.|widget\.)[^:]*:[[:space:]]unknown setting' "$validation_output"; then
+      echo 'Noctalia validator reported an obsolete setting' >&2
+      exit 1
+    fi
+    touch "$out"
 ''
