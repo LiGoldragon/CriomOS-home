@@ -102,18 +102,18 @@ else
     test -S ${lib.escapeShellArg metaSocketPath}
 
     claimed_path=${lib.escapeShellArg "${homeDirectory}/claimed"}
-    lock="{1 home-nexus-check home-nexus-check [$claimed_path] home-nexus-check}"
-    registration="Lock.{home-nexus-check home-nexus-check [$claimed_path] home-nexus-check}"
+    lock="{ 1 home-nexus-check home-nexus-check [ $claimed_path ] home-nexus-check }"
+    registration="Lock.{ home-nexus-check home-nexus-check [ $claimed_path ] home-nexus-check }"
     registered="$(${orchestrateProfilePackage}/bin/orchestrate "$registration")"
     test "$registered" = "Locked.$lock"
     observed="$(${orchestrateProfilePackage}/bin/orchestrate 'Observe.Locks')"
-    test "$observed" = "Observed.Locks.[$lock]"
-    released="$(${orchestrateProfilePackage}/bin/orchestrate 'Release.{1}')"
+    test "$observed" = "Observed.Locks.[ $lock ]"
+    released="$(${orchestrateProfilePackage}/bin/orchestrate 'Release.1')"
     test "$released" = "Released.$lock"
     observed_empty="$(${orchestrateProfilePackage}/bin/orchestrate 'Observe.Locks')"
     test "$observed_empty" = 'Observed.Locks.[]'
-    configured="$(${orchestrateProfilePackage}/bin/meta-orchestrate 'Configure.{${ordinarySocketPath} ${metaSocketPath}}')"
-    test "$configured" = 'Configured.{${ordinarySocketPath} ${metaSocketPath}}'
+    configured="$(${orchestrateProfilePackage}/bin/meta-orchestrate 'Configure.{ ${ordinarySocketPath} ${metaSocketPath} }')"
+    test "$configured" = 'Configured.{ ${ordinarySocketPath} ${metaSocketPath} }'
 
     touch "$out"
   ''
