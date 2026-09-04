@@ -435,11 +435,11 @@
         "rust-build": "rust-build_2"
       },
       "locked": {
-        "lastModified": 1788522490,
-        "narHash": "sha256-PBBsHu8rYPrYWFaMm9Yra0w1oCzft+AvQBAsjdtUlcE=",
+        "lastModified": 1788526064,
+        "narHash": "sha256-ekF770p/8VdwRtrKdnKfd8fQafZXAMEafqcuKwO8IhM=",
         "owner": "LiGoldragon",
         "repo": "claude-answers",
-        "rev": "a2edb6777b602b19349e179df64a515b79ace8e9",
+        "rev": "f5c15478bdafd9be164e09a6fc6507d5d5dcab9f",
         "type": "github"
       },
       "original": {
