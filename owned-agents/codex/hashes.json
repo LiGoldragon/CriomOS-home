@@ -1,20 +1,20 @@
 {
-  "version": "0.152.1",
-  "hash": "sha256-U0g2AK5qlU9UyBEqrncCpjB4ESt/2jX/DCaF1KOaWFY=",
-  "cargoHash": "sha256-m50x+ClPnbxhq0Lg9csDkfOLbHh3EAqVNSM1gwEF8rk=",
+  "cargoHash": "sha256-GG6kOXmCdq+bZLU2ul0DIVL8lDuweayvZvXn6+bcUZw=",
+  "hash": "sha256-mWkpqNESrTHVQt55bsQDiYHGopc03VToYj23YENpM6U=",
   "librusty_v8": {
-    "version": "150.4.0",
-    "profile": "ptrcomp_sandbox_release",
     "baseUrl": "https://github.com/openai/codex/releases/download/rusty-v8-v150.4.0",
     "hashes": {
-      "x86_64-linux": "sha256-o1x10fJuapg4haRbM0kKTr5U8FBQVosyuJz7QhswtYM=",
+      "aarch64-darwin": "sha256-AK27SHmISMd1UEQcaGc6XoUpuOG3PqvN7iMss5tA9KE=",
       "aarch64-linux": "sha256-0VF+7UBUaFNwKbAF1f6ZfsdNXI01H5FrOm3yC30oEbo=",
-      "aarch64-darwin": "sha256-AK27SHmISMd1UEQcaGc6XoUpuOG3PqvN7iMss5tA9KE="
+      "x86_64-linux": "sha256-o1x10fJuapg4haRbM0kKTr5U8FBQVosyuJz7QhswtYM="
     },
+    "profile": "ptrcomp_sandbox_release",
     "srcBindingHashes": {
-      "x86_64-linux": "sha256-dyeCauR5vbZF6Acjn7EtH44uI956bPFvXuWSaQ0dhQY=",
+      "aarch64-darwin": "sha256-ylrfDPicmnCtRgrnNkiy/om3SqETs8t/dXtqArdYOU8=",
       "aarch64-linux": "sha256-dyeCauR5vbZF6Acjn7EtH44uI956bPFvXuWSaQ0dhQY=",
-      "aarch64-darwin": "sha256-ylrfDPicmnCtRgrnNkiy/om3SqETs8t/dXtqArdYOU8="
-    }
-  }
+      "x86_64-linux": "sha256-dyeCauR5vbZF6Acjn7EtH44uI956bPFvXuWSaQ0dhQY="
+    },
+    "version": "150.4.0"
+  },
+  "version": "0.153.2"
 }

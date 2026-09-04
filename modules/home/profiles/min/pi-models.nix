@@ -1,3 +1,5 @@
+# DEPRECATED — Pi is being phased out. Do not add new models or
+# configuration here.
 {
   lib,
   pkgs,
