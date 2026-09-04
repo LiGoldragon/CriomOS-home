@@ -1,0 +1,14 @@
+id = "criomos/wispr-status"
+name = "Wispr Status"
+version = "1.0.0"
+plugin_api = 23
+author = "CriomOS"
+description = "Shows the app-owned Wispr Flow status in the Noctalia bar."
+
+[[service]]
+id = "status"
+entry = "WisprStatusService.luau"
+
+[[widget]]
+id = "status"
+entry = "BarWidget.luau"

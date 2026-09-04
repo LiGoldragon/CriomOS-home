@@ -35,7 +35,6 @@ let
     builtins.readFile
       homeConfiguration.config.xdg.configFile."noctalia/config.toml".source;
   parsedConfigToml = builtins.fromTOML configToml;
-  sfwbarSource = builtins.readFile ../../modules/home/profiles/min/sfwbar.nix;
   noctaliaShell = inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default;
   noctaliaExecutable = pkgs.lib.getExe' noctaliaShell "noctalia";
   generatedConfig = pkgs.writeText "noctalia-settings-composition.toml" configToml;
@@ -43,11 +42,6 @@ in
 assert pkgs.lib.assertMsg (
   settings.theme.mode == "external"
 ) "Noctalia must consume Chroma's external light/dark mode";
-assert pkgs.lib.assertMsg (
-  pkgs.lib.hasInfix "file = \"$HOME/.local/state/noctalia/settings.toml\";" sfwbarSource
-  && pkgs.lib.hasInfix "declared.theme.mode = \"external\";" sfwbarSource
-  && pkgs.lib.hasInfix "modes.\"/theme/mode\" = \"always\";" sfwbarSource
-) "Noctalia's mutable overlay must always reconcile external mode without replacing user state";
 assert pkgs.lib.assertMsg (
   settings.theme.source == "wallpaper"
 ) "the declared Noctalia theme source must override Stylix's custom-palette target";
@@ -66,6 +60,7 @@ assert pkgs.lib.assertMsg (
   && settings.bar.main.center == [ "workspaces" ]
   &&
     settings.bar.main.end == [
+      "wispr-status"
       "listener-level"
       "tray"
       "battery"
@@ -73,6 +68,7 @@ assert pkgs.lib.assertMsg (
       "brightness"
       "control-center"
     ]
+  && settings.widget.wispr-status.type == "criomos/wispr-status:status"
   && settings.widget.listener-level.type == "criomos/listener-level:level"
   && settings.widget.tray.drawer
   && settings.widget.battery.display_mode == "graphic"

@@ -50,10 +50,13 @@ let
   belowMediumPackages = packagePaths belowMediumHome;
   mediumPackages = packagePaths mediumHome;
   maximumPackages = packagePaths maximumHome;
+  wisprPackage = builtins.head (pkgs.lib.subtractLists belowMediumHome.config.home.packages mediumHome.config.home.packages);
+  wisprStatus = "${wisprPackage}/bin/wispr-flow-status";
 in
 assert builtins.length (pkgs.lib.subtractLists belowMediumPackages mediumPackages) == 1;
 assert pkgs.lib.subtractLists mediumPackages belowMediumPackages == [ ];
 assert mediumPackages == maximumPackages;
 pkgs.runCommand "wispr-flow-profile-tier" { } ''
+  test -x ${wisprStatus}
   touch "$out"
 ''
