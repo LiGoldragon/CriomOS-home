@@ -1,6 +1,6 @@
 {
   "cargoHash": "sha256-GG6kOXmCdq+bZLU2ul0DIVL8lDuweayvZvXn6+bcUZw=",
-  "hash": "sha256-mWkpqNESrTHVQt55bsQDiYHGopc03VToYj23YENpM6U=",
+  "hash": "sha256-5TAlPdMavt2oE1ds8pAMyKNfiz9x61omv8iUQz3W+qU=",
   "librusty_v8": {
     "baseUrl": "https://github.com/openai/codex/releases/download/rusty-v8-v150.4.0",
     "hashes": {
@@ -16,5 +16,5 @@
     },
     "version": "150.4.0"
   },
-  "version": "0.153.2"
+  "version": "0.153.3"
 }
