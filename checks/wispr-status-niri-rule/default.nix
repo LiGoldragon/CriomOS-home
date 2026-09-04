@@ -8,7 +8,6 @@ let
   runtimeInputs = profilePkgs.callPackage "${inputs.wispr-flow-linux}/nix/runtime-inputs.nix" { };
   wisprFlow = profilePkgs.callPackage "${inputs.wispr-flow-linux}/nix/wispr-flow.nix" {
     inherit runtimeInputs;
-    installerExe = inputs.wispr-flow-installer;
   };
   wisprFlowFhs = profilePkgs.callPackage "${inputs.wispr-flow-linux}/nix/fhs.nix" { wispr-flow = wisprFlow; };
   statusCommand = "${wisprFlowFhs}/bin/wispr-flow-status";

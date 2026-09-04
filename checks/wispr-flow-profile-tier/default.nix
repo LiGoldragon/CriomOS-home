@@ -5,6 +5,10 @@ let
     system = pkgs.stdenv.hostPlatform.system;
     config.allowUnfreePredicate = package: pkgs.lib.getName package == "wispr-flow";
   };
+  runtimeInputs = profilePkgs.callPackage "${inputs.wispr-flow-linux}/nix/runtime-inputs.nix" { };
+  providerWispr = profilePkgs.callPackage "${inputs.wispr-flow-linux}/nix/wispr-flow.nix" {
+    inherit runtimeInputs;
+  };
 
   mkHome =
     user:
@@ -56,7 +60,8 @@ in
 assert builtins.length (pkgs.lib.subtractLists belowMediumPackages mediumPackages) == 1;
 assert pkgs.lib.subtractLists mediumPackages belowMediumPackages == [ ];
 assert mediumPackages == maximumPackages;
+assert providerWispr.version == "1.6.774+criomos.2";
+assert pkgs.lib.hasSuffix "/bin/wispr-flow-status" wisprStatus;
 pkgs.runCommand "wispr-flow-profile-tier" { } ''
-  test -x ${wisprStatus}
   touch "$out"
 ''

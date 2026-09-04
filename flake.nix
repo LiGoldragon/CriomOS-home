@@ -109,15 +109,9 @@
     harness.url = "github:LiGoldragon/harness/d022427938c0925e55e23dfb2d7ba470bbfea3c1";
     harness.inputs.nixpkgs.follows = "nixpkgs";
 
-    # The packaging recipe is public and immutable; its proprietary payload is
-    # a separate local input.  The locked NAR hash identifies the exact
-    # user-supplied installer without committing, hosting, or redistributing it.
-    wispr-flow-linux.url = "github:LiGoldragon/wispr-flow-linux?rev=1ebaf4f809e07d2caecd4863c5e2fa26013a7e9a";
+    # The provider owns the official installer fetch and its fixed checksum.
+    wispr-flow-linux.url = "github:LiGoldragon/wispr-flow-linux?rev=6765c388e5159243072c4259e3ea082dd06f3150";
     wispr-flow-linux.inputs.nixpkgs.follows = "nixpkgs";
-    wispr-flow-installer = {
-      url = "path:/home/li/.local/share/wispr-flow-installer/wispr-flow-setup-1.6.7.exe";
-      flake = false;
-    };
 
     # `annas` — Anna's Archive book/article search + download CLI. Upstream
     # (iosifache/annas-mcp) has no flake; consumed as non-flake source and
