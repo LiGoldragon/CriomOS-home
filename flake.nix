@@ -184,7 +184,7 @@
     # Orchestrate Nexus — per-user path-reservation Nexus. Its executable owns
     # the default fresh Sema store and its ordinary/meta XDG sockets; Home
     # supplies lifecycle and client socket bindings without a bootstrap frame.
-    orchestrate.url = "github:LiGoldragon/orchestrate/e631bad92ef259e74d59fb83e24d17a9a24e2814";
+    orchestrate.url = "github:LiGoldragon/orchestrate/9585484738ce0748d0cf23f0431285f9693ca2ec";
     orchestrate.inputs.nixpkgs.follows = "nixpkgs";
 
     # Message — the messenger: stateful local messaging daemon owning the
