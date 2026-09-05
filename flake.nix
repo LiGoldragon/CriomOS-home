@@ -633,6 +633,7 @@
           ghostty-primary-selection = checkPkgs.callPackage ./checks/ghostty-primary-selection {
             inherit inputs;
           };
+          terminal-oom-policy = checkPkgs.callPackage ./checks/terminal-oom-policy { inherit inputs; };
           bird-home-isolation = checkPkgs.callPackage ./checks/bird-home-isolation { inherit inputs; };
           desktop-shell-launch = checkPkgs.callPackage ./checks/desktop-shell-launch { inherit inputs; };
           wispr-flow-profile-tier = checkPkgs.callPackage ./checks/wispr-flow-profile-tier {

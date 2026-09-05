@@ -14,6 +14,21 @@ parent claim therefore cannot read a partial marker; malformed markers still
 fail closed. New Claude markers encode `uuid-version=uuid-v4` or
 `uuid-version=uuid-v5`; deployed untyped v4 markers stay compatible.
 
+## Terminal scopes survive a kernel OOM kill
+
+This generation installs `~/.config/systemd/user/app-ghostty-.scope.d/oom-policy.conf`
+(`OOMPolicy=continue`) and starts the rescue terminal scope with the same
+property. Ghostty's per-surface `app-ghostty-surface-transient-<pid>.scope`
+units no longer stop, together with every process in them, when the kernel
+OOM killer takes one of their processes; the user manager's
+`DefaultOOMPolicy=stop` stays in force for everything else.
+
+Activation only links the drop-in and reloads the user manager; no service
+restarts. Surfaces opened after that reload carry `OOMPolicy=continue`
+(`systemctl --user show app-ghostty-surface-transient-<pid>.scope -p OOMPolicy`);
+a surface that was already running keeps the `stop` it was started with until
+it is closed and reopened. Live sessions are not interrupted.
+
 ## Chroma 0.3.1 Datomic configuration cutover
 
 This generation pins Chroma `0.3.1` at

@@ -53,6 +53,8 @@
     # the home-manager generation. Re-introducing them as explicit
     # imports.
     ./profiles/min/niri.nix
+    # Terminal scopes survive a kernel OOM kill of one of their processes.
+    ./profiles/min/terminal-scopes.nix
     ./profiles/min/ui-priority.nix
     ./profiles/min/dictation.nix
     ./profiles/min/wispr-flow.nix

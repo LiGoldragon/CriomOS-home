@@ -20,6 +20,11 @@ let
     wispr-flow = wisprFlow;
   };
   wisprFlowStatus = "${wisprFlowFhs}/bin/wispr-flow-status";
+  # The rescue terminal is its own scope: single-instance is off, so Ghostty
+  # creates no per-surface scope and the shell shares this scope with it.
+  # OOMPolicy=continue keeps the scope (and the terminal) alive when the kernel
+  # OOM killer takes one process inside it; the Ghostty surface scopes get the
+  # same policy from the drop-in in terminal-scopes.nix.
   rescueTerminalPackage = pkgs.writeShellScriptBin "criomos-rescue-terminal" ''
     set -eu
 
@@ -31,6 +36,7 @@ let
       --property=MemoryAccounting=yes \
       --property=MemoryLow=256M \
       --property=MemoryHigh=2G \
+      --property=OOMPolicy=continue \
       ${terminal} \
         --gtk-single-instance=false \
         --class=criomos-rescue-terminal \
