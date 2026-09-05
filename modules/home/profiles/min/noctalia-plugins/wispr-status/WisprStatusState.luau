@@ -82,6 +82,7 @@ end
 function State.disconnect(status)
   status.session_id, status.sequence = nil, nil
   status.state, status.hands_free, status.error = "unavailable", false, nil
+  status.last_microphone_sequence = nil
   status.microphone = { sequence = nil, capture = "unavailable", rms = nil }
 end
 
