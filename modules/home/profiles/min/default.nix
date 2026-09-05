@@ -340,6 +340,7 @@ let
     pkgs.llama-cpp
     (pkgs.callPackage ../../../../packages/gws { inherit inputs; })
     (pkgs.callPackage ../../../../packages/playwright-cli { })
+    (pkgs.callPackage ../../../../packages/plannotator { })
     codexCliPackage
     codexRemote
     flowIdPackage
