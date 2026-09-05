@@ -237,7 +237,7 @@ let
       parted # Disk utils
       wireguard-tools
     ]
-    ++ (optionals (node.machine.arch == "x86-64") [ i7z ]);
+    ++ (optionals (node.machine.architecture == "x86_64") [ i7z ]);
 
   programmingTools = with pkgs; [
     # C
