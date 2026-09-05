@@ -31,6 +31,9 @@ stdenv.mkDerivation {
   };
 
   dontUnpack = true;
+  # Bun's compiled executable keeps the application payload after the ELF data;
+  # stripping it turns the executable back into the Bun runtime.
+  dontStrip = true;
   nativeBuildInputs = [ pkgs.autoPatchelfHook ];
   buildInputs = [ stdenv.cc.cc ];
 
