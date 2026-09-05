@@ -9,7 +9,7 @@
 #   { horizon, user, inputs, ... }
 #
 # - horizon: from the OS-supplied projection (the per-(cluster, node) view).
-# - user:    horizon.users.<userName>, set per-user in CriomOS userHomes.
+# - user:    one explicit entry from Horizon’s users vector, selected by name at the Home boundary.
 # - inputs:  CriomOS-home's own flake inputs (niri-flake, noctalia,
 #            stylix, etc.) — this aggregate forwards
 #            them to inner modules that need them (e.g. niri-flake's

@@ -661,6 +661,14 @@
         }
       ) derivationChecks;
 
+      homeUser = import ./lib/horizon-user.nix { inherit lib; };
+      homeUsers = builtins.listToAttrs (
+        map (rawUser: {
+          name = rawUser.name;
+          value = homeUser rawUser;
+        }) horizon.users
+      );
+
       mkHomeConfiguration =
         userName: user:
         inputs.home-manager.lib.homeManagerConfiguration {
@@ -698,7 +706,7 @@
       # cannot know.
       legacyPackages.${pkgs.stdenv.hostPlatform.system} = pkgs;
 
-      homeConfigurations = builtins.mapAttrs mkHomeConfiguration horizon.users;
+      homeConfigurations = builtins.mapAttrs mkHomeConfiguration homeUsers;
 
       # Wrap blueprint's auto-discovered homeModules.default so that:
       # (1) upstream homeModules from CriomOS-home's own flake inputs

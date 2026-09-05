@@ -4,11 +4,12 @@
   lib,
   pkgs,
   horizon,
+  user,
   hexis,
   ...
 }:
 let
-  profileUser = ((horizon.users or { }).${config.home.username} or { });
+  profileUser = user;
   primaryWorkspace = "${config.home.homeDirectory}/primary";
   primaryWorkspacePointer = lib.replaceStrings [ "~" "/" ] [ "~0" "~1" ] primaryWorkspace;
   mediumEnabled = profileUser.size.medium or false;
