@@ -32,7 +32,7 @@ local function consume_microphone(now_ms)
   last_microphone_sequence = microphone.sequence
   if microphone.capture == "available" and type(microphone.rms) == "number" and microphone.rms >= 0 and microphone.rms <= 1 then
     microphone_level = microphone.rms
-    visible_microphone_level = clamp(microphone_level * 2.75, 0.0, 1.0)
+    visible_microphone_level = clamp(math.sqrt(microphone_level) * 3.0, 0.0, 1.0)
     last_microphone_sample_ms = now_ms
   else
     microphone_level, visible_microphone_level, last_microphone_sample_ms = 0.0, 0.0, nil
