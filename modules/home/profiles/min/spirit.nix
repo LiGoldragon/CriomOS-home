@@ -17,20 +17,12 @@ let
 
   system = pkgs.stdenv.hostPlatform.system;
   agentPackage = inputs.agent.packages.${system}.default;
-  serviceName =
-    service:
-    if builtins.isString service then
-      service
-    else if builtins.isAttrs service then
-      let
-        names = builtins.attrNames service;
-      in
-      if builtins.length names == 1 then builtins.head names else null
-    else
-      null;
-  isPersonaDevelopment = builtins.any (service: serviceName service == "PersonaDevelopment") (
-    horizon.node.services or [ ]
-  );
+  # Horizon’s projected capability sum carries the configurable node roles.
+  # `services` is nullable public configuration, so it cannot be used as the
+  # profile gate that legacy Home treated it as.
+  isPersonaDevelopment = builtins.any (
+    capability: (capability.kind or null) == "personaDevelopment"
+  ) (horizon.node.capabilities or [ ]);
 
   # These values configure the retained agent daemon only. The maintained
   # Spirit composition owns the separate judgment adapter and provider.

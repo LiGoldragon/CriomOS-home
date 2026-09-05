@@ -17,8 +17,6 @@ let
     isMultimediaDev
     ;
   inherit (pkgs) writeText;
-  inherit (horizon.node.machine) model;
-
   shellLaunch = command: "${shell} -c '${command}'";
   homeDir = config.home.homeDirectory;
   nixProfileExec = name: "${homeDir}/.nix-profile/bin/${name}";
@@ -37,9 +35,12 @@ let
     waybarEksek = nixProfileExec "waybar";
     swaylockEksek = nixProfileExec "swaylock";
     browser =
-      if size.medium then "${nixProfileExec "qutebrowser"}"
-      else if size.min then termBrowser
-      else "";
+      if size.medium then
+        "${nixProfileExec "qutebrowser"}"
+      else if size.min then
+        termBrowser
+      else
+        "";
     launcher = "${nixProfileExec "wofi"} --show drun";
     shellTerm = shellLaunch "export SHELL=${zshEksek}; exec ${terminal} ${zshEksek}";
   };
@@ -55,7 +56,7 @@ mkIf size.min {
       gtk = true;
     };
     systemd.enable = true;
-    extraSessionCommands = '''';
+    extraSessionCommands = '';
     config = null;
     extraConfig = swayConfigString;
   };
