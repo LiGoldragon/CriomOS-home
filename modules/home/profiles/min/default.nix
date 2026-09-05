@@ -75,7 +75,7 @@ let
 
   codexConfig = codexPermissionDefaults // {
     developer_instructions = codexSkillReadDeduplicationInstruction;
-    model = "gpt-5.6-sol";
+    model = "gpt-6-astra";
     model_reasoning_effort = "xhigh";
     personality = "pragmatic";
     plan_mode_reasoning_effort = "xhigh";
