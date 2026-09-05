@@ -745,8 +745,7 @@ let
   # only declares a narrow C/C++/Pascal/TeX set; we register
   # emacsclient as the default for the cluster's full text / source
   # set. Text types not in this list still fall through to whichever
-  # other registered .desktop matches (e.g. codium for some boutique
-  # types), preserving chooser flexibility.
+  # other registered .desktop matches, preserving chooser flexibility.
   defaultEditorMimeTypes = [
     "text/plain"
     "text/markdown"
@@ -785,8 +784,7 @@ let
   ];
 
   # Horizon's projected preferred editor owns EDITOR/VISUAL and
-  # text/source MIME defaults. Emacs can be preferred even when VSCodium
-  # is installed as an auxiliary editor in the same medium profile.
+  # text/source MIME defaults.
   isPreferredEditor = user.preferredEditor == "Emacs";
 
 in
@@ -805,8 +803,7 @@ mkIf size.medium {
   home = {
     # EDITOR/VISUAL are claimed only when this user's projected
     # preferredEditor is Emacs. mkForce because the neovim module
-    # also defines them. The vscodium module makes the symmetric
-    # claim when the user's preferredEditor is Codium.
+    # also defines them.
     sessionVariables = lib.mkIf isPreferredEditor {
       EDITOR = lib.mkForce "emacsclient -c";
       VISUAL = lib.mkForce "emacsclient -c";

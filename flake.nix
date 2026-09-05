@@ -40,56 +40,6 @@
     stylix.url = "github:danth/stylix";
     stylix.inputs.nixpkgs.follows = "nixpkgs";
 
-    # Editor — vscodium extensions.
-    # Note: the open-vsx + vscode-marketplace catalogues come into
-    # scope via `pkgs.open-vsx` from CriomOS-pkgs (which applies
-    # nix-vscode-extensions's overlay against a pkgs that has
-    # allowUnfree=true). This file consumes `pkgs.open-vsx` directly,
-    # so no nix-vscode-extensions input is needed here.
-
-    # visualjj VSIX — fetched as a versioned flake input so the lock-
-    # file hash (auto-resolved by nix flake update) replaces a manual
-    # sha256. The nix-vscode-extensions flake's visualjj has a
-    # nixpkgs-side meta.license = unfree gate that fires inside
-    # home-manager's extension evaluation even when allowUnfree is set,
-    # so we keep using `buildVscodeMarketplaceExtension` and source the
-    # VSIX from this input. Bump the version in the URL when upstream
-    # ships a new release; `nix flake update visualjj-vsix` then picks
-    # up the new content hash without any code edit.
-    visualjj-vsix = {
-      type = "file";
-      url = "https://open-vsx.org/api/visualjj/visualjj/linux-x64/0.28.1/file/visualjj.visualjj-0.28.1@linux-x64.vsix";
-      flake = false;
-    };
-
-    # claude-code VSIX — same `type = file` pattern as visualjj. Both
-    # nix-vscode-extensions and the nixpkgs-side definition tag claude-
-    # code as `meta.license = unfree`, which trips home-manager's
-    # vscode-extensions evaluation regardless of allowUnfree being
-    # set at every layer we tried (CriomOS-pkgs's pkgs.config, the
-    # overlay-extended pkgs, even nixpkgs.config.allowUnfree at the
-    # nixos level via mkOverride 0). Bypassing the catalogue + using
-    # buildVscodeMarketplaceExtension on the raw VSIX sidesteps the
-    # gate entirely.
-    claude-code-vsix = {
-      type = "file";
-      url = "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/anthropic/vsextensions/claude-code/2.1.258/vspackage";
-      flake = false;
-    };
-
-    # Codex sidebar VSIX — keep the editor surface on its own versioned
-    # input, alongside the independently pinned Codex CLI below.  The
-    # Open VSX catalogue is deliberately not the update authority here:
-    # Codium marketplace checks are disabled, and its catalogue cadence can
-    # otherwise leave the sidebar behind the TUI.  For a coordinated Codex
-    # refresh, update this URL, run `nix flake update codex-chatgpt-vsix`, and
-    # run the VSCodium lifecycle check before deploying.
-    codex-chatgpt-vsix = {
-      type = "file";
-      url = "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/openai/vsextensions/chatgpt/26.5825.51511/vspackage?targetPlatform=linux-x64";
-      flake = false;
-    };
-
     # `substack` CLI — its own flake, exposes packages.<system>.default.
     substack-cli.url = "github:LiGoldragon/substack-cli";
     substack-cli.inputs.nixpkgs.follows = "nixpkgs";
@@ -665,7 +615,6 @@
           spirit-deployment = checkPkgs.callPackage ./checks/spirit-deployment { inherit inputs; };
           flow-id = checkPkgs.callPackage ./checks/flow-id { inherit inputs; };
           aggregator-deployment = checkPkgs.callPackage ./checks/aggregator-deployment { inherit inputs; };
-          vscodium-casual = checkPkgs.callPackage ./checks/vscodium-casual { };
           owned-agent-updater = checkPkgs.callPackage ./checks/owned-agent-updater { inherit inputs; };
           system-projection-boundary = checkPkgs.callPackage ./checks/system-projection-boundary { };
           main-contract-pins = checkPkgs.callPackage ./checks/main-contract-pins {
@@ -682,11 +631,6 @@
         }
         // lib.optionalAttrs (agentIntercomSupported _system) {
           agent-intercom = checkPkgs.callPackage ./checks/agent-intercom { inherit inputs; };
-        }
-        // lib.optionalAttrs (_system == "x86_64-linux") {
-          vscodium-claude-lifecycle = checkPkgs.callPackage ./checks/vscodium-claude-lifecycle {
-            inherit inputs;
-          };
         }
         // lib.optionalAttrs (desktopAppSupported _system) {
           claude-desktop-declared-cli = checkPkgs.callPackage ./checks/claude-desktop-declared-cli {

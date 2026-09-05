@@ -11,7 +11,7 @@
 # - horizon: from the OS-supplied projection (the per-(cluster, node) view).
 # - user:    horizon.users.<userName>, set per-user in CriomOS userHomes.
 # - inputs:  CriomOS-home's own flake inputs (niri-flake, noctalia,
-#            stylix, vscodium-ext, etc.) — this aggregate forwards
+#            stylix, etc.) — this aggregate forwards
 #            them to inner modules that need them (e.g. niri-flake's
 #            home module).
 
@@ -81,7 +81,6 @@
     ./profiles/min/bitwarden.nix
     ./profiles/med
     ./profiles/med/cli-tools.nix
-    ./profiles/med/codium.nix
     ./profiles/med/emacs.nix
     # NOT importing ./profiles/med/element.nix here — that file declares
     # `systemd.services.nginx-element` (system-level, not user). It belongs
@@ -93,7 +92,6 @@
     # alongside Chrome — a sibling module, not imported by ./profiles/max.
     ./profiles/max/browser-use.nix
     ./neovim/neovim
-    ./vscodium/vscodium
   ];
 
   config = { };

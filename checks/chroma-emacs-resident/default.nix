@@ -30,7 +30,7 @@ let
     textScale.emacsHeight = 14;
     user = {
       size.medium = true;
-      preferredEditor = "Codium";
+      preferredEditor = "Emacs";
     };
   };
   homeEmacs = moduleContent homeEmacsModule;

@@ -185,7 +185,6 @@ in
         emacs.enable = false;
         ghostty.enable = false;
         vscode.enable = false;
-        vscodium.enable = false;
         wofi.enable = false;
         waybar.enable = false;
         fzf.enable = false;

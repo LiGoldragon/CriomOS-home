@@ -41,31 +41,6 @@ let
         }
       ];
     }).config;
-  vscodiumConfiguration =
-    (inputs.home-manager.lib.homeManagerConfiguration {
-      inherit pkgs;
-      extraSpecialArgs = {
-        inherit inputs horizon ownedAgentPackages;
-        user = horizon.users.test-user // {
-          preferredEditor = "Emacs";
-        };
-        hexis = inputs.hexis.packages.${pkgs.stdenv.hostPlatform.system}.default;
-        textScale.codiumZoom = 0;
-      };
-      modules = [
-        ({ ... }: { _module.args.ownedAgentPackages = ownedAgentPackages; })
-        ../../modules/home/core-packages.nix
-        ../../modules/home/profiles/min/agent-intercom.nix
-        ../../modules/home/vscodium/vscodium
-        {
-          home = {
-            username = "test-user";
-            homeDirectory = "/home/test-user";
-            stateVersion = "26.05";
-          };
-        }
-      ];
-    }).config;
   profile = pkgs.buildEnv {
     name = "agent-intercom-integration-profile";
     paths = configuration.home.packages;
@@ -79,7 +54,6 @@ assert configuration.home.activation ? mergeAgentIntercomCodexMcp;
 assert configuration.home.activation ? mergeAgentIntercomClaudeMcp;
 assert hasPackage "agent-intercom-runtime";
 assert builtins.elem claudeCodePackage configuration.home.packages;
-assert builtins.elem claudeCodePackage vscodiumConfiguration.home.packages;
 pkgs.runCommand "agent-intercom-integration-contract"
   {
     nativeBuildInputs = [
