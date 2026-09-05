@@ -3,26 +3,33 @@ local stream_callback = nil
 local current = nil
 local writes = 0
 
+local function microphone(sequence, capture, rms)
+  return { sequence = sequence, capture = capture, rms = rms }
+end
+
+local function snapshot(sequence, state, microphone_value)
+  return {
+    contract = "com.criomos.wispr.status.v2", type = "snapshot", session_id = "alpha",
+    sequence = sequence, state = state, hands_free = false, microphone = microphone_value,
+  }
+end
+
+local frames = {
+  recording = snapshot(1, "recording", microphone(1, "available", 0.4)),
+  heartbeat = snapshot(2, "recording", microphone(1, "available", 0.4)),
+  same_rms_fresh = snapshot(3, "recording", microphone(2, "available", 0.4)),
+  heartbeat_after_sample = snapshot(4, "recording", microphone(2, "available", 0.4)),
+  out_of_order_microphone = snapshot(5, "recording", microphone(1, "available", 1)),
+  invalid_microphone = snapshot(6, "recording", { sequence = 3, capture = "available", rms = 2 }),
+  silence = snapshot(7, "recording", microphone(3, "available", 0)),
+  unavailable = snapshot(8, "recording", microphone(4, "unavailable", nil)),
+}
+
 noctalia = {
-  getenv = function(name)
-    if name == "XDG_RUNTIME_DIR" then return "/run/user/test" end
-    return nil
-  end,
+  getenv = function(name) if name == "XDG_RUNTIME_DIR" then return "/run/user/test" end end,
   nowMs = function() return now end,
   setUpdateInterval = function(_) end,
-  json = {
-    decode = function(line)
-      local session, sequence, state, hands = string.match(
-        line,
-        '^%{"contract":"com%.criomos%.wispr%.status%.v1","type":"snapshot","session_id":"([%w%-]+)","sequence":(%d+),"state":"([a-z]+)","hands_free":([a-z]+)%}$'
-      )
-      if session == nil then return nil end
-      return {
-        contract = "com.criomos.wispr.status.v1", type = "snapshot", session_id = session,
-        sequence = tonumber(sequence), state = state, hands_free = hands == "true",
-      }
-    end,
-  },
+  json = { decode = function(line) return frames[line] end },
   state = {
     set = function(key, value)
       assert(key == "wispr-status-state")
@@ -30,50 +37,40 @@ noctalia = {
       writes = writes + 1
     end,
   },
-  runStream = function(_, callback)
-    stream_callback = callback
-  end,
+  runStream = function(_, callback) stream_callback = callback end,
 }
 
-package.preload["./WisprStatusState.luau"] = function()
-  return dofile("WisprStatusState.luau")
-end
+package.preload["./WisprStatusState.luau"] = function() return dofile("WisprStatusState.luau") end
 dofile("WisprStatusService.luau")
 assert(current.state == "unavailable")
 assert(stream_callback ~= nil)
-stream_callback('{"contract":"com.criomos.wispr.status.v1","type":"snapshot","session_id":"alpha","sequence":1,"state":"recording","hands_free":false}')
-assert(current.state == "recording")
-local accepted_writes = writes
-now = 4000
-stream_callback('{"contract":"com.criomos.wispr.status.v1","type":"snapshot","session_id":"alpha","sequence":2,"state":"recording","hands_free":false}')
-assert(current.state == "recording")
-assert(writes == accepted_writes)
-now = 6000
+
+stream_callback("recording")
+assert(current.state == "recording" and current.microphone.sequence == 1)
+local recording_writes = writes
+now = 400
+stream_callback("heartbeat")
+assert(writes == recording_writes)
+now = 500
+stream_callback("same_rms_fresh")
+assert(current.microphone.sequence == 2 and writes == recording_writes + 1)
+local fresh_writes = writes
+now = 700
+stream_callback("heartbeat_after_sample")
+assert(writes == fresh_writes)
+
+stream_callback("out_of_order_microphone")
+assert(current.microphone.sequence == 2 and writes == fresh_writes)
+stream_callback("invalid_microphone")
+assert(current.microphone.sequence == 2 and writes == fresh_writes)
+now = 5601
 update()
 assert(current.state == "recording")
-local writes_before_invalid_frames = writes
-stream_callback('{"contract":"com.criomos.wispr.status.v1","type":"snapshot","session_id":"alpha","sequence":1,"state":"idle","hands_free":false}')
-stream_callback('{"contract":"com.criomos.wispr.status.v1","type":"snapshot","session_id":"alpha","sequence":2,"state":"idle","hands_free":false}')
-stream_callback('{"contract":"wrong","type":"snapshot","session_id":"alpha","sequence":3,"state":"idle","hands_free":false}')
-stream_callback(string.rep("x", 9000))
-assert(writes == writes_before_invalid_frames)
-now = 9501
-update()
-assert(current.state == "unavailable")
-local stale_writes = writes
-stream_callback('{"contract":"com.criomos.wispr.status.v1","type":"snapshot","session_id":"alpha","sequence":1,"state":"idle","hands_free":false}')
-stream_callback('{"contract":"wrong","type":"snapshot","session_id":"alpha","sequence":2,"state":"idle","hands_free":false}')
-stream_callback(string.rep("x", 9000))
-assert(writes == stale_writes)
+now = 5701
+stream_callback("silence")
+assert(current.microphone.capture == "available" and current.microphone.rms == 0)
+stream_callback("unavailable")
+assert(current.microphone.capture == "unavailable" and current.microphone.rms == nil)
+
 stream_callback("__wispr_status_socket_disconnected__")
-assert(current.state == "unavailable")
-stream_callback('{"contract":"com.criomos.wispr.status.v1","type":"snapshot","session_id":"beta","sequence":1,"state":"transcribing","hands_free":true}')
-assert(current.state == "transcribing" and current.hands_free)
-stream_callback("__wispr_status_socket_disconnected__")
-stream_callback('{"contract":"com.criomos.wispr.status.v1","type":"snapshot","session_id":"alpha","sequence":2,"state":"recording","hands_free":false}')
-assert(current.state == "unavailable")
-stream_callback('{"contract":"com.criomos.wispr.status.v1","type":"snapshot","session_id":"gamma","sequence":1,"state":"error","hands_free":false}')
-assert(current.state == "error")
-now = now + 6000
-update()
-assert(current.state == "unavailable")
+assert(current.state == "unavailable" and current.microphone.capture == "unavailable")

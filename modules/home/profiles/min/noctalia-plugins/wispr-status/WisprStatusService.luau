@@ -12,7 +12,10 @@ end
 local function publish()
   local value = State.public(status)
   if last_published ~= nil and last_published.state == value.state
-    and last_published.hands_free == value.hands_free and last_published.error == value.error then return end
+    and last_published.hands_free == value.hands_free and last_published.error == value.error
+    and last_published.microphone.sequence == value.microphone.sequence
+    and last_published.microphone.capture == value.microphone.capture
+    and last_published.microphone.rms == value.microphone.rms then return end
   last_published = value
   noctalia.state.set("wispr-status-state", value)
 end
@@ -24,12 +27,15 @@ end
 local function consume(line)
   if line == disconnected then unavailable(); return end
   local event = State.decode(line, noctalia.json.decode)
-  if event ~= nil and State.consume(status, event) then last_event_ms = noctalia.nowMs(); publish() end
+  if event ~= nil then
+    local accepted = State.consume(status, event)
+    if accepted then last_event_ms = noctalia.nowMs(); publish() end
+  end
 end
 
 local runtime_directory = noctalia.getenv("XDG_RUNTIME_DIR") or ""
 if runtime_directory ~= "" then
-  local socket_path = runtime_directory .. "/wispr-flow-status-v1.sock"
+  local socket_path = runtime_directory .. "/wispr-flow-status-v2.sock"
   local command = "while true; do @SOCAT@ -u UNIX-CONNECT:" .. shell_quote(socket_path)
     .. " STDOUT; printf '%s\\n' " .. disconnected .. "; sleep 1; done"
   noctalia.runStream(command, consume)

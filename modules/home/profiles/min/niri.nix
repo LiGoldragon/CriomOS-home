@@ -15,7 +15,6 @@ let
   wisprRuntimeInputs = pkgs.callPackage "${inputs.wispr-flow-linux}/nix/runtime-inputs.nix" { };
   wisprFlow = pkgs.callPackage "${inputs.wispr-flow-linux}/nix/wispr-flow.nix" {
     runtimeInputs = wisprRuntimeInputs;
-    installerExe = inputs.wispr-flow-installer;
   };
   wisprFlowFhs = pkgs.callPackage "${inputs.wispr-flow-linux}/nix/fhs.nix" {
     wispr-flow = wisprFlow;

@@ -1,9 +1,9 @@
 id = "criomos/wispr-status"
 name = "Wispr Status"
-version = "1.0.0"
+version = "2.0.0"
 plugin_api = 23
 author = "CriomOS"
-description = "Shows the app-owned Wispr Flow status in the Noctalia bar."
+description = "Shows v2 app-owned Wispr Flow status and recording meter in the Noctalia bar."
 
 [[service]]
 id = "wispr-status-service"
