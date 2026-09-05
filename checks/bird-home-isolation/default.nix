@@ -3,7 +3,7 @@ let
   system = pkgs.stdenv.hostPlatform.system;
   ownedAgentPackages = import ../../lib/owned-agent-packages.nix { inherit inputs pkgs; };
   ownedAgentModule = { ... }: { _module.args.ownedAgentPackages = ownedAgentPackages; };
-  piModelsModule = ../../modules/home/profiles/min/pi-models.nix;
+    piModelsModule = ../../modules/home/profiles/min/pi-models.nix;
   agentIntercomModule = ../../modules/home/profiles/min/agent-intercom.nix;
   orchestrateModule = ../../modules/home/profiles/min/orchestrate.nix;
   spiritModule = ../../modules/home/profiles/min/spirit.nix;
@@ -21,13 +21,7 @@ let
   };
   localPersonaHorizon = {
     node = remoteHorizon.node // {
-      services = [
-        {
-          PersonaDevelopment = {
-            capabilities = [ ];
-          };
-        }
-      ];
+      capabilities = [ { kind = "personaDevelopment"; } ];
     };
     exNodes = { };
   };

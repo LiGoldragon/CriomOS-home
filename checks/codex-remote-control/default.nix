@@ -9,7 +9,7 @@ let
     (inputs.home-manager.lib.homeManagerConfiguration {
       inherit pkgs;
       extraSpecialArgs = {
-        inherit inputs;
+        inherit inputs user;
         hexis = inputs.hexis.packages.${system}.default;
         horizon = {
           node.services = [ ];
