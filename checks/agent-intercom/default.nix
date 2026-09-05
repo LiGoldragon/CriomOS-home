@@ -69,16 +69,16 @@ pkgs.runCommand "agent-intercom-integration-contract"
 
     test -x ${agentIntercom}/bin/coi
     test -x ${agentIntercom}/bin/cci
-    test -x ${agentIntercom}/bin/codex-raw
     test -x ${agentIntercom}/bin/claude-raw
     ! test -e ${agentIntercom}/bin/codex
+    ! test -e ${agentIntercom}/bin/codex-raw
     ! test -e ${agentIntercom}/bin/claude
-    test "$( ${agentIntercom}/bin/codex-raw --version )" = 'codex-cli ${codexCliPackage.version}'
     test "$( ${agentIntercom}/bin/claude-raw --version )" = '${claudeCodePackage.version} (Claude Code)'
     test "$( ${profile}/bin/codex --version )" = 'codex-cli ${codexCliPackage.version}'
+    ! test -e ${profile}/bin/codex-raw
     test "$( ${profile}/bin/claude --version )" = '${claudeCodePackage.version} (Claude Code)'
 
-    grep -F -- '--yolo' ${agentIntercom}/bin/coi
+    ! grep -F -- '--yolo' ${agentIntercom}/bin/coi
     grep -F ${codexCliPackage}/bin/codex ${agentIntercom}/bin/coi
     grep -F -- '--dangerously-skip-permissions' ${agentIntercom}/bin/cci
     grep -F ${claudeCodePackage}/bin/claude ${agentIntercom}/bin/cci

@@ -506,7 +506,7 @@
         "claude-remote-control"
         "codex-remote-control"
         "codex-remote-control-vm"
-        "codex-tui"
+        "codex-remote"
       ];
       agentIntercomSupported = system: lib.elem system agentIntercomSystems;
       desktopAppSupported =
@@ -620,7 +620,7 @@
           main-contract-pins = checkPkgs.callPackage ./checks/main-contract-pins {
             inherit inputs;
           };
-          codex-tui = checkPkgs.callPackage ./checks/codex-tui { };
+          codex-remote = checkPkgs.callPackage ./checks/codex-remote { };
           claude-remote-control = checkPkgs.callPackage ./checks/claude-remote-control {
             inherit inputs;
           };

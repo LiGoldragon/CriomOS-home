@@ -290,13 +290,15 @@ let
     ssh-to-age
   ];
 
-  # Pi is built directly from inputs.pi-src. The Codex TUI launcher preserves
-  # its caller's directory when attaching to the shared app-server; raw
-  # recovery commands and Agent Intercom bridges retain the pinned clients.
+  # Pi is built directly from inputs.pi-src. Codex is the canonical pinned
+  # upstream CLI; the separately named remote client attaches to the shared
+  # app-server.
   claudeCodePackage = config.criomos.corePackages.claude;
   codexCliPackage = config.criomos.corePackages.codex;
   flowIdPackage = config.criomos.corePackages.flowId;
-  codexTui = pkgs.callPackage ../../../../owned-agents/codex/tui.nix { inherit codexCliPackage; };
+  codexRemote = pkgs.callPackage ../../../../owned-agents/codex/remote.nix {
+    inherit codexCliPackage;
+  };
   piPackage = pkgs.callPackage ../../../../packages/pi { inherit inputs; };
 
   mkRawRecoveryCommand =
@@ -309,7 +311,6 @@ let
     };
 
   directClaude = mkRawRecoveryCommand "direct-claude" claudeCodePackage "claude";
-  directCodex = mkRawRecoveryCommand "direct-codex" codexCliPackage "codex";
   directPi = mkRawRecoveryCommand "direct-pi" piPackage "pi";
 
   dolthubCreateDatabase = pkgs.callPackage ../../../../packages/dolthub-create-database { };
@@ -333,14 +334,14 @@ let
     inputs.orca-ide.packages.${pkgs.stdenv.hostPlatform.system}.orca-ide
     piPackage
     directClaude
-    directCodex
     directPi
     piTesting
     pkgs.opencode
     pkgs.llama-cpp
     (pkgs.callPackage ../../../../packages/gws { inherit inputs; })
     (pkgs.callPackage ../../../../packages/playwright-cli { })
-    codexTui
+    codexCliPackage
+    codexRemote
     flowIdPackage
   ];
 

@@ -37,6 +37,8 @@ let
     rustToolchain = pkgs.rustc;
   };
   profile = moduleResult.config.content;
+  packageName = package: package.pname or (package.name or "");
+  hasPackage = name: builtins.any (package: packageName package == name) profile.home.packages;
   codexCleanup = profile.home.activation.removeStaleCodexConfiguration.data;
   codexMerge = profile.home.activation.mergeCodexConfig.data;
   codexActivation = pkgs.writeShellScript "ai-agent-launch-codex-activation" ''
@@ -54,6 +56,8 @@ let
 in
 assert profile.home.activation ? removeStaleCodexConfiguration;
 assert profile.home.activation ? mergeCodexConfig;
+assert builtins.elem codexCliPackage profile.home.packages;
+assert !hasPackage "direct-codex";
 pkgs.runCommand "ai-agent-launch-orchestration"
   {
     nativeBuildInputs = [
@@ -88,10 +92,12 @@ pkgs.runCommand "ai-agent-launch-orchestration"
     ${pkgs.yq-go}/bin/yq -p toml -o json -e '.' ${roleFile "worker"} > /dev/null
     ${pkgs.yq-go}/bin/yq -p toml -o json -e '.' ${roleFile "explorer"} > /dev/null
 
-    test "$( ${pkgs.yq-go}/bin/yq -p toml '.model' "$codexHome/.codex/config.toml" )" = "gpt-5.6-sol"
+    test "$( ${pkgs.yq-go}/bin/yq -p toml '.model' "$codexHome/.codex/config.toml" )" = "gpt-6-astra"
     test "$( ${pkgs.yq-go}/bin/yq -p toml '.model_reasoning_effort' "$codexHome/.codex/config.toml" )" = "xhigh"
     test "$( ${pkgs.yq-go}/bin/yq -p toml '.agents.default_subagent_model' "$codexHome/.codex/config.toml" )" = "gpt-5.6-luna"
     test "$( ${pkgs.yq-go}/bin/yq -p toml '.agents.default_subagent_reasoning_effort' "$codexHome/.codex/config.toml" )" = "xhigh"
+    test "$( ${pkgs.yq-go}/bin/yq -p toml '.approval_policy' "$codexHome/.codex/config.toml" )" = "never"
+    test "$( ${pkgs.yq-go}/bin/yq -p toml '.sandbox_mode' "$codexHome/.codex/config.toml" )" = "danger-full-access"
     test "$( ${pkgs.yq-go}/bin/yq -p toml '.unrelated_setting' "$codexHome/.codex/config.toml" )" = "preserve-me"
     test "$( ${pkgs.yq-go}/bin/yq -p toml -o json 'has("orchestrator")' "$codexHome/.codex/config.toml" )" = false
 

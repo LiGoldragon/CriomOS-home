@@ -3,7 +3,6 @@
   pkgs,
   codexCliPackage ? pkgs.callPackage ../../owned-agents/codex { inherit inputs; },
   claudeCodePackage ? pkgs.callPackage ../../owned-agents/claude-code { inherit inputs; },
-  codexRawCommand ? "${codexCliPackage}/bin/codex",
   ...
 }:
 # Blueprint evaluates package outputs for every exposed system. Avoid resolving
@@ -143,13 +142,8 @@ else
       # `coi` owns its local bridge process and always invokes the shared raw
       # CLI. The package deliberately never publishes normal `codex`.
       makeWrapper ${pkgs.nodejs}/bin/node "$out/bin/coi" \
-        --add-flags "$root/codex/dist/coi.mjs --yolo" \
-        --set CODEX_INTERCOM_CODEX_COMMAND ${codexRawCommand}
-      cat > "$out/bin/codex-raw" <<'EOF'
-      #!${pkgs.runtimeShell}
-      exec ${codexRawCommand} "$@"
-      EOF
-      chmod +x "$out/bin/codex-raw"
+        --add-flags "$root/codex/dist/coi.mjs" \
+        --set CODEX_INTERCOM_CODEX_COMMAND ${codexCliPackage}/bin/codex
 
       makeWrapper ${pkgs.nodejs}/bin/node "$out/bin/claude-intercom-mcp" \
         --add-flags "$root/claude/claude-server.mjs"

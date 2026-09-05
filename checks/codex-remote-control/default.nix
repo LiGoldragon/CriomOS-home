@@ -3,15 +3,6 @@ let
   system = pkgs.stdenv.hostPlatform.system;
   codexCliPackage = pkgs.callPackage ../../owned-agents/codex { inherit inputs; };
   corePackagesModule = ../../modules/home/core-packages.nix;
-  codexTuiFixtureCli = pkgs.writeShellApplication {
-    name = "codex";
-    text = ''
-      printf '%s\n' "$@"
-    '';
-  };
-  codexTuiFixture = pkgs.callPackage ../../owned-agents/codex/tui.nix {
-    codexCliPackage = codexTuiFixtureCli;
-  };
   codexRemoteControlModule = ../../modules/home/profiles/min/agent-intercom.nix;
   mkConfiguration =
     user:
@@ -106,62 +97,6 @@ assert
 assert builtins.length remoteControlService.Service.ExecStart == 1;
 pkgs.runCommand "codex-remote-control-contract" { } ''
   set -eu
-
-  expect_remote() {
-    test "$("${codexTuiFixture}/bin/codex" "$@")" = "$({
-      printf '%s\n' \
-        --cd "$PWD" \
-        --sandbox danger-full-access \
-        --ask-for-approval never \
-        --remote unix:// \
-        "$@"
-    })"
-  }
-  expect_remote_with_overrides() {
-    test "$("${codexTuiFixture}/bin/codex" "$@")" = "$({
-      printf '%s\n' --cd "$PWD" --remote unix:// "$@"
-    })"
-  }
-  expect_raw() {
-    test "$("${codexTuiFixture}/bin/codex" "$@")" = "$(printf '%s\n' "$@")"
-  }
-  expect_rejected() {
-    if "${codexTuiFixture}/bin/codex" "$@" >/dev/null 2>&1; then
-      echo "unexpectedly accepted raw app-server lifecycle: $*" >&2
-      exit 1
-    fi
-  }
-  expect_owner_guard() {
-    set +e
-    output="$("${codexTuiFixture}/bin/codex" "$@" 2>&1)"
-    status=$?
-    set -e
-    test "$status" = 126
-    test "$output" = 'CriomOS codex: remote-control is owned by codex-remote-control; use direct-codex only for raw recovery'
-  }
-  expect_remote "fresh prompt"
-  expect_remote --profile mobile --model gpt-5.6-terra "fresh prompt"
-  expect_remote_with_overrides --ask-for-approval never --sandbox workspace-write "fresh prompt"
-  expect_remote -c 'model="gpt-5.6-terra"' resume thread-id
-  expect_remote fork thread-id
-  expect_remote agents
-  expect_raw --version
-  expect_raw -V
-  expect_raw --help
-  expect_raw -h
-  expect_raw help
-  expect_raw resume --help
-  expect_raw exec "one-shot task"
-  expect_rejected app-server proxy
-  expect_raw app-server daemon version
-  expect_rejected app-server --remote-control --listen unix://
-  expect_rejected app-server daemon start
-  expect_owner_guard remote-control start
-  expect_raw login
-  expect_rejected --remote unix:///tmp/other.sock resume thread-id
-  expect_rejected resume --remote unix:///tmp/other.sock thread-id
-  expect_rejected agents --remote unix:///tmp/other.sock
-  expect_remote -- --remote
-  expect_remote -- --version
+  test "${builtins.head remoteControlService.Service.ExecStart}" = "${codexCliPackage}/bin/codex app-server --remote-control --listen unix://"
   touch "$out"
 ''

@@ -194,11 +194,11 @@ listener, SSH tunnel, authorization key, remote identity, enrollment,
 reconnect, OAuth, pairing, or private-key configuration exists in the profile
 or its derivations.
 
-Normal `codex` and `claude` are the direct, pinned upstream CLIs. Agent
-Intercom exposes the distinct `coi --yolo` and
+Normal `codex` and `claude` are the direct, pinned upstream CLIs.
+`codex-remote` explicitly attaches a terminal session to the persistent local
+Codex app-server. Agent Intercom exposes the distinct `coi` and
 `cci --dangerously-skip-permissions` bridges; their child processes invoke the
-explicitly raw upstream CLIs, preventing wrapper recursion. `codex-raw`,
-`claude-raw`, `direct-codex`, and `direct-claude` are recovery/debug-only.
+canonical upstream CLIs. `claude-raw` and `direct-claude` are recovery/debug-only.
 
 ### desktop-app support
 

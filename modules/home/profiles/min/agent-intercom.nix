@@ -18,7 +18,9 @@ let
   # module has no architecture, node-service, or node-identity gate.
   desktopEnabled = edgeEnabled && mediumEnabled;
   codexCliPackage = config.criomos.corePackages.codex;
-  codexTui = pkgs.callPackage ../../../../owned-agents/codex/tui.nix { inherit codexCliPackage; };
+  codexRemote = pkgs.callPackage ../../../../owned-agents/codex/remote.nix {
+    inherit codexCliPackage;
+  };
   claudeCodePackage = config.criomos.corePackages.claude;
   claudeDesktopPackage = pkgs.callPackage ../../../../owned-agents/claude-desktop {
     inherit claudeCodePackage;
@@ -30,34 +32,28 @@ let
   # editor package. ChatGPT Desktop carries its vendor Core independently.
   agentIntercom = pkgs.callPackage ../../../../packages/agent-intercom {
     inherit inputs codexCliPackage claudeCodePackage;
-    codexRawCommand = "${codexCliPackage}/bin/codex";
   };
   # Agent Intercom owns its operational entry points (`coi`, `cci`, MCP
-  # servers, and fleet tools), but normal shell commands must remain the
-  # pinned upstream CLIs. In an Edge medium profile the Desktop module also
-  # supplies `codex`. The producer never exports normal command names; this
-  # runtime view hides only explicit raw recovery commands from the user union.
+  # servers, and fleet tools). The producer never exports normal command
+  # names; this runtime view hides its Claude-only recovery alias from the
+  # user union.
   agentIntercomRuntime = pkgs.symlinkJoin {
     name = "agent-intercom-runtime";
     paths = [ agentIntercom ];
     postBuild = ''
       rm \
-        "$out/bin/codex-raw" \
         "$out/bin/claude-raw"
     '';
   };
 in
 lib.mkMerge [
   {
-    # The Codex TUI launcher keeps its caller's working directory when it
-    # attaches to the shared app-server. Keep Intercom-specific operational
-    # entry points available without letting their aliases shadow ordinary
-    # commands. These wrappers and their local integration do not require a
-    # node-service gate.
+    # Keep Intercom-specific operational entry points available without
+    # letting their aliases shadow the canonical upstream commands.
     home.packages = [
       agentIntercomRuntime
       claudeCodePackage
-      codexTui
+      codexCliPackage
     ];
 
     home.file = {
@@ -153,7 +149,7 @@ lib.mkMerge [
     # Codex's app-server is the single owner of every normal terminal TUI
     # session.  Its default Unix socket is local to the user, while remote
     # control reaches the phone through Codex's authenticated relay.
-    home.packages = [ codexTui ];
+    home.packages = [ codexRemote ];
 
     systemd.user.services.codex-remote-control = {
       Unit.Description = "Codex Remote Control app-server";
