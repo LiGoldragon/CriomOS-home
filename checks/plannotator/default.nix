@@ -22,8 +22,13 @@ pkgs.runCommand "plannotator-cli-contract"
       > "$TMPDIR/stdout" 2> "$TMPDIR/stderr" &
     annotate_pid=$!
 
-    curl --silent --show-error --fail --retry 10 --retry-connrefused --retry-delay 1 \
-      http://127.0.0.1:19432/api/plan > "$TMPDIR/plan.json"
+    if ! curl --silent --show-error --fail --retry 10 --retry-connrefused --retry-delay 1 \
+      http://127.0.0.1:19432/api/plan > "$TMPDIR/plan.json"; then
+      cat "$TMPDIR/stderr" >&2
+      kill "$annotate_pid" 2>/dev/null || true
+      wait "$annotate_pid" || true
+      exit 1
+    fi
     grep -F '"mode":"annotate"' "$TMPDIR/plan.json"
     grep -F '"gate":true' "$TMPDIR/plan.json"
     curl --silent --show-error --fail \
