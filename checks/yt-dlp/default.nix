@@ -44,7 +44,7 @@ let
       githubId = "yt-dlp-check";
       name = "yt-dlp check";
     };
-    horizon.node.machine.arch = "x86-64";
+    horizon.node.machine.architecture = "x86_64";
     config = { };
     inputs = { };
     hexis = null;

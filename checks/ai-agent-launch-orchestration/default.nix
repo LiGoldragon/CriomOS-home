@@ -22,7 +22,7 @@ let
     inherit inputs lib pkgs;
     criomos-lib = inputs.criomos-lib.lib;
     user = fixtureUser;
-    horizon.node.machine.arch = "x86-64";
+    horizon.node.machine.architecture = "x86_64";
     config = {
       home.homeDirectory = "/tmp/ai-agent-launch-check";
       xdg.configHome = "/tmp/ai-agent-launch-check/.config";
