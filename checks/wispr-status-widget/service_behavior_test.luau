@@ -44,10 +44,27 @@ assert(stream_callback ~= nil)
 stream_callback('{"contract":"com.criomos.wispr.status.v1","type":"snapshot","session_id":"alpha","sequence":1,"state":"recording","hands_free":false}')
 assert(current.state == "recording")
 local accepted_writes = writes
+now = 4000
+stream_callback('{"contract":"com.criomos.wispr.status.v1","type":"snapshot","session_id":"alpha","sequence":2,"state":"recording","hands_free":false}')
+assert(current.state == "recording")
+assert(writes == accepted_writes)
+now = 6000
+update()
+assert(current.state == "recording")
+local writes_before_invalid_frames = writes
+stream_callback('{"contract":"com.criomos.wispr.status.v1","type":"snapshot","session_id":"alpha","sequence":1,"state":"idle","hands_free":false}')
+stream_callback('{"contract":"com.criomos.wispr.status.v1","type":"snapshot","session_id":"alpha","sequence":2,"state":"idle","hands_free":false}')
+stream_callback('{"contract":"wrong","type":"snapshot","session_id":"alpha","sequence":3,"state":"idle","hands_free":false}')
+stream_callback(string.rep("x", 9000))
+assert(writes == writes_before_invalid_frames)
+now = 9501
+update()
+assert(current.state == "unavailable")
+local stale_writes = writes
 stream_callback('{"contract":"com.criomos.wispr.status.v1","type":"snapshot","session_id":"alpha","sequence":1,"state":"idle","hands_free":false}')
 stream_callback('{"contract":"wrong","type":"snapshot","session_id":"alpha","sequence":2,"state":"idle","hands_free":false}')
 stream_callback(string.rep("x", 9000))
-assert(writes == accepted_writes)
+assert(writes == stale_writes)
 stream_callback("__wispr_status_socket_disconnected__")
 assert(current.state == "unavailable")
 stream_callback('{"contract":"com.criomos.wispr.status.v1","type":"snapshot","session_id":"beta","sequence":1,"state":"transcribing","hands_free":true}')

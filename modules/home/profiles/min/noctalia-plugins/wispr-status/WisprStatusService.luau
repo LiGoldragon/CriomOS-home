@@ -4,11 +4,18 @@ local stale_after_ms = 5000
 local disconnected = "__wispr_status_socket_disconnected__"
 local status = State.new()
 local last_event_ms = nil
+local last_published = nil
 
 local function shell_quote(value)
   return "'" .. string.gsub(value, "'", "'\\''") .. "'"
 end
-local function publish() noctalia.state.set("wispr-status-state", State.public(status)) end
+local function publish()
+  local value = State.public(status)
+  if last_published ~= nil and last_published.state == value.state
+    and last_published.hands_free == value.hands_free and last_published.error == value.error then return end
+  last_published = value
+  noctalia.state.set("wispr-status-state", value)
+end
 local function unavailable()
   State.disconnect(status)
   last_event_ms = nil
