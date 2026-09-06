@@ -503,7 +503,6 @@
         "claude-desktop-declared-cli"
         "claude-desktop-egl-linkage"
         "claude-desktop-launcher-linkage"
-        "claude-remote-control"
         "codex-remote-control"
         "codex-remote-control-vm"
         "codex-remote"
@@ -622,9 +621,6 @@
             inherit inputs;
           };
           codex-remote = checkPkgs.callPackage ./checks/codex-remote { };
-          claude-remote-control = checkPkgs.callPackage ./checks/claude-remote-control {
-            inherit inputs;
-          };
           yt-dlp = checkPkgs.callPackage ./checks/yt-dlp {
             inherit inputs;
             homePkgs = checkPkgs;

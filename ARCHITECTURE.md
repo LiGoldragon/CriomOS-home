@@ -218,15 +218,12 @@ failure terminal before the ordinary resolver or downloader can run. The
 declared executable is the only executable identity; its absence fails through
 the session launch instead of falling back to mutable user state.
 
-`claude-remote-control` user service is a persistent Claude session owner for
-every minimum Home profile. It starts with the user home as its portable
-default root (or an explicitly configured absolute root) and a typed
-`same-dir`, `worktree`, or `session` spawn mode; it does not hardwire any
-machine-specific checkout. Claude Desktop, the browser, and mobile control
-those sessions through Anthropic's authenticated relay, so this declaration
-does not add a local network listener, tunnel, or alternate privacy boundary.
-The local Claude terminal is deliberately not a thin client for that owner;
-there is no `remoteControlAtStartup` policy on per-TUI launches.
+Home declares no persistent Claude Remote Control owner. Claude Code is a
+terminal harness here: sessions are created by a person or a flow at the
+moment they are wanted, never held open by a restarting background service.
+Claude Desktop, the browser, and mobile remain Anthropic-relay clients of
+whatever session their own account owns; Home neither hosts nor supervises
+one.
 
 A Nix utility fetches Hugging Face models by URL or query, mirroring
 `nix-prefetch-url`: it prefetches via the Hugging Face CLI, hashes, and
