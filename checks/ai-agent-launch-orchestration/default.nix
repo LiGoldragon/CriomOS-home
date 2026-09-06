@@ -37,8 +37,40 @@ let
     rustToolchain = pkgs.rustc;
   };
   profile = moduleResult.config.content;
-  packageName = package: package.pname or (package.name or "");
-  hasPackage = name: builtins.any (package: packageName package == name) profile.home.packages;
+  # The profile deliberately contains unfree entries such as unrar before the
+  # canonical Codex package.  A membership check must not make an unrelated
+  # package's license metadata a precondition for observing Codex.
+  evaluatedOutPath =
+    package:
+    let
+      candidate = builtins.tryEval package.outPath;
+    in
+    if candidate.success then candidate.value else null;
+  hasOutPath =
+    expected: packages:
+    builtins.any (
+      package:
+      let
+        actual = evaluatedOutPath package;
+      in
+      actual != null && actual == expected
+    ) packages;
+  codexOutPath = codexCliPackage.outPath;
+  packagesWithoutCodex = builtins.filter (
+    package:
+    let
+      actual = evaluatedOutPath package;
+    in
+    actual == null || actual != codexOutPath
+  ) profile.home.packages;
+  evaluatedPackageName =
+    package:
+    let
+      candidate = builtins.tryEval (package.pname or (package.name or ""));
+    in
+    if candidate.success then candidate.value else null;
+  hasPackage =
+    name: builtins.any (package: evaluatedPackageName package == name) profile.home.packages;
   codexCleanup = profile.home.activation.removeStaleCodexConfiguration.data;
   codexMerge = profile.home.activation.mergeCodexConfig.data;
   codexActivation = pkgs.writeShellScript "ai-agent-launch-codex-activation" ''
@@ -56,7 +88,8 @@ let
 in
 assert profile.home.activation ? removeStaleCodexConfiguration;
 assert profile.home.activation ? mergeCodexConfig;
-assert builtins.elem codexCliPackage profile.home.packages;
+assert hasOutPath codexOutPath profile.home.packages;
+assert !(hasOutPath codexOutPath packagesWithoutCodex);
 assert !hasPackage "direct-codex";
 pkgs.runCommand "ai-agent-launch-orchestration"
   {
