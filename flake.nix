@@ -698,7 +698,7 @@
     // {
       packages = projectPackages;
       checks = projectChecks;
-      lib.horizonUser = homeUser;
+      horizonUser = homeUser;
       apps = builtins.mapAttrs (system: _: bp.apps.${system} or { }) projectPackages;
 
       # Consumers need the exact overlay-applied package set without forcing a
