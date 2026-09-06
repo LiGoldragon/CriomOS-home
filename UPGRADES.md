@@ -1,5 +1,22 @@
 # Upgrades
 
+## Claude Remote Control removal
+
+The `claude-remote-control` user service, its `criomos.claudeRemoteControl`
+options, and its contract check are removed. Every minimum Home profile
+previously started a persistent Claude session owner with `Restart=always`
+and `RestartSec=2s`; nothing declares one now, and there is no disabled
+option or compatibility stub to migrate. Any per-user projection that set
+`criomos.claudeRemoteControl.workingDirectory` or `.spawn` must drop that
+setting — the option no longer exists and evaluation fails on it.
+
+Activating this generation removes the unit from the Home-managed set. A unit
+already running from the previous generation survives activation, so stop and
+disable it once on each account that had it:
+`systemctl --user disable --now claude-remote-control.service`. Claude Code
+remains installed and unchanged as a terminal harness. The independent
+`codex-remote-control` owner is untouched.
+
 ## Flow identity helper
 
 After activating a generation pinned to `harness`'s `flow-id`, a parent flow claims its lane with `flow-id codex --flows-root /absolute/flows-root` or `flow-id claude --flows-root /absolute/flows-root --parent-session UUID` before writing its first artifact.
@@ -126,49 +143,23 @@ rollback. The package check compares the delivered ASAR and bundled Core with
 an independently extracted fixed-output OpenAI archive and exercises the
 generated wrapper with inherited vendor variables plus Wayland selection.
 
-## Claude Fable 5.1 and persistent Remote Control
+## Claude Fable 5.1
 
 This generation moves the declared Claude Code CLI, Claude Code VSIX, and
 Claude Desktop together. Claude Code 2.1.257 introduced
 `claude-fable-5-1` and made it the current Fable picker entry, while the
-package is pinned at 2.1.258. The persistent `claude-remote-control` owner
-remains model-neutral: selecting a model is a new-session decision, not a
-global Home policy.
+package is pinned at 2.1.258.
 
-Deploy the resulting Home revision before changing the running owner. Verify
-the installed CLI with `claude --version`, then restart only the owner with
-`systemctl --user restart claude-remote-control` when no managed session has
-an in-flight turn. A restart replaces the owner process, so attached Claude
-Desktop, browser, and mobile clients reconnect through Anthropic's relay.
-There is no process-level session preservation across that restart: defer it
-until the current work is safe to interrupt. The declaration neither rewrites
-local Claude transcript files nor migrates account-side conversation/model
-state; whether an interrupted Remote Control session can be reopened is
-Anthropic relay behavior, not a Home migration guarantee. To start a new
-terminal session with Fable, use `claude --model claude-fable-5-1`; in Claude
-Desktop, browser, and mobile, choose **Fable 5.1** from the upstream model
-picker. Fable 5.1 uses 30-day safety-monitoring retention by default; do not
-select it where that retention is unacceptable.
+Deploy the resulting Home revision, then verify the installed CLI with
+`claude --version`. To start a new terminal session with Fable, use
+`claude --model claude-fable-5-1`; in Claude Desktop, browser, and mobile,
+choose **Fable 5.1** from the upstream model picker. Fable 5.1 uses 30-day
+safety-monitoring retention by default; do not select it where that retention
+is unacceptable.
 
 Do not use a stateful Claude Code update or allow Desktop to download its own
-CLI. If the post-activation CLI is not the pinned version or the Remote
-Control owner does not restart, leave the previous owner stopped and repair
-the declarative generation before creating further sessions.
-
-## Persistent Claude Remote Control
-
-Every enabled minimum Home profile now requires an explicit, absolute non-home
-`criomos.claudeRemoteControl.workingDirectory` before it creates the persistent
-`claude-remote-control` service. It uses `--spawn=same-dir`; the consumer's
-per-user projection owns the working root and may select the `worktree` or
-`session` spawn mode without baking a machine-specific path into Home. Closing
-Claude Desktop or the browser/mobile client must not stop the service.
-
-Claude Desktop, browser, and mobile operate through Anthropic's authenticated
-relay. The local terminal has no supported thin-client attachment to this
-owner, and normal Claude TUI launches deliberately do not set
-`remoteControlAtStartup`. This change adds no Home-managed listener, tunnel,
-or relay credentials.
+CLI. If the post-activation CLI is not the pinned version, repair the
+declarative generation before creating further sessions.
 
 ## Orchestrate 0.25.0 Lock contract
 
