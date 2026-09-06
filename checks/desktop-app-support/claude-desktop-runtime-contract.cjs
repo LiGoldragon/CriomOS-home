@@ -69,11 +69,14 @@ async function exposeActualManager() {
   const isAnonymousClass = anonymousClassStart > namedClassStart;
   const classStart = isAnonymousClass ? anonymousClassStart : namedClassStart;
   if (classStart < 0) throw new Error("could not locate the actual Claude Code manager class binding");
-  const bindingStart = source.lastIndexOf(",", classStart) + 1;
-  const classAssignment = isAnonymousClass ? "=new class" : "=class";
-  const binding = source.slice(bindingStart, source.indexOf(classAssignment, bindingStart));
+  // The bundler emits the binding as either its own `var NAME=class{...}` or a
+  // continuation `,NAME=class{...}`. Read the identifier immediately left of
+  // the assignment rather than assuming either separator.
+  let bindingStart = classStart;
+  while (bindingStart > 0 && /[A-Za-z0-9_$]/.test(source[bindingStart - 1])) bindingStart -= 1;
+  const binding = source.slice(bindingStart, classStart);
   if (!/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(binding)) {
-    throw new Error(`unexpected Claude Code manager binding: ${binding}`);
+    throw new Error(`unexpected Claude Code manager binding: ${JSON.stringify(source.slice(classStart - 80, classStart + 40))}`);
   }
   const classEnd = braceEnd(source, classStart);
   const manager = isAnonymousClass ? `${binding}.constructor` : binding;

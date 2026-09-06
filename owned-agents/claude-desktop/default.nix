@@ -190,11 +190,16 @@ stdenvNoCC.mkDerivation {
     # The app's own local-binary selection is fail-closed and always points at
     # the one Claude Code derivation supplied to this package.
     app_asar="$out/lib/claude-desktop/resources/app.asar"
+    unpacked_app="$out/lib/claude-desktop/resources/app.asar.unpacked"
     extracted_app="$TMPDIR/claude-desktop-app"
+    # Native modules are dlopen'd from disk and cannot be read out of the
+    # archive, so the repack reproduces this archive's own unpacked set.
+    unpack_pattern="$(${nodejs}/bin/node ${./asar-unpack-pattern.mjs} "$app_asar")"
     ${asar}/bin/asar extract "$app_asar" "$extracted_app"
     ${nodejs}/bin/node ${./patch-runtime.mjs} "$extracted_app" ${claudeCodePackage}/bin/claude
     rm "$app_asar"
-    ${asar}/bin/asar pack "$extracted_app" "$app_asar"
+    rm -rf "$unpacked_app"
+    ${asar}/bin/asar pack "$extracted_app" "$app_asar" --unpack "$unpack_pattern"
 
     # This is the sole launcher wrapper. It points directly at the unpacked
     # executable and therefore cannot retain an upstream store prefix.
