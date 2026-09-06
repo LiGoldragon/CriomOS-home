@@ -25,6 +25,11 @@ pkgs.runCommand "claude-desktop-declared-cli-contract"
   ''
     set -eu
 
+    echo 'claude-desktop-declared-cli: shipped native modules'
+    ${pkgs.nodejs}/bin/node \
+      ${../desktop-app-support/claude-desktop-asar-contract.cjs} \
+      ${claudeDesktopPackage}/lib/claude-desktop/resources/app.asar
+
     prepare_test_app() {
       source_desktop="$1"
       name="$2"
@@ -32,9 +37,13 @@ pkgs.runCommand "claude-desktop-declared-cli-contract"
       test_app="$TMPDIR/claude-desktop-app-$name"
       cp -a "$source_desktop"/. "$test_desktop"
       chmod -R u+w "$test_desktop"
+      unpack_pattern="$(${pkgs.nodejs}/bin/node \
+        ${../../owned-agents/claude-desktop/asar-unpack-pattern.mjs} \
+        "$source_desktop/lib/claude-desktop/resources/app.asar")"
       ${pkgs.asar}/bin/asar extract \
         "$source_desktop/lib/claude-desktop/resources/app.asar" \
         "$test_app"
+      rm -rf "$test_desktop/lib/claude-desktop/resources/app.asar.unpacked"
       ${pkgs.nodejs}/bin/node -e '
         const fs = require("node:fs");
         const path = require("node:path");
@@ -57,6 +66,10 @@ pkgs.runCommand "claude-desktop-declared-cli-contract"
       ' "$test_app"
       ${pkgs.asar}/bin/asar pack \
         "$test_app" \
+        "$test_desktop/lib/claude-desktop/resources/app.asar" \
+        --unpack "$unpack_pattern"
+      ${pkgs.nodejs}/bin/node \
+        ${../desktop-app-support/claude-desktop-asar-contract.cjs} \
         "$test_desktop/lib/claude-desktop/resources/app.asar"
     }
 

@@ -1,4 +1,5 @@
 import { readFile, readdir, writeFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import { join } from "node:path";
 
 const [appDirectory, declaredClaudeCode] = process.argv.slice(2);
@@ -76,14 +77,94 @@ for (const file of files) {
 }
 if (!constructorPatched) throw new Error("Claude Code local-override constructor was not found");
 
+// The injected method resolves everything it needs itself. It must never read
+// a minified identifier from the enclosing bundle scope: those names change
+// with every upstream build, and a stale one throws a ReferenceError that the
+// old `catch` reported as a missing binary.
+const unavailableMessage = (path) => `[CCD] LOCAL OVERRIDE: declared binary unavailable at ${path}`;
+const localBinaryMethod = [
+  "async initLocalBinary(e){",
+  "let executable=!1;",
+  "try{",
+  'const nodeFs=require("node:fs");',
+  "try{nodeFs.accessSync(e,nodeFs.constants.X_OK),executable=!0}catch{executable=!1}",
+  "}catch(internal){",
+  "throw Error(`[CCD] LOCAL OVERRIDE: internal error resolving declared binary at ${e}: ${internal&&internal.stack||internal}`)",
+  "}",
+  "if(!executable)throw Error(`[CCD] LOCAL OVERRIDE: declared binary unavailable at ${e}`);",
+  "this.localBinaryPath=e;",
+  "try{console.warn(`[CCD] LOCAL OVERRIDE: Using local binary at ${e}`)}catch{}",
+  "}",
+].join("");
+
+// Execute the injected method here, at build time, so a bundle change can only
+// ever break the build and never the running application.
+const probeRequire = createRequire(import.meta.url);
+const probe = (injectedRequire) => new Function("require", `return {${localBinaryMethod}}`)(injectedRequire);
+
+async function expectRejection(method, path, expected, description) {
+  const holder = { localBinaryPath: null };
+  try {
+    await method.call(holder, path);
+  } catch (error) {
+    if (error?.message !== expected) {
+      throw new Error(`${description} reported ${JSON.stringify(error?.message)}, expected ${JSON.stringify(expected)}`);
+    }
+    return;
+  }
+  throw new Error(`${description} unexpectedly succeeded`);
+}
+
+{
+  const absent = join(appDirectory, "criomos-absent-declared-binary");
+  await expectRejection(probe(probeRequire).initLocalBinary, absent, unavailableMessage(absent), "absent declared binary");
+
+  const broken = () => {
+    throw new TypeError("require is not available");
+  };
+  const holder = { localBinaryPath: null };
+  let internalMessage = null;
+  try {
+    await probe(broken).initLocalBinary.call(holder, declaredClaudeCode);
+  } catch (error) {
+    internalMessage = error?.message ?? "";
+  }
+  if (internalMessage === null) throw new Error("injected override ignored a broken host environment");
+  if (internalMessage === unavailableMessage(declaredClaudeCode)) {
+    throw new Error("injected override reported an internal failure as a missing binary");
+  }
+  if (!internalMessage.startsWith("[CCD] LOCAL OVERRIDE: internal error")) {
+    throw new Error(`injected override reported an unexpected internal failure: ${internalMessage}`);
+  }
+
+  // The declared executable is absent by construction in the fail-closed
+  // contract check, so assert whichever outcome the real path warrants.
+  let declaredIsExecutable = true;
+  try {
+    probeRequire("node:fs").accessSync(declaredClaudeCode, probeRequire("node:fs").constants.X_OK);
+  } catch {
+    declaredIsExecutable = false;
+  }
+  if (declaredIsExecutable) {
+    const resolved = { localBinaryPath: null };
+    await probe(probeRequire).initLocalBinary.call(resolved, declaredClaudeCode);
+    if (resolved.localBinaryPath !== declaredClaudeCode) {
+      throw new Error(`injected override resolved ${JSON.stringify(resolved.localBinaryPath)}, expected ${JSON.stringify(declaredClaudeCode)}`);
+    }
+  } else {
+    await expectRejection(
+      probe(probeRequire).initLocalBinary,
+      declaredClaudeCode,
+      unavailableMessage(declaredClaudeCode),
+      "declared binary absent from the store",
+    );
+  }
+}
+
 let binaryPatched = false;
 for (const file of files) {
   const source = await readFile(file, "utf8");
-  const result = replaceOne(
-    source,
-    "async initLocalBinary(e){",
-    "async initLocalBinary(e){try{await y.default.access(e,u.constants.X_OK),this.localBinaryPath=e,F.warn(`[CCD] LOCAL OVERRIDE: Using local binary at ${e}`)}catch{throw Error(`[CCD] LOCAL OVERRIDE: declared binary unavailable at ${e}`)}}",
-  );
+  const result = replaceOne(source, "async initLocalBinary(e){", localBinaryMethod);
   if (result === null) continue;
   if (binaryPatched) throw new Error("Claude Code local-binary method occurs more than once");
   await writeFile(file, result);
