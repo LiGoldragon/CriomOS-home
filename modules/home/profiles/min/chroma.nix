@@ -17,6 +17,7 @@ let
   inherit (visualTheme) darkThemeSwitchTiming lightThemeSwitchTiming;
 
   chromaPackage = inputs.chroma.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  chromaSetDarkTheme = inputs.chroma.packages.${pkgs.stdenv.hostPlatform.system}."chroma-set-dark-theme";
 
   dark = config.lib.stylix.colors.withHashtag;
   light = (config.stylix.base16.mkSchemeAttrs visualTheme.lightBase16Scheme).withHashtag;
@@ -168,6 +169,9 @@ mkIf (size.min && behavesAs.edge) {
 
   home.packages = [
     chromaPackage
+    # This Chroma-owned command is available on PATH for an explicit dark
+    # theme request. Home activation and the Chroma service do not invoke it.
+    chromaSetDarkTheme
     pkgs.dconf
   ];
 
