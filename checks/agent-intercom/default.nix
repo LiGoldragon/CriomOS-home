@@ -48,6 +48,10 @@ let
   packageName = package: package.pname or (package.name or "");
   hasPackage = name: builtins.any (package: packageName package == name) configuration.home.packages;
 in
+assert !(configuration.home.file ? ".pi/agent/packages/agent-intercom-pi");
+assert !(configuration.home.file ? ".pi/agent/packages/agent-intercom-orchestrator");
+assert !(configuration.home.activation ? mergeAgentIntercomOpenCodeServerPlugin);
+assert !(configuration.home.activation ? mergeAgentIntercomOpenCodeTuiPlugin);
 assert configuration.home.activation ? mergeAgentIntercomCodexMcp;
 assert configuration.home.activation ? mergeAgentIntercomClaudeMcp;
 assert hasPackage "agent-intercom-runtime";

@@ -606,9 +606,6 @@
             inherit inputs;
           };
           message-service-path = checkPkgs.callPackage ./checks/message-service-path { inherit inputs; };
-          pi-criomos-package-load = checkPkgs.callPackage ./checks/pi-criomos-package-load {
-            inherit inputs;
-          };
           gws = checkPkgs.callPackage ./checks/gws { inherit inputs; };
           playwright-cli = checkPkgs.callPackage ./checks/playwright-cli { };
           plannotator = checkPkgs.callPackage ./checks/plannotator { };
@@ -644,7 +641,6 @@
           };
         }
         // lib.optionalAttrs (_system == "x86_64-linux") {
-          pi-harness-profile = checkPkgs.callPackage ./checks/pi-harness-profile { inherit inputs; };
           ai-agent-launch-orchestration = checkPkgs.callPackage ./checks/ai-agent-launch-orchestration {
             inherit inputs;
           };

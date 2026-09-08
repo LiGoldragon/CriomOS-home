@@ -58,6 +58,10 @@ assert profile.home.activation ? removeStaleCodexConfiguration;
 assert profile.home.activation ? mergeCodexConfig;
 assert builtins.elem codexCliPackage profile.home.packages;
 assert !hasPackage "direct-codex";
+assert !hasPackage "pi";
+assert !hasPackage "direct-pi";
+assert !hasPackage "pi-testing";
+assert !hasPackage "opencode";
 pkgs.runCommand "ai-agent-launch-orchestration"
   {
     nativeBuildInputs = [

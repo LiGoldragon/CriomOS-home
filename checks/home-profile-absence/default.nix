@@ -110,6 +110,7 @@ assert !(largeEdge.systemd.user.services ? ${retiredService});
 assert !(ordinary.systemd.user.services ? ${retiredService});
 assert !(hasBridge largeEdge);
 assert !(hasBridge ordinary);
+assert !(builtins.any (package: packageName package == "traycer") largeEdge.home.packages);
 pkgs.runCommand "home-profile-absence" { } ''
   touch "$out"
 ''
