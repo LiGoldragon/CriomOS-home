@@ -290,16 +290,14 @@ let
     ssh-to-age
   ];
 
-  # Pi is built directly from inputs.pi-src. Codex is the canonical pinned
-  # upstream CLI; the separately named remote client attaches to the shared
-  # app-server.
+  # Codex is the canonical pinned upstream CLI; the separately named remote
+  # client attaches to the shared app-server.
   claudeCodePackage = config.criomos.corePackages.claude;
   codexCliPackage = config.criomos.corePackages.codex;
   flowIdPackage = config.criomos.corePackages.flowId;
   codexRemote = pkgs.callPackage ../../../../owned-agents/codex/remote.nix {
     inherit codexCliPackage;
   };
-  piPackage = pkgs.callPackage ../../../../packages/pi { inherit inputs; };
 
   mkRawRecoveryCommand =
     commandName: package: executableName:
@@ -311,32 +309,14 @@ let
     };
 
   directClaude = mkRawRecoveryCommand "direct-claude" claudeCodePackage "claude";
-  directPi = mkRawRecoveryCommand "direct-pi" piPackage "pi";
 
   dolthubCreateDatabase = pkgs.callPackage ../../../../packages/dolthub-create-database { };
-
-  piTesting = pkgs.writeShellApplication {
-    name = "pi-testing";
-    text = ''
-      export PI_CODING_AGENT_DIR="''${PI_TESTING_AGENT_DIR:-$HOME/.pi-testing/agent}"
-      export PI_CODING_AGENT_SESSION_DIR="''${PI_TESTING_SESSION_DIR:-$PI_CODING_AGENT_DIR/sessions}"
-      export PI_PACKAGE_DIR="''${PI_PACKAGE_DIR:-$HOME/.local/share/criomos/pi/package}"
-
-      mkdir -p "$PI_CODING_AGENT_DIR" "$PI_CODING_AGENT_SESSION_DIR"
-
-      exec ${piPackage}/bin/pi "$@"
-    '';
-  };
 
   AIPackages = [
     pkgs.gemini-cli
     inputs.herdr.packages.${pkgs.stdenv.hostPlatform.system}.herdr
     inputs.orca-ide.packages.${pkgs.stdenv.hostPlatform.system}.orca-ide
-    piPackage
     directClaude
-    directPi
-    piTesting
-    pkgs.opencode
     pkgs.llama-cpp
     (pkgs.callPackage ../../../../packages/gws { inherit inputs; })
     (pkgs.callPackage ../../../../packages/playwright-cli { })

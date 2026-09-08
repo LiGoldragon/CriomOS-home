@@ -56,25 +56,6 @@ lib.mkMerge [
       codexCliPackage
     ];
 
-    home.file = {
-      ".pi/agent/packages/agent-intercom-pi" = {
-        source = "${agentIntercom}/share/agent-intercom/pi";
-        force = true;
-      };
-      ".pi/agent/packages/agent-intercom-orchestrator" = {
-        source = "${agentIntercom}/share/agent-intercom/orchestrator";
-        force = true;
-      };
-      ".pi-testing/agent/packages/agent-intercom-pi" = {
-        source = "${agentIntercom}/share/agent-intercom/pi";
-        force = true;
-      };
-      ".pi-testing/agent/packages/agent-intercom-orchestrator" = {
-        source = "${agentIntercom}/share/agent-intercom/orchestrator";
-        force = true;
-      };
-    };
-
     home.activation.mergeAgentIntercomCodexMcp = inputs.hexis.lib.mkManagedConfig {
       inherit lib pkgs hexis;
       file = "$HOME/.codex/config.toml";
@@ -127,23 +108,6 @@ lib.mkMerge [
       };
     };
 
-    home.activation.mergeAgentIntercomOpenCodeServerPlugin = inputs.hexis.lib.mkManagedConfig {
-      inherit lib pkgs hexis;
-      file = "$HOME/.config/opencode/opencode.json";
-      declared = {
-        plugin = [ "${agentIntercom}/share/agent-intercom/opencode/dist/plugin.mjs" ];
-      };
-      modes."/plugin" = "always";
-    };
-
-    home.activation.mergeAgentIntercomOpenCodeTuiPlugin = inputs.hexis.lib.mkManagedConfig {
-      inherit lib pkgs hexis;
-      file = "$HOME/.config/opencode/tui.json";
-      declared = {
-        plugin = [ "${agentIntercom}/share/agent-intercom/opencode/dist/tui.mjs" ];
-      };
-      modes."/plugin" = "always";
-    };
   }
   (lib.mkIf (profileUser.size.min or false) {
     # Codex's app-server is the single owner of every normal terminal TUI

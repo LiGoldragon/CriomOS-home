@@ -12,7 +12,6 @@ let
 
   codingPackages = [
     pkgs.pandoc
-    inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.traycer
   ];
 
   # Per Li 2026-04-25: gimp, krita, calibre, inkscape stay Max-tier.
@@ -37,7 +36,7 @@ let
   # new dependency hashes are absent from all configured binary caches and
   # cannot be built on the x86_64-only remote builder. Re-add once the
   # nixos cache carries the new i686 derivations or an i686 builder is added.
-  windowsEmulationsPackages = [];
+  windowsEmulationsPackages = [ ];
 
 in
 mkMerge [
