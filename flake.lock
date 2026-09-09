@@ -2163,6 +2163,27 @@
         "type": "github"
       }
     },
+    "plannotator-capability": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1788985321,
+        "narHash": "sha256-+zasi6RQZ5HD09m8/GDCpf8P6pagNu00ThXsdvBmkY8=",
+        "owner": "LiGoldragon",
+        "repo": "plannotator",
+        "rev": "013912e008fff9aca24e2e8b4de13054d116aeeb",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LiGoldragon",
+        "ref": "013912e008ff",
+        "repo": "plannotator",
+        "type": "github"
+      }
+    },
     "primary-generated-src": {
       "flake": false,
       "locked": {
@@ -2294,6 +2315,7 @@
         "pi-web-access-unpdf-src": "pi-web-access-unpdf-src",
         "pi-web-access-yocto-queue-src": "pi-web-access-yocto-queue-src",
         "pkgs": "pkgs",
+        "plannotator-capability": "plannotator-capability",
         "primary-generated-src": "primary-generated-src",
         "pyproject-build-systems": "pyproject-build-systems",
         "pyproject-nix": "pyproject-nix",

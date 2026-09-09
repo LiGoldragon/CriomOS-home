@@ -30,6 +30,12 @@
 
     horizon.url = "path:./stubs/no-horizon";
 
+    # Capability-authorized artifact broker contract consumed by the Tailnet
+    # gateway integration check. Production serving remains fail-closed in the
+    # producer until a trusted peer-identity transport is configured.
+    plannotator-capability.url = "github:LiGoldragon/plannotator/013912e008ff";
+    plannotator-capability.inputs.nixpkgs.follows = "nixpkgs";
+
     # Compositor + shell.
     niri-flake.url = "github:sodiboo/niri-flake";
     niri-flake.inputs.nixpkgs.follows = "nixpkgs";
@@ -622,6 +628,11 @@
           codex-artifact-gateway-module = checkPkgs.callPackage ./checks/codex-artifact-gateway-module {
             inherit inputs;
           };
+          codex-artifact-gateway-integration =
+            checkPkgs.callPackage ./checks/codex-artifact-gateway-integration
+              {
+                inherit inputs;
+              };
           yt-dlp = checkPkgs.callPackage ./checks/yt-dlp {
             inherit inputs;
             homePkgs = checkPkgs;
