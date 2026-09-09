@@ -41,6 +41,7 @@
     # desktop-app support, with no node identity, remote transport, or
     # credential control.
     ./profiles/min/agent-intercom.nix
+    ./profiles/min/codex-artifact-gateway.nix
     # Sibling .nix files in profiles/min/ are individual HM modules, not
     # imported transitively by the directory import (Nix only auto-loads
     # default.nix). Archive's homeModule/default.nix listed each one

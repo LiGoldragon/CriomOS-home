@@ -618,6 +618,10 @@
             inherit inputs;
           };
           codex-remote = checkPkgs.callPackage ./checks/codex-remote { };
+          codex-artifact-gateway = checkPkgs.callPackage ./checks/codex-artifact-gateway { };
+          codex-artifact-gateway-module = checkPkgs.callPackage ./checks/codex-artifact-gateway-module {
+            inherit inputs;
+          };
           yt-dlp = checkPkgs.callPackage ./checks/yt-dlp {
             inherit inputs;
             homePkgs = checkPkgs;

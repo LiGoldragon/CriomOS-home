@@ -281,6 +281,12 @@ in
         }
         {
           matches = [
+            { app-id = "^criomos-codex-desktop$"; }
+          ];
+          open-focused = true;
+        }
+        {
+          matches = [
             { app-id = "SolarFire|SolarFire\\.exe|solarfire"; }
             { title = "Solar Fire|SolarFire"; }
           ];
