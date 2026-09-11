@@ -127,7 +127,7 @@ status_is_applied 0
 assert_emacs_state ignis-light ignis-dark '#faf5f0' nil
 
 emacsclient --socket-name "$emacs_socket_name" --eval "(load-theme 'chroma-test-overlay t)" >/dev/null
-chroma 'SetTheme.{Dark}' >/dev/null
+chroma 'SetTheme.Dark' >/dev/null
 await_event
 status_is_applied 1
 assert_emacs_state ignis-dark ignis-light '#000000' t
@@ -141,7 +141,7 @@ await_event
 status_is_applied 1
 assert_emacs_state ignis-dark ignis-light '#000000' t
 
-chroma 'SetTheme.{Light}' >/dev/null
+chroma 'SetTheme.Light' >/dev/null
 await_event
 status_is_applied 2
 assert_emacs_state ignis-light ignis-dark '#faf5f0' t
