@@ -412,14 +412,15 @@
       pkgs = inputs.pkgs.pkgs.extend (lib.composeManyExtensions packageOverlays);
       # Blueprint's default package set deliberately has no unfree policy.
       # Keep the producer's proprietary package allowance explicit and narrow:
-      # only the four owned AI derivation names may pass package metadata
-      # evaluation. This set is used only to construct the local package
-      # outputs; it does not alter the profile-wide package policy.
+      # only the owned AI derivations and the declared archive extractor may pass
+      # package metadata evaluation. This set is used only to construct the local
+      # package outputs; it does not alter the profile-wide package policy.
       ownedUnfreeNames = [
         "claude-code"
         "claude-desktop"
         "chatgpt"
         "chatgpt-unwrapped"
+        "unrar"
       ];
       ownedUnfreePredicate = package: lib.elem (lib.getName package) ownedUnfreeNames;
       # Blueprint constructs its auto-imported package/check graph before it
