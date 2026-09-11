@@ -145,16 +145,14 @@ let
           Dark
         }
       }
-      {
-        Scheduled.{
-          [
-            {CivilDawn.-30 Cold Minutes.30}
-            {CivilDusk.-60 Warmest Minutes.60}
-          ]
-          Neutral
-        }
+      Scheduled.{
+        [
+          {CivilDawn.-30 Cold Minutes.30}
+          {CivilDusk.-60 Warmest Minutes.60}
+        ]
+        Neutral
       }
-      {Manual.Bright}
+      Manual.Bright
     }
   '';
 

@@ -53,8 +53,8 @@ cat > "$XDG_CONFIG_HOME/chroma/config.datom" <<'EOF'
   {{#000000 #111111 #222222 #333333 #444444 #dddddd #eeeeee #ffffff #ff0000 #ff8800 #ffff00 #00ff00 #00ffff #0000ff #ff00ff #aa0000}
    {#f4f0e8 #e8e0d8 #ddd5ce #887a70 #6a5e55 #3d3530 #2a2420 #1a1510 #cc0044 #d06600 #b89000 #1a8a30 #9930cc #b03080 #8822bb #cc3355}}
   None Some.12 None None Manual.Light}
- {Manual.Neutral}
- {Manual.Bright}}
+ Manual.Neutral
+ Manual.Bright}
 EOF
 
 export CHROMA_SANDBOX_FAKE_GAMMA_READY="$test_root/gamma-ready"
