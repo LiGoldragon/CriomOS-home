@@ -421,6 +421,7 @@
         "chatgpt"
         "chatgpt-unwrapped"
         "unrar"
+        "android-sdk-platform-tools"
       ];
       ownedUnfreePredicate = package: lib.elem (lib.getName package) ownedUnfreeNames;
       # Blueprint constructs its auto-imported package/check graph before it
