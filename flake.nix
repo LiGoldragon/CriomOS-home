@@ -106,7 +106,7 @@
     # Chroma — unified visual-state daemon (theme + warmth + brightness).
     # Replaces darkman + the nightshift-* services + the brightness shell
     # wrapper. Consumed in modules/home/profiles/min/chroma.nix.
-    chroma.url = "github:LiGoldragon/chroma/182bced3a10a2fd2160d4449c3003f171cc02fb7";
+    chroma.url = "github:LiGoldragon/chroma/9b59d8a3b2c6764835519ee21c185738eed7e9d0";
     chroma.inputs.nixpkgs.follows = "nixpkgs";
 
     # Resident Emacs projection for Chroma's desired theme state.  Home owns
