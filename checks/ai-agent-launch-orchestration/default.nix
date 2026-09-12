@@ -22,7 +22,8 @@ let
     inherit inputs lib pkgs;
     criomos-lib = inputs.criomos-lib.lib;
     user = fixtureUser;
-    horizon.node.machine.arch = "X86_64";
+    # The real projection, not a hand-written shape. See fixtures/horizon.nix.
+    horizon = import ../../fixtures/horizon.nix;
     config = {
       home.homeDirectory = "/tmp/ai-agent-launch-check";
       xdg.configHome = "/tmp/ai-agent-launch-check/.config";

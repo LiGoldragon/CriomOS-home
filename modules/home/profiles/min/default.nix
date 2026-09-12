@@ -237,7 +237,10 @@ let
       parted # Disk utils
       wireguard-tools
     ]
-    ++ (optionals (node.machine.arch == "X86_64") [ i7z ]);
+    # Horizon projects `machine.architecture`, lowercase (`x86_64`,
+    # `aarch64`): see horizon-rs `lib/src/model.rs` `Machine` and
+    # `projection.rs` `architecture_name`. There is no `machine.arch`.
+    ++ (optionals (node.machine.architecture == "x86_64") [ i7z ]);
 
   programmingTools = with pkgs; [
     # C

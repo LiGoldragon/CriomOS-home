@@ -44,7 +44,8 @@ let
       githubId = "yt-dlp-check";
       name = "yt-dlp check";
     };
-    horizon.node.machine.arch = "X86_64";
+    # The real projection, not a hand-written shape. See fixtures/horizon.nix.
+    horizon = import ../../fixtures/horizon.nix;
     config = { };
     inputs = { };
     hexis = null;
