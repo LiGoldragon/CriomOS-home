@@ -214,12 +214,6 @@
       url = "github:LiGoldragon/pi-subagents-nicobailon/bfca4f8317551fa9e8e8ef82c2608a6216953216";
       flake = false;
     };
-    # Generated project-role packets used by the harness compatibility check.
-    # The source revision itself pins skills at the authoritative generator revision.
-    primary-generated-src = {
-      url = "github:LiGoldragon/primary/fd049d9030a789ccb60e21732acdfc754b30e410";
-      flake = false;
-    };
     agent-intercom-tsx-src = {
       type = "file";
       url = "https://registry.npmjs.org/tsx/-/tsx-4.20.0.tgz";
