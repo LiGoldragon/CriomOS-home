@@ -1,7 +1,7 @@
 {
   outputs = _: {
     horizon = {
-      users = { };
+      users = [ ];
     };
   };
 }

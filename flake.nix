@@ -568,6 +568,7 @@
         // {
           chroma-datom-config = checkPkgs.callPackage ./checks/chroma-datom-config { inherit inputs; };
           chroma-emacs-resident = checkPkgs.callPackage ./checks/chroma-emacs-resident { inherit inputs; };
+          horizon-user-projection = checkPkgs.callPackage ./checks/horizon-user-projection { };
           default-opener = checkPkgs.callPackage ./checks/default-opener { inherit inputs; };
           listener-dictation-bindings = checkPkgs.callPackage ./checks/listener-dictation-bindings {
             inherit inputs;
@@ -664,6 +665,14 @@
         }
       ) derivationChecks;
 
+      homeUser = import ./lib/horizon-user.nix { inherit lib; };
+      homeUsers = builtins.listToAttrs (
+        map (rawUser: {
+          name = rawUser.name;
+          value = homeUser rawUser;
+        }) horizon.users
+      );
+
       mkHomeConfiguration =
         userName: user:
         inputs.home-manager.lib.homeManagerConfiguration {
@@ -693,6 +702,7 @@
     // {
       packages = projectPackages;
       checks = projectChecks;
+      horizonUser = homeUser;
       apps = builtins.mapAttrs (system: _: bp.apps.${system} or { }) projectPackages;
 
       # Consumers need the exact overlay-applied package set without forcing a
@@ -701,7 +711,7 @@
       # cannot know.
       legacyPackages.${pkgs.stdenv.hostPlatform.system} = pkgs;
 
-      homeConfigurations = builtins.mapAttrs mkHomeConfiguration horizon.users;
+      homeConfigurations = builtins.mapAttrs mkHomeConfiguration homeUsers;
 
       # Wrap blueprint's auto-discovered homeModules.default so that:
       # (1) upstream homeModules from CriomOS-home's own flake inputs
