@@ -1,5 +1,6 @@
-{ lib, pkgs }:
+{ pkgs, ... }:
 let
+  lib = pkgs.lib;
   horizonUser = import ../../lib/horizon-user.nix { inherit lib; };
   users = horizonUser.usersByName [
     {

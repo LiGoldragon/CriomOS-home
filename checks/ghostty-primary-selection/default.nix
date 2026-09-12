@@ -14,7 +14,10 @@ let
     config.lib.niri.actions.spawn = spawnAction;
     constants = inputs.criomos-lib.lib.constants;
     horizon.node.behavesAs.edge = true;
-    user.useFastRepeat = true;
+    user = {
+      useFastRepeat = true;
+      size = "Min";
+    };
   };
   niriModule =
     if niriModuleResult ? content then niriModuleResult.content else niriModuleResult;
