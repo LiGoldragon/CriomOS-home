@@ -11,7 +11,7 @@ let
   runtimeDirectory = "/build/orchestrate-nexus-runtime";
   nexusRuntimeDirectory = "${runtimeDirectory}/orchestrate-nexus";
   ordinarySocketPath = "${nexusRuntimeDirectory}/orchestrate.sock";
-  metaSocketPath = "${nexusRuntimeDirectory}/meta-orchestrate.sock";
+  metaSocketPath = "${nexusRuntimeDirectory}/orchestrate-meta.sock";
 
   moduleResult = import orchestrateModule {
     inherit inputs lib pkgs;
@@ -71,8 +71,10 @@ else
 
     test -x "${orchestratePackage}/bin/orchestrate-nexus"
     test -x "${orchestrateProfilePackage}/bin/orchestrate"
-    test -x "${orchestrateProfilePackage}/bin/meta-orchestrate"
+    test -x "${orchestrateProfilePackage}/bin/orchestrate-meta"
     test -x "${orchestratePackage}/bin/orchestrate-upgrade-preflight"
+    test -x "${orchestratePackage}/bin/orchestrate-relocate"
+    test ! -e "${orchestrateProfilePackage}/bin/meta-orchestrate"
     test ! -e "${orchestrateProfilePackage}/bin/orchestrate-daemon"
     test ! -e "${orchestratePackage}/bin/orchestrate-write-configuration"
 
@@ -112,8 +114,12 @@ else
     test "$released" = "Released.$lock"
     observed_empty="$(${orchestrateProfilePackage}/bin/orchestrate 'Observe.Locks')"
     test "$observed_empty" = 'Observed.Locks.[]'
-    configured="$(${orchestrateProfilePackage}/bin/meta-orchestrate 'Configure.{ ${ordinarySocketPath} ${metaSocketPath} }')"
-    test "$configured" = 'Configured.{ ${ordinarySocketPath} ${metaSocketPath} }'
+    # The meta reply is a ConfigurationReceipt: the configuration nested in
+    # its own product, then MetaConfigureDone. A fresh store opens with the
+    # ordinary bootstrap window still available, so this first meta Configure
+    # is what shuts it.
+    configured="$(${orchestrateProfilePackage}/bin/orchestrate-meta 'Configure.{ ${ordinarySocketPath} ${metaSocketPath} }')"
+    test "$configured" = 'Configured.{ { ${ordinarySocketPath} ${metaSocketPath} } True }'
 
     touch "$out"
   ''

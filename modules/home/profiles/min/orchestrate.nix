@@ -13,8 +13,8 @@ let
         mkdir -p $out/bin
         makeWrapper ${orchestratePackage}/bin/orchestrate $out/bin/orchestrate \
           --run 'export ORCHESTRATE_SOCKET="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/orchestrate-nexus/orchestrate.sock"'
-        makeWrapper ${orchestratePackage}/bin/meta-orchestrate $out/bin/meta-orchestrate \
-          --run 'export ORCHESTRATE_META_SOCKET="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/orchestrate-nexus/meta-orchestrate.sock"'
+        makeWrapper ${orchestratePackage}/bin/orchestrate-meta $out/bin/orchestrate-meta \
+          --run 'export ORCHESTRATE_META_SOCKET="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/orchestrate-nexus/orchestrate-meta.sock"'
       '';
 in
 {

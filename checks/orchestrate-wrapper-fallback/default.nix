@@ -9,7 +9,7 @@ let
     : "''${ORCHESTRATE_SOCKET:?}"
     ${pkgs.coreutils}/bin/printf '%s\n' "$ORCHESTRATE_SOCKET" > "$ORCHESTRATE_WRAPPER_WITNESS"
   '';
-  fakeMetaClient = pkgs.writeShellScriptBin "meta-orchestrate" ''
+  fakeMetaClient = pkgs.writeShellScriptBin "orchestrate-meta" ''
     set -eu
     : "''${ORCHESTRATE_WRAPPER_WITNESS:?}"
     : "''${ORCHESTRATE_META_SOCKET:?}"
@@ -31,8 +31,16 @@ let
       orchestrate = fakeOrchestrate;
     };
   };
+  # The module returns a plain attribute set. Its sibling
+  # checks/orchestrate-service-path already carried this fallback; this file
+  # did not, so it could not be evaluated at all.
   moduleConfiguration =
-    if moduleResult.config ? content then moduleResult.config.content else moduleResult.config;
+    if moduleResult ? config && moduleResult.config ? content then
+      moduleResult.config.content
+    else if moduleResult ? content then
+      moduleResult.content
+    else
+      moduleResult;
   profilePackage = builtins.head moduleConfiguration.home.packages;
 in
 pkgs.runCommand "orchestrate-wrapper-fallback" { nativeBuildInputs = [ pkgs.coreutils ]; } ''
@@ -50,7 +58,7 @@ pkgs.runCommand "orchestrate-wrapper-fallback" { nativeBuildInputs = [ pkgs.core
   fi
   if ${pkgs.coreutils}/bin/env -u XDG_RUNTIME_DIR -u ORCHESTRATE_META_SOCKET \
     ORCHESTRATE_WRAPPER_WITNESS="$meta_witness" \
-    ${fakeOrchestratePackage}/bin/meta-orchestrate; then
+    ${fakeOrchestratePackage}/bin/orchestrate-meta; then
     exit 1
   fi
 
@@ -59,11 +67,11 @@ pkgs.runCommand "orchestrate-wrapper-fallback" { nativeBuildInputs = [ pkgs.core
     ${profilePackage}/bin/orchestrate
   ${pkgs.coreutils}/bin/env -u XDG_RUNTIME_DIR \
     ORCHESTRATE_WRAPPER_WITNESS="$meta_witness" \
-    ${profilePackage}/bin/meta-orchestrate
+    ${profilePackage}/bin/orchestrate-meta
 
   runtime_root="/run/user/$(${pkgs.coreutils}/bin/id -u)"
   test "$(< "$ordinary_witness")" = "$runtime_root/orchestrate-nexus/orchestrate.sock"
-  test "$(< "$meta_witness")" = "$runtime_root/orchestrate-nexus/meta-orchestrate.sock"
+  test "$(< "$meta_witness")" = "$runtime_root/orchestrate-nexus/orchestrate-meta.sock"
 
   touch "$out"
 ''
