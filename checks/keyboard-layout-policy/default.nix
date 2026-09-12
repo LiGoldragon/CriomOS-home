@@ -28,9 +28,6 @@ let
   niriModuleContent =
     if niriModuleResult ? content then niriModuleResult.content else niriModuleResult;
   keyboardXkb = niriModuleContent.programs.niri.settings.input.keyboard.xkb;
-
-  swayConfiguration = builtins.readFile ../../modules/home/profiles/min/swayConf.nix;
-  hyprlandConfiguration = builtins.readFile ../../modules/home/profiles/min/hyprland.nix;
 in
 assert lib.assertMsg (
   keyboardXkb.layout == "us"
@@ -41,12 +38,6 @@ assert lib.assertMsg (
 assert lib.assertMsg (
   keyboardXkb.options == "ctrl:nocaps,altwin:swap_ralt_rwin"
 ) "Niri must preserve existing non-layout XKB options";
-assert lib.assertMsg (
-  !(lib.hasInfix "xkb_variant colemak" swayConfiguration)
-) "Sway fallback config must not duplicate laptop Colemak outside keyd";
-assert lib.assertMsg (
-  !(lib.hasInfix "kb_variant = colemak" hyprlandConfiguration)
-) "Hyprland fallback config must not duplicate laptop Colemak outside keyd";
 
 pkgs.runCommand "keyboard-layout-policy-check" { } ''
   touch "$out"

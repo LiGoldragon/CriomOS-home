@@ -2184,23 +2184,6 @@
         "type": "github"
       }
     },
-    "primary-generated-src": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1787401865,
-        "narHash": "sha256-nJQUt+Hy6u4bVL1Vt/jR53tbcC3b67JuYbjGmIynRjY=",
-        "owner": "LiGoldragon",
-        "repo": "primary",
-        "rev": "fd049d9030a789ccb60e21732acdfc754b30e410",
-        "type": "github"
-      },
-      "original": {
-        "owner": "LiGoldragon",
-        "repo": "primary",
-        "rev": "fd049d9030a789ccb60e21732acdfc754b30e410",
-        "type": "github"
-      }
-    },
     "pyproject-build-systems": {
       "inputs": {
         "nixpkgs": [
@@ -2316,7 +2299,6 @@
         "pi-web-access-yocto-queue-src": "pi-web-access-yocto-queue-src",
         "pkgs": "pkgs",
         "plannotator-capability": "plannotator-capability",
-        "primary-generated-src": "primary-generated-src",
         "pyproject-build-systems": "pyproject-build-systems",
         "pyproject-nix": "pyproject-nix",
         "rust-overlay": "rust-overlay_2",
