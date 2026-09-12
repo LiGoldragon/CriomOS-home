@@ -323,6 +323,10 @@ let
     pkgs.llama-cpp
     (pkgs.callPackage ../../../../packages/gws { inherit inputs; })
     (pkgs.callPackage ../../../../packages/playwright-cli { })
+    # `cdp-stdin-type` — pipe a gopass secret straight into a remote browser
+    # tab's focused field over CDP, so a password reaches the browser without
+    # touching the server's disk, argv, environment, or any agent's context.
+    (pkgs.callPackage ../../../../packages/cdp-stdin-type { })
     (pkgs.callPackage ../../../../packages/plannotator { })
     codexCliPackage
     codexRemote
