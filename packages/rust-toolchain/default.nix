@@ -1,6 +1,6 @@
 { inputs, pkgs, ... }:
 
-(inputs.rust-overlay.lib.mkRustBin { } pkgs).stable."1.96.0".minimal.override {
+(inputs.rust-overlay.lib.mkRustBin { } pkgs).stable."1.97.1".minimal.override {
   extensions = [
     "rust-src"
     "rust-analyzer"
