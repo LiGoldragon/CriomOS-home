@@ -6,7 +6,7 @@
   ...
 }:
 let
-  inherit (user) size;
+  sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
   system = pkgs.stdenv.hostPlatform.system;
 
   # `annas` — Anna's Archive book/article search + download CLI.
@@ -44,7 +44,7 @@ let
     '';
   };
 in
-lib.mkIf size.medium {
+lib.mkIf (sizeAtLeast "Medium") {
   home.packages = [
     inputs.substack-cli.packages.${system}.default
     inputs.claude-answers.packages.${system}.default

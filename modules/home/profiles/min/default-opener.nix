@@ -6,7 +6,7 @@
   ...
 }:
 let
-  inherit (user) size;
+  sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
   defaultBrowser = "google-chrome.desktop";
   browserMimeTypes = [
     "text/html"
@@ -28,7 +28,7 @@ let
   '';
 in
 {
-  config = lib.mkIf size.min {
+  config = lib.mkIf (sizeAtLeast "Min") {
     home = {
       sessionVariables.PATH = "${config.home.homeDirectory}/.local/bin:$PATH";
       packages = [

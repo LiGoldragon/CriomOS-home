@@ -22,7 +22,7 @@
 #   - the OpenAI-compatible token is read at RUNTIME from gopass
 #     (goldragon.criome/local-llm-api-token); the bytes never enter Nix.
 #
-# Gating: the same Large tier as Chrome (max/default.nix `size.large`
+# Gating: the same Large tier as Chrome (max/default.nix size threshold
 # block) — browser-use without Chrome is useless and its closure is large
 # (264-package Python env). Spirit bxe9: just packaged + on PATH; any
 # harness/agent calls `browser-use` like a shell command. The library
@@ -30,7 +30,7 @@
 # (`browser-use-local`) are also exposed for scripted scout flows
 # (report 61's DigitalOcean token workflow, Spirit 7hmc/5g4d/7o4q).
 let
-  inherit (user) size;
+  sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
 
   browserUse = pkgs.callPackage ../../../../packages/browser-use { inherit inputs; };
 
@@ -303,7 +303,7 @@ let
     '';
   };
 in
-lib.mkIf (size.large && endpointNode != null) {
+lib.mkIf (sizeAtLeast "Large" && endpointNode != null) {
   home.packages = [
     # The packaged browser-use CLI on PATH (Spirit bxe9). Exposes
     # `browser-use`, `bu`, `browseruse`, `browser-use-tui`, and the

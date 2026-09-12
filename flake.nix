@@ -665,13 +665,8 @@
         }
       ) derivationChecks;
 
-      homeUser = import ./lib/horizon-user.nix { inherit lib; };
-      homeUsers = builtins.listToAttrs (
-        map (rawUser: {
-          name = rawUser.name;
-          value = homeUser rawUser;
-        }) horizon.users
-      );
+      horizonUser = import ./lib/horizon-user.nix { inherit lib; };
+      homeUsers = horizonUser.usersByName horizon.users;
 
       mkHomeConfiguration =
         userName: user:
@@ -702,7 +697,7 @@
     // {
       packages = projectPackages;
       checks = projectChecks;
-      horizonUser = homeUser;
+      horizonUsersByName = horizonUser.usersByName;
       apps = builtins.mapAttrs (system: _: bp.apps.${system} or { }) projectPackages;
 
       # Consumers need the exact overlay-applied package set without forcing a

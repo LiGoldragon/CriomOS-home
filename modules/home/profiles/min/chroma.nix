@@ -11,13 +11,14 @@
 let
   inherit (lib) mkIf;
   inherit (horizon.node) behavesAs;
-  inherit (user) size;
+  sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
   inherit (textScale) fontPt;
   inherit (config.criomosHome) visualTheme;
   inherit (visualTheme) darkThemeSwitchTiming lightThemeSwitchTiming;
 
   chromaPackage = inputs.chroma.packages.${pkgs.stdenv.hostPlatform.system}.default;
-  chromaSetDarkTheme = inputs.chroma.packages.${pkgs.stdenv.hostPlatform.system}."chroma-set-dark-theme";
+  chromaSetDarkTheme =
+    inputs.chroma.packages.${pkgs.stdenv.hostPlatform.system}."chroma-set-dark-theme";
 
   dark = config.lib.stylix.colors.withHashtag;
   light = (config.stylix.base16.mkSchemeAttrs visualTheme.lightBase16Scheme).withHashtag;
@@ -157,7 +158,7 @@ let
   '';
 
 in
-mkIf (size.min && behavesAs.edge) {
+mkIf (sizeAtLeast "Min" && behavesAs.edge) {
   assertions = [
     {
       assertion = light.base05 != light.base00;

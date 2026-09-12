@@ -11,6 +11,7 @@
   ...
 }:
 let
+  sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
   inherit (builtins)
     fromJSON
     map
@@ -156,7 +157,7 @@ in
 # an edge user environment must retain its .pi and .pi-testing state even when
 # the host does not run Agent Intercom locally.  The projected node roles still
 # determine whether a local provider record is available above.
-lib.mkIf user.size.min {
+lib.mkIf (sizeAtLeast "Min") {
   home.activation.preparePiPackageSymlink = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
     if [ -d "${piPackageHomePath}" ] && [ ! -L "${piPackageHomePath}" ]; then
       if ${pkgs.jq}/bin/jq -e '.name == "@earendil-works/pi-coding-agent"' \

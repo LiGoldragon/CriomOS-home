@@ -9,7 +9,7 @@
 let
   inherit (lib) mkIf mkOption;
   inherit (lib.types) bool nonEmptyListOf str;
-  inherit (user) size;
+  sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
 
   system = pkgs.stdenv.hostPlatform.system;
   aggregatorPackage = inputs.aggregator.packages.${system}.default;
@@ -101,7 +101,7 @@ in
     };
   };
 
-  config = mkIf (size.min && config.criomosHome.aggregator.enable) {
+  config = mkIf (sizeAtLeast "Min" && config.criomosHome.aggregator.enable) {
     home.packages = [ aggregatorProfilePackage ];
 
     systemd.user.services.aggregator-daemon = {

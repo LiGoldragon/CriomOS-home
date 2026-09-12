@@ -25,24 +25,15 @@ let
 
   belowMediumHome = mkHome {
     name = "below-medium-profile-check";
-    size = {
-      medium = false;
-      max = false;
-    };
+    size = "Min";
   };
   mediumHome = mkHome {
     name = "medium-profile-check";
-    size = {
-      medium = true;
-      max = false;
-    };
+    size = "Medium";
   };
   maximumHome = mkHome {
     name = "maximum-profile-check";
-    size = {
-      medium = true;
-      max = true;
-    };
+    size = "Max";
   };
 in
 let
@@ -50,7 +41,9 @@ let
   belowMediumPackages = packagePaths belowMediumHome;
   mediumPackages = packagePaths mediumHome;
   maximumPackages = packagePaths maximumHome;
-  wisprPackage = builtins.head (pkgs.lib.subtractLists belowMediumHome.config.home.packages mediumHome.config.home.packages);
+  wisprPackage = builtins.head (
+    pkgs.lib.subtractLists belowMediumHome.config.home.packages mediumHome.config.home.packages
+  );
   wisprStatus = "${wisprPackage}/bin/wispr-flow-status";
 in
 assert builtins.length (pkgs.lib.subtractLists belowMediumPackages mediumPackages) == 1;

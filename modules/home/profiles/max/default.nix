@@ -8,7 +8,8 @@
 }:
 let
   inherit (lib) optionals mkIf mkMerge;
-  inherit (user) isMultimediaDev size;
+  inherit (user) isMultimediaDev;
+  sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
 
   codingPackages = [
     pkgs.pandoc
@@ -43,7 +44,7 @@ mkMerge [
   # Large-tier baseline: most "max profile" packages are now Large per
   # the bulk size-Max -> Large rule. Specific heavy items that stay
   # Max-only are wrapped in their own mkIf below.
-  (mkIf size.large {
+  (mkIf (sizeAtLeast "Large") {
     home.packages =
       with pkgs;
       [
@@ -86,8 +87,8 @@ mkMerge [
   })
 
   # Max-tier exceptions per Li 2026-04-25: obs-studio + gimp/krita/
-  # calibre/inkscape (when isMultimediaDev) live at size.max only.
-  (mkIf size.max {
+  # calibre/inkscape (when isMultimediaDev) live at the Max size only.
+  (mkIf (sizeAtLeast "Max") {
     home.packages = optionals isMultimediaDev maxMultimediaPackages;
 
     programs.obs-studio = {

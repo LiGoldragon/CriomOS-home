@@ -1,34 +1,38 @@
 { lib, pkgs }:
 let
   horizonUser = import ../../lib/horizon-user.nix { inherit lib; };
-  projected = horizonUser {
-    name = "test-user";
-    size = "Large";
-    hasPublicKey = true;
-    publicKeys = [
-      {
-        node = "test-node";
-        ssh = "ssh-ed25519 test";
-        keygrip = "TESTKEYGRIP";
-      }
-    ];
-    resolvedTextSize = "ExtraLarge";
-  };
+  users = horizonUser.usersByName [
+    {
+      name = "test-user";
+      size = "Large";
+      hasPublicKey = true;
+      publicKeys = [
+        {
+          node = "test-node";
+          ssh = "ssh-ed25519 test";
+          keygrip = "TESTKEYGRIP";
+        }
+      ];
+      resolvedTextSize = "ExtraLarge";
+    }
+  ];
+  projected = users.test-user;
 in
-assert lib.assertMsg projected.size.min "Large Horizon users must enable the minimum Home profile";
-assert lib.assertMsg projected.size.medium
-  "Large Horizon users must enable the medium Home profile";
-assert lib.assertMsg projected.size.large "Large Horizon users must enable the large Home profile";
+assert lib.assertMsg (horizonUser.sizeAtLeast projected.size "Min")
+  "Large Horizon users must include the minimum Home profile";
+assert lib.assertMsg (horizonUser.sizeAtLeast projected.size "Medium")
+  "Large Horizon users must include the medium Home profile";
+assert lib.assertMsg (horizonUser.sizeAtLeast projected.size "Large")
+  "Large Horizon users must include the large Home profile";
 assert lib.assertMsg (
-  !projected.size.max
-) "Large Horizon users must not enable the maximum Home profile";
-assert lib.assertMsg projected.hasPubKey "Horizon public-key presence must reach Home";
+  !(horizonUser.sizeAtLeast projected.size "Max")
+) "Large Horizon users must not include the maximum Home profile";
 assert lib.assertMsg (
-  projected.pubKeys.test-node.keygrip == "TESTKEYGRIP"
-) "Horizon public keys must be indexed by node";
+  projected.hasPublicKey && (builtins.head projected.publicKeys).keygrip == "TESTKEYGRIP"
+) "Home must retain current Horizon public-key fields";
 assert lib.assertMsg (
-  projected.textSize == "ExtraLarge"
-) "Home must consume Horizon's resolved text size";
+  projected.resolvedTextSize == "ExtraLarge"
+) "Home must retain Horizon's resolved text size";
 pkgs.runCommand "horizon-user-projection-check" { } ''
   touch "$out"
 ''

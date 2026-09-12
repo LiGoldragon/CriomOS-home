@@ -22,7 +22,7 @@ let
       horizon.node.behavesAs.edge = true;
       user = {
         useFastRepeat = false;
-        size.medium = true;
+        size = "Medium";
       };
     };
     modules = [

@@ -1,38 +1,27 @@
-# Convert one public Horizon user projection into the explicit per-user Home
-# module argument. Horizon publishes users as a vector; Home configuration
-# names are Nix attributes, so the flake maps each entry by its declared name
-# before it calls this converter. This is the only vector-to-name boundary in
-# Home.
+# Home consumes Horizon's current user projection directly. These functions
+# perform only the two operations required at the flake/module boundary:
+# naming vector entries for Nix outputs and comparing the declared size enum.
 { lib }:
-raw:
 let
-  rank = {
-    Zero = 0;
-    Min = 1;
-    Medium = 2;
-    Large = 3;
-    Max = 4;
-  };
-  atLeast = magnitude: (rank.${raw.size} or 0) >= rank.${magnitude};
-  publicKeys = raw.publicKeys or [ ];
+  sizeOrder = [
+    "Zero"
+    "Min"
+    "Medium"
+    "Large"
+    "Max"
+  ];
 in
-raw
-// {
-  size = {
-    min = atLeast "Min";
-    medium = atLeast "Medium";
-    large = atLeast "Large";
-    max = atLeast "Max";
-  };
-  hasPubKey = raw.hasPublicKey or false;
-  pubKeys = builtins.listToAttrs (
-    map (key: {
-      name = key.node;
-      value = {
-        inherit (key) ssh keygrip;
-      };
-    }) publicKeys
-  );
-  sshPubKey = raw.sshPublicKey or null;
-  textSize = raw.resolvedTextSize or raw.textSize or "Medium";
+{
+  usersByName = users: builtins.listToAttrs (map (user: lib.nameValuePair user.name user) users);
+
+  sizeAtLeast =
+    actual: required:
+    let
+      index = size: lib.lists.findFirstIndex (candidate: candidate == size) null sizeOrder;
+      actualIndex = index actual;
+      requiredIndex = index required;
+    in
+    assert lib.assertMsg (actualIndex != null) "Unknown Horizon user size ${actual}";
+    assert lib.assertMsg (requiredIndex != null) "Unknown required Horizon user size ${required}";
+    actualIndex >= requiredIndex;
 }

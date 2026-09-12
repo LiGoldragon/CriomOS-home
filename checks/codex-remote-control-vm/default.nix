@@ -5,20 +5,21 @@ let
   codexRemoteControlModule = ../../modules/home/profiles/min/agent-intercom.nix;
   corePackagesModule = ../../modules/home/core-packages.nix;
   testUser = "codex-remote-control-test";
+  user = {
+    name = testUser;
+    size = "Min";
+  };
   testHome = "/home/${testUser}";
   testUid = 1000;
   hmConfiguration =
     (inputs.home-manager.lib.homeManagerConfiguration {
       inherit pkgs;
       extraSpecialArgs = {
-        inherit inputs;
+        inherit inputs user;
         hexis = inputs.hexis.packages.${system}.default;
         horizon = {
           node.services = [ ];
-          users.${testUser} = {
-            name = testUser;
-            size.min = true;
-          };
+          users = [ user ];
         };
       };
       modules = [

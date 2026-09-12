@@ -9,10 +9,10 @@
   ...
 }:
 let
-  profileUser = user;
+  sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
   primaryWorkspace = "${config.home.homeDirectory}/primary";
   primaryWorkspacePointer = lib.replaceStrings [ "~" "/" ] [ "~0" "~1" ] primaryWorkspace;
-  mediumEnabled = profileUser.size.medium or false;
+  mediumEnabled = sizeAtLeast "Medium";
   edgeEnabled = ((horizon.node.behavesAs or { }).edge or false);
   # Desktop selection is generic projected Edge ownership plus cumulative user
   # size. Individual desktop derivations declare their own availability; this
@@ -110,7 +110,7 @@ lib.mkMerge [
     };
 
   }
-  (lib.mkIf (profileUser.size.min or false) {
+  (lib.mkIf (sizeAtLeast "Min") {
     # Codex's app-server is the single owner of every normal terminal TUI
     # session.  Its default Unix socket is local to the user, while remote
     # control reaches the phone through Codex's authenticated relay.

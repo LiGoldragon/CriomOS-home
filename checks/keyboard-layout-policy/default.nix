@@ -21,7 +21,7 @@ let
     textScale.fontPt = 12;
     user = {
       useFastRepeat = true;
-      size.min = true;
+      size = "Min";
     };
   };
 

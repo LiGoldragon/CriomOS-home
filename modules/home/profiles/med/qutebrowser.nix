@@ -8,7 +8,8 @@
 let
   inherit (builtins) readFile toString;
   inherit (lib) mkIf optionalString;
-  inherit (user) useColemak size;
+  inherit (user) useColemak;
+  sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
 
   badDomains = [
     "www.reddit.com"
@@ -105,7 +106,7 @@ let
   domainListBlok = builtins.concatStringsSep "\n" mkDomainsList;
 
 in
-lib.mkIf size.medium {
+lib.mkIf (sizeAtLeast "Medium") {
   home = {
     packages = [ pkgs.qutebrowser ];
 

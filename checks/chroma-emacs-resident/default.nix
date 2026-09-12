@@ -29,7 +29,7 @@ let
     lib = pkgs.lib;
     textScale.emacsHeight = 14;
     user = {
-      size.medium = true;
+      size = "Medium";
       preferredEditor = "Emacs";
     };
   };

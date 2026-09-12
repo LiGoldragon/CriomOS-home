@@ -136,7 +136,7 @@ let
         workspacePaths = [ fakeWorkspace ];
       };
     };
-    user.size.min = true;
+    user.size = "Min";
   };
 
   moduleConfiguration =
@@ -159,10 +159,11 @@ let
       message = "legacy report scraping service names must be absent.";
     }
     {
-      condition = !(
-        builtins.hasAttr "activation" moduleConfiguration.home
-        && builtins.hasAttr "aggregatorState" moduleConfiguration.home.activation
-      );
+      condition =
+        !(
+          builtins.hasAttr "activation" moduleConfiguration.home
+          && builtins.hasAttr "aggregatorState" moduleConfiguration.home.activation
+        );
       message = "aggregator runtime state must initialize from the user service, not Home Manager activation.";
     }
     {

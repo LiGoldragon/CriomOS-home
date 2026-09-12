@@ -13,8 +13,9 @@ let
         hexis = inputs.hexis.packages.${system}.default;
         horizon = {
           node.services = [ ];
-          users.${user.name} = user;
+          users = [ user ];
         };
+        inherit user;
       };
       modules = [
         corePackagesModule
@@ -30,15 +31,15 @@ let
     }).config;
   codexUser = {
     name = "codex-remote-control-test";
-    size.min = true;
+    size = "Min";
   };
   nonCodexUser = {
     name = "codex-remote-control-test";
-    size.min = false;
+    size = "Zero";
   };
   secondCodexUser = {
     name = "codex-remote-control-second";
-    size.min = true;
+    size = "Min";
   };
   configuration = mkConfiguration codexUser;
   nonCodexConfiguration = mkConfiguration nonCodexUser;
@@ -46,10 +47,12 @@ let
   embeddedUserName = "embedded-codex-test";
   embeddedHorizon = {
     node.services = [ ];
-    users.${embeddedUserName} = {
-      name = embeddedUserName;
-      size.min = true;
-    };
+    users = [
+      {
+        name = embeddedUserName;
+        size = "Min";
+      }
+    ];
   };
   embeddedConfiguration = inputs.nixpkgs.lib.nixosSystem {
     inherit system;
@@ -70,7 +73,7 @@ let
             codexRemoteControlModule
           ];
           users.${embeddedUserName} = {
-            _module.args.user = embeddedHorizon.users.${embeddedUserName};
+            _module.args.user = builtins.head embeddedHorizon.users;
             home = {
               username = embeddedUserName;
               homeDirectory = "/home/${embeddedUserName}";

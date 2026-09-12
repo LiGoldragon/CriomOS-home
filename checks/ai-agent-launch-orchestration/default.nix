@@ -9,10 +9,11 @@ let
   claudeCodePackage = pkgs.callPackage ../../owned-agents/claude-code { inherit inputs; };
   fixtureUser = {
     useColemak = false;
-    hasPubKey = false;
+    hasPublicKey = false;
+    publicKeys = [ ];
     gitSigningKey = null;
     matrixId = null;
-    size.min = true;
+    size = "Min";
     isMultimediaDev = false;
     emailAddress = "ai-agent-launch-check@example.invalid";
     githubId = "ai-agent-launch-check";

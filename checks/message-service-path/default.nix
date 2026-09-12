@@ -19,7 +19,7 @@ let
       xdg.stateHome = stateHome;
       criomosHome.message.enable = true;
     };
-    user.size.min = true;
+    user.size = "Min";
   };
 
   moduleConfiguration =

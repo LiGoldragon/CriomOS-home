@@ -234,7 +234,7 @@ let
         criomeDomainName = "prometheus.goldragon.criome";
       };
     };
-    user.size.min = true;
+    user.size = "Min";
   };
 
   moduleConfiguration =

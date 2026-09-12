@@ -19,7 +19,7 @@ let
     inherit inputs lib pkgs;
     config.lib.niri.actions.spawn = spawnAction;
     horizon.node.behavesAs.edge = true;
-    user.size.min = true;
+    user.size = "Min";
   };
 
   moduleContent = if moduleResult ? content then moduleResult.content else moduleResult;
@@ -43,8 +43,7 @@ let
     && builtins.elemAt command 1 == "Start.{}";
 
   commandRunsListenerStop =
-    command:
-    builtins.length command == 1 && commandRunsExecutable command "/bin/listener-stop-capture";
+    command: builtins.length command == 1 && commandRunsExecutable command "/bin/listener-stop-capture";
 
   commandRunsListenerCancel =
     command:

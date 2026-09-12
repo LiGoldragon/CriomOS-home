@@ -7,13 +7,12 @@ let
     inherit inputs codexCliPackage claudeCodePackage;
   };
   horizon = {
-    users.test-user = {
-      name = "test-user";
-      size = {
-        min = true;
-        medium = true;
-      };
-    };
+    users = [
+      {
+        name = "test-user";
+        size = "Medium";
+      }
+    ];
     node = {
       name = "no-service-fixture";
       behavesAs.edge = false;
@@ -25,7 +24,7 @@ let
       inherit pkgs;
       extraSpecialArgs = {
         inherit inputs horizon ownedAgentPackages;
-        user = horizon.users.test-user;
+        user = builtins.head horizon.users;
         hexis = inputs.hexis.packages.${pkgs.stdenv.hostPlatform.system}.default;
       };
       modules = [

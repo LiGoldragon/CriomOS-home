@@ -17,7 +17,7 @@ let
       criomeDomainName = "edge.invalid";
     };
     exNodes = { };
-    users.${remoteUser.name} = remoteUser;
+    users = [ remoteUser ];
   };
   localPersonaHorizon = {
     node = remoteHorizon.node // {
@@ -33,7 +33,7 @@ let
   };
   remoteUser = {
     name = "remote-user";
-    size.min = true;
+    size = "Min";
   };
   fakeOrchestrate = {
     packages.${system}.default = pkgs.writeShellScriptBin "orchestrate" "exit 0";

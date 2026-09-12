@@ -8,7 +8,7 @@
 }:
 let
   inherit (lib) mkIf;
-  inherit (user) size;
+  sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
   inherit (textScale) emacsHeight;
 
   emacsBase = pkgs.emacs-pgtk;
@@ -788,7 +788,7 @@ let
   isPreferredEditor = user.preferredEditor == "Emacs";
 
 in
-mkIf size.medium {
+mkIf (sizeAtLeast "Medium") {
   programs.emacs = {
     enable = true;
     package = emacsWithPackages;

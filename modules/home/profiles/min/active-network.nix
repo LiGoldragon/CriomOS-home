@@ -8,7 +8,7 @@
 }:
 let
   inherit (horizon.node) behavesAs;
-  inherit (user) size;
+  sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
   helperPython = pkgs.python3.withPackages (pythonPackages: [ pythonPackages.dbus-next ]);
   activeNetworkHelper = pkgs.writeShellApplication {
     name = "criomos-active-network-helper";
@@ -19,7 +19,7 @@ let
     '';
   };
 in
-lib.mkIf (size.min && behavesAs.edge) {
+lib.mkIf (sizeAtLeast "Min" && behavesAs.edge) {
   home.packages = [ activeNetworkHelper ];
 
   systemd.user.services.active-network-widget = {

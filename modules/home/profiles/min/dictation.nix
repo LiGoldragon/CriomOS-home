@@ -10,7 +10,7 @@
 let
   inherit (lib) mkIf;
   inherit (horizon.node) behavesAs;
-  inherit (user) size;
+  sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
 
   a = config.lib.niri.actions;
 
@@ -122,7 +122,7 @@ let
     esac
   '';
 in
-mkIf (size.min && behavesAs.edge) {
+mkIf (sizeAtLeast "Min" && behavesAs.edge) {
   home.packages = [
     listener
     listenerStop

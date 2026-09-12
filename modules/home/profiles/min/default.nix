@@ -23,14 +23,15 @@ let
   inherit (horizon) node;
   inherit (user)
     useColemak
-    hasPubKey
+    hasPublicKey
     gitSigningKey
     matrixId
-    size
     isMultimediaDev
     emailAddress
     ;
   inherit (user) githubId name;
+  sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
+  nodePublicKey = lib.findFirst (key: key.node == node.name) null user.publicKeys;
   codexSkillReadDeduplicationInstruction = "Skill-read de-duplication: A pasted <skill ...>...</skill> block is complete when it has matching opening and closing <skill> tags, a skill name, a location, and non-empty body text. Treat a complete pasted skill block as already loaded for this session. Read the same skill location again only when the block is structurally missing content, the user asks to verify source or freshness, or a higher-priority instruction explicitly requires verification.";
 
   codexPermissionDefaults = import ./codex-permission-defaults.nix;
@@ -425,7 +426,7 @@ in
 {
   imports = [ ./default-opener.nix ];
 
-  config = mkIf size.min {
+  config = mkIf (sizeAtLeast "Min") {
     fonts.fontconfig = {
       enable = true;
       # TODO
@@ -443,7 +444,7 @@ in
 
     services = {
       dunst = {
-        enable = !size.min;
+        enable = !(sizeAtLeast "Min");
         settings = {
           global = {
             geometry = "300x5-30+50";
@@ -465,7 +466,7 @@ in
         defaultCacheTtlSsh = 3600;
         maxCacheTtlSsh = 86400;
         enableSshSupport = true;
-        sshKeys = (optional hasPubKey user.pubKeys.${node.name}.keygrip);
+        sshKeys = optional hasPublicKey nodePublicKey.keygrip;
       };
 
       mpd = {
@@ -531,7 +532,7 @@ in
 
       git = {
         enable = true;
-        signing = mkIf hasPubKey {
+        signing = mkIf hasPublicKey {
           key = gitSigningKey;
           signByDefault = true;
         };
@@ -584,7 +585,7 @@ in
             name = name;
             email = emailAddress;
           };
-          signing = mkIf hasPubKey {
+          signing = mkIf hasPublicKey {
             behavior = "own";
             backend = "gpg";
             key = gitSigningKey;

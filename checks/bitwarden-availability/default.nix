@@ -37,18 +37,9 @@ let
       ];
     }).config.home.packages;
 
-  disabledPackages = mkProfilePackages {
-    min = false;
-    medium = false;
-  };
-  minimumPackages = mkProfilePackages {
-    min = true;
-    medium = false;
-  };
-  mediumPackages = mkProfilePackages {
-    min = true;
-    medium = true;
-  };
+  disabledPackages = mkProfilePackages "Zero";
+  minimumPackages = mkProfilePackages "Min";
+  mediumPackages = mkProfilePackages "Medium";
 
   packageNames = packages: map lib.getName packages;
   disabledNames = packageNames disabledPackages;

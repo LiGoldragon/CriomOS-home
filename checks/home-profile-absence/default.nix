@@ -68,10 +68,7 @@ let
         horizon.node.behavesAs.edge = edge;
         user = {
           isMultimediaDev = false;
-          size = {
-            inherit large;
-            max = false;
-          };
+          size = if large then "Large" else "Medium";
         };
       };
       modules = [

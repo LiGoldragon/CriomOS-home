@@ -11,7 +11,8 @@ let
   tomlFormat = pkgs.formats.toml { };
   yamlFormat = pkgs.formats.yaml { };
   inherit (user) githubId;
-  inherit (user) useColemak size;
+  inherit (user) useColemak;
+  sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
   inherit (pkgs) mksh;
 
   tokenizedHub = pkgs.writeScriptBin "hub" ''
@@ -40,7 +41,9 @@ let
   '';
 
   fasterWhisperPython = pkgs.writeShellScriptBin "faster-whisper-python" ''
-    exec ${pkgs.python3.withPackages (pythonPackages: [ pythonPackages.faster-whisper ])}/bin/python "$@"
+    exec ${
+      pkgs.python3.withPackages (pythonPackages: [ pythonPackages.faster-whisper ])
+    }/bin/python "$@"
   '';
 
   lispDevPackages = with pkgs; [
@@ -85,7 +88,7 @@ let
   ];
 
 in
-lib.mkIf size.medium {
+lib.mkIf (sizeAtLeast "Medium") {
   programs = {
     starship = {
       enable = true;

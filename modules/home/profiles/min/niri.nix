@@ -9,6 +9,7 @@
   ...
 }:
 let
+  sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
   terminal = "${pkgs.ghostty}/bin/ghostty";
   noctaliaShell = inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default;
   noctaliaExecutable = lib.getExe' noctaliaShell "noctalia";
@@ -425,7 +426,7 @@ in
         # Hotkey overlay
         "Mod+Shift+S".action = a.show-hotkey-overlay;
       }
-      // lib.optionalAttrs (user.size.medium or false) {
+      // lib.optionalAttrs (sizeAtLeast "Medium") {
         # The app owns its own single-instance and optional XDG autostart.
         # This compositor binding only invokes the provider's native control
         # endpoint; it never injects or holds a key.
