@@ -21,8 +21,7 @@ let
       hexis = inputs.hexis.packages.${system}.default;
     };
     modules = [
-      ../../modules/home/core-packages.nix
-      ../../modules/home/deployments/cf7879-core-relay.nix
+      ../../modules/home/deployments/core-checkup-only.nix
       {
         home = {
           username = user.name;
@@ -72,8 +71,6 @@ assert service.Service.KillMode == "control-group";
 assert service.Service.WorkingDirectory == "%t/core-checkup";
 assert service.Service.StateDirectoryMode == "0700";
 assert !(service.Service ? RuntimeMaxSec);
-assert configuration.criomosHome.clusterRelay.enable;
-assert configuration.criomosHome.clusterRelay.runtimeRouteFile == null;
 assert policy.luna == false;
 assert policy.harness.codexTargets == [
   {

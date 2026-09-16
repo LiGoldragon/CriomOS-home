@@ -1,33 +1,25 @@
 # Upgrades
 
-## Message 0.11.1 to 0.12.0 startup and store cutover
+## Core-only interim with Message 0.11.1
 
-The Home Message unit now writes the 0.12 startup request through the pinned
-`message-write-configuration` binary. Its one inline Datom argument is the
-nested contract and metadata shape:
+This branch's `homeModules."core-checkup-only"` selector keeps the exact
+deployed Message producer `38345dae42ac04caad0204ddbb94daf8f92c3367` and its
+parenthesized startup writer. It imports the generic core-checkup timer and
+the current target snapshot without importing or enabling cluster-relay, so
+the live schema-3 messenger store and its clients remain a coherent pair.
 
-```text
-{ { <message-socket> <mode> <supervision-socket> <mode> <router-socket> [ <ingresses> ] <owner-identity> } <database-path> <owner-label> <output-path> }
-```
+The Home check executes the pinned old writer with temporary sockets and
+verifies that it emits a nonempty binary configuration. The OS projection must
+provide the immutable roster path to `criomosHome.coreCheckup.rosterFile`; the
+default `/etc/core-checkup/roster.json` is not a substitute when the OS has not
+projected that file.
 
-The retired parenthesized `ConfigurationWriteRequest` form is refused. The
-Home check executes the packaged writer with temporary sockets and verifies
-that it emits a nonempty binary configuration; a source-text grep is not the
-contract proof.
-
-The 0.12 daemon and its clients must advance together because the socket wire
-and Datom command surface changed. The live 0.11.1 messenger store is schema 3,
-while the candidate daemon expects schema 5; the available migration only
-covers schema 4. Keep the Message daemon and relay parked until a reviewed,
-data-preserving schema-3 migration exists and passes against a copy of the
-real store. Moving the store aside and starting an empty schema-5 store would
-discard durable identity and delivery state and is not an activation gate.
-
-When that gate is green, stop the old unit, take a byte-preserving backup,
-realize the complete Home generation containing the matching Message daemon
-and relay client, and verify both sockets and the writer receipt before
-activation. A rollback restores the complete prior Home generation and its
-matching client/daemon pair; never mix a 0.11.1 client with a 0.12 daemon.
+The 0.12 daemon and its clients remain held because their socket wire and
+Datom command surface changed. The candidate expects schema 5, while the live
+store is schema 3 and the available migration only covers schema 4. A future
+0.12 activation requires a reviewed data-preserving migration, a byte-
+preserving backup, a complete matching daemon/client generation, and a full
+generation rollback path. Never mix the 0.11.1 and 0.12 stacks.
 
 ## Claude Remote Control removal
 

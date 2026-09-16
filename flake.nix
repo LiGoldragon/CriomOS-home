@@ -154,10 +154,11 @@
     # durable agent-identity map, delivery registry, message ledger,
     # per-recipient inboxes, and thread index (messenger.sema). Consumed in
     # modules/home/profiles/min/message.nix, which gives it a systemd --user
-    # supervisor. Pinned coherently with the cluster relay client. This is a
-    # breaking 0.11.1 -> 0.12 contract/store cutover; the active v3 store must
-    # pass the producer's data-preserving migration gate before this pin runs.
-    message.url = "github:LiGoldragon/message/fe0d04561051";
+    # supervisor. The core-only interim keeps the exact deployed 0.11.1
+    # producer while the 0.12 contract/store cutover remains held.
+    # Interim core-only deployment: preserve the exact deployed 0.11.1
+    # producer while the 0.12 schema-5 migration is reviewed separately.
+    message.url = "github:LiGoldragon/message/38345dae42ac04caad0204ddbb94daf8f92c3367";
     message.inputs.nixpkgs.follows = "nixpkgs";
     message.inputs.crane.follows = "crane";
 
@@ -763,14 +764,12 @@
           );
         };
 
-      # Deployment consumers add this module alongside `homeModules.default`
-      # after the OS projection has selected the cf7879 relay generation.  It
-      # pins this flake's package inputs for the imported modules while leaving
-      # the consumer's unrelated Home settings in the surrounding module set.
-      homeModules."cf7879-core-relay" =
+      # Interim selector for production's existing Message 0.11.1 stack.
+      # This module deliberately has no relay import or enablement.
+      homeModules."core-checkup-only" =
         { lib, ... }:
         {
-          imports = [ ./modules/home/deployments/cf7879-core-relay.nix ];
+          imports = [ ./modules/home/deployments/core-checkup-only.nix ];
           _module.args.inputs = lib.mkForce inputs;
         };
     };

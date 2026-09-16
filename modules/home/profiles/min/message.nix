@@ -48,10 +48,10 @@ let
 
   # message-write-configuration takes one inline brace object (the
   # single-argument text edge). Its producer-owned contract is a nested
-  # brace socket/owner object, followed by the store path, label, and output
-  # path. The owner uid is read at service start so the unit does not bake a
-  # numeric uid into the store; systemd expands the %t-derived socket
-  # arguments before the script runs.
+  # parenthesized socket/owner object, followed by the store path, label,
+  # and output path. The owner uid is read at service start so the unit does
+  # not bake a numeric uid into the store; systemd expands the %t-derived
+  # socket arguments before the script runs.
   writeConfigurationScript = pkgs.writeShellScript "message-write-configuration-request" ''
     set -eu
     working_socket="$1"
@@ -59,7 +59,7 @@ let
     router_socket="$3"
     ${pkgs.coreutils}/bin/mkdir -p ${stateDirectory}
     exec ${messagePackage}/bin/message-write-configuration \
-      "{ { $working_socket 432 $meta_socket 384 $router_socket [] UnixUser.$(${pkgs.coreutils}/bin/id -u) } ${databasePath} ${config.home.username} ${signalPath} }"
+      "{($working_socket 432 $meta_socket 384 $router_socket [] UnixUser.$(${pkgs.coreutils}/bin/id -u)) ${databasePath} ${config.home.username} ${signalPath}}"
   '';
 in
 {
