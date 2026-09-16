@@ -9,7 +9,9 @@
     ../core-packages.nix
     ../profiles/min/core-checkup.nix
     ../profiles/min/core-checkup-primary-successor.nix
+    ../profiles/min/codex-layer-resume.nix
   ];
 
   config.criomosHome.coreCheckup.enable = true;
+  config.criomosHome.codexLayerResume.enable = true;
 }

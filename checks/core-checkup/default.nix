@@ -21,6 +21,7 @@ let
       hexis = inputs.hexis.packages.${system}.default;
     };
     modules = [
+      inputs.stylix.homeModules.stylix
       ../../modules/home/deployments/core-checkup-only.nix
       {
         home = {
@@ -45,6 +46,7 @@ let
             openWork = true;
           } ];
         };
+        stylix.base16Scheme = ../../modules/home/ignis.yaml;
       }
     ];
   }).config;

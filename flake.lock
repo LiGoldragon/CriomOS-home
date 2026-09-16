@@ -448,6 +448,23 @@
         "type": "github"
       }
     },
+    "codex-layer-resume-source": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1789571101,
+        "narHash": "sha256-Z4CCiRAYs35080hsLdMRX0FPJobfVyQcMk8edQSjXII=",
+        "owner": "LiGoldragon",
+        "repo": "primary",
+        "rev": "0b4f39317ee60706470e8dbc7ff69c2562c36c58",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LiGoldragon",
+        "repo": "primary",
+        "rev": "0b4f39317ee60706470e8dbc7ff69c2562c36c58",
+        "type": "github"
+      }
+    },
     "core-checkup-source": {
       "flake": false,
       "locked": {
@@ -2282,6 +2299,7 @@
         "chroma": "chroma",
         "chroma-emacs": "chroma-emacs",
         "claude-answers": "claude-answers",
+        "codex-layer-resume-source": "codex-layer-resume-source",
         "core-checkup-source": "core-checkup-source",
         "crane": "crane_3",
         "criomos-lib": "criomos-lib",
