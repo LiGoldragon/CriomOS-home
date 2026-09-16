@@ -17,6 +17,14 @@
 
     system.url = "path:./stubs/no-system";
 
+    # Source-controlled, pinned checkup runner. Home only supplies the generic
+    # user-service lifecycle; the OS projection supplies its runtime config.
+    core-checkup-source = {
+      url = "github:LiGoldragon/primary/667b9bbed04f62dc55a1e0d25c84b484841bd6f4";
+      flake = false;
+    };
+
+
     pkgs.url = "github:LiGoldragon/CriomOS-pkgs";
     pkgs.inputs.nixpkgs.follows = "nixpkgs";
     pkgs.inputs.system.follows = "system";
@@ -614,6 +622,7 @@
           plannotator = checkPkgs.callPackage ./checks/plannotator { };
           spirit-deployment = checkPkgs.callPackage ./checks/spirit-deployment { inherit inputs; };
           flow-id = checkPkgs.callPackage ./checks/flow-id { inherit inputs; };
+          core-checkup = checkPkgs.callPackage ./checks/core-checkup { inherit inputs; };
           aggregator-deployment = checkPkgs.callPackage ./checks/aggregator-deployment { inherit inputs; };
           owned-agent-updater = checkPkgs.callPackage ./checks/owned-agent-updater { inherit inputs; };
           system-projection-boundary = checkPkgs.callPackage ./checks/system-projection-boundary { };
