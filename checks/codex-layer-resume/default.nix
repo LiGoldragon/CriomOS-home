@@ -69,10 +69,10 @@ pkgs.runCommand "codex-layer-resume"
       mkdir -p "$mock_bin"
       cp ${indexFile} "$explicit_registry"
       cat > "$mock_bin/codex" <<'MOCK'
-      #!/bin/sh
-      set -eu
-      printf '%s\n' "$@" > "$MOCK_LOG"
-      MOCK
+#!/bin/sh
+set -eu
+printf '%s\n' "$@" > "$MOCK_LOG"
+MOCK
       chmod 0755 "$mock_bin/codex"
 
       export MOCK_LOG="$TMPDIR/primary-argv"
