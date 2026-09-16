@@ -17,7 +17,7 @@ in {
     policyFile = mkOption { type = str; readOnly = true; default = "${config.xdg.configHome}/core-checkup/policy.json"; description = "Home-generated generic policy file."; };
     codexTargets = mkOption { type = listOf attrs; default = [ ]; description = "Explicit fresh Codex harness targets supplied by the owning deployment."; };
     claudeTargets = mkOption { type = listOf attrs; default = [ ]; description = "Explicit fresh Claude harness targets supplied by the owning deployment."; };
-    sourceRevision = mkOption { type = str; readOnly = true; default = "fbdc399f2a8ae94c80f0e8afaac9392836e3a2a2"; description = "Pinned primary source revision carried by inputs.core-checkup-source."; };
+    sourceRevision = mkOption { type = str; readOnly = true; default = "d3002f4bf9ae81852c3b7e5e65f4793afbc1e3da"; description = "Pinned primary source revision carried by inputs.core-checkup-source."; };
   };
 
   config = mkIf cfg.enable {
