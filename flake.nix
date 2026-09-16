@@ -20,7 +20,7 @@
     # Source-controlled, pinned checkup runner. Home only supplies the generic
     # user-service lifecycle; the OS projection supplies its runtime config.
     core-checkup-source = {
-      url = "tarball+https://github.com/LiGoldragon/primary/archive/d3002f4bf9ae81852c3b7e5e65f4793afbc1e3da.tar.gz";
+      url = "tarball+https://github.com/LiGoldragon/primary/archive/37ed03c74787f4a5e825895140cc64879e41ed4a.tar.gz";
       flake = false;
     };
 

@@ -37,6 +37,7 @@ let
     ];
   }).config;
   service = configuration.systemd.user.services.core-checkup;
+  policy = builtins.fromJSON configuration.xdg.configFile."core-checkup/policy.json".text;
   execStart = builtins.concatStringsSep "\n" (pkgs.lib.toList service.Service.ExecStart);
   execStartPre = builtins.concatStringsSep "\n" (pkgs.lib.toList service.Service.ExecStartPre);
   unitText = pkgs.writeText "core-checkup-closure.service" "${execStartPre}\n${execStart}\n";
@@ -44,10 +45,15 @@ let
   rosterPath = toString fixtureRoster;
 in
 assert service ? Service;
+assert service.Service.TimeoutStartSec == "180s";
+assert service.Service.KillMode == "control-group";
+assert service.Service.WorkingDirectory == "%t/core-checkup";
+assert !(service.Service ? RuntimeMaxSec);
+assert policy.luna == false;
 assert builtins.elem fixtureRoster.drvPath (builtins.attrNames (builtins.getContext execStart));
 assert builtins.elem fixtureRoster.drvPath (builtins.attrNames (builtins.getContext execStartPre));
 pkgs.runCommand "core-checkup-home" {
-  nativeBuildInputs = [ pkgs.nodejs ];
+  nativeBuildInputs = [ pkgs.nodejs pkgs.util-linux ];
   exportReferencesGraph = [ "unit-closure" unitText ];
 } ''
   set -eu

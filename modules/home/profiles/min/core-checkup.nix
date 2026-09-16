@@ -5,7 +5,7 @@ let
   cfg = config.criomosHome.coreCheckup;
   runner = pkgs.writeShellApplication {
     name = "core-checkup";
-    runtimeInputs = [ pkgs.nodejs pkgs.iputils pkgs.systemd config.criomos.corePackages.codex config.criomos.corePackages.claude ];
+    runtimeInputs = [ pkgs.nodejs pkgs.iproute2 pkgs.iputils pkgs.systemd pkgs.util-linux config.criomos.corePackages.codex config.criomos.corePackages.claude ];
     text = ''
       exec ${pkgs.nodejs}/bin/node ${inputs.core-checkup-source}/tools/core-checkup.mjs "$@"
     '';
@@ -17,7 +17,7 @@ in {
     policyFile = mkOption { type = str; readOnly = true; default = "${config.xdg.configHome}/core-checkup/policy.json"; description = "Home-generated generic policy file."; };
     codexTargets = mkOption { type = listOf attrs; default = [ ]; description = "Explicit fresh Codex harness targets supplied by the owning deployment."; };
     claudeTargets = mkOption { type = listOf attrs; default = [ ]; description = "Explicit fresh Claude harness targets supplied by the owning deployment."; };
-    sourceRevision = mkOption { type = str; readOnly = true; default = "d3002f4bf9ae81852c3b7e5e65f4793afbc1e3da"; description = "Pinned primary source revision carried by inputs.core-checkup-source."; };
+    sourceRevision = mkOption { type = str; readOnly = true; default = "37ed03c74787f4a5e825895140cc64879e41ed4a"; description = "Pinned primary source revision carried by inputs.core-checkup-source."; };
   };
 
   config = mkIf cfg.enable {
@@ -26,7 +26,10 @@ in {
       eventLog.retention = "operator-managed; no automatic deletion";
       allowRepair = false;
       wake.enabled = false;
-      luna = true;
+      # This monitor has no model child. A future judgment job is a distinct
+      # surface, so a model request is rejected by the runner rather than
+      # treated as a sandbox or working-directory policy.
+      luna = false;
       quotaProbe.socketPath = "$HOME/.codex/app-server-control/app-server-control.sock";
       units = [ ];
       harness = {
@@ -39,11 +42,13 @@ in {
       Service = {
         Type = "oneshot";
         StateDirectory = "core-checkup";
-        RuntimeMaxSec = "120s";
-        TimeoutStartSec = "120s";
+        RuntimeDirectory = "core-checkup";
+        WorkingDirectory = "%t/core-checkup";
+        TimeoutStartSec = "180s";
+        KillMode = "control-group";
         MemoryMax = "256M";
         NoNewPrivileges = true;
-        Environment = "PATH=${lib.makeBinPath [ pkgs.nodejs pkgs.iputils pkgs.systemd config.criomos.corePackages.codex config.criomos.corePackages.claude ]}";
+        Environment = "PATH=${lib.makeBinPath [ pkgs.nodejs pkgs.iproute2 pkgs.iputils pkgs.systemd pkgs.util-linux config.criomos.corePackages.codex config.criomos.corePackages.claude ]}";
         ExecStartPre = "${pkgs.coreutils}/bin/test -r ${cfg.rosterFile}";
         ExecStart = "${runner}/bin/core-checkup ${cfg.rosterFile} ${cfg.policyFile} %S/core-checkup/events.ndjson %S/core-checkup/state.json";
       };

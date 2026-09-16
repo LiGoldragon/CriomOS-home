@@ -448,6 +448,19 @@
         "type": "github"
       }
     },
+    "core-checkup-source": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1789555976,
+        "narHash": "sha256-h1yT5yfiePsewrrrNCq0bJ0zHkmjuYG8tYqfBIxVaDg=",
+        "type": "tarball",
+        "url": "https://github.com/LiGoldragon/primary/archive/37ed03c74787f4a5e825895140cc64879e41ed4a.tar.gz"
+      },
+      "original": {
+        "type": "tarball",
+        "url": "https://github.com/LiGoldragon/primary/archive/37ed03c74787f4a5e825895140cc64879e41ed4a.tar.gz"
+      }
+    },
     "crane": {
       "locked": {
         "lastModified": 1780532242,
@@ -2230,19 +2243,6 @@
         "url": "https://github.com/pyproject-nix/pyproject.nix"
       }
     },
-    "core-checkup-source": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1789521073,
-        "narHash": "sha256-G7oeqkVZL6Y1VyUC3WaoQuxZF5lIk0yEiJmbkSOmM5A=",
-        "type": "tarball",
-        "url": "https://github.com/LiGoldragon/primary/archive/d3002f4bf9ae81852c3b7e5e65f4793afbc1e3da.tar.gz"
-      },
-      "original": {
-        "type": "tarball",
-        "url": "https://github.com/LiGoldragon/primary/archive/d3002f4bf9ae81852c3b7e5e65f4793afbc1e3da.tar.gz"
-      }
-    },
     "root": {
       "inputs": {
         "agent": "agent",
@@ -2265,8 +2265,8 @@
         "chroma": "chroma",
         "chroma-emacs": "chroma-emacs",
         "claude-answers": "claude-answers",
-        "crane": "crane_3",
         "core-checkup-source": "core-checkup-source",
+        "crane": "crane_3",
         "criomos-lib": "criomos-lib",
         "google-workspace-cli": "google-workspace-cli",
         "harness": "harness",
