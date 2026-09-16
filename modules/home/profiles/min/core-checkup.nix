@@ -10,6 +10,54 @@ let
       exec ${pkgs.nodejs}/bin/node ${inputs.core-checkup-source}/tools/core-checkup.mjs "$@"
     '';
   };
+  preflight = pkgs.writeShellApplication {
+    name = "core-checkup-preflight";
+    runtimeInputs = [ pkgs.coreutils ];
+    text = ''
+      set -eu
+      roster="$1"
+      event_file="$2"
+      if test -r "$roster"; then
+        exit 0
+      fi
+      mkdir -p "$(dirname "$event_file")"
+      printf '{"schema":"core-checkup/v1","at":"%s","kind":"config","name":"core-checkup","status":"config_missing","reason":"roster_unreadable"}\n' "$(${pkgs.coreutils}/bin/date --iso-8601=seconds)" >> "$event_file"
+      exit 1
+    '';
+  };
+  resultReporter = pkgs.writeShellApplication {
+    name = "core-checkup-service-result";
+    runtimeInputs = [ pkgs.coreutils ];
+    text = ''
+      set -eu
+      event_file="$1"
+      service_result="''${SERVICE_RESULT:-unknown}"
+      exit_code="''${EXIT_CODE:-unknown}"
+      exit_status="''${EXIT_STATUS:-}"
+
+      case "$service_result" in
+        success) exit 0 ;;
+        timeout) outcome=global_timeout ;;
+        oom-kill) outcome=oom_kill ;;
+        exit-code) outcome=service_exit_code ;;
+        signal) outcome=service_signal ;;
+        core-dump) outcome=service_core_dump ;;
+        protocol|watchdog|resources|start-limit-hit) outcome=service_failure ;;
+        *) service_result=unknown; outcome=service_failure ;;
+      esac
+      case "$exit_code" in
+        exited|killed|dumped) ;;
+        *) exit_code=unknown ;;
+      esac
+      case "$exit_status" in
+        0|[1-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5]) ;;
+        *) exit_status=null ;;
+      esac
+      mkdir -p "$(dirname "$event_file")"
+      printf '{"schema":"core-checkup/v1","at":"%s","kind":"service-result","name":"core-checkup","status":"%s","service_result":"%s","exit_code":"%s","exit_status":%s}\n' \
+        "$(${pkgs.coreutils}/bin/date --iso-8601=seconds)" "$outcome" "$service_result" "$exit_code" "$exit_status" >> "$event_file"
+    '';
+  };
 in {
   options.criomosHome.coreCheckup = {
     enable = mkOption { type = bool; default = false; description = "Install the generic, OS-projected core-checkup user timer."; };
@@ -42,6 +90,7 @@ in {
       Service = {
         Type = "oneshot";
         StateDirectory = "core-checkup";
+        StateDirectoryMode = "0700";
         RuntimeDirectory = "core-checkup";
         WorkingDirectory = "%t/core-checkup";
         TimeoutStartSec = "180s";
@@ -49,8 +98,12 @@ in {
         MemoryMax = "256M";
         NoNewPrivileges = true;
         Environment = "PATH=${lib.makeBinPath [ pkgs.nodejs pkgs.iproute2 pkgs.iputils pkgs.systemd pkgs.util-linux config.criomos.corePackages.codex config.criomos.corePackages.claude ]}";
-        ExecStartPre = "${pkgs.coreutils}/bin/test -r ${cfg.rosterFile}";
+        ExecStartPre = "${preflight}/bin/core-checkup-preflight ${cfg.rosterFile} %S/core-checkup/events.ndjson";
         ExecStart = "${runner}/bin/core-checkup ${cfg.rosterFile} ${cfg.policyFile} %S/core-checkup/events.ndjson %S/core-checkup/state.json";
+        # ExecStopPost also runs when ExecStartPre fails. It maps only
+        # systemd's bounded result enums, so timeout or OOM is never
+        # mislabeled as a runner or roster failure.
+        ExecStopPost = "${resultReporter}/bin/core-checkup-service-result %S/core-checkup/events.ndjson";
       };
     };
     systemd.user.timers.core-checkup = {
