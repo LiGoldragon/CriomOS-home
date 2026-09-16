@@ -44,8 +44,8 @@ let
   rosterPath = toString fixtureRoster;
 in
 assert service ? Service;
-assert builtins.elem rosterPath (builtins.attrNames (builtins.getContext execStart));
-assert builtins.elem rosterPath (builtins.attrNames (builtins.getContext execStartPre));
+assert builtins.elem fixtureRoster.drvPath (builtins.attrNames (builtins.getContext execStart));
+assert builtins.elem fixtureRoster.drvPath (builtins.attrNames (builtins.getContext execStartPre));
 pkgs.runCommand "core-checkup-home" {
   nativeBuildInputs = [ pkgs.nodejs ];
   exportReferencesGraph = [ "unit-closure" unitText ];
