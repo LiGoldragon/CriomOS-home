@@ -1,12 +1,59 @@
-{ pkgs, inputs, ... }:
-pkgs.runCommand "core-checkup-home" { nativeBuildInputs = [ pkgs.nodejs ]; } ''
+{ inputs, pkgs, ... }:
+let
+  system = pkgs.stdenv.hostPlatform.system;
+  fixtureRoster = pkgs.writeText "core-checkup-roster-fixture.json" (builtins.toJSON {
+    endpoints = [ ];
+    units = [ ];
+    allowRestart = false;
+  });
+  user = {
+    name = "core-checkup-closure-test";
+    size = "Min";
+  };
+  configuration = (inputs.home-manager.lib.homeManagerConfiguration {
+    inherit pkgs;
+    extraSpecialArgs = {
+      inherit inputs user;
+      horizon = {
+        node.services = [ ];
+        users = [ user ];
+      };
+      hexis = inputs.hexis.packages.${system}.default;
+    };
+    modules = [
+      ../../modules/home/core-packages.nix
+      ../../modules/home/profiles/min/core-checkup.nix
+      {
+        home = {
+          username = user.name;
+          homeDirectory = "/home/${user.name}";
+          stateVersion = "26.05";
+        };
+        criomosHome.coreCheckup = {
+          enable = true;
+          rosterFile = fixtureRoster;
+        };
+      }
+    ];
+  }).config;
+  service = configuration.systemd.user.services.core-checkup;
+  execStart = builtins.concatStringsSep "\n" (pkgs.lib.toList service.Service.ExecStart);
+  execStartPre = builtins.concatStringsSep "\n" (pkgs.lib.toList service.Service.ExecStartPre);
+  unitText = pkgs.writeText "core-checkup-closure.service" "${execStartPre}\n${execStart}\n";
+  sourcePath = toString inputs.core-checkup-source;
+  rosterPath = toString fixtureRoster;
+in
+assert service ? Service;
+assert builtins.match ".*${rosterPath}.*" execStart != null;
+assert builtins.match ".*${rosterPath}.*" execStartPre != null;
+assert builtins.hasContext execStart;
+assert builtins.hasContext execStartPre;
+pkgs.runCommand "core-checkup-home" { nativeBuildInputs = [ pkgs.nix pkgs.nodejs ]; } ''
+  set -eu
   test -f ${inputs.core-checkup-source}/tools/core-checkup.mjs
-  grep -q 'OnUnitActiveSec = "30min"' ${../../modules/home/profiles/min/core-checkup.nix}
-  grep -q 'rosterFile' ${../../modules/home/profiles/min/core-checkup.nix}
-  grep -q 'policyFile' ${../../modules/home/profiles/min/core-checkup.nix}
-  grep -q 'wake.enabled = false' ${../../modules/home/profiles/min/core-checkup.nix}
-  grep -q 'd3002f4bf9ae81852c3b7e5e65f4793afbc1e3da' ${../../flake.nix}
-  grep -q 'ExecStartPre.*test -r.*rosterFile' ${../../modules/home/profiles/min/core-checkup.nix}
+  printf '%s\n' "$(${pkgs.nix}/bin/nix-store --query --requisites ${unitText})" > "$TMPDIR/requisites"
+  grep -Fx ${pkgs.lib.escapeShellArg rosterPath} "$TMPDIR/requisites"
+  grep -Fx ${pkgs.lib.escapeShellArg sourcePath} "$TMPDIR/requisites"
   cat > roster.json <<'EOF'
   {"endpoints":[],"units":[],"allowRestart":false}
   EOF
@@ -25,5 +72,5 @@ pkgs.runCommand "core-checkup-home" { nativeBuildInputs = [ pkgs.nodejs ]; } ''
     exit 1
   fi
   grep -q '"kind":"config"' $out/invalid.ndjson
-  touch $out
+  touch "$out"
 ''
