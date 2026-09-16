@@ -20,7 +20,7 @@
     # Source-controlled, pinned checkup runner. Home only supplies the generic
     # user-service lifecycle; the OS projection supplies its runtime config.
     core-checkup-source = {
-      url = "github:LiGoldragon/primary/8d4541cc3cb099b5e9796a1ad3c54375fc1c45fc";
+      url = "github:LiGoldragon/primary/fbdc399f2a8ae94c80f0e8afaac9392836e3a2a2";
       flake = false;
     };
 
