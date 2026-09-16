@@ -5,7 +5,7 @@ pkgs.runCommand "core-checkup-home" { nativeBuildInputs = [ pkgs.nodejs ]; } ''
   grep -q 'rosterFile' ${../../modules/home/profiles/min/core-checkup.nix}
   grep -q 'policyFile' ${../../modules/home/profiles/min/core-checkup.nix}
   grep -q 'wake.enabled = false' ${../../modules/home/profiles/min/core-checkup.nix}
-  grep -q 'fbdc399f2a8ae94c80f0e8afaac9392836e3a2a2' ${../../flake.nix}
+  grep -q 'd3002f4bf9ae81852c3b7e5e65f4793afbc1e3da' ${../../flake.nix}
   grep -q 'ExecStartPre.*test -r.*rosterFile' ${../../modules/home/profiles/min/core-checkup.nix}
   cat > roster.json <<'EOF'
   {"endpoints":[],"units":[],"allowRestart":false}
