@@ -8,16 +8,31 @@ let
   fixtureInputs = inputs // {
     message.packages.${system}.default = fakeRelay;
   };
-  result = import ../../modules/home/deployments/cf7879-cluster-relay.nix {
-    inputs = fixtureInputs;
-    inherit lib pkgs;
-    config = {
-      home.homeDirectory = "/build/cluster-relay-home";
-      criomos.corePackages.claude = pkgs.hello;
-      criomosHome.clusterRelay.enable = true;
-      criomosHome.clusterRelay.runtimeRouteFile = null;
+  result = lib.evalModules {
+    specialArgs = {
+      inputs = fixtureInputs;
+      inherit pkgs;
+      user.size = "Min";
     };
-    user.size = "Min";
+    modules = [
+      ../../modules/home/deployments/cf7879-cluster-relay.nix
+      ({ lib, ... }: {
+        options = {
+          home.homeDirectory = lib.mkOption { type = lib.types.str; };
+          home.packages = lib.mkOption {
+            type = lib.types.listOf lib.types.package;
+            default = [ ];
+          };
+          criomos.corePackages.claude = lib.mkOption { type = lib.types.package; };
+        };
+        config = {
+          home.homeDirectory = "/build/cluster-relay-home";
+          criomos.corePackages.claude = pkgs.hello;
+          criomosHome.clusterRelay.enable = true;
+          criomosHome.clusterRelay.runtimeRouteFile = null;
+        };
+      })
+    ];
   };
   package = builtins.head result.config.home.packages;
 in
