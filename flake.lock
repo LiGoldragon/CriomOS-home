@@ -1410,17 +1410,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1786575531,
-        "narHash": "sha256-GBY6toTmGJgHXqemJ8xPZeKy8OVrU0hls19oNtGw0ZU=",
+        "lastModified": 1789567870,
+        "narHash": "sha256-7/4WUh8QEZEJayX7RzZYoH8at0DYLuZ5VB/ziq9m+k0=",
         "owner": "LiGoldragon",
         "repo": "message",
-        "rev": "bf7295641bb2f15ad86622f242909a0646166ced",
+        "rev": "69e28f0ea37f209a7c4fd4e7412b61373e558c18",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
+        "ref": "69e28f0ea37f",
         "repo": "message",
-        "rev": "bf7295641bb2f15ad86622f242909a0646166ced",
         "type": "github"
       }
     },
@@ -2197,6 +2197,23 @@
         "type": "github"
       }
     },
+    "prompt-relay-source": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1789567922,
+        "narHash": "sha256-gYd13s9BTiXrIZhZ/QcRVHoB/9+vCf1AwNO4bcvn9hE=",
+        "owner": "LiGoldragon",
+        "repo": "primary",
+        "rev": "4928115e8e676cdd53e19366d9d6519bcf30fbc0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LiGoldragon",
+        "ref": "4928115e8e67",
+        "repo": "primary",
+        "type": "github"
+      }
+    },
     "pyproject-build-systems": {
       "inputs": {
         "nixpkgs": [
@@ -2313,6 +2330,7 @@
         "pi-web-access-yocto-queue-src": "pi-web-access-yocto-queue-src",
         "pkgs": "pkgs",
         "plannotator-capability": "plannotator-capability",
+        "prompt-relay-source": "prompt-relay-source",
         "pyproject-build-systems": "pyproject-build-systems",
         "pyproject-nix": "pyproject-nix",
         "rust-overlay": "rust-overlay_2",
