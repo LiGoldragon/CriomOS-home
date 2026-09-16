@@ -48,12 +48,14 @@ assert builtins.match ".*${rosterPath}.*" execStart != null;
 assert builtins.match ".*${rosterPath}.*" execStartPre != null;
 assert builtins.hasContext execStart;
 assert builtins.hasContext execStartPre;
-pkgs.runCommand "core-checkup-home" { nativeBuildInputs = [ pkgs.nix pkgs.nodejs ]; } ''
+pkgs.runCommand "core-checkup-home" {
+  nativeBuildInputs = [ pkgs.nodejs ];
+  exportReferencesGraph = [ "unit-closure" unitText ];
+} ''
   set -eu
   test -f ${inputs.core-checkup-source}/tools/core-checkup.mjs
-  printf '%s\n' "$(${pkgs.nix}/bin/nix-store --query --requisites ${unitText})" > "$TMPDIR/requisites"
-  grep -Fx ${pkgs.lib.escapeShellArg rosterPath} "$TMPDIR/requisites"
-  grep -Fx ${pkgs.lib.escapeShellArg sourcePath} "$TMPDIR/requisites"
+  grep -Fx ${pkgs.lib.escapeShellArg rosterPath} unit-closure
+  grep -Fx ${pkgs.lib.escapeShellArg sourcePath} unit-closure
   cat > roster.json <<'EOF'
   {"endpoints":[],"units":[],"allowRestart":false}
   EOF
