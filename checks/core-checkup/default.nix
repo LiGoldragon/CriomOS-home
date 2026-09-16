@@ -18,5 +18,12 @@ pkgs.runCommand "core-checkup-home" { nativeBuildInputs = [ pkgs.nodejs ]; } ''
     exit 1
   fi
   grep -q '"kind":"config"' $out/missing.ndjson
+  cat > invalid-policy.json <<'EOF'
+  {"eventLog":{"retention":"check"},"allowRepair":false,"wake":{"enabled":false},"luna":false,"units":[{"name":"not-in-os-roster.service","scope":"user","allowRestart":false}]}
+  EOF
+  if ${pkgs.nodejs}/bin/node ${inputs.core-checkup-source}/tools/core-checkup.mjs roster.json invalid-policy.json $out/invalid.ndjson $out/invalid-state.json; then
+    exit 1
+  fi
+  grep -q '"kind":"config"' $out/invalid.ndjson
   touch $out
 ''
