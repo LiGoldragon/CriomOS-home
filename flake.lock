@@ -448,6 +448,23 @@
         "type": "github"
       }
     },
+    "core-checkup-source": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1789518442,
+        "narHash": "sha256-PWjrE2mKKDLm4q5v7Fr825WdkBDKJK7eRCwz0ZrF7qg=",
+        "owner": "LiGoldragon",
+        "repo": "primary",
+        "rev": "667b9bbed04f62dc55a1e0d25c84b484841bd6f4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LiGoldragon",
+        "repo": "primary",
+        "rev": "667b9bbed04f62dc55a1e0d25c84b484841bd6f4",
+        "type": "github"
+      }
+    },
     "crane": {
       "locked": {
         "lastModified": 1780532242,
@@ -2252,6 +2269,7 @@
         "chroma": "chroma",
         "chroma-emacs": "chroma-emacs",
         "claude-answers": "claude-answers",
+        "core-checkup-source": "core-checkup-source",
         "crane": "crane_3",
         "criomos-lib": "criomos-lib",
         "google-workspace-cli": "google-workspace-cli",
