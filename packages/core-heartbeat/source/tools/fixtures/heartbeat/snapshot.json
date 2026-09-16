@@ -1,0 +1,1 @@
+{"schema":"heartbeat-snapshot/v1","candidates":[{"id":"source-a","kind":"lane_tip","flow":"cf7879","text":"abc123 Publish successor package, dry-run green"}],"reports":[],"lanes":[],"recipients":["efa157","d9961c"]}

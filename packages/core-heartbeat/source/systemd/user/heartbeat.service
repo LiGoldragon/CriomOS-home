@@ -1,0 +1,10 @@
+[Unit]
+Description=Read-only quota-paced heartbeat proposal
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/env node %h/primary/tools/heartbeat.mjs %h/.config/core-checkup/heartbeat.json
+RuntimeMaxSec=180
+TimeoutStartSec=180
+MemoryMax=512M
+NoNewPrivileges=yes

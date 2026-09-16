@@ -1,0 +1,4 @@
+{"kind":"quota","name":"account.primary","remainingPercent":16,"windowMinutes":10080,"observedAt":"2026-09-16T15:52:39Z"}
+{"kind":"quota","name":"codex_bengalfox.secondary","remainingPercent":99,"windowMinutes":300,"observedAt":"2026-09-16T15:53:00Z"}
+{"kind":"quota","name":"account.primary","remainingPercent":98,"windowMinutes":10080,"observedAt":"2999-01-01T00:00:00Z"}
+{"kind":"quota","name":"account.primary","remainingPercent":-1,"windowMinutes":10080,"observedAt":"2026-09-16T15:54:00Z"}
