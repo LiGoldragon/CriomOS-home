@@ -23,6 +23,7 @@ let
     modules = [
       ../../modules/home/core-packages.nix
       ../../modules/home/profiles/min/core-checkup.nix
+      ../../modules/home/profiles/min/core-checkup-primary-successor.nix
       {
         home = {
           username = user.name;
@@ -32,6 +33,19 @@ let
         criomosHome.coreCheckup = {
           enable = true;
           rosterFile = fixtureRoster;
+          # The deployment module must replace this stale target snapshot.
+          codexTargets = [ {
+            identifier = "stale-codex";
+            threadId = "stale";
+            socketPath = "/stale";
+            openWork = true;
+          } ];
+          claudeTargets = [ {
+            identifier = "primary-840e42";
+            sessionId = "840e42bb-b2cd-42eb-a9ec-7659a5b13ded";
+            transcriptPath = "/stale/840e42.jsonl";
+            openWork = true;
+          } ];
         };
       }
     ];
@@ -60,6 +74,34 @@ assert service.Service.WorkingDirectory == "%t/core-checkup";
 assert service.Service.StateDirectoryMode == "0700";
 assert !(service.Service ? RuntimeMaxSec);
 assert policy.luna == false;
+assert policy.harness.codexTargets == [
+  {
+    identifier = "cf7879";
+    threadId = "01a0a715-2d5d-7342-b278-1dbcf78795bd";
+    socketPath = "$HOME/.codex/app-server-control/app-server-control.sock";
+    openWork = true;
+  }
+  {
+    identifier = "e43002";
+    threadId = "01a0a792-2d0e-7a53-ac0b-9b3e43002941";
+    socketPath = "$HOME/.codex/app-server-control/app-server-control.sock";
+    openWork = true;
+  }
+];
+assert policy.harness.claudeTargets == [
+  {
+    identifier = "primary-claude-successor-840e42";
+    sessionId = "efa15708-dc5d-42ce-af62-8ffb84c9815e";
+    transcriptPath = "/home/li/.claude/projects/-home-li-wt-github-com-LiGoldragon-primary-claude-successor-840e42-bootstrap-local--claude-worktrees-claude-successor-840e42/efa15708-dc5d-42ce-af62-8ffb84c9815e.jsonl";
+    openWork = true;
+  }
+  {
+    identifier = "secondary-57a7aa";
+    sessionId = "57a7aa02-e52d-4266-8746-6770ff770d11";
+    transcriptPath = "/home/li/.claude/projects/-git-github-com-LiGoldragon-secondary/57a7aa02-e52d-4266-8746-6770ff770d11.jsonl";
+    openWork = true;
+  }
+];
 assert builtins.elem fixtureRoster.drvPath (builtins.attrNames (builtins.getContext execStart));
 assert builtins.elem fixtureRoster.drvPath (builtins.attrNames (builtins.getContext execStartPre));
 pkgs.runCommand "core-checkup-home" {
