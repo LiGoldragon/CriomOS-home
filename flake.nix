@@ -17,6 +17,11 @@
 
     system.url = "path:./stubs/no-system";
 
+    prompt-relay-source = {
+      url = "github:LiGoldragon/primary/28532075161275aeca04e5bf2a50d8a7c3195bf7";
+      flake = false;
+    };
+
     pkgs.url = "github:LiGoldragon/CriomOS-pkgs";
     pkgs.inputs.nixpkgs.follows = "nixpkgs";
     pkgs.inputs.system.follows = "system";
@@ -142,12 +147,12 @@
     # durable agent-identity map, delivery registry, message ledger,
     # per-recipient inboxes, and thread index (messenger.sema). Consumed in
     # modules/home/profiles/min/message.nix, which gives it a systemd --user
-    # supervisor. Pinned to v0.10.2: the phase-3 messenger promotion
+    # supervisor. Pinned coherently with the cluster relay client: the messenger
     # (converged contracts, delivery legs, PTY control-socket delivery) plus
     # the additive v2 -> v3 store migration — the deployed store, born at v2,
     # is preserved aside and re-stamped on first open — on the
     # incident-hardened sema-engine 0.11.2 orchestrate 0.14.1 runs.
-    message.url = "github:LiGoldragon/message/bf7295641bb2f15ad86622f242909a0646166ced";
+    message.url = "github:LiGoldragon/message/fe0d04561051";
     message.inputs.nixpkgs.follows = "nixpkgs";
     message.inputs.crane.follows = "crane";
 
@@ -609,6 +614,7 @@
             inherit inputs;
           };
           message-service-path = checkPkgs.callPackage ./checks/message-service-path { inherit inputs; };
+          cluster-relay-package = checkPkgs.callPackage ./checks/cluster-relay-package { inherit inputs; };
           gws = checkPkgs.callPackage ./checks/gws { inherit inputs; };
           playwright-cli = checkPkgs.callPackage ./checks/playwright-cli { };
           plannotator = checkPkgs.callPackage ./checks/plannotator { };
