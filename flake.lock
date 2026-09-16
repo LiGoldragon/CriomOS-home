@@ -1410,16 +1410,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1789567870,
-        "narHash": "sha256-7/4WUh8QEZEJayX7RzZYoH8at0DYLuZ5VB/ziq9m+k0=",
+        "lastModified": 1789569240,
+        "narHash": "sha256-6ju1K1+LbazQHQlvLi7PkQQ3bvsQktAvCyUwcBN4izk=",
         "owner": "LiGoldragon",
         "repo": "message",
-        "rev": "69e28f0ea37f209a7c4fd4e7412b61373e558c18",
+        "rev": "fe0d04561051da85292a058ab156e286b7494aa4",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
-        "ref": "69e28f0ea37f",
+        "ref": "fe0d04561051",
         "repo": "message",
         "type": "github"
       }
