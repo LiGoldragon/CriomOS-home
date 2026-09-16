@@ -2200,16 +2200,16 @@
     "prompt-relay-source": {
       "flake": false,
       "locked": {
-        "lastModified": 1789567922,
-        "narHash": "sha256-gYd13s9BTiXrIZhZ/QcRVHoB/9+vCf1AwNO4bcvn9hE=",
+        "lastModified": 1789569815,
+        "narHash": "sha256-ZdnW52o/rKiZdRrfJUHeF5WYYFYgzPvXYXZbGpdtXyY=",
         "owner": "LiGoldragon",
         "repo": "primary",
-        "rev": "4928115e8e676cdd53e19366d9d6519bcf30fbc0",
+        "rev": "966eb74edca1bad5bd4e066aec0bb87b5d2efad1",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
-        "ref": "4928115e8e67",
+        "ref": "966eb74edca1",
         "repo": "primary",
         "type": "github"
       }

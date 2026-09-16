@@ -28,7 +28,7 @@
       # 6301363e is the requested roster/file-source parent.  This successor
       # additionally refuses a blocked or permission-waiting record which
       # still reports status=idle.
-      url = "github:LiGoldragon/primary/4928115e8e67";
+      url = "github:LiGoldragon/primary/966eb74edca1";
       flake = false;
     };
 
