@@ -2230,6 +2230,19 @@
         "url": "https://github.com/pyproject-nix/pyproject.nix"
       }
     },
+    "core-checkup-source": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1789521073,
+        "narHash": "sha256-G7oeqkVZL6Y1VyUC3WaoQuxZF5lIk0yEiJmbkSOmM5A=",
+        "type": "tarball",
+        "url": "https://github.com/LiGoldragon/primary/archive/d3002f4bf9ae81852c3b7e5e65f4793afbc1e3da.tar.gz"
+      },
+      "original": {
+        "type": "tarball",
+        "url": "https://github.com/LiGoldragon/primary/archive/d3002f4bf9ae81852c3b7e5e65f4793afbc1e3da.tar.gz"
+      }
+    },
     "root": {
       "inputs": {
         "agent": "agent",
@@ -2253,6 +2266,7 @@
         "chroma-emacs": "chroma-emacs",
         "claude-answers": "claude-answers",
         "crane": "crane_3",
+        "core-checkup-source": "core-checkup-source",
         "criomos-lib": "criomos-lib",
         "google-workspace-cli": "google-workspace-cli",
         "harness": "harness",
