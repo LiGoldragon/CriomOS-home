@@ -26,16 +26,21 @@ let
     if moduleResult.config ? content then moduleResult.config.content else moduleResult.config;
   service = moduleConfiguration.systemd.user.services.message-daemon.Service;
   writer = service.ExecStartPre;
+  writerExecutable = lib.head (lib.splitString " " writer);
 in
 assert service.ExecStart == "${messagePackage}/bin/message-daemon ${signalPath}";
 assert service.RuntimeDirectory == "message";
 assert service.RuntimeDirectoryMode == "0700";
-pkgs.runCommand "message-service-path" { nativeBuildInputs = [ pkgs.gnugrep ]; } ''
+pkgs.runCommand "message-service-path" { nativeBuildInputs = [ pkgs.gnugrep pkgs.coreutils ]; } ''
   set -eu
 
-  grep -F '"{($working_socket 432 $meta_socket 384 $router_socket [] UnixUser.$(' ${writer}
-  ! grep -F '(ConfigurationWriteRequest ' ${writer}
-  ! grep -F 'ConfigurationWriteRequest.' ${writer}
-  grep -F '${messagePackage}/bin/message-write-configuration' ${writer}
+  # Exercise the exact packaged writer script, through the current Message
+  # package rather than a fake executable. This catches a producer Datom-shape
+  # change that a source grep cannot see, and proves that the generated
+  # request creates a binary configuration at the path the daemon consumes.
+  runtime="$TMPDIR/message-runtime"
+  mkdir -p "$runtime"
+  ${writerExecutable} "$runtime/message.sock" "$runtime/message-owner.sock" "$runtime/router.sock"
+  test -s "${signalPath}"
   touch "$out"
 ''
