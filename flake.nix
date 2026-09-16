@@ -22,6 +22,12 @@
       flake = false;
     };
 
+    # Reviewed primary/secondary lane resume wrappers and their immutable snapshot.
+    codex-layer-resume-source = {
+      url = "github:LiGoldragon/primary/0b4f39317ee60706470e8dbc7ff69c2562c36c58";
+      flake = false;
+    };
+
     pkgs.url = "github:LiGoldragon/CriomOS-pkgs";
     pkgs.inputs.nixpkgs.follows = "nixpkgs";
     pkgs.inputs.system.follows = "system";
@@ -620,6 +626,7 @@
           plannotator = checkPkgs.callPackage ./checks/plannotator { };
           spirit-deployment = checkPkgs.callPackage ./checks/spirit-deployment { inherit inputs; };
           flow-id = checkPkgs.callPackage ./checks/flow-id { inherit inputs; };
+          codex-layer-resume = checkPkgs.callPackage ./checks/codex-layer-resume { inherit inputs; };
           aggregator-deployment = checkPkgs.callPackage ./checks/aggregator-deployment { inherit inputs; };
           owned-agent-updater = checkPkgs.callPackage ./checks/owned-agent-updater { inherit inputs; };
           system-projection-boundary = checkPkgs.callPackage ./checks/system-projection-boundary { };
