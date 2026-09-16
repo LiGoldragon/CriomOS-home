@@ -87,8 +87,21 @@ MOCK
     ${package}/bin/codex-secondary --registry "$explicit_registry"
     test "$(sed -n '1p' "$MOCK_LOG")" = resume
     test "$(sed -n '2p' "$MOCK_LOG")" = --cd
-    test "$(sed -n '3p' "$MOCK_LOG")" = /home/li/secondary
+    test "$(sed -n '3p' "$MOCK_LOG")" = /git/github.com/LiGoldragon/secondary
     test "$(sed -n '4p' "$MOCK_LOG")" = 01a0a11f-6130-70e2-80b1-796348e7b086
+
+      # A valid lane record carrying an unreviewed UUID must fail closed before
+      # spawning codex; an overridden registry cannot borrow a lane's CWD.
+      unknown_registry="$TMPDIR/unknown-lane-index.json"
+      sed 's/01a0a11f-6130-70e2-80b1-796348e7b086/01a0a649-2486-7533-97e5-50a10e55398e/' \
+        "$explicit_registry" > "$unknown_registry"
+      export MOCK_LOG="$TMPDIR/unknown-argv"
+      rm -f "$MOCK_LOG"
+      if ${package}/bin/codex-secondary --registry "$unknown_registry"; then
+        echo "unknown reviewed UUID unexpectedly resumed" >&2
+        exit 1
+      fi
+      test ! -e "$MOCK_LOG"
 
       # An explicit registry wins over CODEX_LAYER_INDEX and the default path.
       export CODEX_LAYER_INDEX="$TMPDIR/does-not-exist.json"

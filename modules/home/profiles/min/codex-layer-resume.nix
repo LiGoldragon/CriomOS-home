@@ -12,12 +12,19 @@ let
     primary = "Primary";
     secondary = "Secondary";
   };
-  recordedCwds = {
-    # Recorded in the session_meta event for each reviewed thread. Codex's
-    # supported `resume --cd` flag makes this choice explicit and avoids the
-    # interactive working-directory picker.
-    primary = "/home/li/wt/primary-5f4fea";
-    secondary = "/home/li/secondary";
+  recordedSessions = {
+    # Key this table by the exact reviewed UUID. A lane-only CWD would let an
+    # overridden registry select a different session and resume it in the
+    # wrong directory. The secondary path is the canonical path recorded by
+    # the actual TUI; /home/li/secondary is its symlink alias.
+    "01a0a715-2d5d-7342-b278-1dbcf78795bd" = {
+      layer = "primary";
+      cwd = "/home/li/wt/primary-5f4fea";
+    };
+    "01a0a11f-6130-70e2-80b1-796348e7b086" = {
+      layer = "secondary";
+      cwd = "/git/github.com/LiGoldragon/secondary";
+    };
   };
   sourceRoot = "${inputs.codex-layer-resume-source}/tools/codex-layer-resume";
   launcher = pkgs.writeText "codex-layer-resume-launch.mjs" ''
@@ -26,12 +33,10 @@ let
     import { homedir } from "node:os";
     import { parseArgs, resolveThread, ResolutionError } from "./codex-layer-resume.mjs";
 
-    const recordedCwds = ${builtins.toJSON recordedCwds};
+    const recordedSessions = ${builtins.toJSON recordedSessions};
 
     const run = (argv) => {
       const { layer, registryPath } = parseArgs(argv, process.env, homedir());
-      const cwd = recordedCwds[layer];
-      if (typeof cwd !== "string") throw new ResolutionError("no recorded cwd for " + layer);
       let registry;
       try {
         registry = JSON.parse(readFileSync(registryPath, "utf8"));
@@ -39,6 +44,11 @@ let
         throw new ResolutionError("cannot read registry " + registryPath + ": " + error.message);
       }
       const threadId = resolveThread(registry, layer);
+      const reviewed = recordedSessions[threadId];
+      if (!reviewed || reviewed.layer !== layer || typeof reviewed.cwd !== "string") {
+        throw new ResolutionError("thread " + threadId + " is not a reviewed " + layer + " session");
+      }
+      const cwd = reviewed.cwd;
       const result = spawnSync("codex", ["resume", "--cd", cwd, threadId], { stdio: "inherit" });
       if (result.error) throw new ResolutionError("could not run codex resume: " + result.error.message);
       return { status: result.status, signal: result.signal };
@@ -58,9 +68,12 @@ let
 
     This Home package wraps the reviewed lane-index snapshot and selects the
     recorded session directory with Codex's supported `resume --cd` option.
-    The primary record uses `${recordedCwds.primary}` and the secondary record
-    uses `${recordedCwds.secondary}`. The wrapper refuses title-only and stale
-    records through the upstream resolver.
+    Each recorded session UUID is bound to its reviewed working directory. The
+    primary record uses `/home/li/wt/primary-5f4fea`; the secondary record uses
+    the canonical `/git/github.com/LiGoldragon/secondary` path (the
+    `/home/li/secondary` symlink resolves there). Registry overrides are
+    accepted only when they resolve one of those exact reviewed UUIDs; the
+    wrapper refuses title-only, stale, and unknown records.
   '';
   package = pkgs.stdenvNoCC.mkDerivation {
     pname = "codex-layer-resume";
