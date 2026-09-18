@@ -235,8 +235,31 @@ secondary owns the generation/backup/rollback decision. Rollback means return
 to the complete preceding Home generation with the captured client and unit
 state; it is not a manual socket or store edit.
 
-The Message 0.12/Flow coupled activation is deliberately not enabled by this
-Flow-only introduction. Message needs a reviewed canonical binary configuration
-that preserves its typed ordinary/meta socket, router/ingress, owner, and store
-coordinates. Until that input is supplied, this generation does not alter the
-existing Message package pin, `message-daemon.signal`, or Message unit.
+## Message 0.12 and Flow coupled candidate
+
+This candidate pins Message `0.12.0` with Flow `0.3.0`. The Message user unit
+requires and starts after `flow-nexus.service`, exports
+`FLOW_SOCKET=%t/flow/flow.sock`, and starts `message-nexus` with the new binary
+configuration at `$XDG_STATE_HOME/message/message-daemon.rkyv`. Its distinct
+fresh store is `$XDG_STATE_HOME/message/messenger-v6.sema`; the previous
+`messenger.sema` and `message-daemon.signal` are preserved and never opened,
+restamped, renamed, or deleted by this candidate.
+
+The generated configuration gives the ordinary and owner sockets mode `0600`,
+uses the projected Home user as `UnixUser` owner, and uses an empty
+`component_ingresses` vector. The empty ingress vector is the intended
+candidate configuration, not evidence that it equals every earlier runtime
+configuration. A secondary activation must stop on a target/user/owner or
+configuration mismatch rather than infer one.
+
+Before any authorized activation, Secondary captures the current unit and
+profile generation, Message and Flow client `PATH` resolution plus symlink
+targets (including `$HOME/.local/bin`), the existing Message archives and
+stores with their path, existence, mode, and digest, and the existing runtime
+socket names. Retain those captures and a backup outside each managed target.
+Do not remove an override, old client, archive, or store by hand. Verify the
+new unit, `message`/`message-meta` clients, both `0600` sockets, Flow dependency,
+and typed ordinary/meta replies before accepting it. Rollback is the complete
+previous Home/CriomOS generation under Secondary's rollback gate, using the
+captured state to restore the matching service/client selection; it is never a
+manual store conversion or socket edit.
