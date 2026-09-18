@@ -143,6 +143,12 @@
     orchestrate.url = "github:LiGoldragon/orchestrate/9070cbb8717813b127e448dd5a43a2095daf7d1b";
     orchestrate.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Flow Nexus — typed durable route registry. Its source pins its own
+    # producer contract graph; Home owns only package and user-service policy.
+    flow.url = "github:LiGoldragon/flow/61d765e4814035c2c0a1424e670a1b62da3d10b6";
+    flow.inputs.nixpkgs.follows = "nixpkgs";
+    flow.inputs.crane.follows = "crane";
+
     # Message — the messenger: stateful local messaging daemon owning the
     # durable agent-identity map, delivery registry, message ledger,
     # per-recipient inboxes, and thread index (messenger.sema). Consumed in
@@ -614,6 +620,7 @@
             inherit inputs;
           };
           message-service-path = checkPkgs.callPackage ./checks/message-service-path { inherit inputs; };
+          flow-service-path = checkPkgs.callPackage ./checks/flow-service-path { inherit inputs; };
           herdr-toast-delivery = checkPkgs.callPackage ./checks/herdr-toast-delivery { inherit inputs; };
           cluster-relay-package = checkPkgs.callPackage ./checks/cluster-relay-package { inherit inputs; };
           gws = checkPkgs.callPackage ./checks/gws { inherit inputs; };

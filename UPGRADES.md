@@ -216,3 +216,27 @@ Adopt it only when those captured bytes are identical to the two-line setting
 above. Use an authorized Home activation path that preserves that backup and
 creates the managed file; do not force, delete, or overwrite a different,
 missing, or unreadable target. Any mismatch stops adoption for review.
+
+## Flow Nexus first deployment
+
+This generation introduces the `flow-nexus` user service and its `flow` and
+`flow-meta` client wrappers. The Nexus owns one state store at
+`~/.local/state/flow/flow.sema` and its ordinary/meta sockets at
+`$XDG_RUNTIME_DIR/flow/flow.sock` and `$XDG_RUNTIME_DIR/flow/flow-meta.sock`.
+The executable has no startup arguments: its initial socket configuration is
+seeded in that store and later changes pass only through `flow-meta configure`,
+which returns a restart requirement.
+
+Before an authorized secondary activation, capture the current unit state,
+client `PATH` resolution and symlink targets (including `~/.local/bin`), and
+the existence and digest of any pre-existing Flow state store. Do not delete,
+rename, or rewrite a state store during this generation's activation. The
+secondary owns the generation/backup/rollback decision. Rollback means return
+to the complete preceding Home generation with the captured client and unit
+state; it is not a manual socket or store edit.
+
+The Message 0.12/Flow coupled activation is deliberately not enabled by this
+Flow-only introduction. Message needs a reviewed canonical binary configuration
+that preserves its typed ordinary/meta socket, router/ingress, owner, and store
+coordinates. Until that input is supplied, this generation does not alter the
+existing Message package pin, `message-daemon.signal`, or Message unit.
