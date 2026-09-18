@@ -617,6 +617,7 @@
             inherit inputs;
           };
           message-service-path = checkPkgs.callPackage ./checks/message-service-path { inherit inputs; };
+          message-flow-wiring = checkPkgs.callPackage ./checks/message-flow-wiring { inherit inputs; };
           flow-service-path = checkPkgs.callPackage ./checks/flow-service-path { inherit inputs; };
           herdr-toast-delivery = checkPkgs.callPackage ./checks/herdr-toast-delivery { inherit inputs; };
           cluster-relay-package = checkPkgs.callPackage ./checks/cluster-relay-package { inherit inputs; };
