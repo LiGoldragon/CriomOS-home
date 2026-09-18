@@ -118,6 +118,15 @@ let
 
   remoteFiles = remoteConfiguration.config.home.file;
   remoteActivation = remoteConfiguration.config.home.activation;
+  piSettingsActivation = pkgs.writeShellScript "bird-home-isolation-pi-settings-activation" ''
+    set -eu
+    DRY_RUN_CMD=""
+    run() {
+      "$@"
+    }
+    ${remoteActivation.mergePiSettings.data}
+    ${remoteActivation.mergePiTestingSettings.data}
+  '';
 in
 assert remoteFiles ? ".pi/agent/SYSTEM.md";
 assert remoteFiles ? ".pi-testing/agent/SYSTEM.md";
@@ -137,6 +146,31 @@ assert !(remoteConfiguration.config.systemd.user.services ? spirit-daemon);
 assert orchestrateConfiguration.config.systemd.user.services ? orchestrate-nexus;
 assert localSpiritConfiguration.config.systemd.user.services ? spirit-judge;
 assert localSpiritConfiguration.config.systemd.user.services ? spirit-daemon;
-pkgs.runCommand "bird-home-role-isolation" { } ''
-  touch "$out"
-''
+pkgs.runCommand "bird-home-role-isolation"
+  {
+    nativeBuildInputs = [ pkgs.jq ];
+  }
+  ''
+    set -eu
+
+    home="$TMPDIR/home"
+    mkdir -p "$home/.pi/agent" "$home/.pi-testing/agent"
+    cat > "$home/.pi/agent/settings.json" <<'EOF'
+    { "defaultProvider": "old-provider", "defaultModel": "old-model", "defaultThinkingLevel": "low", "unrelated": "ordinary-custom" }
+    EOF
+    cat > "$home/.pi-testing/agent/settings.json" <<'EOF'
+    { "defaultProvider": "old-provider", "defaultModel": "old-model", "defaultThinkingLevel": "low", "unrelated": "testing-custom" }
+    EOF
+
+    HOME="$home" ${piSettingsActivation}
+
+    for settings in "$home/.pi/agent/settings.json" "$home/.pi-testing/agent/settings.json"; do
+      test "$( ${pkgs.jq}/bin/jq -r '.defaultProvider' "$settings" )" = "openai-codex"
+      test "$( ${pkgs.jq}/bin/jq -r '.defaultModel' "$settings" )" = "gpt-5.6-sol"
+      test "$( ${pkgs.jq}/bin/jq -r '.defaultThinkingLevel' "$settings" )" = "medium"
+    done
+    test "$( ${pkgs.jq}/bin/jq -r '.unrelated' "$home/.pi/agent/settings.json" )" = "ordinary-custom"
+    test "$( ${pkgs.jq}/bin/jq -r '.unrelated' "$home/.pi-testing/agent/settings.json" )" = "testing-custom"
+
+    touch "$out"
+  ''

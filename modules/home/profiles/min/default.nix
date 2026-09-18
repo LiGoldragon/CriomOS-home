@@ -58,28 +58,28 @@ let
       name = "default";
       description = "Default Codex collaboration agent.";
       model = "gpt-5.6-luna";
-      effort = "xhigh";
+      effort = "medium";
     };
     worker = codexBuiltinAgent {
       name = "worker";
       description = "Codex implementation collaboration agent.";
       model = "gpt-5.6-terra";
-      effort = "high";
+      effort = "medium";
     };
     explorer = codexBuiltinAgent {
       name = "explorer";
       description = "Codex exploration collaboration agent.";
       model = "gpt-5.6-luna";
-      effort = "xhigh";
+      effort = "medium";
     };
   };
 
   codexConfig = codexPermissionDefaults // {
     developer_instructions = codexSkillReadDeduplicationInstruction;
     model = "gpt-6-astra";
-    model_reasoning_effort = "xhigh";
+    model_reasoning_effort = "medium";
     personality = "pragmatic";
-    plan_mode_reasoning_effort = "xhigh";
+    plan_mode_reasoning_effort = "medium";
 
     features = {
       multi_agent = true;
@@ -131,7 +131,7 @@ let
 
     agents = {
       default_subagent_model = "gpt-5.6-luna";
-      default_subagent_reasoning_effort = "xhigh";
+      default_subagent_reasoning_effort = "medium";
     };
   };
 

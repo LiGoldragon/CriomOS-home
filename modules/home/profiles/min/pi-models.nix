@@ -131,7 +131,7 @@ let
   piSettingsConfig = {
     defaultProvider = "openai-codex";
     defaultModel = defaultOpenAiCodexModel;
-    defaultThinkingLevel = "high";
+    defaultThinkingLevel = "medium";
     enabledModels =
       remoteOpenAiCodexModels
       ++ lib.optionals (endpointNode != null) (
