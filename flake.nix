@@ -143,16 +143,19 @@
     orchestrate.url = "github:LiGoldragon/orchestrate/9070cbb8717813b127e448dd5a43a2095daf7d1b";
     orchestrate.inputs.nixpkgs.follows = "nixpkgs";
 
-    # Message — the messenger: stateful local messaging daemon owning the
-    # durable agent-identity map, delivery registry, message ledger,
-    # per-recipient inboxes, and thread index (messenger.sema). Consumed in
-    # modules/home/profiles/min/message.nix, which gives it a systemd --user
-    # supervisor. Pinned coherently with the cluster relay client: the messenger
-    # (converged contracts, delivery legs, PTY control-socket delivery) plus
-    # the additive v2 -> v3 store migration — the deployed store, born at v2,
-    # is preserved aside and re-stamped on first open — on the
-    # incident-hardened sema-engine 0.11.2 orchestrate 0.14.1 runs.
-    message.url = "github:LiGoldragon/message/fe0d04561051";
+    # Flow Nexus — typed durable route registry. Its source pins its own
+    # producer contract graph; Home owns only package and user-service policy.
+    flow.url = "github:LiGoldragon/flow/61d765e4814035c2c0a1424e670a1b62da3d10b6";
+    flow.inputs.nixpkgs.follows = "nixpkgs";
+    flow.inputs.crane.follows = "crane";
+
+    # Message — the messenger: stateful local messaging Nexus owning the
+    # durable agent-identity map, delivery registry, ledger, inboxes, thread
+    # index, and event-scoped receipts. Its coupled Home module owns service
+    # policy only; the component consumes one typed binary configuration file.
+    # The deployment candidate preserves that configuration until a reviewed
+    # canonical configuration witness can replace the legacy writer.
+    message.url = "github:LiGoldragon/message/55657f4e90716071b55fa9dc133eb7d2083b7182";
     message.inputs.nixpkgs.follows = "nixpkgs";
     message.inputs.crane.follows = "crane";
 
@@ -614,6 +617,7 @@
             inherit inputs;
           };
           message-service-path = checkPkgs.callPackage ./checks/message-service-path { inherit inputs; };
+          flow-service-path = checkPkgs.callPackage ./checks/flow-service-path { inherit inputs; };
           herdr-toast-delivery = checkPkgs.callPackage ./checks/herdr-toast-delivery { inherit inputs; };
           cluster-relay-package = checkPkgs.callPackage ./checks/cluster-relay-package { inherit inputs; };
           gws = checkPkgs.callPackage ./checks/gws { inherit inputs; };

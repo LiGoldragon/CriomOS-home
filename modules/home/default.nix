@@ -65,6 +65,9 @@
     # Orchestrate — supervises the multi-agent claim/coordination daemon
     # (systemd --user unit + pinned flake input).
     ./profiles/min/orchestrate.nix
+    # Flow — durable route registry and typed recipient resolver. Message
+    # depends on this service only in the later coupled Message/Flow change.
+    ./profiles/min/flow.nix
     # Message — supervises the messenger daemon (durable agent-identity
     # map + delivery registry in messenger.sema; systemd --user unit +
     # pinned flake input).
