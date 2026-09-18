@@ -424,7 +424,10 @@ let
 
 in
 {
-  imports = [ ./default-opener.nix ];
+  imports = [
+    ./default-opener.nix
+    ./herdr.nix
+  ];
 
   config = mkIf (sizeAtLeast "Min") {
     fonts.fontconfig = {
