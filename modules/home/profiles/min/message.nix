@@ -21,25 +21,33 @@ let
         for binary in ${messagePackage}/bin/*; do
           ln -s "$binary" "$out/bin/$(basename "$binary")"
         done
-        rm $out/bin/message $out/bin/meta-message
+        rm $out/bin/message $out/bin/message-meta $out/bin/meta-message
         makeWrapper ${messagePackage}/bin/message $out/bin/message \
           --run 'export MESSAGE_SOCKET="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/message/message.sock"'
-        makeWrapper ${messagePackage}/bin/meta-message $out/bin/meta-message \
+        makeWrapper ${messagePackage}/bin/message-meta $out/bin/message-meta \
           --run 'export MESSAGE_META_SOCKET="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/message/message-owner.sock"'
+        ln -s message-meta $out/bin/meta-message
       '';
 
   # The message daemon is the messenger: the stateful local messaging
   # component owning the durable agent-identity map and delivery registry
-  # in `messenger.sema`. Runtime layout mirrors orchestrate: the sema store
-  # and binary daemon signal live under XDG state, sockets under the user
+  # in `messenger-v6.sema`. Runtime layout mirrors orchestrate: the sema store
+  # and binary daemon configuration live under XDG state, sockets under the user
   # runtime directory so stale endpoints disappear with the login session.
   stateDirectory = "${config.xdg.stateHome}/message";
-  signalPath = "${stateDirectory}/message-daemon.signal";
-  databasePath = "${stateDirectory}/messenger.sema";
+  configurationPath = "${stateDirectory}/message-daemon.rkyv";
+  databasePath = "${stateDirectory}/messenger-v6.sema";
   runtimeDirectory = "%t/message";
   workingSocketPath = "${runtimeDirectory}/message.sock";
   metaSocketPath = "${runtimeDirectory}/message-owner.sock";
-  # No router daemon is deployed. This names the canonical location the
+  ownerLabel = "message";
+  # No router daemon is deployed. These router and empty-ingress coordinates
+  # preserve both the previously published Home configuration and the current
+  # configuration archive observed before adoption. The owner is the projected
+  # Home user: systemd runs this user unit as that uid. The stable `message`
+  # owner label is also preserved from the observed current archive.
+  #
+  # This names the canonical location the
   # co-resident router's working socket will occupy when one exists; the
   # messenger connects to it lazily per forward, so an absent router only
   # degrades host-to-host forwards to a typed unreachable outcome, never
@@ -48,7 +56,7 @@ let
 
   # message-write-configuration takes one inline brace object (the
   # single-argument text edge). Its producer-owned contract is a nested
-  # parenthesized socket/owner object, followed by the store path, label,
+  # nested socket/owner object, followed by the store path, label,
   # and output path. The owner uid is read at service start so the unit does
   # not bake a numeric uid into the store; systemd expands the %t-derived
   # socket arguments before the script runs.
@@ -59,7 +67,7 @@ let
     router_socket="$3"
     ${pkgs.coreutils}/bin/mkdir -p ${stateDirectory}
     exec ${messagePackage}/bin/message-write-configuration \
-      "{($working_socket 432 $meta_socket 384 $router_socket [] UnixUser.$(${pkgs.coreutils}/bin/id -u)) ${databasePath} ${config.home.username} ${signalPath}}"
+      "{ { $working_socket 384 $meta_socket 384 $router_socket [] UnixUser.$(${pkgs.coreutils}/bin/id -u) } ${databasePath} ${ownerLabel} ${configurationPath} }"
   '';
 in
 {
@@ -77,6 +85,8 @@ in
     systemd.user.services.message-daemon = {
       Unit = {
         Description = "Message (messenger) local messaging daemon";
+        After = [ "flow-nexus.service" ];
+        Requires = [ "flow-nexus.service" ];
         StartLimitIntervalSec = 60;
         StartLimitBurst = 5;
       };
@@ -84,8 +94,9 @@ in
       Service = {
         RuntimeDirectory = "message";
         RuntimeDirectoryMode = "0700";
+        Environment = [ "FLOW_SOCKET=%t/flow/flow.sock" ];
         ExecStartPre = "${writeConfigurationScript} ${workingSocketPath} ${metaSocketPath} ${routerSocketPath}";
-        ExecStart = "${messagePackage}/bin/message-daemon ${signalPath}";
+        ExecStart = "${messagePackage}/bin/message-nexus ${configurationPath}";
         Restart = "on-failure";
         RestartSec = "2s";
       };

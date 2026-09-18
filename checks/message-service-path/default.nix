@@ -8,8 +8,11 @@ let
   homeDirectory = "/build/message-service-home";
   stateHome = "${homeDirectory}/.local/state";
   stateDirectory = "${stateHome}/message";
-  signalPath = "${stateDirectory}/message-daemon.signal";
+  configurationPath = "${stateDirectory}/message-daemon.rkyv";
+  databasePath = "${stateDirectory}/messenger-v6.sema";
   messagePackage = inputs.message.packages.${system}.default;
+  messageConfigurationContract =
+    inputs.message.checks.${system}.message-startup-request-writes-a-loadable-configuration;
 
   moduleResult = import messageModule {
     inherit inputs lib pkgs;
@@ -24,18 +27,55 @@ let
 
   moduleConfiguration =
     if moduleResult.config ? content then moduleResult.config.content else moduleResult.config;
-  service = moduleConfiguration.systemd.user.services.message-daemon.Service;
-  writer = service.ExecStartPre;
+  unit = moduleConfiguration.systemd.user.services.message-daemon;
+  service = unit.Service;
+  writerCommand = lib.head (lib.splitString " " service.ExecStartPre);
 in
-assert service.ExecStart == "${messagePackage}/bin/message-daemon ${signalPath}";
+assert unit.Unit.After == [ "flow-nexus.service" ];
+assert unit.Unit.Requires == [ "flow-nexus.service" ];
+assert service.ExecStart == "${messagePackage}/bin/message-nexus ${configurationPath}";
 assert service.RuntimeDirectory == "message";
 assert service.RuntimeDirectoryMode == "0700";
-pkgs.runCommand "message-service-path" { nativeBuildInputs = [ pkgs.gnugrep ]; } ''
-  set -eu
+assert service.Environment == [ "FLOW_SOCKET=%t/flow/flow.sock" ];
+pkgs.runCommand "message-service-path"
+  {
+    nativeBuildInputs = [
+      pkgs.findutils
+      pkgs.gnugrep
+    ];
+    inherit messageConfigurationContract;
+  }
+  ''
+    set -eu
 
-  grep -F '"{($working_socket 432 $meta_socket 384 $router_socket [] UnixUser.$(' ${writer}
-  ! grep -F '(ConfigurationWriteRequest ' ${writer}
-  ! grep -F 'ConfigurationWriteRequest.' ${writer}
-  grep -F '${messagePackage}/bin/message-write-configuration' ${writer}
-  touch "$out"
-''
+    # This dependency is Message's own positive writer/read-back witness. The
+    # Home-specific witness below then executes this module's generated writer.
+    test -e "$messageConfigurationContract"
+
+    runtime="$PWD/runtime"
+    mkdir -p "$runtime"
+
+    writer_receipt="$(${writerCommand} \
+      "$runtime/message.sock" \
+      "$runtime/message-owner.sock" \
+      "$runtime/router.sock")"
+
+    test "$writer_receipt" = '{ ${configurationPath} }'
+    test -s '${configurationPath}'
+    test ! -e '${databasePath}'
+
+    # Force the daemon to stop after decoding and validating the archive but
+    # before it can create or open a Sema store. A directory at the selected
+    # database path makes the typed store open fail without state mutation.
+    mkdir '${databasePath}'
+    if ${messagePackage}/bin/message-nexus '${configurationPath}' \
+        >daemon.stdout 2>daemon.stderr; then
+      echo 'message-nexus unexpectedly started with a directory as its database' >&2
+      exit 1
+    fi
+    grep -F 'message-daemon: component:' daemon.stderr
+    ! grep -F 'message-daemon: configuration:' daemon.stderr
+    test -z "$(find '${databasePath}' -mindepth 1 -print -quit)"
+
+    touch "$out"
+  ''
