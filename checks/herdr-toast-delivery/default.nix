@@ -4,8 +4,22 @@ let
     inherit pkgs;
     extraSpecialArgs = {
       inherit inputs;
-      user.size = "Min";
-      horizon.node = { };
+      user = {
+        size = "Min";
+        useColemak = false;
+        hasPublicKey = false;
+        gitSigningKey = "";
+        matrixId = "";
+        isMultimediaDev = false;
+        emailAddress = "herdr-toast-check@example.invalid";
+        githubId = "herdr-toast-check";
+        name = "herdr-toast-check";
+        publicKeys = [ ];
+      };
+      horizon.node = {
+        name = "herdr-toast-check";
+        machine.architecture = "x86_64";
+      };
       hexis = inputs.hexis.packages.${pkgs.stdenv.hostPlatform.system}.default;
       rustToolchain = pkgs.rustc;
     };

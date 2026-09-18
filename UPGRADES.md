@@ -199,3 +199,20 @@ paths.
 The Nexus uses `$XDG_STATE_HOME/orchestrate-nexus/orchestrate-nexus.sema`. The
 legacy `$XDG_STATE_HOME/orchestrate/orchestrate.sema` store is deliberately
 left in place and is neither opened nor migrated.
+
+## Herdr terminal toast adoption
+
+This generation declaratively manages `$XDG_CONFIG_HOME/herdr/config.toml`
+with the terminal-delivery setting:
+
+```toml
+[ui.toast]
+delivery = "terminal"
+```
+
+Before an authorized deployment, Secondary must capture the existing unmanaged
+file's bytes and SHA-256 and retain a backup outside the Home-managed target.
+Adopt it only when those captured bytes are identical to the two-line setting
+above. Use an authorized Home activation path that preserves that backup and
+creates the managed file; do not force, delete, or overwrite a different,
+missing, or unreadable target. Any mismatch stops adoption for review.
