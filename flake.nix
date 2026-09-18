@@ -593,6 +593,9 @@
           terminal-oom-policy = checkPkgs.callPackage ./checks/terminal-oom-policy { inherit inputs; };
           bird-home-isolation = checkPkgs.callPackage ./checks/bird-home-isolation { inherit inputs; };
           desktop-shell-launch = checkPkgs.callPackage ./checks/desktop-shell-launch { inherit inputs; };
+          chatgpt-voice-niri-rule = checkPkgs.callPackage ./checks/chatgpt-voice-niri-rule {
+            inherit inputs;
+          };
           wispr-flow-profile-tier = checkPkgs.callPackage ./checks/wispr-flow-profile-tier {
             inherit inputs;
           };

@@ -21,6 +21,21 @@ let
     wispr-flow = wisprFlow;
   };
   wisprFlowStatus = "${wisprFlowFhs}/bin/wispr-flow-status";
+  toggleMicrophoneMute = pkgs.writeShellScript "criomos-toggle-microphone-mute" ''
+    set -eu
+
+    ${lib.getExe' pkgs.wireplumber "wpctl"} set-mute @DEFAULT_AUDIO_SOURCE@ toggle
+
+    case "$(${lib.getExe' pkgs.wireplumber "wpctl"} get-volume @DEFAULT_AUDIO_SOURCE@)" in
+      *"[MUTED]"*) feedback="muted" ;;
+      *) feedback="unmuted" ;;
+    esac
+
+    # pw-play uses PipeWire's default output, including the connected headset.
+    printf '%s\n' "$feedback" \
+      | ${lib.getExe pkgs.espeak-ng} --stdin --stdout \
+      | ${lib.getExe' pkgs.pipewire "pw-play"} -
+  '';
   # The rescue terminal is its own scope: single-instance is off, so Ghostty
   # creates no per-surface scope and the shell shares this scope with it.
   # OOMPolicy=continue keeps the scope (and the terminal) alive when the kernel
@@ -157,6 +172,7 @@ in
     slurp
     wl-clipboard
     gnome-control-center
+    espeak-ng
   ]);
 
   systemd.user.services = lib.mkIf behavesAs.edge {
@@ -285,6 +301,15 @@ in
             { app-id = "^criomos-codex-desktop$"; }
           ];
           open-focused = true;
+        }
+        {
+          # ChatGPT's voice surface uses the same app-id as its main window.
+          # Keep both in Niri's normal layout so a narrow floating voice
+          # surface cannot cover the desktop or be stranded off-workspace.
+          matches = [
+            { app-id = "^chatgpt$"; }
+          ];
+          open-floating = false;
         }
         {
           matches = [
@@ -417,6 +442,7 @@ in
 
         # Volume
         "XF86AudioMute".action = a.spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SINK@" "toggle";
+        "XF86AudioMicMute".action = a.spawn "${toggleMicrophoneMute}";
         "XF86AudioRaiseVolume".action = a.spawn "wpctl" "set-volume" "-l" "1" "@DEFAULT_AUDIO_SINK@" "5%+";
         "XF86AudioLowerVolume".action = a.spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "5%-";
 
