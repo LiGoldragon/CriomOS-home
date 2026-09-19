@@ -18,7 +18,7 @@
     system.url = "path:./stubs/no-system";
 
     prompt-relay-source = {
-      url = "github:LiGoldragon/primary/28532075161275aeca04e5bf2a50d8a7c3195bf7";
+      url = "github:LiGoldragon/primary/9d144e3fde0ec5060c19088b20c3bee93c7eb115";
       flake = false;
     };
 
