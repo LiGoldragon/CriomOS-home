@@ -2187,17 +2187,17 @@
     "prompt-relay-source": {
       "flake": false,
       "locked": {
-        "lastModified": 1789570794,
-        "narHash": "sha256-0Y66GkkRB/TfD9E685/a8W8lnXzTFmQxcwsyb4It8jw=",
+        "lastModified": 1789847620,
+        "narHash": "sha256-wW2l9LfPIw5x1W3IehxOLlR5o6VmTf8IHWlOdHQW8VM=",
         "owner": "LiGoldragon",
         "repo": "primary",
-        "rev": "28532075161275aeca04e5bf2a50d8a7c3195bf7",
+        "rev": "f31f9d49415637d6f541415d4cb23cd99a1f708e",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
+        "ref": "f31f9d494156",
         "repo": "primary",
-        "rev": "28532075161275aeca04e5bf2a50d8a7c3195bf7",
         "type": "github"
       }
     },
