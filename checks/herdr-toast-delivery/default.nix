@@ -38,6 +38,9 @@ let
   parsedConfigToml = builtins.fromTOML configToml;
 in
 assert parsedConfigToml.ui.toast.delivery == "terminal";
+assert parsedConfigToml.theme.auto_switch;
+assert parsedConfigToml.theme.dark_name == "catppuccin";
+assert parsedConfigToml.theme.light_name == "catppuccin-latte";
 pkgs.runCommand "herdr-toast-delivery" { } ''
   touch "$out"
 ''
