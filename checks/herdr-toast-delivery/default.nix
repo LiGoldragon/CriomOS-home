@@ -35,6 +35,14 @@ let
     ];
   };
   configToml = builtins.readFile homeConfiguration.config.xdg.configFile."herdr/config.toml".source;
+  legacyConfigToml = ''
+    [ui.toast]
+    delivery = "terminal"
+
+    [ui]
+    agent_panel_sort = "spaces"
+  '';
+  legacyConfig = pkgs.writeText "herdr-legacy-config.toml" legacyConfigToml;
   parsedConfigToml = builtins.fromTOML configToml;
   herdrAdoption = homeConfiguration.config.home.activation.adoptHerdrConfig.data;
   herdrAdoptionScript = pkgs.writeText "herdr-adoption" herdrAdoption;
@@ -44,6 +52,7 @@ assert parsedConfigToml.theme.auto_switch;
 assert parsedConfigToml.theme.dark_name == "catppuccin";
 assert parsedConfigToml.theme.light_name == "catppuccin-latte";
 assert parsedConfigToml.ui.agent_panel_sort == "spaces";
+assert configToml != legacyConfigToml;
 pkgs.runCommand "herdr-toast-delivery" {
   nativeBuildInputs = [ pkgs.coreutils ];
 } ''
@@ -51,10 +60,10 @@ pkgs.runCommand "herdr-toast-delivery" {
 
   exact_home="$TMPDIR/exact-home"
   mkdir -p "$exact_home/.config/herdr"
-  cp ${homeConfiguration.config.xdg.configFile."herdr/config.toml".source} "$exact_home/.config/herdr/config.toml"
+  cp ${legacyConfig} "$exact_home/.config/herdr/config.toml"
   HOME="$exact_home" ${pkgs.bash}/bin/bash ${herdrAdoptionScript}
   test ! -e "$exact_home/.config/herdr/config.toml"
-  cmp ${homeConfiguration.config.xdg.configFile."herdr/config.toml".source} \
+  cmp ${legacyConfig} \
     "$exact_home/.local/state/criomos/herdr-adoption/config.toml.pre-home-manager"
   sha256sum --check --status \
     "$exact_home/.local/state/criomos/herdr-adoption/config.toml.pre-home-manager.sha256"

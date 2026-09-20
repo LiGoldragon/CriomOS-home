@@ -1,5 +1,12 @@
 { lib, pkgs, ... }:
 let
+  legacyHerdrConfig = pkgs.writeText "herdr-legacy-config.toml" ''
+    [ui.toast]
+    delivery = "terminal"
+
+    [ui]
+    agent_panel_sort = "spaces"
+  '';
   herdrConfig = pkgs.writeText "herdr-config.toml" ''
     [theme]
     auto_switch = true
@@ -16,9 +23,8 @@ in
 {
   xdg.configFile."herdr/config.toml".source = herdrConfig;
 
-  # The first managed generation may replace only the captured configuration
-  # below. Any other file shape, including a dangling or foreign symlink,
-  # remains a deployment-time review stop.
+  # The first managed generation replaces only the observed unmanaged file.
+  # The managed target deliberately adds CriomOS theme switching afterwards.
   home.activation.adoptHerdrConfig = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
     herdr_config="$HOME/.config/herdr/config.toml"
     herdr_backup_directory="''${XDG_STATE_HOME:-$HOME/.local/state}/criomos/herdr-adoption"
@@ -38,28 +44,30 @@ in
         exit 1
       fi
 
-      if ! cmp -s "$herdr_config" "${herdrConfig}"; then
-        echo "Refusing Herdr adoption: $herdr_config does not match the declared configuration" >&2
+      if ! cmp -s "$herdr_config" "${legacyHerdrConfig}"; then
+        echo "Refusing Herdr adoption: $herdr_config does not match the observed legacy configuration" >&2
         exit 1
       fi
 
       mkdir -p "$herdr_backup_directory"
-      if [ -e "$herdr_backup" ]; then
-        if ! cmp -s "$herdr_backup" "${herdrConfig}"; then
-          echo "Refusing Herdr adoption: existing backup differs from the declared configuration" >&2
+      if [ -e "$herdr_backup" ] || [ -L "$herdr_backup" ]; then
+        if [ ! -f "$herdr_backup" ] || [ -L "$herdr_backup" ] || ! cmp -s "$herdr_backup" "${legacyHerdrConfig}"; then
+          echo "Refusing Herdr adoption: existing backup differs from the observed legacy configuration" >&2
           exit 1
         fi
       else
         cp -- "$herdr_config" "$herdr_backup"
       fi
 
-      if [ -e "$herdr_checksum" ]; then
-        if ! sha256sum --check --status "$herdr_checksum"; then
+      herdr_actual_checksum="$(sha256sum "$herdr_backup")"
+      if [ -e "$herdr_checksum" ] || [ -L "$herdr_checksum" ]; then
+        if [ ! -f "$herdr_checksum" ] || [ -L "$herdr_checksum" ] \
+          || ! printf '%s\\n' "$herdr_actual_checksum" | cmp -s - "$herdr_checksum"; then
           echo "Refusing Herdr adoption: existing backup checksum does not verify" >&2
           exit 1
         fi
       else
-        sha256sum "$herdr_backup" > "$herdr_checksum"
+        (umask 077; printf '%s\\n' "$herdr_actual_checksum" > "$herdr_checksum")
       fi
 
       rm -- "$herdr_config"
