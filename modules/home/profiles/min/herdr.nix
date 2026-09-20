@@ -26,7 +26,7 @@ in
     herdr_checksum="$herdr_backup.sha256"
 
     if [ -L "$herdr_config" ]; then
-      if [ "$( ${pkgs.coreutils}/bin/readlink -f "$herdr_config" )" = "${herdrConfig}" ]; then
+      if [ "$(readlink -f "$herdr_config")" = "${herdrConfig}" ]; then
         :
       else
         echo "Refusing Herdr adoption: $herdr_config is an unmanaged symlink" >&2
@@ -38,31 +38,31 @@ in
         exit 1
       fi
 
-      if ! ${pkgs.coreutils}/bin/cmp -s "$herdr_config" "${herdrConfig}"; then
+      if ! cmp -s "$herdr_config" "${herdrConfig}"; then
         echo "Refusing Herdr adoption: $herdr_config does not match the declared configuration" >&2
         exit 1
       fi
 
-      ${pkgs.coreutils}/bin/mkdir -p "$herdr_backup_directory"
+      mkdir -p "$herdr_backup_directory"
       if [ -e "$herdr_backup" ]; then
-        if ! ${pkgs.coreutils}/bin/cmp -s "$herdr_backup" "${herdrConfig}"; then
+        if ! cmp -s "$herdr_backup" "${herdrConfig}"; then
           echo "Refusing Herdr adoption: existing backup differs from the declared configuration" >&2
           exit 1
         fi
       else
-        ${pkgs.coreutils}/bin/cp -- "$herdr_config" "$herdr_backup"
+        cp -- "$herdr_config" "$herdr_backup"
       fi
 
       if [ -e "$herdr_checksum" ]; then
-        if ! ${pkgs.coreutils}/bin/sha256sum --check --status "$herdr_checksum"; then
+        if ! sha256sum --check --status "$herdr_checksum"; then
           echo "Refusing Herdr adoption: existing backup checksum does not verify" >&2
           exit 1
         fi
       else
-        ${pkgs.coreutils}/bin/sha256sum "$herdr_backup" > "$herdr_checksum"
+        sha256sum "$herdr_backup" > "$herdr_checksum"
       fi
 
-      ${pkgs.coreutils}/bin/rm -- "$herdr_config"
+      rm -- "$herdr_config"
     fi
   '';
 }
