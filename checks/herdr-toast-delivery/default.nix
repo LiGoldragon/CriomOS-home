@@ -36,11 +36,44 @@ let
   };
   configToml = builtins.readFile homeConfiguration.config.xdg.configFile."herdr/config.toml".source;
   parsedConfigToml = builtins.fromTOML configToml;
+  herdrAdoption = homeConfiguration.config.home.activation.adoptHerdrConfig.data;
+  herdrAdoptionScript = pkgs.writeText "herdr-adoption" herdrAdoption;
 in
 assert parsedConfigToml.ui.toast.delivery == "terminal";
 assert parsedConfigToml.theme.auto_switch;
 assert parsedConfigToml.theme.dark_name == "catppuccin";
 assert parsedConfigToml.theme.light_name == "catppuccin-latte";
-pkgs.runCommand "herdr-toast-delivery" { } ''
+assert parsedConfigToml.ui.agent_panel_sort == "spaces";
+pkgs.runCommand "herdr-toast-delivery" {
+  nativeBuildInputs = [ pkgs.coreutils ];
+} ''
+  set -eu
+
+  exact_home="$TMPDIR/exact-home"
+  mkdir -p "$exact_home/.config/herdr"
+  cp ${homeConfiguration.config.xdg.configFile."herdr/config.toml".source} "$exact_home/.config/herdr/config.toml"
+  HOME="$exact_home" ${pkgs.bash}/bin/bash ${herdrAdoptionScript}
+  test ! -e "$exact_home/.config/herdr/config.toml"
+  cmp ${homeConfiguration.config.xdg.configFile."herdr/config.toml".source} \
+    "$exact_home/.local/state/criomos/herdr-adoption/config.toml.pre-home-manager"
+  sha256sum --check --status \
+    "$exact_home/.local/state/criomos/herdr-adoption/config.toml.pre-home-manager.sha256"
+
+  mismatch_home="$TMPDIR/mismatch-home"
+  mkdir -p "$mismatch_home/.config/herdr"
+  printf '%s\\n' '[ui.toast]' 'delivery = "desktop"' > "$mismatch_home/.config/herdr/config.toml"
+  if HOME="$mismatch_home" ${pkgs.bash}/bin/bash ${herdrAdoptionScript}; then
+    echo "Herdr adoption accepted a mismatched configuration" >&2
+    exit 1
+  fi
+  test "$(cat "$mismatch_home/.config/herdr/config.toml")" = $'[ui.toast]\\ndelivery = "desktop"'
+
+  missing_home="$TMPDIR/missing-home"
+  mkdir -p "$missing_home/.config/herdr"
+  if HOME="$missing_home" ${pkgs.bash}/bin/bash ${herdrAdoptionScript}; then
+    echo "Herdr adoption accepted a missing configuration" >&2
+    exit 1
+  fi
+
   touch "$out"
 ''

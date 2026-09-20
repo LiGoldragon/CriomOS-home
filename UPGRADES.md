@@ -200,19 +200,35 @@ The Nexus uses `$XDG_STATE_HOME/orchestrate-nexus/orchestrate-nexus.sema`. The
 legacy `$XDG_STATE_HOME/orchestrate/orchestrate.sema` store is deliberately
 left in place and is neither opened nor migrated.
 
-## Herdr terminal toast adoption
+## Herdr configuration adoption
 
 This generation declaratively manages `$XDG_CONFIG_HOME/herdr/config.toml`
-with the terminal-delivery setting:
+with the observed terminal-delivery, CriomOS theme-switching, and agent-panel
+sort settings:
 
 ```toml
+[theme]
+auto_switch = true
+dark_name = "catppuccin"
+light_name = "catppuccin-latte"
+
 [ui.toast]
 delivery = "terminal"
+
+[ui]
+agent_panel_sort = "spaces"
 ```
 
-Before an authorized deployment, Secondary must capture the existing unmanaged
-file's bytes and SHA-256 and retain a backup outside the Home-managed target.
-Adopt it only when those captured bytes are identical to the two-line setting
-above. Use an authorized Home activation path that preserves that backup and
-creates the managed file; do not force, delete, or overwrite a different,
-missing, or unreadable target. Any mismatch stops adoption for review.
+On the first authorized Home activation, the generated adoption gate accepts
+only a regular file byte-identical to that complete configuration. It copies
+the file and its SHA-256 record to
+`$XDG_STATE_HOME/criomos/herdr-adoption/config.toml.pre-home-manager` (or
+`$HOME/.local/state/...` when XDG state is unset), then removes the original so
+Home Manager can create its managed link. An existing backup must still match
+and its checksum must verify.
+
+A missing, unreadable, changed, or foreign-symlinked target stops activation
+without touching it. Review and resolve that state before retrying; do not
+force, delete, or overwrite it. Roll back by activating the previous Home
+generation, then restore the retained backup deliberately if an unmanaged file
+is required.
