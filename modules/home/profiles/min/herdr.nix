@@ -62,12 +62,12 @@ in
       herdr_actual_checksum="$(sha256sum "$herdr_backup")"
       if [ -e "$herdr_checksum" ] || [ -L "$herdr_checksum" ]; then
         if [ ! -f "$herdr_checksum" ] || [ -L "$herdr_checksum" ] \
-          || ! printf '%s\\n' "$herdr_actual_checksum" | cmp -s - "$herdr_checksum"; then
+          || ! printf '%s\n' "$herdr_actual_checksum" | cmp -s - "$herdr_checksum"; then
           echo "Refusing Herdr adoption: existing backup checksum does not verify" >&2
           exit 1
         fi
       else
-        (umask 077; printf '%s\\n' "$herdr_actual_checksum" > "$herdr_checksum")
+        (umask 077; printf '%s\n' "$herdr_actual_checksum" > "$herdr_checksum")
       fi
 
       rm -- "$herdr_config"
