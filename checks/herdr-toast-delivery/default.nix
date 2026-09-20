@@ -61,12 +61,13 @@ pkgs.runCommand "herdr-toast-delivery" {
 
   mismatch_home="$TMPDIR/mismatch-home"
   mkdir -p "$mismatch_home/.config/herdr"
-  printf '%s\\n' '[ui.toast]' 'delivery = "desktop"' > "$mismatch_home/.config/herdr/config.toml"
+  printf '%s\n' '[ui.toast]' 'delivery = "desktop"' > "$mismatch_home/.config/herdr/config.toml"
   if HOME="$mismatch_home" ${pkgs.bash}/bin/bash ${herdrAdoptionScript}; then
     echo "Herdr adoption accepted a mismatched configuration" >&2
     exit 1
   fi
-  test "$(cat "$mismatch_home/.config/herdr/config.toml")" = $'[ui.toast]\\ndelivery = "desktop"'
+  printf '%s\n' '[ui.toast]' 'delivery = "desktop"' > "$TMPDIR/mismatched-config.toml"
+  cmp "$TMPDIR/mismatched-config.toml" "$mismatch_home/.config/herdr/config.toml"
 
   missing_home="$TMPDIR/missing-home"
   mkdir -p "$missing_home/.config/herdr"
