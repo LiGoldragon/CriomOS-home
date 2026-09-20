@@ -72,8 +72,10 @@ in
       };
       Service = {
         Type = "simple";
-        WorkingDirectory = "%S/opencode-testing/scratch";
-        ExecStartPre = "${pkgs.coreutils}/bin/mkdir -p %S/opencode-testing/scratch";
+        RuntimeDirectory = "opencode-testing";
+        RuntimeDirectoryMode = "0700";
+        WorkingDirectory = "%t/opencode-testing/scratch";
+        ExecStartPre = "${pkgs.coreutils}/bin/mkdir -p %t/opencode-testing/scratch";
         Environment = [ "OPENCODE_CONFIG=${testingConfig}" ];
         LoadCredential = [ "opencode-server-password:${credentialSource}" ];
         ExecStart = "${runner}/bin/opencode-testing-server";
