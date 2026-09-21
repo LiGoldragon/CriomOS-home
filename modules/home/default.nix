@@ -71,6 +71,9 @@
     # map + delivery registry in messenger.sema; systemd --user unit +
     # pinned flake input).
     ./profiles/min/message.nix
+    # Flow Nexus remains disabled until its package, native launch receipt,
+    # and durable store migration are validated for this host.
+    ./profiles/min/flow.nix
     # Chroma — visual-state daemon (theme + warmth + brightness).
     # Replaces darkman + nightshift + the brightness shell wrapper.
     # Per-user systemd unit + apply script + default config.nota.

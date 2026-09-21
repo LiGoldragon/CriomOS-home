@@ -8,11 +8,12 @@
 }:
 let
   inherit (lib) mkIf mkOption;
-  inherit (lib.types) bool;
+  inherit (lib.types) bool enum;
   sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
 
   system = pkgs.stdenv.hostPlatform.system;
   messagePackage = inputs.message.packages.${system}.default;
+  daemonBinary = config.criomosHome.message.daemonBinary or "message-daemon";
 
   messageProfilePackage =
     pkgs.runCommand "${messagePackage.name}-profile" { nativeBuildInputs = [ pkgs.makeWrapper ]; }
@@ -69,6 +70,11 @@ in
       default = true;
       description = "Supervise the message (messenger) daemon as a systemd --user service.";
     };
+    daemonBinary = mkOption {
+      type = enum [ "message-daemon" "message-nexus" ];
+      default = "message-daemon";
+      description = "Select the pinned Message daemon binary after its store migration and rollback compatibility are verified.";
+    };
   };
 
   config = mkIf (sizeAtLeast "Min" && config.criomosHome.message.enable) {
@@ -85,7 +91,7 @@ in
         RuntimeDirectory = "message";
         RuntimeDirectoryMode = "0700";
         ExecStartPre = "${writeConfigurationScript} ${workingSocketPath} ${metaSocketPath} ${routerSocketPath}";
-        ExecStart = "${messagePackage}/bin/message-daemon ${signalPath}";
+        ExecStart = "${messagePackage}/bin/${daemonBinary} ${signalPath}";
         Restart = "on-failure";
         RestartSec = "2s";
       };

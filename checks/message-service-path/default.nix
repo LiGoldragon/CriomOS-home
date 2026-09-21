@@ -26,8 +26,24 @@ let
     if moduleResult.config ? content then moduleResult.config.content else moduleResult.config;
   service = moduleConfiguration.systemd.user.services.message-daemon.Service;
   writer = service.ExecStartPre;
+  nexusModuleResult = import messageModule {
+    inherit inputs lib pkgs;
+    config = {
+      home.homeDirectory = homeDirectory;
+      home.username = "message-test-user";
+      xdg.stateHome = stateHome;
+      criomosHome.message = {
+        enable = true;
+        daemonBinary = "message-nexus";
+      };
+    };
+    user.size = "Min";
+  };
+  nexusModuleConfiguration =
+    if nexusModuleResult.config ? content then nexusModuleResult.config.content else nexusModuleResult.config;
 in
 assert service.ExecStart == "${messagePackage}/bin/message-daemon ${signalPath}";
+assert nexusModuleConfiguration.systemd.user.services.message-daemon.Service.ExecStart == "${messagePackage}/bin/message-nexus ${signalPath}";
 assert service.RuntimeDirectory == "message";
 assert service.RuntimeDirectoryMode == "0700";
 pkgs.runCommand "message-service-path" { nativeBuildInputs = [ pkgs.gnugrep ]; } ''
