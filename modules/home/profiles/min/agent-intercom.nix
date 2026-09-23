@@ -122,6 +122,7 @@ lib.mkMerge [
         WorkingDirectory = primaryWorkspace;
         ExecStart = "${codexCliPackage}/bin/codex app-server --remote-control --listen unix://";
         UMask = "0077";
+        LimitNOFILE = 524288;
         Restart = "always";
         RestartSec = "2s";
       };
