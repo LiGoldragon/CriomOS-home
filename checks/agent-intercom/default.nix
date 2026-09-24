@@ -58,7 +58,7 @@ assert configuration.home.activation ? mergeAgentIntercomClaudeMcp;
 assert hasPackage "agent-intercom-runtime";
 assert builtins.elem claudeCodePackage configuration.home.packages;
 assert cleanupService.Service.ExecStart == [ "${agentIntercom}/bin/agent-intercom-fleet-cleanup" ];
-assert cleanupService.Service.Environment == "AGENT_INTERCOM_DISABLE_CLEANUP_TIMER=1";
+assert cleanupService.Service.Environment == [ "AGENT_INTERCOM_DISABLE_CLEANUP_TIMER=1" ];
 assert cleanupService.Service.Type == "oneshot";
 assert cleanupTimer.Timer.OnBootSec == "5min";
 assert cleanupTimer.Timer.OnUnitActiveSec == "15min";
