@@ -30,4 +30,5 @@ assert
 pkgs.runCommand "codex-next-contract" { } ''
   ${package}/bin/codex --version > "$out"
   test "$(cat "$out")" = "codex-cli 0.158.0-alpha.9"
+  test -x ${package}/bin/codex-code-mode-host
 ''

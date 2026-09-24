@@ -30,11 +30,13 @@ stdenvNoCC.mkDerivation {
   installPhase = ''
     runHook preInstall
     install -Dm755 codex-${artifact.target} "$out/bin/codex"
+    install -Dm755 codex-code-mode-host-${artifact.target} "$out/bin/codex-code-mode-host"
     runHook postInstall
   '';
   doInstallCheck = true;
   installCheckPhase = ''
     test "$("$out/bin/codex" --version)" = "codex-cli ${version}"
+    test -x "$out/bin/codex-code-mode-host"
   '';
   meta = {
     description = "Pinned upstream Codex candidate for the isolated next server";
