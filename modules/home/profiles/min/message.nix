@@ -49,7 +49,7 @@ let
 
   # message-write-configuration takes one inline brace object (the
   # single-argument text edge). Its producer-owned contract is a nested
-  # parenthesized socket/owner object, followed by the store path, label,
+  # brace-structured socket/owner object, followed by the store path, label,
   # and output path. The owner uid is read at service start so the unit does
   # not bake a numeric uid into the store; systemd expands the %t-derived
   # socket arguments before the script runs.
@@ -60,7 +60,7 @@ let
     router_socket="$3"
     ${pkgs.coreutils}/bin/mkdir -p ${stateDirectory}
     exec ${messagePackage}/bin/message-write-configuration \
-      "{($working_socket 432 $meta_socket 384 $router_socket [] UnixUser.$(${pkgs.coreutils}/bin/id -u)) ${databasePath} ${config.home.username} ${signalPath}}"
+      "{{$working_socket 432 $meta_socket 384 $router_socket [] UnixUser.$(${pkgs.coreutils}/bin/id -u)} ${databasePath} ${config.home.username} ${signalPath}}"
   '';
 in
 {
@@ -71,7 +71,10 @@ in
       description = "Supervise the message (messenger) daemon as a systemd --user service.";
     };
     daemonBinary = mkOption {
-      type = enum [ "message-daemon" "message-nexus" ];
+      type = enum [
+        "message-daemon"
+        "message-nexus"
+      ];
       default = "message-daemon";
       description = "Select the pinned Message daemon binary after its store migration and rollback compatibility are verified.";
     };
