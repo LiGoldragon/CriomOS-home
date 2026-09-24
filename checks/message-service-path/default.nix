@@ -26,6 +26,12 @@ let
     if moduleResult.config ? content then moduleResult.config.content else moduleResult.config;
   service = moduleConfiguration.systemd.user.services.message-daemon.Service;
   preserver = lib.head service.ExecStartPre;
+  instrumentedPreserver = pkgs.writeShellScript "message-preserve-live-store-race-fixture" (
+    lib.replaceStrings
+      [ "${pkgs.coreutils}/bin/ln --" ]
+      [ "${pkgs.coreutils}/bin/sleep 1\n${pkgs.coreutils}/bin/ln --" ]
+      (builtins.readFile preserver)
+  );
   writer = lib.last service.ExecStartPre;
   writerScript = lib.head (lib.splitString " " writer);
   preservePath = "${stateDirectory}/messenger.sema.${messagePackage.name}.preopen";
@@ -54,7 +60,7 @@ assert
   == "${messagePackage}/bin/message-nexus ${signalPath}";
 assert service.RuntimeDirectory == "message";
 assert service.RuntimeDirectoryMode == "0700";
-pkgs.runCommand "message-service-path" { nativeBuildInputs = [ pkgs.coreutils pkgs.gnugrep ]; } ''
+pkgs.runCommand "message-service-path" { nativeBuildInputs = [ pkgs.coreutils pkgs.diffutils pkgs.findutils pkgs.gnugrep ]; } ''
   set -eu
 
   grep -F '"{{$working_socket 432 $meta_socket 384 $router_socket [] UnixUser.$(' ${writerScript}
@@ -76,6 +82,34 @@ pkgs.runCommand "message-service-path" { nativeBuildInputs = [ pkgs.coreutils pk
     exit 1
   fi
   printf 'partial-copy\n' | cmp - '${preservePath}'
+
+  # Simulate an interrupted competing publication after this invocation made
+  # its private temporary copy. The final sidecar must remain unpromoted and
+  # the invocation must remove its own temporary file through the EXIT trap.
+  rm '${preservePath}'
+  (
+    for _ in $(${pkgs.coreutils}/bin/seq 1 1000); do
+      if ${pkgs.findutils}/bin/find '${stateDirectory}' -maxdepth 1 -name '.${messagePackage.name}.preopen.*' -print -quit | ${pkgs.gnugrep}/bin/grep -q .; then
+        printf 'competing-partial\n' > '${preservePath}'
+        exit 0
+      fi
+      ${pkgs.coreutils}/bin/sleep 0.01
+    done
+    echo 'Message preserver did not create its temporary snapshot' >&2
+    exit 1
+  ) &
+  competitor=$!
+  if ${instrumentedPreserver}; then
+    echo 'Message preserver accepted a competing partial snapshot' >&2
+    exit 1
+  fi
+  wait "$competitor"
+  printf 'competing-partial\n' | cmp - '${preservePath}'
+  if ${pkgs.findutils}/bin/find '${stateDirectory}' -maxdepth 1 -name '.${messagePackage.name}.preopen.*' -print -quit | ${pkgs.gnugrep}/bin/grep -q .; then
+    echo 'Message preserver left its interrupted temporary snapshot behind' >&2
+    exit 1
+  fi
+  printf 'live-messenger-before-open\n' | cmp - '${stateDirectory}/messenger.sema'
 
   # Exercise the same packaged writer that ExecStartPre invokes. A successful
   # write proves the module's nested contract is a Datom Struct at the real
