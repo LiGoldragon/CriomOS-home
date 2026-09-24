@@ -17,8 +17,12 @@ let
   cfg = config.criomosHome.flow;
   system = pkgs.stdenv.hostPlatform.system;
   flowPackage = inputs.flow.packages.${system}.default;
+  stableCodexClient =
+    config.criomosHome.herdr.stableCodexClientPackage or config.criomos.corePackages.codex;
+  nextCodexClient =
+    config.criomosHome.codexNext.clientPackage or config.criomos.corePackages.codex;
   flowRuntimePath = makeBinPath [
-    inputs.herdr.packages.${system}.herdr
+    (config.criomosHome.herdr.package or inputs.herdr.packages.${system}.herdr)
     inputs.harness.packages.${system}.default
     config.criomos.corePackages.codex
     config.criomos.corePackages.claude
@@ -60,6 +64,14 @@ in
         RuntimeDirectoryMode = "0700";
         Environment = [
           "FLOW_SOURCE_ROOT=/home/li/primary"
+          "FLOW_CODEX_STABLE_CLIENT=${stableCodexClient}/bin/codex-stable-flow-client"
+          "FLOW_CODEX_STABLE_SOCKET=/home/li/.codex/app-server-control/app-server-control.sock"
+          "FLOW_CODEX_STABLE_HOME=/home/li/.codex"
+          "FLOW_CODEX_STABLE_MODELS=gpt-5.6-terra,gpt-5.6-sol,gpt-5.6-luna"
+          "FLOW_CODEX_NEXT_CLIENT=${nextCodexClient}/bin/codex-next-flow-client"
+          "FLOW_CODEX_NEXT_SOCKET=/home/li/.codex-next/app-server-control/app-server-control.sock"
+          "FLOW_CODEX_NEXT_HOME=/home/li/.codex-next"
+          "FLOW_CODEX_NEXT_MODELS=gpt-6-sol,gpt-6-luna,gpt-6-astra"
           "PATH=${flowRuntimePath}"
         ];
         ExecStart = "${cfg.package}/bin/flow-nexus";
