@@ -52,6 +52,7 @@ assert !(configuration.home.file ? ".pi/agent/packages/agent-intercom-orchestrat
 assert !(configuration.home.activation ? mergeAgentIntercomOpenCodeServerPlugin);
 assert !(configuration.home.activation ? mergeAgentIntercomOpenCodeTuiPlugin);
 assert configuration.home.activation ? mergeAgentIntercomCodexMcp;
+assert configuration.home.activation ? mergeClaudePermissionDefaults;
 assert configuration.home.activation ? mergeAgentIntercomClaudeMcp;
 assert hasPackage "agent-intercom-runtime";
 assert builtins.elem claudeCodePackage configuration.home.packages;

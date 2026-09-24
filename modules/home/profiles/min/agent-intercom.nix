@@ -68,6 +68,16 @@ lib.mkMerge [
       modes."/mcp_servers/agent-intercom" = "always";
     };
 
+    # Claude Code reads this managed default before it enters a session. Keep
+    # the declaration separate from the launcher so regular and Intercom
+    # invocations share the same user-authorized permission mode.
+    home.activation.mergeClaudePermissionDefaults = inputs.hexis.lib.mkManagedConfig {
+      inherit lib pkgs hexis;
+      file = "$HOME/.claude/settings.json";
+      declared.permissions.defaultMode = "bypassPermissions";
+      modes."/permissions/defaultMode" = "always";
+    };
+
     # Hexis v1 walks declared object leaves. A legacy Claude project entry
     # recorded as a scalar therefore blocks its leaf-only trust write: it is
     # an intermediate path segment, not an object. Canonicalize only that
