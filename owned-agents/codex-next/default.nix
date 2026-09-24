@@ -36,7 +36,8 @@ stdenvNoCC.mkDerivation {
   installPhase = ''
     runHook preInstall
     install -Dm755 codex-${artifact.target} "$out/bin/codex"
-    install -Dm755 "$codeModeHost" "$out/bin/codex-code-mode-host"
+    tar -xOzf "$codeModeHost" codex-code-mode-host-${artifact.target} > codex-code-mode-host
+    install -Dm755 codex-code-mode-host "$out/bin/codex-code-mode-host"
     runHook postInstall
   '';
   doInstallCheck = true;
