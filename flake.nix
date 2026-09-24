@@ -482,6 +482,7 @@
           };
           basePackages = {
             codex = ownedAgentPackages.codexPackage;
+            codex-next = ownedPkgs.callPackage ./owned-agents/codex-next { };
             claude-code = ownedAgentPackages.claudeCodePackage;
           };
         in
@@ -673,6 +674,7 @@
           ai-agent-launch-orchestration = checkPkgs.callPackage ./checks/ai-agent-launch-orchestration {
             inherit inputs;
           };
+          codex-next = checkPkgs.callPackage ./checks/codex-next { inherit inputs; };
           codex-remote-control = checkPkgs.callPackage ./checks/codex-remote-control {
             inherit inputs;
           };

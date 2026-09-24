@@ -41,6 +41,7 @@
     # service; generic Edge plus medium profile capability selects optional
     # desktop-app support, with no node identity, remote transport, or
     # credential control.
+    ./profiles/min/codex-next.nix
     ./profiles/min/agent-intercom.nix
     ./profiles/min/opencode.nix
     ./profiles/min/field-luna-heartbeat.nix
