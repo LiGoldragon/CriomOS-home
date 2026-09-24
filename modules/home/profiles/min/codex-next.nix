@@ -29,8 +29,36 @@ let
       exec ${package}/bin/codex --remote ${lib.escapeShellArg "unix://${socket}"} "$@"
     '';
   };
+  flowClient = pkgs.writeShellApplication {
+    name = "codex-next-flow-client";
+    text = ''
+      export CODEX_HOME=${lib.escapeShellArg nextHome}
+      exec ${package}/bin/codex "$@"
+    '';
+  };
 in
 {
+  options.criomosHome.codexNext = {
+    rawClientPackage = lib.mkOption {
+      type = lib.types.package;
+      readOnly = true;
+      default = package;
+      description = "Raw immutable next Codex package without endpoint selection.";
+    };
+    clientPackage = lib.mkOption {
+      type = lib.types.package;
+      readOnly = true;
+      default = flowClient;
+      description = "Immutable Flow client wrapper that sets only the isolated next CODEX_HOME and forwards argv unchanged.";
+    };
+    remoteClientPackage = lib.mkOption {
+      type = lib.types.package;
+      readOnly = true;
+      default = client;
+      description = "Administrative next client wrapper with the next remote endpoint preselected.";
+    };
+  };
+
   config = lib.mkIf enabled {
     home.packages = [ client ];
     systemd.user.services.codex-remote-control-next = {

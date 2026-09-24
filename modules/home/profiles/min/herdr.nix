@@ -1,5 +1,19 @@
-{ lib, pkgs, ... }:
+{
+  config,
+  inputs,
+  lib,
+  pkgs,
+  ...
+}:
 let
+  herdrPackage = pkgs.callPackage ../../../../packages/herdr { inherit inputs; };
+  stableCodexClientPackage = pkgs.writeShellApplication {
+    name = "codex-stable-flow-client";
+    text = ''
+      export CODEX_HOME=${lib.escapeShellArg "${config.home.homeDirectory}/.codex"}
+      exec ${config.criomos.corePackages.codex}/bin/codex "$@"
+    '';
+  };
   legacyHerdrConfig = pkgs.writeText "herdr-legacy-config.toml" ''
     [ui.toast]
     delivery = "terminal"
@@ -8,6 +22,12 @@ let
     agent_panel_sort = "spaces"
   '';
   herdrConfig = pkgs.writeText "herdr-config.toml" ''
+    [agents]
+    codex_executables = [
+      "${stableCodexClientPackage}/bin/codex-stable-flow-client",
+      "${config.criomosHome.codexNext.clientPackage}/bin/codex-next-flow-client",
+    ]
+
     [theme]
     auto_switch = true
     dark_name = "catppuccin"
@@ -21,11 +41,27 @@ let
   '';
 in
 {
-  xdg.configFile."herdr/config.toml".source = herdrConfig;
+  options.criomosHome.herdr = {
+    package = lib.mkOption {
+      type = lib.types.package;
+      readOnly = true;
+      default = herdrPackage;
+      description = "Pinned Herdr package with the CriomOS exact Codex executable boundary.";
+    };
+    stableCodexClientPackage = lib.mkOption {
+      type = lib.types.package;
+      readOnly = true;
+      default = stableCodexClientPackage;
+      description = "Immutable Flow client wrapper that sets only stable CODEX_HOME and forwards argv unchanged.";
+    };
+  };
+
+  config = {
+    xdg.configFile."herdr/config.toml".source = herdrConfig;
 
   # The first managed generation replaces only the observed unmanaged file.
   # The managed target deliberately adds CriomOS theme switching afterwards.
-  home.activation.adoptHerdrConfig = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
+    home.activation.adoptHerdrConfig = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
     herdr_config="$HOME/.config/herdr/config.toml"
     herdr_backup_directory="''${XDG_STATE_HOME:-$HOME/.local/state}/criomos/herdr-adoption"
     herdr_backup="$herdr_backup_directory/config.toml.pre-home-manager"
@@ -72,5 +108,6 @@ in
 
       rm -- "$herdr_config"
     fi
-  '';
+    '';
+  };
 }

@@ -318,7 +318,7 @@ let
 
   AIPackages = [
     pkgs.gemini-cli
-    inputs.herdr.packages.${pkgs.stdenv.hostPlatform.system}.herdr
+    (config.criomosHome.herdr.package or inputs.herdr.packages.${pkgs.stdenv.hostPlatform.system}.herdr)
     inputs.orca-ide.packages.${pkgs.stdenv.hostPlatform.system}.orca-ide
     directClaude
     pkgs.llama-cpp
