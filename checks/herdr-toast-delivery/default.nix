@@ -68,13 +68,14 @@ pkgs.runCommand "herdr-toast-delivery" {
   sha256sum --check --status \
     "$exact_home/.local/state/criomos/herdr-adoption/config.toml.pre-home-manager.sha256"
 
-  legacy_link_home="$TMPDIR/legacy-link-home"
-  mkdir -p "$legacy_link_home/.config/herdr"
-  ln -s ${legacyConfig} "$legacy_link_home/.config/herdr/config.toml"
-  HOME="$legacy_link_home" ${pkgs.bash}/bin/bash ${herdrAdoptionScript}
-  test ! -e "$legacy_link_home/.config/herdr/config.toml"
-  cmp ${legacyConfig} \
-    "$legacy_link_home/.local/state/criomos/herdr-adoption/config.toml.pre-home-manager"
+  unrelated_link_home="$TMPDIR/unrelated-link-home"
+  mkdir -p "$unrelated_link_home/.config/herdr"
+  ln -s ${legacyConfig} "$unrelated_link_home/.config/herdr/config.toml"
+  if HOME="$unrelated_link_home" ${pkgs.bash}/bin/bash ${herdrAdoptionScript}; then
+    echo "Herdr adoption accepted an unrelated legacy-content symlink" >&2
+    exit 1
+  fi
+  test -L "$unrelated_link_home/.config/herdr/config.toml"
 
   mismatch_home="$TMPDIR/mismatch-home"
   mkdir -p "$mismatch_home/.config/herdr"

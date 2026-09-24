@@ -98,7 +98,8 @@ in
     if [ -L "$herdr_config" ]; then
       if [ "$(readlink -f "$herdr_config")" = "${herdrConfig}" ]; then
         :
-      elif [ -f "$herdr_config" ]; then
+      elif [ -f "$herdr_config" ] \
+        && [[ "$(readlink -f "$herdr_config")" == /nix/store/*-home-manager-files/.config/herdr/config.toml ]]; then
         # A prior Home Manager generation linked the recorded legacy file. It is
         # safe to replace only after its contents and preserved backup verify.
         adopt_legacy_herdr_config
