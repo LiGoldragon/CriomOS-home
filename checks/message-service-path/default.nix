@@ -26,6 +26,7 @@ let
     if moduleResult.config ? content then moduleResult.config.content else moduleResult.config;
   service = moduleConfiguration.systemd.user.services.message-daemon.Service;
   writer = service.ExecStartPre;
+  writerScript = lib.head (lib.splitString " " writer);
   nexusModuleResult = import messageModule {
     inherit inputs lib pkgs;
     config = {
@@ -54,16 +55,16 @@ assert service.RuntimeDirectoryMode == "0700";
 pkgs.runCommand "message-service-path" { nativeBuildInputs = [ pkgs.gnugrep ]; } ''
   set -eu
 
-  grep -F '"{{$working_socket 432 $meta_socket 384 $router_socket [] UnixUser.$(' ${writer}
-  ! grep -F '"{($working_socket 432 $meta_socket 384 $router_socket [] UnixUser.$(' ${writer}
-  ! grep -F '(ConfigurationWriteRequest ' ${writer}
-  ! grep -F 'ConfigurationWriteRequest.' ${writer}
-  grep -F '${messagePackage}/bin/message-write-configuration' ${writer}
+  grep -F '"{{$working_socket 432 $meta_socket 384 $router_socket [] UnixUser.$(' ${writerScript}
+  ! grep -F '"{($working_socket 432 $meta_socket 384 $router_socket [] UnixUser.$(' ${writerScript}
+  ! grep -F '(ConfigurationWriteRequest ' ${writerScript}
+  ! grep -F 'ConfigurationWriteRequest.' ${writerScript}
+  grep -F '${messagePackage}/bin/message-write-configuration' ${writerScript}
 
   # Exercise the same packaged writer that ExecStartPre invokes. A successful
   # write proves the module's nested contract is a Datom Struct at the real
   # package boundary rather than only matching an expected source string.
-  ${writer} \
+  ${writerScript} \
     /run/user/1000/message/message.sock \
     /run/user/1000/message/message-owner.sock \
     /run/user/1000/router/router.sock
