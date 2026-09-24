@@ -1,0 +1,44 @@
+{ config, lib, pkgs, user, ... }:
+let
+  enabled = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size "Min";
+  package = pkgs.callPackage ../../../../owned-agents/codex-next { };
+  nextHome = "${config.home.homeDirectory}/.codex-next";
+  socket = "${nextHome}/app-server-control/app-server-control.sock";
+  prepare = pkgs.writeShellScript "codex-next-prepare" ''
+    set -eu
+    umask 077
+    ${pkgs.coreutils}/bin/mkdir -p ${lib.escapeShellArg nextHome}
+    ${pkgs.coreutils}/bin/chmod 700 ${lib.escapeShellArg nextHome}
+    # Bootstrap account data once; never share the mutable session database.
+    for file in auth.json config.toml; do
+      if [ ! -e ${lib.escapeShellArg nextHome}/"$file" ] && [ -f ${lib.escapeShellArg config.home.homeDirectory}/.codex/"$file" ]; then
+        ${pkgs.coreutils}/bin/install -m600 ${lib.escapeShellArg config.home.homeDirectory}/.codex/"$file" ${lib.escapeShellArg nextHome}/"$file"
+      fi
+    done
+  '';
+  client = pkgs.writeShellApplication {
+    name = "codex-next";
+    text = ''
+      export CODEX_HOME=${lib.escapeShellArg nextHome}
+      exec ${package}/bin/codex --remote ${lib.escapeShellArg "unix://${socket}"} "$@"
+    '';
+  };
+in {
+  config = lib.mkIf enabled {
+    home.packages = [ client ];
+    systemd.user.services.codex-remote-control-next = {
+      Unit.Description = "Codex Remote Control next server";
+      Service = {
+        WorkingDirectory = "${config.home.homeDirectory}/primary";
+        Environment = [ "CODEX_HOME=${nextHome}" ];
+        ExecStartPre = "${prepare}";
+        ExecStart = "${package}/bin/codex app-server --remote-control --listen unix://${socket}";
+        UMask = "0077";
+        LimitNOFILE = 524288;
+        Restart = "on-failure";
+        RestartSec = "2s";
+      };
+      Install.WantedBy = [ "default.target" ];
+    };
+  };
+}
