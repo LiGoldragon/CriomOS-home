@@ -70,6 +70,11 @@
     harness.url = "github:LiGoldragon/harness/d022427938c0925e55e23dfb2d7ba470bbfea3c1";
     harness.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Flow Nexus — immutable release accepted by the full configured-builder
+    # gate (9/9 flake checks and 54/54 tests). Keep its own tested dependency
+    # graph instead of silently substituting this flake's Rust inputs.
+    flow.url = "github:LiGoldragon/flow/4560453644c095d97d09390819a22e213850986c";
+
     # The public immutable recipe owns the audited proprietary installer source;
     # this lock identifies the exact v2 status-bridge producer.
     wispr-flow-linux.url = "github:LiGoldragon/wispr-flow-linux?rev=e97b9587a7186ad74c5d84b2da6abfb86645b68d";
@@ -617,6 +622,7 @@
             inherit inputs;
           };
           message-service-path = checkPkgs.callPackage ./checks/message-service-path { inherit inputs; };
+          flow-service-path = checkPkgs.callPackage ./checks/flow-service-path { inherit inputs; };
           herdr-toast-delivery = checkPkgs.callPackage ./checks/herdr-toast-delivery { inherit inputs; };
           cluster-relay-package = checkPkgs.callPackage ./checks/cluster-relay-package { inherit inputs; };
           gws = checkPkgs.callPackage ./checks/gws { inherit inputs; };

@@ -1,14 +1,16 @@
-{ pkgs, ... }:
+{ pkgs, inputs, ... }:
 let
   inherit (pkgs) lib;
   system = pkgs.stdenv.hostPlatform.system;
   module = ../../modules/home/profiles/min/flow.nix;
+  expectedFlowRevision = "4560453644c095d97d09390819a22e213850986c";
   flowPackage = pkgs.writeShellScriptBin "flow-nexus" "exit 0";
   herdrPackage = pkgs.writeShellScriptBin "herdr" "exit 0";
   flowIdPackage = pkgs.writeShellScriptBin "flow-id" "exit 0";
   codexPackage = pkgs.writeShellScriptBin "codex" "exit 0";
   claudePackage = pkgs.writeShellScriptBin "claude" "exit 0";
-  inputs = {
+  moduleInputs = {
+    flow.packages.${system}.default = flowPackage;
     herdr.packages.${system}.herdr = herdrPackage;
     harness.packages.${system}.default = flowIdPackage;
   };
@@ -22,8 +24,9 @@ let
     codexPackage
     claudePackage
   ];
-  enabled = import module {
-    inherit inputs lib pkgs;
+  enabledByDefault = import module {
+    inputs = moduleInputs;
+    inherit lib pkgs;
     user.size = "Min";
     config.home.username = "li";
     config.criomos.corePackages = corePackages;
@@ -33,17 +36,16 @@ let
     };
   };
   disabled = import module {
-    inherit inputs lib pkgs;
+    inputs = moduleInputs;
+    inherit lib pkgs;
     user.size = "Min";
     config.home.username = "li";
     config.criomos.corePackages = corePackages;
-    config.criomosHome.flow = {
-      enable = false;
-      package = null;
-    };
+    config.criomosHome.flow.enable = false;
   };
   wrongUser = import module {
-    inherit inputs lib pkgs;
+    inputs = moduleInputs;
+    inherit lib pkgs;
     user.size = "Min";
     config.home.username = "another-user";
     config.criomos.corePackages = corePackages;
@@ -52,10 +54,13 @@ let
       package = flowPackage;
     };
   };
-  unit = enabled.config.systemd.user.services.flow-nexus;
+  unit = enabledByDefault.config.systemd.user.services.flow-nexus;
   disabledUnit = disabled.config.systemd.user.services.flow-nexus;
 in
 assert unit.condition;
+assert inputs.flow.sourceInfo.rev == expectedFlowRevision;
+assert enabledByDefault.options.criomosHome.flow.enable.default;
+assert enabledByDefault.options.criomosHome.flow.package.default == flowPackage;
 assert unit.content.Service.ExecStart == "${flowPackage}/bin/flow-nexus";
 assert unit.content.Service.RuntimeDirectory == "flow";
 assert builtins.elem "FLOW_SOURCE_ROOT=/home/li/primary" unit.content.Service.Environment;
@@ -63,7 +68,8 @@ assert builtins.elem "PATH=${expectedPath}" unit.content.Service.Environment;
 assert unit.content.Unit.After == [ "codex-remote-control.service" ];
 assert unit.content.Unit.Requires == [ "codex-remote-control.service" ];
 assert !disabledUnit.condition;
-assert !(builtins.elemAt wrongUser.config.assertions 1).assertion;
+assert !(builtins.elemAt wrongUser.config.assertions 0).assertion;
 pkgs.runCommand "flow-service-path" { } ''
-  touch "$out"
+  mkdir -p "$out"
+  printf '%s\n' '${expectedFlowRevision}' > "$out/flow-revision"
 ''
