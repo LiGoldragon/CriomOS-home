@@ -21,6 +21,18 @@ let
     [ui]
     agent_panel_sort = "spaces"
   '';
+  predecessorManagedHerdrConfig = pkgs.writeText "herdr-predecessor-managed-config.toml" ''
+    [theme]
+    auto_switch = true
+    dark_name = "catppuccin"
+    light_name = "catppuccin-latte"
+
+    [ui.toast]
+    delivery = "terminal"
+
+    [ui]
+    agent_panel_sort = "spaces"
+  '';
   herdrConfig = pkgs.writeText "herdr-config.toml" ''
     [agents]
     codex_executables = [
@@ -67,12 +79,7 @@ in
     herdr_backup="$herdr_backup_directory/config.toml.pre-home-manager"
     herdr_checksum="$herdr_backup.sha256"
 
-    adopt_legacy_herdr_config() {
-      if ! cmp -s "$herdr_config" "${legacyHerdrConfig}"; then
-        echo "Refusing Herdr adoption: $herdr_config does not match the observed legacy configuration" >&2
-        exit 1
-      fi
-
+    verify_legacy_herdr_backup() {
       mkdir -p "$herdr_backup_directory"
       if [ -e "$herdr_backup" ] || [ -L "$herdr_backup" ]; then
         if [ ! -f "$herdr_backup" ] || [ -L "$herdr_backup" ] || ! cmp -s "$herdr_backup" "${legacyHerdrConfig}"; then
@@ -99,10 +106,15 @@ in
       if [ "$(readlink -f "$herdr_config")" = "${herdrConfig}" ]; then
         :
       elif [ -f "$herdr_config" ] \
-        && [[ "$(readlink -f "$herdr_config")" == /nix/store/*-home-manager-files/.config/herdr/config.toml ]]; then
-        # A prior Home Manager generation linked the recorded legacy file. It is
-        # safe to replace only after its contents and preserved backup verify.
-        adopt_legacy_herdr_config
+        && [[ "$(readlink "$herdr_config")" == /nix/store/*-home-manager-files/.config/herdr/config.toml ]]; then
+        # A prior Home Manager generation linked the recorded themed legacy
+        # configuration. It is safe to replace only after it and its original
+        # pre-Home-Manager backup both verify.
+        if ! cmp -s "$herdr_config" "${predecessorManagedHerdrConfig}"; then
+          echo "Refusing Herdr adoption: $herdr_config does not match the recorded predecessor configuration" >&2
+          exit 1
+        fi
+        verify_legacy_herdr_backup
         rm -- "$herdr_config"
       else
         echo "Refusing Herdr adoption: $herdr_config is an unmanaged symlink" >&2
@@ -114,7 +126,11 @@ in
         exit 1
       fi
 
-      adopt_legacy_herdr_config
+      if ! cmp -s "$herdr_config" "${legacyHerdrConfig}"; then
+        echo "Refusing Herdr adoption: $herdr_config does not match the observed legacy configuration" >&2
+        exit 1
+      fi
+      verify_legacy_herdr_backup
       rm -- "$herdr_config"
     fi
     '';
