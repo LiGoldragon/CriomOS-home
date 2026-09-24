@@ -62,6 +62,29 @@ let
     exec ${messagePackage}/bin/message-write-configuration \
       "{{$working_socket 432 $meta_socket 384 $router_socket [] UnixUser.$(${pkgs.coreutils}/bin/id -u)} ${databasePath} ${config.home.username} ${signalPath}}"
   '';
+  preserveLiveStoreScript = pkgs.writeShellScript "message-preserve-live-store" ''
+    set -eu
+    store=${lib.escapeShellArg databasePath}
+    preserve="$store.${messagePackage.name}.preopen"
+
+    if [ ! -e "$store" ] && [ ! -L "$store" ]; then
+      exit 0
+    fi
+    if [ ! -f "$store" ] || [ -L "$store" ]; then
+      echo "Refusing Message pre-open preservation: $store is not a regular file" >&2
+      exit 1
+    fi
+    if [ -e "$preserve" ] || [ -L "$preserve" ]; then
+      if [ ! -f "$preserve" ] || [ -L "$preserve" ]; then
+        echo "Refusing Message pre-open preservation: $preserve is not a regular file" >&2
+        exit 1
+      fi
+      exit 0
+    fi
+
+    ${pkgs.coreutils}/bin/cp --reflink=auto --preserve=mode,timestamps -- "$store" "$preserve"
+    ${pkgs.coreutils}/bin/cmp -s -- "$store" "$preserve"
+  '';
 in
 {
   options.criomosHome.message = {
@@ -93,7 +116,10 @@ in
       Service = {
         RuntimeDirectory = "message";
         RuntimeDirectoryMode = "0700";
-        ExecStartPre = "${writeConfigurationScript} ${workingSocketPath} ${metaSocketPath} ${routerSocketPath}";
+        ExecStartPre = [
+          preserveLiveStoreScript
+          "${writeConfigurationScript} ${workingSocketPath} ${metaSocketPath} ${routerSocketPath}"
+        ];
         ExecStart = "${messagePackage}/bin/${daemonBinary} ${signalPath}";
         Restart = "on-failure";
         RestartSec = "2s";

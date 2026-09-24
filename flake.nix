@@ -157,7 +157,7 @@
     # the additive v2 -> v3 store migration — the deployed store, born at v2,
     # is preserved aside and re-stamped on first open — on the
     # incident-hardened sema-engine 0.11.2 orchestrate 0.14.1 runs.
-    message.url = "github:LiGoldragon/message/a8c6a924d5d04fbfcbf0a7e2e1b145076d327a53";
+    message.url = "github:LiGoldragon/message/8aa6d7b465c9ba3720eb21f17b833c251b828353";
     message.inputs.nixpkgs.follows = "nixpkgs";
     message.inputs.crane.follows = "crane";
 
