@@ -68,6 +68,14 @@ pkgs.runCommand "herdr-toast-delivery" {
   sha256sum --check --status \
     "$exact_home/.local/state/criomos/herdr-adoption/config.toml.pre-home-manager.sha256"
 
+  legacy_link_home="$TMPDIR/legacy-link-home"
+  mkdir -p "$legacy_link_home/.config/herdr"
+  ln -s ${legacyConfig} "$legacy_link_home/.config/herdr/config.toml"
+  HOME="$legacy_link_home" ${pkgs.bash}/bin/bash ${herdrAdoptionScript}
+  test ! -e "$legacy_link_home/.config/herdr/config.toml"
+  cmp ${legacyConfig} \
+    "$legacy_link_home/.local/state/criomos/herdr-adoption/config.toml.pre-home-manager"
+
   mismatch_home="$TMPDIR/mismatch-home"
   mkdir -p "$mismatch_home/.config/herdr"
   printf '%s\n' '[ui.toast]' 'delivery = "desktop"' > "$mismatch_home/.config/herdr/config.toml"

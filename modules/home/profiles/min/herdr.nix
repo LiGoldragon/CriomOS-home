@@ -67,19 +67,7 @@ in
     herdr_backup="$herdr_backup_directory/config.toml.pre-home-manager"
     herdr_checksum="$herdr_backup.sha256"
 
-    if [ -L "$herdr_config" ]; then
-      if [ "$(readlink -f "$herdr_config")" = "${herdrConfig}" ]; then
-        :
-      else
-        echo "Refusing Herdr adoption: $herdr_config is an unmanaged symlink" >&2
-        exit 1
-      fi
-    else
-      if [ ! -f "$herdr_config" ]; then
-        echo "Refusing Herdr adoption: $herdr_config is missing or is not a regular file" >&2
-        exit 1
-      fi
-
+    adopt_legacy_herdr_config() {
       if ! cmp -s "$herdr_config" "${legacyHerdrConfig}"; then
         echo "Refusing Herdr adoption: $herdr_config does not match the observed legacy configuration" >&2
         exit 1
@@ -105,7 +93,27 @@ in
       else
         (umask 077; printf '%s\n' "$herdr_actual_checksum" > "$herdr_checksum")
       fi
+    }
 
+    if [ -L "$herdr_config" ]; then
+      if [ "$(readlink -f "$herdr_config")" = "${herdrConfig}" ]; then
+        :
+      elif [ -f "$herdr_config" ]; then
+        # A prior Home Manager generation linked the recorded legacy file. It is
+        # safe to replace only after its contents and preserved backup verify.
+        adopt_legacy_herdr_config
+        rm -- "$herdr_config"
+      else
+        echo "Refusing Herdr adoption: $herdr_config is an unmanaged symlink" >&2
+        exit 1
+      fi
+    else
+      if [ ! -f "$herdr_config" ]; then
+        echo "Refusing Herdr adoption: $herdr_config is missing or is not a regular file" >&2
+        exit 1
+      fi
+
+      adopt_legacy_herdr_config
       rm -- "$herdr_config"
     fi
     '';
