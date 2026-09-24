@@ -46,6 +46,8 @@ let
   };
   packageName = package: package.pname or (package.name or "");
   hasPackage = name: builtins.any (package: packageName package == name) configuration.home.packages;
+  cleanupService = configuration.systemd.user.services.agent-intercom-fleet-cleanup;
+  cleanupTimer = configuration.systemd.user.timers.agent-intercom-fleet-cleanup;
 in
 assert !(configuration.home.file ? ".pi/agent/packages/agent-intercom-pi");
 assert !(configuration.home.file ? ".pi/agent/packages/agent-intercom-orchestrator");
@@ -55,6 +57,13 @@ assert configuration.home.activation ? mergeAgentIntercomCodexMcp;
 assert configuration.home.activation ? mergeAgentIntercomClaudeMcp;
 assert hasPackage "agent-intercom-runtime";
 assert builtins.elem claudeCodePackage configuration.home.packages;
+assert cleanupService.Service.ExecStart == "${agentIntercom}/bin/agent-intercom-fleet-cleanup";
+assert cleanupService.Service.Environment == "AGENT_INTERCOM_DISABLE_CLEANUP_TIMER=1";
+assert cleanupService.Service.Type == "oneshot";
+assert cleanupTimer.Timer.OnBootSec == "5min";
+assert cleanupTimer.Timer.OnUnitActiveSec == "15min";
+assert cleanupTimer.Timer.Persistent;
+assert cleanupTimer.Timer.Unit == "agent-intercom-fleet-cleanup.service";
 pkgs.runCommand "agent-intercom-integration-contract"
   {
     nativeBuildInputs = [
@@ -70,6 +79,7 @@ pkgs.runCommand "agent-intercom-integration-contract"
 
     test -x ${agentIntercom}/bin/coi
     test -x ${agentIntercom}/bin/cci
+    test -x ${agentIntercom}/bin/agent-intercom-fleet-cleanup
     test -x ${agentIntercom}/bin/claude-raw
     ! test -e ${agentIntercom}/bin/codex
     ! test -e ${agentIntercom}/bin/codex-raw
@@ -83,6 +93,8 @@ pkgs.runCommand "agent-intercom-integration-contract"
     grep -F ${codexCliPackage}/bin/codex ${agentIntercom}/bin/coi
     grep -F -- '--dangerously-skip-permissions' ${agentIntercom}/bin/cci
     grep -F ${claudeCodePackage}/bin/claude ${agentIntercom}/bin/cci
+    ! grep -F '/home/li/.pi/agent/packages/agent-intercom-orchestrator' \
+      ${agentIntercom}/bin/agent-intercom-fleet-cleanup
 
     protocol_home="$TMPDIR/protocol-home"
     mkdir -p "$protocol_home" "$TMPDIR/runtime"

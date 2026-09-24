@@ -57,6 +57,35 @@ lib.mkMerge [
       codexCliPackage
     ];
 
+    # Keep the fleet reaper under Home Manager ownership.  Upstream's mutable
+    # installer used a source path below ~/.pi, which becomes stale when that
+    # checkout disappears.  The packaged wrapper carries the exact pinned
+    # orchestrator source and its Node runtime in the immutable store instead.
+    systemd.user.services.agent-intercom-fleet-cleanup = {
+      Unit = {
+        Description = "Stop expired Agent Intercom worker cgroups";
+        After = [ "default.target" ];
+      };
+      Service = {
+        Type = "oneshot";
+        Environment = "AGENT_INTERCOM_DISABLE_CLEANUP_TIMER=1";
+        ExecStart = "${agentIntercom}/bin/agent-intercom-fleet-cleanup";
+        Nice = 10;
+        IOSchedulingClass = "idle";
+      };
+    };
+
+    systemd.user.timers.agent-intercom-fleet-cleanup = {
+      Unit.Description = "Periodically clean expired Agent Intercom workers";
+      Timer = {
+        OnBootSec = "5min";
+        OnUnitActiveSec = "15min";
+        Persistent = true;
+        Unit = "agent-intercom-fleet-cleanup.service";
+      };
+      Install.WantedBy = [ "timers.target" ];
+    };
+
     home.activation.mergeAgentIntercomCodexMcp = inputs.hexis.lib.mkManagedConfig {
       inherit lib pkgs hexis;
       file = "$HOME/.codex/config.toml";
