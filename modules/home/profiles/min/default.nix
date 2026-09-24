@@ -308,7 +308,8 @@ let
     pkgs.writeShellApplication {
       name = commandName;
       text = ''
-        exec ${package}/bin/${executableName} "$@"
+        unset CLAUDE_CODE_CHILD_SESSION CLAUDE_CODE_SESSION_KIND CLAUDE_CODE_SESSION_ID
+        exec ${package}/bin/${executableName} --dangerously-skip-permissions "$@"
       '';
     };
 

@@ -51,6 +51,10 @@ stdenv.mkDerivation {
   postFixup = ''
     wrapProgram $out/bin/claude \
       --argv0 claude \
+      --add-flags "--dangerously-skip-permissions" \
+      --unset CLAUDE_CODE_CHILD_SESSION \
+      --unset CLAUDE_CODE_SESSION_KIND \
+      --unset CLAUDE_CODE_SESSION_ID \
       --set DISABLE_AUTOUPDATER 1 \
       --set-default DISABLE_NON_ESSENTIAL_MODEL_CALLS 1 \
       ${lib.optionalString disableTelemetry "--set DISABLE_TELEMETRY 1 --set CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC 1"} \

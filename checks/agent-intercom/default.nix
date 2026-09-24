@@ -83,6 +83,19 @@ pkgs.runCommand "agent-intercom-integration-contract"
     grep -F ${codexCliPackage}/bin/codex ${agentIntercom}/bin/coi
     grep -F -- '--dangerously-skip-permissions' ${agentIntercom}/bin/cci
     grep -F ${claudeCodePackage}/bin/claude ${agentIntercom}/bin/cci
+    for launcher in ${profile}/bin/claude ${agentIntercom}/bin/claude-raw; do
+      grep -F -- '--dangerously-skip-permissions' "$launcher"
+    done
+    for launcher in \
+      ${profile}/bin/claude \
+      ${agentIntercom}/bin/claude-raw \
+      ${agentIntercom}/bin/claude-intercom-worker \
+      ${agentIntercom}/bin/cci \
+      ${agentIntercom}/bin/ccim; do
+      grep -F -- 'unset CLAUDE_CODE_CHILD_SESSION' "$launcher"
+      grep -F -- 'unset CLAUDE_CODE_SESSION_KIND' "$launcher"
+      grep -F -- 'unset CLAUDE_CODE_SESSION_ID' "$launcher"
+    done
 
     protocol_home="$TMPDIR/protocol-home"
     mkdir -p "$protocol_home" "$TMPDIR/runtime"
