@@ -25,8 +25,10 @@ let
   moduleConfiguration =
     if moduleResult.config ? content then moduleResult.config.content else moduleResult.config;
   service = moduleConfiguration.systemd.user.services.message-daemon.Service;
-  writer = service.ExecStartPre;
+  preserver = lib.head service.ExecStartPre;
+  writer = lib.last service.ExecStartPre;
   writerScript = lib.head (lib.splitString " " writer);
+  preservePath = "${stateDirectory}/messenger.sema.${messagePackage.name}.preopen";
   nexusModuleResult = import messageModule {
     inherit inputs lib pkgs;
     config = {
@@ -52,7 +54,7 @@ assert
   == "${messagePackage}/bin/message-nexus ${signalPath}";
 assert service.RuntimeDirectory == "message";
 assert service.RuntimeDirectoryMode == "0700";
-pkgs.runCommand "message-service-path" { nativeBuildInputs = [ pkgs.gnugrep ]; } ''
+pkgs.runCommand "message-service-path" { nativeBuildInputs = [ pkgs.coreutils pkgs.gnugrep ]; } ''
   set -eu
 
   grep -F '"{{$working_socket 432 $meta_socket 384 $router_socket [] UnixUser.$(' ${writerScript}
@@ -60,6 +62,20 @@ pkgs.runCommand "message-service-path" { nativeBuildInputs = [ pkgs.gnugrep ]; }
   ! grep -F '(ConfigurationWriteRequest ' ${writerScript}
   ! grep -F 'ConfigurationWriteRequest.' ${writerScript}
   grep -F '${messagePackage}/bin/message-write-configuration' ${writerScript}
+
+  mkdir -p '${stateDirectory}'
+  printf 'live-messenger-before-open\n' > '${stateDirectory}/messenger.sema'
+  ${preserver}
+  cmp '${stateDirectory}/messenger.sema' '${preservePath}'
+
+  # A partial or mismatched prior snapshot cannot be silently accepted.
+  rm '${preservePath}'
+  printf 'partial-copy\n' > '${preservePath}'
+  if ${preserver}; then
+    echo 'Message preserver accepted a mismatched pre-open snapshot' >&2
+    exit 1
+  fi
+  printf 'partial-copy\n' | cmp - '${preservePath}'
 
   # Exercise the same packaged writer that ExecStartPre invokes. A successful
   # write proves the module's nested contract is a Datom Struct at the real

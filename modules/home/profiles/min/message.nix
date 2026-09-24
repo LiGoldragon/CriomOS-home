@@ -66,6 +66,7 @@ let
     set -eu
     store=${lib.escapeShellArg databasePath}
     preserve="$store.${messagePackage.name}.preopen"
+    preserve_directory="$(${pkgs.coreutils}/bin/dirname "$preserve")"
 
     if [ ! -e "$store" ] && [ ! -L "$store" ]; then
       exit 0
@@ -79,11 +80,33 @@ let
         echo "Refusing Message pre-open preservation: $preserve is not a regular file" >&2
         exit 1
       fi
+      if ! ${pkgs.coreutils}/bin/cmp -s -- "$store" "$preserve"; then
+        echo "Refusing Message pre-open preservation: existing snapshot differs from live store" >&2
+        exit 1
+      fi
       exit 0
     fi
 
-    ${pkgs.coreutils}/bin/cp --reflink=auto --preserve=mode,timestamps -- "$store" "$preserve"
-    ${pkgs.coreutils}/bin/cmp -s -- "$store" "$preserve"
+    preserve_temp="$(${pkgs.coreutils}/bin/mktemp "$preserve_directory/.${messagePackage.name}.preopen.XXXXXX")"
+    cleanup_preserve_temp() {
+      ${pkgs.coreutils}/bin/rm -f -- "$preserve_temp"
+    }
+    trap cleanup_preserve_temp EXIT HUP INT TERM
+
+    ${pkgs.coreutils}/bin/cp --reflink=auto --preserve=mode,timestamps -- "$store" "$preserve_temp"
+    ${pkgs.coreutils}/bin/cmp -s -- "$store" "$preserve_temp"
+    if ${pkgs.coreutils}/bin/ln -- "$preserve_temp" "$preserve"; then
+      ${pkgs.coreutils}/bin/rm -f -- "$preserve_temp"
+      trap - EXIT HUP INT TERM
+      exit 0
+    fi
+
+    if [ -f "$preserve" ] && [ ! -L "$preserve" ] \
+      && ${pkgs.coreutils}/bin/cmp -s -- "$store" "$preserve"; then
+      exit 0
+    fi
+    echo "Refusing Message pre-open preservation: snapshot appeared but does not verify" >&2
+    exit 1
   '';
 in
 {
