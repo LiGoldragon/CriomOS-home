@@ -1,14 +1,28 @@
 {
   config,
+  inputs,
   lib,
+  pkgs,
   user,
   ...
 }:
 let
-  inherit (lib) mkIf mkOption optional;
+  inherit (lib)
+    makeBinPath
+    mkIf
+    mkOption
+    optional
+    ;
   inherit (lib.types) bool nullOr package;
   sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
   cfg = config.criomosHome.flow;
+  system = pkgs.stdenv.hostPlatform.system;
+  flowRuntimePath = makeBinPath [
+    inputs.herdr.packages.${system}.herdr
+    inputs.harness.packages.${system}.default
+    config.criomos.corePackages.codex
+    config.criomos.corePackages.claude
+  ];
 in
 {
   options.criomosHome.flow = {
@@ -48,6 +62,10 @@ in
         Type = "simple";
         RuntimeDirectory = "flow";
         RuntimeDirectoryMode = "0700";
+        Environment = [
+          "FLOW_SOURCE_ROOT=/home/li/primary"
+          "PATH=${flowRuntimePath}"
+        ];
         ExecStart = "${cfg.package}/bin/flow-nexus";
         Restart = "on-failure";
         RestartSec = 2;
