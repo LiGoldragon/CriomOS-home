@@ -38,6 +38,13 @@ let
   defaultModel = "deepseek-v4-flash";
   providerEndpoint = "https://api.deepseek.com/v1";
   providerGopassPath = "platform.deepseek.com/api-key";
+  # Keep DeepSeek as the default provider. A prompt can name this secondary
+  # OpenAI-compatible provider and any catalog model ID without changing the
+  # maintained Spirit judgment default.
+  openRouterProviderName = "openrouter";
+  openRouterDefaultModel = "openai/gpt-6-luna";
+  openRouterProviderEndpoint = "https://openrouter.ai/api/v1";
+  openRouterProviderGopassPath = "platform.openrouter.ai/api-key";
 
   # The agent daemon resolves its own provider credential at runtime. No secret
   # value is embedded in this Nix configuration.
@@ -72,7 +79,7 @@ let
 
     mkdir -p "$out"
     ${agentPackage}/bin/agent-write-configuration \
-      "AgentConfigurationWriteRequest.{${agentSocketPath} ${agentMetaSocketPath} 384 ${agentDatabasePath} [ProviderSeed.{${providerName} ${providerEndpoint} ${defaultModel} Gopass.${providerGopassPath}}] $out/${agentConfigurationPath}}" \
+      "AgentConfigurationWriteRequest.{${agentSocketPath} ${agentMetaSocketPath} 384 ${agentDatabasePath} [ProviderSeed.{${providerName} ${providerEndpoint} ${defaultModel} Gopass.${providerGopassPath}} ProviderSeed.{${openRouterProviderName} ${openRouterProviderEndpoint} ${openRouterDefaultModel} Gopass.${openRouterProviderGopassPath}}] $out/${agentConfigurationPath}}" \
       > "$out/configuration-written.dotos"
     test -s "$out/${agentConfigurationPath}"
   '';

@@ -42,6 +42,10 @@ let
         *'ProviderSeed (deepseek https://api.deepseek.com/v1 deepseek-v4-flash (Gopass platform.deepseek.com/api-key))'*) ;;
         *) exit 65 ;;
       esac
+      case "$request" in
+        *'ProviderSeed (openrouter https://openrouter.ai/api/v1 openai/gpt-6-luna (Gopass platform.openrouter.ai/api-key))'*) ;;
+        *) exit 66 ;;
+      esac
       output_path=''${request##* }
       output_path=''${output_path%))}
       printf 'fake agent configuration archive\n' > "$output_path"
