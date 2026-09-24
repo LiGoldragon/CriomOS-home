@@ -1,4 +1,10 @@
-{ config, lib, pkgs, user, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  user,
+  ...
+}:
 let
   enabled = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size "Min";
   package = pkgs.callPackage ../../../../owned-agents/codex-next { };
@@ -23,7 +29,8 @@ let
       exec ${package}/bin/codex --remote ${lib.escapeShellArg "unix://${socket}"} "$@"
     '';
   };
-in {
+in
+{
   config = lib.mkIf enabled {
     home.packages = [ client ];
     systemd.user.services.codex-remote-control-next = {

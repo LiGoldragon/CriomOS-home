@@ -1,3 +1,25 @@
+## Isolated Codex next server
+
+The minimum Home profile now declares `codex-remote-control-next.service`
+and the `codex-next` client. The candidate is the stock upstream
+0.158.0-alpha.9 release, pinned by artifact digest. The existing canonical
+Codex package and `codex-remote-control.service` retain their stable pin.
+
+Next owns `.codex-next`, including its own session database and control
+socket. On first start only, it copies existing account and configuration
+files into that private directory without printing credentials. Subsequent
+starts preserve next-owned files. It never shares the stable session store.
+
+A successful `model/list` is discovery, not inference acceptance. Check an
+actual completed turn on the next socket before selecting a newly exposed
+model. Launchers must retain the owning server endpoint with each binding;
+resuming a stable thread on next is not a server migration. Existing threads
+and the stable service are not restarted by the next service.
+
+The package and module check can be evaluated independently of host
+materialization using the flake's pinned nixpkgs and Home Manager inputs.
+Full Home activation continues through the OS/Lojix materialized projections.
+
 # Upgrades
 
 ## Claude Remote Control removal

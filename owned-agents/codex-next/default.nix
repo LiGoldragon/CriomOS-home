@@ -1,12 +1,23 @@
-{ lib, stdenvNoCC, fetchurl }:
+{
+  lib,
+  stdenvNoCC,
+  fetchurl,
+}:
 let
   version = "0.158.0-alpha.9";
   targets = {
-    x86_64-linux = { target = "x86_64-unknown-linux-musl"; hash = "sha256-r6jIHXWayHDyGbTKysFbpa1qERB7W3sQXI2Cg7jRFnw="; };
-    aarch64-linux = { target = "aarch64-unknown-linux-musl"; hash = "sha256-e202MgQU0Atua8WVlJJ/rIYksCL6j9hNMw3zOoYqPxA="; };
+    x86_64-linux = {
+      target = "x86_64-unknown-linux-musl";
+      hash = "sha256-r6jIHXWayHDyGbTKysFbpa1qERB7W3sQXI2Cg7jRFnw=";
+    };
+    aarch64-linux = {
+      target = "aarch64-unknown-linux-musl";
+      hash = "sha256-e202MgQU0Atua8WVlJJ/rIYksCL6j9hNMw3zOoYqPxA=";
+    };
   };
   artifact = targets.${stdenvNoCC.hostPlatform.system};
-in stdenvNoCC.mkDerivation {
+in
+stdenvNoCC.mkDerivation {
   pname = "codex-next";
   inherit version;
   src = fetchurl {
@@ -25,5 +36,10 @@ in stdenvNoCC.mkDerivation {
   installCheckPhase = ''
     test "$("$out/bin/codex" --version)" = "codex-cli ${version}"
   '';
-  meta = { description = "Pinned upstream Codex candidate for the isolated next server"; license = lib.licenses.asl20; platforms = builtins.attrNames targets; mainProgram = "codex"; };
+  meta = {
+    description = "Pinned upstream Codex candidate for the isolated next server";
+    license = lib.licenses.asl20;
+    platforms = builtins.attrNames targets;
+    mainProgram = "codex";
+  };
 }
