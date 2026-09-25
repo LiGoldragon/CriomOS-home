@@ -73,7 +73,7 @@
     # Flow Nexus — immutable release accepted by the full configured-builder
     # gate (9/9 flake checks and 54/54 tests). Keep its own tested dependency
     # graph instead of silently substituting this flake's Rust inputs.
-    flow.url = "github:LiGoldragon/flow/7cc19af0a1e4aff891e1fd8dce8d14b354eaee79";
+    flow.url = "github:LiGoldragon/flow/aba7467592088242a15258abc751c89bb52d4c2c";
 
     # The public immutable recipe owns the audited proprietary installer source;
     # this lock identifies the exact v2 status-bridge producer.
