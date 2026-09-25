@@ -846,6 +846,26 @@
         "type": "github"
       }
     },
+    "field-clj": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1790367662,
+        "narHash": "sha256-0DltuMGHqepYrEOSA5d1SVU186aT749CruoXZ/S20qo=",
+        "ref": "refs/heads/main",
+        "rev": "212cf38f67a3f6729169902bb490e61880e204cb",
+        "revCount": 2,
+        "type": "git",
+        "url": "ssh://git@github.com/LiGoldragon/field-clj.git"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/LiGoldragon/field-clj.git"
+      }
+    },
     "firefox-gnome-theme": {
       "flake": false,
       "locked": {
@@ -2271,6 +2291,8 @@
         "claude-answers": "claude-answers",
         "crane": "crane_3",
         "criomos-lib": "criomos-lib",
+        "field-clj": "field-clj",
+        "flow": "flow",
         "google-workspace-cli": "google-workspace-cli",
         "harness": "harness",
         "herdr": "herdr",
