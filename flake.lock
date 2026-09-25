@@ -1197,17 +1197,17 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1790351608,
-        "narHash": "sha256-AWRI7NNIIqh8PDpcMKYoOPM3TTeCSBehO1bPilGYtw4=",
+        "lastModified": 1790353839,
+        "narHash": "sha256-VUBdzIBfq3kcTAk+D/qXNONALxAI2BEgQ/TdBM3cc4U=",
         "owner": "LiGoldragon",
         "repo": "flow",
-        "rev": "aba7467592088242a15258abc751c89bb52d4c2c",
+        "rev": "2586ea19bf8ebd607490dec7b97a4e378c746407",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "flow",
-        "rev": "aba7467592088242a15258abc751c89bb52d4c2c",
+        "rev": "2586ea19bf8ebd607490dec7b97a4e378c746407",
         "type": "github"
       }
     },

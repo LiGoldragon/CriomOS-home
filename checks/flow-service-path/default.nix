@@ -3,7 +3,7 @@ let
   inherit (pkgs) lib;
   system = pkgs.stdenv.hostPlatform.system;
   module = ../../modules/home/profiles/min/flow.nix;
-  expectedFlowRevision = "aba7467592088242a15258abc751c89bb52d4c2c";
+  expectedFlowRevision = "2586ea19bf8ebd607490dec7b97a4e378c746407";
   flowPackage = pkgs.writeShellScriptBin "flow-nexus" "exit 0";
   herdrPackage = pkgs.writeShellScriptBin "herdr" "exit 0";
   flowIdPackage = pkgs.writeShellScriptBin "flow-id" "exit 0";
