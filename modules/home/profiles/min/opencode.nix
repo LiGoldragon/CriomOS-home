@@ -10,11 +10,13 @@ let
   enabled = lib.any (capability: (capability.kind or null) == "openCodeTesting") capabilities;
   yggAddress = horizon.node.keys.yggdrasil.address or null;
   credentialSource = "/run/secrets/opencodeServerPassword";
-  testingConfig = pkgs.writeText "opencode-testing.json" (builtins.toJSON {
-    "$schema" = "https://opencode.ai/config.json";
-    share = "disabled";
-    permission.bash = "ask";
-  });
+  testingConfig = pkgs.writeText "opencode-testing.json" (
+    builtins.toJSON {
+      "$schema" = "https://opencode.ai/config.json";
+      share = "disabled";
+      permission.bash = "ask";
+    }
+  );
   credentialLauncher = pkgs.writeText "opencode-testing-launch.py" ''
     import os
     import sys
@@ -35,7 +37,10 @@ let
   '';
   runner = pkgs.writeShellApplication {
     name = "opencode-testing-server";
-    runtimeInputs = [ pkgs.python3 pkgs.opencode ];
+    runtimeInputs = [
+      pkgs.python3
+      pkgs.opencode
+    ];
     text = ''
       set -eu
       credential_path="$CREDENTIALS_DIRECTORY/opencode-server-password"
@@ -63,7 +68,12 @@ in
 
     # This overlay is loaded after the existing user config, leaving its protected
     # state, plugins, and other policy untouched while forcing this POC's policy.
-    home.packages = [ login ];
+    # Keep the tested login wrapper, while also making the actual OpenCode CLI
+    # a declarative member of the Home profile.
+    home.packages = [
+      pkgs.opencode
+      login
+    ];
 
     systemd.user.services.opencode-testing = {
       Unit = {

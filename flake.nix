@@ -73,7 +73,7 @@
     # Flow Nexus — immutable release accepted by the full configured-builder
     # gate (9/9 flake checks and 54/54 tests). Keep its own tested dependency
     # graph instead of silently substituting this flake's Rust inputs.
-    flow.url = "github:LiGoldragon/flow/2586ea19bf8ebd607490dec7b97a4e378c746407";
+    flow.url = "github:LiGoldragon/flow/aba7467592088242a15258abc751c89bb52d4c2c";
 
     # The public immutable recipe owns the audited proprietary installer source;
     # this lock identifies the exact v2 status-bridge producer.
@@ -624,9 +624,12 @@
           };
           message-service-path = checkPkgs.callPackage ./checks/message-service-path { inherit inputs; };
           flow-service-path = checkPkgs.callPackage ./checks/flow-service-path { inherit inputs; };
+          opencode-testing = checkPkgs.callPackage ./checks/opencode-testing { inherit inputs; };
           herdr-toast-delivery = checkPkgs.callPackage ./checks/herdr-toast-delivery { inherit inputs; };
           herdr-agent-executable = checkPkgs.callPackage ./checks/herdr-agent-executable { inherit inputs; };
-          herdr-codex-integration = checkPkgs.callPackage ./checks/herdr-codex-integration { inherit inputs; };
+          herdr-codex-integration = checkPkgs.callPackage ./checks/herdr-codex-integration {
+            inherit inputs;
+          };
           cluster-relay-package = checkPkgs.callPackage ./checks/cluster-relay-package { inherit inputs; };
           gws = checkPkgs.callPackage ./checks/gws { inherit inputs; };
           playwright-cli = checkPkgs.callPackage ./checks/playwright-cli { };
