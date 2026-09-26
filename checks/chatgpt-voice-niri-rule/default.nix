@@ -39,7 +39,7 @@ let
   chatgptRule = lib.findFirst (
     rule: builtins.any (match: (match.app-id or "") == "^chatgpt$") rule.matches
   ) null settings.window-rules;
-  microphoneMuteBinding = settings.binds."XF86AudioMicMute".action.command;
+  microphoneMuteBinding = settings.binds."XF86AudioMicMute".action.spawn;
 in
 assert lib.assertMsg (chatgptRule != null)
   "ChatGPT must have a Niri window rule";

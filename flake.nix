@@ -519,17 +519,6 @@
         "x86_64-linux"
         "aarch64-linux"
       ];
-      ownedCheckNames = [
-        "agent-intercom"
-        "desktop-app-support"
-        "ai-agent-launch-orchestration"
-        "claude-desktop-declared-cli"
-        "claude-desktop-egl-linkage"
-        "claude-desktop-launcher-linkage"
-        "codex-remote-control"
-        "codex-remote-control-vm"
-        "codex-remote"
-      ];
       agentIntercomSupported = system: lib.elem system agentIntercomSystems;
       desktopAppSupported =
         system:
@@ -566,8 +555,10 @@
             value = true;
           }) (builtins.attrNames (projectPackages.${system} or { }))
         );
-      # Blueprint imports every check before it can inspect platform metadata.
-      # Select desktop-app checks from the actual owned package outputs rather
+      # Blueprint imports every check under ./checks with its own package set
+      # before this flake can filter it. Checks that need the Home package set
+      # live under ./gates and are called explicitly in projectChecks below.
+      # Select package checks from the actual owned package outputs rather
       # than a shared architecture predicate.
       derivationChecks = builtins.mapAttrs (
         _system: checks:
@@ -576,7 +567,7 @@
             name: value:
             lib.isDerivation value
             && (!lib.hasPrefix "pkgs-" name || builtins.hasAttr name (packageCheckNames _system))
-          ) (builtins.removeAttrs checks ownedCheckNames)
+          ) checks
         else
           blueprintGeneratedChecks _system
       ) (bp.checks or { });
@@ -652,7 +643,7 @@
           main-contract-pins = checkPkgs.callPackage ./checks/main-contract-pins {
             inherit inputs;
           };
-          codex-remote = checkPkgs.callPackage ./checks/codex-remote { };
+          codex-remote = checkPkgs.callPackage ./gates/codex-remote { };
           codex-artifact-gateway = checkPkgs.callPackage ./checks/codex-artifact-gateway { };
           codex-artifact-gateway-module = checkPkgs.callPackage ./checks/codex-artifact-gateway-module {
             inherit inputs;
@@ -668,31 +659,31 @@
           };
         }
         // lib.optionalAttrs (agentIntercomSupported _system) {
-          agent-intercom = checkPkgs.callPackage ./checks/agent-intercom { inherit inputs; };
+          agent-intercom = checkPkgs.callPackage ./gates/agent-intercom { inherit inputs; };
         }
         // lib.optionalAttrs (desktopAppSupported _system) {
-          claude-desktop-declared-cli = checkPkgs.callPackage ./checks/claude-desktop-declared-cli {
+          claude-desktop-declared-cli = checkPkgs.callPackage ./gates/claude-desktop-declared-cli {
             inherit inputs;
           };
-          claude-desktop-launcher-linkage = checkPkgs.callPackage ./checks/claude-desktop-launcher-linkage {
+          claude-desktop-launcher-linkage = checkPkgs.callPackage ./gates/claude-desktop-launcher-linkage {
             inherit inputs;
           };
-          claude-desktop-egl-linkage = checkPkgs.callPackage ./checks/claude-desktop-egl-linkage {
+          claude-desktop-egl-linkage = checkPkgs.callPackage ./gates/claude-desktop-egl-linkage {
             inherit inputs;
           };
-          desktop-app-support = checkPkgs.callPackage ./checks/desktop-app-support {
+          desktop-app-support = checkPkgs.callPackage ./gates/desktop-app-support {
             inherit inputs;
           };
         }
         // lib.optionalAttrs (_system == "x86_64-linux") {
-          ai-agent-launch-orchestration = checkPkgs.callPackage ./checks/ai-agent-launch-orchestration {
+          ai-agent-launch-orchestration = checkPkgs.callPackage ./gates/ai-agent-launch-orchestration {
             inherit inputs;
           };
           codex-next = checkPkgs.callPackage ./checks/codex-next { inherit inputs; };
-          codex-remote-control = checkPkgs.callPackage ./checks/codex-remote-control {
+          codex-remote-control = checkPkgs.callPackage ./gates/codex-remote-control {
             inherit inputs;
           };
-          codex-remote-control-vm = checkPkgs.callPackage ./checks/codex-remote-control-vm {
+          codex-remote-control-vm = checkPkgs.callPackage ./gates/codex-remote-control-vm {
             inherit inputs;
           };
         }
