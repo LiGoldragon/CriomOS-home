@@ -1,5 +1,72 @@
 # Upgrades
 
+## Flow 0.16.0 and Message 0.16.0
+
+Flow and Message move together: they share signal-flow `1c9e4b30` and
+meta-signal-flow `cbea31ef`, and a Message on this pin cannot talk to any
+older Flow Nexus. Pin both or neither.
+
+What breaks, and what replaces it:
+
+- **Ordinary `Send` is gone.** Nothing on Flow's ordinary socket writes into a
+  pane. `flow 'Send.{ ... }'` no longer parses; the replacement is
+  `flow-meta 'Deliver.{ <delivery-id> <flow> Soft.{ <message-id> Owner
+  Text.«...» } }'` on the privileged socket. No executable caller in this
+  cluster used ordinary `Send`: the live callers are `flow 'List.{}'`
+  (field-clj `#observe`) and `flow 'ResolveRecipient.<id>'`
+  (`primary/tools/field-flow-preflight.mjs`), both untouched.
+- **Flow's meta socket is gated.** A flow whose aspect is outside
+  `MetaAspects` (`[ Psyche ]`) is answered `MetaRefused.PeerNotAuthorized`.
+  The owner — any process in no pane, which includes every systemd user unit —
+  is admitted, and so is the one executable named by `MessageNexusPath`.
+- **`MessageNexusPath` has no environment override.** It lives only in the
+  meta `Configuration`, so `flow-configuration.service` makes one
+  `flow-meta 'Configure.{ ... }'` request after `flow-nexus.service`, carrying
+  the whole record with the pinned `message-nexus` store path in its last
+  position. Without that request Flow refuses Message and every delivery
+  fails closed.
+- **Message's executables changed.** `message-daemon`, `meta-message`,
+  `relay`, `message-cluster`, `message-validate-output` and
+  `message-write-configuration` are gone. The Nexus is `message-nexus` started
+  with **no arguments** — it reads `HOME` and `XDG_RUNTIME_DIR` and nothing
+  else — and the clients are `message` and `message-meta`, which already
+  default to the sockets the Nexus serves, so they are installed unwrapped.
+  The unit is `message-nexus.service`; `message-daemon.service` no longer
+  exists.
+- **Message's store changed.** The new store is
+  `~/.local/state/message/message.sema`. The 0.14 `messenger.sema` holds no
+  record kind 0.16 can read and nothing is migrated. The declared activation
+  step `retireMessengerStore` moves `messenger.sema`, its `.preopen`
+  sidecars, and `message-daemon.signal` into
+  `~/.local/state/message/retired-0.14/`. It is idempotent, and it refuses
+  rather than overwrite anything already retired, so no ledger can be lost.
+- **The cf7879 cluster relay is removed.** It ran Message's `relay`
+  executable, which no longer exists. `criomosHome.clusterRelay` and its
+  check are gone; a projection that set either fails evaluation.
+
+### Activating
+
+1. `systemctl --user daemon-reload` after activation, then confirm
+   `message-daemon.service` is gone and stop any surviving instance:
+   `systemctl --user disable --now message-daemon.service`.
+2. `systemctl --user status flow-nexus.service flow-configuration.service
+   message-nexus.service`. `flow-configuration.service` must be `active
+   (exited)` having printed `Configured.{ ... }`; a `MetaRefused` or a
+   refusal makes the unit fail, which is the signal that Flow is not
+   admitting Message.
+3. Witness admission before trusting the route: `flow-meta 'Deliver.{ ... }'`
+   from the owner's own shell, and one Message delivery end to end.
+
+### Rollback
+
+The previous generation. `nix profile rollback` or activating the prior Home
+generation restores Flow 0.14.0, Message 0.14.0 and
+`message-daemon.service`; then move `retired-0.14/messenger.sema` and its
+sidecars back beside it, because 0.14 opens no other store. Rollback target:
+the Home generation active before this one, named in the deployment receipt.
+There is no automatic countdown here: neither unit can take network or
+remote access away, so no timeout is armed.
+
 ## Claude Remote Control removal
 
 The `claude-remote-control` user service, its `criomos.claudeRemoteControl`

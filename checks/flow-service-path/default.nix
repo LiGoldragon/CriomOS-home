@@ -3,8 +3,9 @@ let
   inherit (pkgs) lib;
   system = pkgs.stdenv.hostPlatform.system;
   module = ../../modules/home/profiles/min/flow.nix;
-  expectedFlowRevision = "9fcd625ac7a0d44be58b9d365a94064e91f09219";
+  expectedFlowRevision = "9aa9bf88e3ff6f3b68864eb300ee009897162ef4";
   flowPackage = pkgs.writeShellScriptBin "flow-nexus" "exit 0";
+  messageNexusPath = "/nix/store/fixture-message/bin/message-nexus";
   herdrPackage = pkgs.writeShellScriptBin "herdr" "exit 0";
   flowIdPackage = pkgs.writeShellScriptBin "flow-id" "exit 0";
   codexPackage = pkgs.writeShellScriptBin "codex" "exit 0";
@@ -33,6 +34,7 @@ let
     config.criomosHome.flow = {
       enable = true;
       package = flowPackage;
+      inherit messageNexusPath;
     };
   };
   disabled = import module {
@@ -44,6 +46,7 @@ let
     config.criomosHome.flow = {
       enable = false;
       package = null;
+      inherit messageNexusPath;
     };
   };
   wrongUser = import module {
@@ -55,10 +58,13 @@ let
     config.criomosHome.flow = {
       enable = true;
       package = flowPackage;
+      inherit messageNexusPath;
     };
   };
   unit = enabledByDefault.config.systemd.user.services.flow-nexus;
   disabledUnit = disabled.config.systemd.user.services.flow-nexus;
+  configureUnit = enabledByDefault.config.systemd.user.services.flow-configuration;
+  configureCommand = configureUnit.content.Service.ExecStart;
 in
 assert unit.condition;
 assert inputs.flow.sourceInfo.rev == expectedFlowRevision;
@@ -73,6 +79,15 @@ assert unit.content.Unit.After == [ "codex-remote-control.service" ];
 assert unit.content.Unit.Requires == [ "codex-remote-control.service" ];
 assert !disabledUnit.condition;
 assert !(builtins.elemAt wrongUser.config.assertions 1).assertion;
+# The privileged Configuration is declared, ordered behind the Nexus, and
+# names the admitted Message Nexus executable in its last position.
+assert configureUnit.condition;
+assert configureUnit.content.Unit.After == [ "flow-nexus.service" ];
+assert configureUnit.content.Unit.Requires == [ "flow-nexus.service" ];
+assert configureUnit.content.Service.Type == "oneshot";
+assert lib.hasInfix "Configure.{ %t/flow/flow.sock %t/flow/flow-meta.sock /home/li/primary " configureCommand;
+assert lib.hasInfix "[ { Claude [ / «!» # ] [ esc esc ] [ enter ] } { Codex [ / «!» ] [ esc ] [] } ] [ Psyche ] ${messageNexusPath} }" configureCommand;
+assert !disabled.config.systemd.user.services.flow-configuration.condition;
 pkgs.runCommand "flow-service-path" { } ''
   mkdir -p "$out"
   printf '%s\n' '${expectedFlowRevision}' > "$out/flow-revision"

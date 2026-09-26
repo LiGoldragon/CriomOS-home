@@ -70,9 +70,10 @@
     # Orchestrate — supervises the multi-agent claim/coordination daemon
     # (systemd --user unit + pinned flake input).
     ./profiles/min/orchestrate.nix
-    # Message — supervises the messenger daemon (durable agent-identity
-    # map + delivery registry in messenger.sema; systemd --user unit +
-    # pinned flake input).
+    # Message — supervises the Message Nexus (the durable message ledger in
+    # ~/.local/state/message/message.sema; systemd --user unit + pinned flake
+    # input). It writes no pane: every delivery is Flow's `Deliver` over
+    # Flow's meta socket, which is why it names the executable Flow admits.
     ./profiles/min/message.nix
     # Compatibility messenger CLI for live Flow routes. The package supplies
     # messenger-clj and all ten hm-* command names from one immutable closure.

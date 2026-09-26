@@ -91,8 +91,12 @@
     harness.inputs.nixpkgs.follows = "nixpkgs";
 
     # Flow Nexus is a pinned Home-managed service. Keep the package, client,
-    # and user unit in one immutable closure.
-    flow.url = "github:LiGoldragon/flow/9fcd625ac7a0d44be58b9d365a94064e91f09219";
+    # and user unit in one immutable closure. Flow 0.16.0 is the only writer
+    # into a flow's pane: ordinary `Send` is gone, `flow-meta 'Deliver.…'`
+    # replaces it, and the meta socket admits only the owner, a Psyche peer,
+    # and the executable named by `MessageNexusPath` — which Home configures
+    # to the pinned `message-nexus` (see profiles/min/flow.nix).
+    flow.url = "github:LiGoldragon/flow/9aa9bf88e3ff6f3b68864eb300ee009897162ef4";
     flow.inputs.nixpkgs.follows = "nixpkgs";
 
     # Standalone compatibility messenger used by the live Flow routes. Home
@@ -174,16 +178,15 @@
     orchestrate.url = "github:LiGoldragon/orchestrate/9070cbb8717813b127e448dd5a43a2095daf7d1b";
     orchestrate.inputs.nixpkgs.follows = "nixpkgs";
 
-    # Message — the messenger: stateful local messaging daemon owning the
-    # durable agent-identity map, delivery registry, message ledger,
-    # per-recipient inboxes, and thread index (messenger.sema). Consumed in
-    # modules/home/profiles/min/message.nix, which gives it a systemd --user
-    # supervisor. Pinned coherently with the cluster relay client: the messenger
-    # (converged contracts, delivery legs, PTY control-socket delivery) plus
-    # the additive v2 -> v3 store migration — the deployed store, born at v2,
-    # is preserved aside and re-stamped on first open — on the
-    # incident-hardened sema-engine 0.11.2 orchestrate 0.14.1 runs.
-    message.url = "github:LiGoldragon/message/930c5169ffcf5fa3784b34b2751763009e926d1d";
+    # Message 0.16.0 — the durable message ledger. The Nexus is `message-nexus`
+    # started with no arguments; its CLIs are `message` and `message-meta`. It
+    # writes no pane: every delivery is Flow's `Deliver` over Flow's meta
+    # socket, so this pin and the `flow` pin above share signal-flow 1c9e4b30
+    # and meta-signal-flow cbea31ef and must move together. Its store is
+    # `~/.local/state/message/message.sema`; the retired `messenger.sema` is
+    # never opened and is moved aside by the activation step in
+    # modules/home/profiles/min/message.nix.
+    message.url = "github:LiGoldragon/message/f1843dbaa63f38634dc10d3b28df2f4a482d6d35";
     message.inputs.nixpkgs.follows = "nixpkgs";
     message.inputs.crane.follows = "crane";
 
@@ -649,7 +652,6 @@
           herdr-codex-integration = checkPkgs.callPackage ./checks/herdr-codex-integration { inherit inputs; };
           herdr-server = checkPkgs.callPackage ./checks/herdr-server { inherit inputs; };
           field-monitoring = checkPkgs.callPackage ./checks/field-monitoring { inherit inputs; };
-          cluster-relay-package = checkPkgs.callPackage ./checks/cluster-relay-package { inherit inputs; };
           gws = checkPkgs.callPackage ./checks/gws { inherit inputs; };
           playwright-cli = checkPkgs.callPackage ./checks/playwright-cli { };
           plannotator = checkPkgs.callPackage ./checks/plannotator { };
