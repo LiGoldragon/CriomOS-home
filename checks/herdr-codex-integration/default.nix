@@ -18,10 +18,17 @@ let
     } ];
   };
   hook = homeConfiguration.config.home.file.".codex-next/herdr-agent-state.sh".source;
+  # The installed hook is the pinned Herdr's own asset; its integration
+  # version is whatever that Herdr release ships, read from the same source.
+  upstreamHook = builtins.readFile "${inputs.herdr}/src/integration/assets/codex/herdr-agent-state.sh";
+  upstreamVersionLine = pkgs.lib.findFirst (
+    line: pkgs.lib.hasPrefix "# HERDR_INTEGRATION_VERSION=" line
+  ) (throw "pinned Herdr hook declares no HERDR_INTEGRATION_VERSION") (pkgs.lib.splitString "\n" upstreamHook);
+  upstreamVersion = pkgs.lib.removePrefix "# " upstreamVersionLine;
   hookMerge = pkgs.writeText "herdr-codex-next-hook-merge" homeConfiguration.config.home.activation.mergeCodexNextHerdrSessionHook.data;
 in
 assert pkgs.lib.hasInfix "HERDR_INTEGRATION_ID=codex" (builtins.readFile hook);
-assert pkgs.lib.hasInfix "HERDR_INTEGRATION_VERSION=6" (builtins.readFile hook);
+assert pkgs.lib.hasInfix upstreamVersion (builtins.readFile hook);
 pkgs.runCommand "herdr-codex-integration" { nativeBuildInputs = [ pkgs.bash pkgs.coreutils pkgs.jq ]; } ''
   set -eu
   home="$TMPDIR/home"
