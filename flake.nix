@@ -99,7 +99,7 @@
     # profiles/min/flow-message-next.nix (lib/stable-next-service.nix). It
     # moves with message-next below: both share signal-flow 1c9e4b30 and
     # meta-signal-flow 2ac045c2.
-    flow-next.url = "github:LiGoldragon/flow/908135684f27c4c912b9808e196fb82fe11f4ce6";
+    flow-next.url = "github:LiGoldragon/flow/ac216c899b8e43fa3401609e3ca2605d9856e7e4";
     flow-next.inputs.nixpkgs.follows = "nixpkgs";
 
     # Standalone compatibility messenger used by the live Flow routes. Home

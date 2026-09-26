@@ -17,7 +17,7 @@ let
   expected = {
     stableFlow = "9fcd625ac7a0d44be58b9d365a94064e91f09219";
     stableMessage = "930c5169ffcf5fa3784b34b2751763009e926d1d";
-    nextFlow = "908135684f27c4c912b9808e196fb82fe11f4ce6";
+    nextFlow = "ac216c899b8e43fa3401609e3ca2605d9856e7e4";
     nextMessage = "481b579fcf72797ffa9ccf8ce4e2283a58cdff97";
   };
 
