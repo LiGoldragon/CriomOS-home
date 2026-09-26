@@ -7,6 +7,8 @@
 }:
 let
   herdrPackage = pkgs.callPackage ../../../../packages/herdr { inherit inputs; };
+  # Matches the flake input `herdr.url = "github:herdrdev/herdr/v0.8.2"`.
+  herdrVersionPin = "0.8.2";
   stableCodexClientPackage = pkgs.writeShellApplication {
     name = "codex-stable-flow-client";
     text = ''
@@ -70,9 +72,54 @@ in
       default = stableCodexClientPackage;
       description = "Immutable Flow client wrapper that sets only stable CODEX_HOME and forwards argv unchanged.";
     };
+    versionPin = lib.mkOption {
+      type = lib.types.str;
+      readOnly = true;
+      default = herdrVersionPin;
+      description = "Herdr version the flake input pins (herdrdev/herdr/v${herdrVersionPin}); the declared server refuses any other package version.";
+    };
+    # The Herdr server holds every open pane. Enabling this replaces a
+    # server started by hand (a transient `systemd-run herdr server` unit):
+    # that handover closes every pane, so it is a window the living opens.
+    # The activation guard below refuses while any other server runs.
+    server.enable = lib.mkEnableOption "the declared Herdr server user service (herdr-server.service)";
   };
 
-  config = {
+  config = lib.mkMerge [
+    (lib.mkIf config.criomosHome.herdr.server.enable {
+      assertions = [
+        {
+          assertion = config.criomosHome.herdr.package.version == herdrVersionPin;
+          message = "herdr-server: the Herdr package is ${config.criomosHome.herdr.package.version}, not the pinned ${herdrVersionPin}.";
+        }
+      ];
+      # Observed from the live transient unit: `herdr server`, Type=exec, no
+      # restart, control-group kill, in app.slice, from the home directory,
+      # with the user manager's environment and no Environment= of its own.
+      systemd.user.services.herdr-server = {
+        Unit.Description = "Herdr server (terminal workspace for agent panes)";
+        Service = {
+          Type = "exec";
+          ExecStart = "${config.criomosHome.herdr.package}/bin/herdr server";
+          WorkingDirectory = "%h";
+          Restart = "no";
+          KillMode = "control-group";
+          Slice = "app.slice";
+        };
+        Install.WantedBy = [ "default.target" ];
+      };
+      home.activation.herdrServerHandoverGuard = lib.hm.dag.entryBefore [ "writeBoundary" ] ''
+        declared_pid="$(${pkgs.systemd}/bin/systemctl --user show -p MainPID --value herdr-server.service 2>/dev/null || echo 0)"
+        for pid in $(${pkgs.procps}/bin/pgrep -u "$(id -u)" -x herdr || true); do
+          if [ "$(tr '\0' '\n' < "/proc/$pid/cmdline" 2>/dev/null | sed -n 2p)" = server ] && [ "$pid" != "$declared_pid" ]; then
+            owner="$(sed -n 's|.*/||p' "/proc/$pid/cgroup" 2>/dev/null | head -n 1)"
+            errorEcho "herdr-server: another Herdr server (PID $pid, $owner) holds the panes; stop it in a handover window before activating the declared server"
+            exit 1
+          fi
+        done
+      '';
+    })
+    {
     xdg.configFile."herdr/config.toml".source = herdrConfig;
 
   home.file.".codex-next/herdr-agent-state.sh" = {
@@ -203,5 +250,6 @@ in
       rm -- "$herdr_config"
     fi
     '';
-  };
+    }
+  ];
 }
