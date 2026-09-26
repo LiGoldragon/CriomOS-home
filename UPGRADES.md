@@ -1,5 +1,20 @@
 # Upgrades
 
+## Next Flow 0.17.0 and next Message 0.17.0 (next slot moves together)
+
+The next slot moves from Flow 0.16.0 / Message 0.16.0 to Flow 0.17.0
+(`90813568`) / Message 0.17.0 (`481b579f`), together: both repin
+meta-signal-flow 11.0.0, and a 0.16 Message cannot decode 0.17 Flow's new
+`FlowExited`/`FlowRetired` refusals. Units, anchors, sockets and clients are
+unchanged; stable is untouched. The 0.16 next stores open under 0.17
+unchanged (witnessed on ouranos: `flow-next 'List.{}'` kept its bindings and
+`message-next` kept its receipts), so no store is moved.
+
+Activating: restart `flow-nexus-next`, then `flow-configuration-next` (its
+`MessageNexusPath` names the 0.17 message-nexus; Flow reads it at start, so
+restart `flow-nexus-next` once more after it), then `message-nexus-next`.
+Rollback: the previous generation; the stores are shared with 0.16.
+
 ## Next Flow 0.16.0 and next Message 0.16.0 beside the stable pair
 
 Additive: stable Flow 0.14.0 (`flow-nexus.service`) and stable Message

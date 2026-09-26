@@ -5,7 +5,7 @@
 # (unit names, runtime directories, socket and store paths); every next
 # counterpart must differ, and the pins must be the ones named here.
 #
-# Runtime half: stable Flow 0.14 and next Flow 0.16 run side by side in one
+# Runtime half: stable Flow 0.14 and next Flow 0.17 run side by side in one
 # runtime directory, next Message beside them, each started exactly as its
 # unit starts it; the next CLIs reach only the next sockets.
 let
@@ -17,8 +17,8 @@ let
   expected = {
     stableFlow = "9fcd625ac7a0d44be58b9d365a94064e91f09219";
     stableMessage = "930c5169ffcf5fa3784b34b2751763009e926d1d";
-    nextFlow = "9aa9bf88e3ff6f3b68864eb300ee009897162ef4";
-    nextMessage = "f1843dbaa63f38634dc10d3b28df2f4a482d6d35";
+    nextFlow = "908135684f27c4c912b9808e196fb82fe11f4ce6";
+    nextMessage = "481b579fcf72797ffa9ccf8ce4e2283a58cdff97";
   };
 
   stub = name: pkgs.writeShellScriptBin name "exit 0";
@@ -114,7 +114,7 @@ assert messageNext.RuntimeDirectory == "message-next";
 # Sockets are pairwise distinct across both slots.
 assert hasInfix "%t/message/message.sock %t/message/message-owner.sock" (lib.last stableMessageService.ExecStartPre);
 assert builtins.length (lib.unique (stableSockets ++ nextSockets)) == 8;
-# Next runs the pinned 0.16 executables with no arguments, on its anchors.
+# Next runs the pinned 0.17 executables with no arguments, on its anchors.
 assert flowNext.ExecStart == "${flowNextPackage}/bin/flow-nexus";
 assert messageNext.ExecStart == "${messageNextPackage}/bin/message-nexus";
 assert builtins.elem "HOME=${homeDirectory}/.local/state/flow-next" flowNext.Environment;
