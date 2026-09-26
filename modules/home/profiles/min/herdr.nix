@@ -167,11 +167,17 @@ in
         :
       elif [ -f "$herdr_config" ] \
         && [[ "$(readlink "$herdr_config")" == /nix/store/*-home-manager-files/.config/herdr/config.toml ]]; then
-        # A prior Home Manager generation linked the recorded themed legacy
-        # configuration. It is safe to replace only after it and its original
-        # pre-Home-Manager backup both verify.
+        # A prior Home Manager generation linked the recorded themed
+        # configuration. That generation followed the first adoption, which
+        # recorded the pre-Home-Manager backup. It is safe to replace only after
+        # the link and that existing backup both verify; the linked file is
+        # Home Manager's own output and is never recorded as the backup.
         if ! cmp -s "$herdr_config" "${predecessorManagedHerdrConfig}"; then
           echo "Refusing Herdr adoption: $herdr_config does not match the recorded predecessor configuration" >&2
+          exit 1
+        fi
+        if [ ! -f "$herdr_backup" ] || [ -L "$herdr_backup" ]; then
+          echo "Refusing Herdr adoption: predecessor link has no recorded pre-Home-Manager backup at $herdr_backup" >&2
           exit 1
         fi
         verify_legacy_herdr_backup

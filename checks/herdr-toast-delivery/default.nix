@@ -92,8 +92,14 @@ pkgs.runCommand "herdr-toast-delivery" {
   sha256sum --check --status \
     "$exact_home/.local/state/criomos/herdr-adoption/config.toml.pre-home-manager.sha256"
 
+  # A predecessor generation follows the first adoption, so its home already
+  # holds the recorded legacy backup; the adoption verifies that backup and
+  # never records the linked managed file in its place.
   predecessor_link_home="$TMPDIR/predecessor-link-home"
-  mkdir -p "$predecessor_link_home/.config/herdr"
+  mkdir -p "$predecessor_link_home/.config/herdr" \
+    "$predecessor_link_home/.local/state/criomos/herdr-adoption"
+  cp ${legacyConfig} \
+    "$predecessor_link_home/.local/state/criomos/herdr-adoption/config.toml.pre-home-manager"
   ln -s ${priorHomeManagerFiles}/.config/herdr/config.toml \
     "$predecessor_link_home/.config/herdr/config.toml"
   HOME="$predecessor_link_home" ${pkgs.bash}/bin/bash ${herdrAdoptionScript}
@@ -102,6 +108,17 @@ pkgs.runCommand "herdr-toast-delivery" {
     "$predecessor_link_home/.local/state/criomos/herdr-adoption/config.toml.pre-home-manager"
   sha256sum --check --status \
     "$predecessor_link_home/.local/state/criomos/herdr-adoption/config.toml.pre-home-manager.sha256"
+
+  unbacked_link_home="$TMPDIR/unbacked-link-home"
+  mkdir -p "$unbacked_link_home/.config/herdr"
+  ln -s ${priorHomeManagerFiles}/.config/herdr/config.toml \
+    "$unbacked_link_home/.config/herdr/config.toml"
+  if HOME="$unbacked_link_home" ${pkgs.bash}/bin/bash ${herdrAdoptionScript}; then
+    echo "Herdr adoption accepted a predecessor link without a recorded backup" >&2
+    exit 1
+  fi
+  test -L "$unbacked_link_home/.config/herdr/config.toml"
+  test ! -e "$unbacked_link_home/.local/state/criomos/herdr-adoption/config.toml.pre-home-manager"
 
   unrelated_link_home="$TMPDIR/unrelated-link-home"
   mkdir -p "$unrelated_link_home/.config/herdr"
