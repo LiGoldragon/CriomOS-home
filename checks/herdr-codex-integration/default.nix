@@ -40,6 +40,6 @@ pkgs.runCommand "herdr-codex-integration" { nativeBuildInputs = [ pkgs.bash pkgs
   test "$( ${pkgs.jq}/bin/jq '[.hooks.SessionStart[].hooks[] | select(.command | contains("/home/test/.codex-next/herdr-agent-state.sh"))] | length' "$home/.codex-next/hooks.json" )" = 0
   test "$( ${pkgs.jq}/bin/jq '[.hooks.SessionStart[].hooks[] | select(.command | contains("/.codex-next/herdr-agent-state.sh"))] | length' "$home/.codex-next/hooks.json" )" = 1
   test "$( ${pkgs.jq}/bin/jq '[.hooks.SessionStart[].hooks[] | select(.command | contains("/tmp/foreign.sh"))] | length' "$home/.codex-next/hooks.json" )" = 1
-  test "$( ${pkgs.jq}/bin/jq -r '.hooks.PreToolUse[0].hooks[0].command' "$home/.codex-next/hooks.json" )" = preserve
+  test "$( ${pkgs.jq}/bin/jq -r '.hooks.PreToolUse[0].hooks[0].command' "$home/.codex-next/hooks.json" )" = "echo preserve"
   touch "$out"
 ''

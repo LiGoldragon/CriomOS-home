@@ -91,8 +91,11 @@ in
   };
 
   # Herdr's supported installer preserves foreign hook groups.  Do the same
-  # declaratively: replace only this next-home hook, retaining every other
-  # SessionStart command and all other events.
+  # declaratively: replace only the Herdr next-home hook, retaining every other
+  # SessionStart command and all other events.  This hooks file belongs to one
+  # CODEX_HOME, so a Herdr hook naming any .codex-next home is ours: the one
+  # under $HOME is the declared entry, one under another home is a stale copy
+  # carried in by a moved home and would report agent state twice.
   home.activation.mergeCodexNextHerdrSessionHook = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     hooks_path="$HOME/.codex-next/hooks.json"
     hook_path="$HOME/.codex-next/herdr-agent-state.sh"
@@ -107,7 +110,7 @@ in
       ${pkgs.jq}/bin/jq --arg hook "$hook_path" '
         def ours:
           (.type == "command")
-          and ((.command // "") | type == "string" and contains($hook));
+          and ((.command // "") | type == "string" and contains("/.codex-next/herdr-agent-state.sh"));
         if type != "object" then error("Codex hooks root must be an object") else . end
         | .hooks = (.hooks // {})
         | if (.hooks | type) != "object" then error("Codex hooks must be an object") else . end
