@@ -490,6 +490,23 @@
         "type": "github"
       }
     },
+    "core-checkup-source": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1789521073,
+        "narHash": "sha256-G7oeqkVZL6Y1VyUC3WaoQuxZF5lIk0yEiJmbkSOmM5A=",
+        "owner": "LiGoldragon",
+        "repo": "primary",
+        "rev": "d3002f4bf9ae81852c3b7e5e65f4793afbc1e3da",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LiGoldragon",
+        "repo": "primary",
+        "rev": "d3002f4bf9ae81852c3b7e5e65f4793afbc1e3da",
+        "type": "github"
+      }
+    },
     "crane": {
       "locked": {
         "lastModified": 1780532242,
@@ -944,6 +961,40 @@
       "original": {
         "type": "git",
         "url": "ssh://git@github.com/LiGoldragon/field-clj.git"
+      }
+    },
+    "field-luna-research-source": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1790206006,
+        "narHash": "sha256-GkfCRNW4T0Uu6cvUKHuuZNSg+C24rWjpY/0jGBLoPn0=",
+        "owner": "LiGoldragon",
+        "repo": "field",
+        "rev": "34fe6c8899684de4f892142d4357a3ca3d67895b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LiGoldragon",
+        "repo": "field",
+        "rev": "34fe6c8899684de4f892142d4357a3ca3d67895b",
+        "type": "github"
+      }
+    },
+    "field-monitoring-source": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1790402714,
+        "narHash": "sha256-eA3vjYgGgDGyKaZ3zegt9tz66vTwy4tIL2qUGMGO4ck=",
+        "owner": "LiGoldragon",
+        "repo": "primary",
+        "rev": "1e8eee26974c68857a3caf9d95ceff4570146294",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LiGoldragon",
+        "repo": "primary",
+        "rev": "1e8eee26974c68857a3caf9d95ceff4570146294",
+        "type": "github"
       }
     },
     "firefox-gnome-theme": {
@@ -2414,9 +2465,12 @@
         "chroma": "chroma",
         "chroma-emacs": "chroma-emacs",
         "claude-answers": "claude-answers",
+        "core-checkup-source": "core-checkup-source",
         "crane": "crane_3",
         "criomos-lib": "criomos-lib",
         "field-clj": "field-clj",
+        "field-luna-research-source": "field-luna-research-source",
+        "field-monitoring-source": "field-monitoring-source",
         "flow": "flow",
         "google-workspace-cli": "google-workspace-cli",
         "harness": "harness",

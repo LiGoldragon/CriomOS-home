@@ -45,6 +45,8 @@
     ./profiles/min/agent-intercom.nix
     ./profiles/min/opencode.nix
     ./profiles/min/field-luna-heartbeat.nix
+    # Field monitors: declared from the hand-made units, each off unless enabled.
+    ./profiles/min/field-monitoring.nix
     ./profiles/min/codex-artifact-gateway.nix
     # Sibling .nix files in profiles/min/ are individual HM modules, not
     # imported transitively by the directory import (Nix only auto-loads

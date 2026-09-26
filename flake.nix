@@ -22,6 +22,22 @@
       flake = false;
     };
 
+    # Field monitoring script sources (modules/home/profiles/min/field-monitoring.nix).
+    # core-checkup is pinned to the revision the hand-made unit ran; the Field
+    # census, checkup, and 98eb43 monitor to primary main; Luna research to field main.
+    core-checkup-source = {
+      url = "github:LiGoldragon/primary/d3002f4bf9ae81852c3b7e5e65f4793afbc1e3da";
+      flake = false;
+    };
+    field-monitoring-source = {
+      url = "github:LiGoldragon/primary/1e8eee26974c68857a3caf9d95ceff4570146294";
+      flake = false;
+    };
+    field-luna-research-source = {
+      url = "github:LiGoldragon/field/34fe6c8899684de4f892142d4357a3ca3d67895b";
+      flake = false;
+    };
+
     pkgs.url = "github:LiGoldragon/CriomOS-pkgs";
     pkgs.inputs.nixpkgs.follows = "nixpkgs";
     pkgs.inputs.system.follows = "system";
@@ -631,6 +647,8 @@
           herdr-toast-delivery = checkPkgs.callPackage ./checks/herdr-toast-delivery { inherit inputs; };
           herdr-agent-executable = checkPkgs.callPackage ./checks/herdr-agent-executable { inherit inputs; };
           herdr-codex-integration = checkPkgs.callPackage ./checks/herdr-codex-integration { inherit inputs; };
+          herdr-server = checkPkgs.callPackage ./checks/herdr-server { inherit inputs; };
+          field-monitoring = checkPkgs.callPackage ./checks/field-monitoring { inherit inputs; };
           cluster-relay-package = checkPkgs.callPackage ./checks/cluster-relay-package { inherit inputs; };
           gws = checkPkgs.callPackage ./checks/gws { inherit inputs; };
           playwright-cli = checkPkgs.callPackage ./checks/playwright-cli { };
