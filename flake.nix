@@ -95,6 +95,13 @@
     flow.url = "github:LiGoldragon/flow/9fcd625ac7a0d44be58b9d365a94064e91f09219";
     flow.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Next Flow: 0.16.0, run beside stable Flow on its own anchors by
+    # profiles/min/flow-message-next.nix (lib/stable-next-service.nix). It
+    # moves with message-next below: both share signal-flow 1c9e4b30 and
+    # meta-signal-flow cbea31ef.
+    flow-next.url = "github:LiGoldragon/flow/9aa9bf88e3ff6f3b68864eb300ee009897162ef4";
+    flow-next.inputs.nixpkgs.follows = "nixpkgs";
+
     # Standalone compatibility messenger used by the live Flow routes. Home
     # installs its immutable package so messenger-clj and all ten hm-* command
     # names share the same closure.
@@ -186,6 +193,12 @@
     message.url = "github:LiGoldragon/message/930c5169ffcf5fa3784b34b2751763009e926d1d";
     message.inputs.nixpkgs.follows = "nixpkgs";
     message.inputs.crane.follows = "crane";
+
+    # Next Message: 0.16.0, the argument-less message-nexus, beside the stable
+    # messenger with a fresh store of its own; it delivers through next Flow.
+    message-next.url = "github:LiGoldragon/message/f1843dbaa63f38634dc10d3b28df2f4a482d6d35";
+    message-next.inputs.nixpkgs.follows = "nixpkgs";
+    message-next.inputs.crane.follows = "crane";
 
     # Mentci approval daemon source, packaged locally because it does not
     # expose a flake.
@@ -644,6 +657,7 @@
             inherit inputs;
           };
           flow-service-path = checkPkgs.callPackage ./checks/flow-service-path { inherit inputs; };
+          flow-message-next = checkPkgs.callPackage ./checks/flow-message-next { inherit inputs; };
           herdr-toast-delivery = checkPkgs.callPackage ./checks/herdr-toast-delivery { inherit inputs; };
           herdr-agent-executable = checkPkgs.callPackage ./checks/herdr-agent-executable { inherit inputs; };
           herdr-codex-integration = checkPkgs.callPackage ./checks/herdr-codex-integration { inherit inputs; };

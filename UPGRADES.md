@@ -1,5 +1,47 @@
 # Upgrades
 
+## Next Flow 0.16.0 and next Message 0.16.0 beside the stable pair
+
+Additive: stable Flow 0.14.0 (`flow-nexus.service`) and stable Message
+0.14.0 (`message-daemon.service`) keep their units, sockets and stores.
+Three units are added — `flow-nexus-next`, `flow-configuration-next`,
+`message-nexus-next` — on anchors of their own (`lib/stable-next-service.nix`):
+
+- sockets `%t/flow-next/flow/{flow,flow-meta}.sock` and
+  `%t/message-next/message/{message,message-owner}.sock`;
+  `%t/message-next/flow` links to next Flow's socket directory;
+- fresh stores `~/.local/state/flow-next/.local/state/flow/flow.sema` and
+  `~/.local/state/message-next/.local/state/message/message.sema`;
+- clients `flow-next`, `flow-next-meta`, `message-next`, `message-next-meta`.
+
+Both Flows observe the same Herdr and launch through the same Codex servers.
+`flow-configuration-next` prints `Configured.{ … NexusRestartRequired }`: the
+Message admission (`MessageNexusPath`, `MetaAspects`) is read live, and the
+Codex fields it repeats are the ones the unit's environment already sets, so
+no restart is owed.
+
+### Activating
+
+`systemctl --user daemon-reload`, then `systemctl --user status
+flow-nexus-next flow-configuration-next message-nexus-next`; the
+configuration unit must be `active (exited)`. Witness with `flow-next
+'List.{}'` and one `message-next-meta 'Send.{ … }'` to a known flow.
+
+### Rollback
+
+Nothing stable is touched, so rollback is disabling the three next units (or
+activating the previous generation). The next stores may be deleted; no
+other state refers to them. No countdown is armed: no unit here can take
+network or remote access away.
+
+### Promotion (the rolling step)
+
+When next is trusted: point the stable modules at the next revisions (the
+0.16 unit bodies in `profiles/min/flow-message-next.nix` are functions of an
+instance and apply to the stable instance unchanged), retire the 0.14
+messenger store as the stable upgrade requires, move callers to the stable
+names, and the next slot is free for the following version.
+
 ## Claude Remote Control removal
 
 The `claude-remote-control` user service, its `criomos.claudeRemoteControl`

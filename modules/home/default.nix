@@ -80,6 +80,9 @@
     # Flow Nexus remains disabled until its package, native launch receipt,
     # and durable store migration are validated for this host.
     ./profiles/min/flow.nix
+    # Next Flow and next Message beside the stable pair, on their own
+    # sockets and stores (the stable/next pattern, lib/stable-next-service.nix).
+    ./profiles/min/flow-message-next.nix
     # Chroma — visual-state daemon (theme + warmth + brightness).
     # Replaces darkman + nightshift + the brightness shell wrapper.
     # Per-user systemd unit + apply script + default config.nota.
