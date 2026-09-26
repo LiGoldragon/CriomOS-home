@@ -24,6 +24,11 @@ let
       rustToolchain = pkgs.rustc;
     };
     modules = [
+      # The Home deployment supplies criomos.corePackages and the Codex-next
+      # client; this standalone fixture imports the same modules so herdr.nix
+      # can resolve both Codex executables.
+      ../../modules/home/core-packages.nix
+      ../../modules/home/profiles/min/codex-next.nix
       ../../modules/home/profiles/min/default.nix
       {
         home = {
@@ -60,7 +65,9 @@ let
     mkdir -p "$out/.config/herdr"
     cp ${predecessorManagedConfig} "$out/.config/herdr/config.toml"
   '';
-  parsedConfigToml = builtins.fromTOML configToml;
+  # The managed config names store paths (the Codex clients); parsing only
+  # inspects keys, so the string context is dropped before fromTOML.
+  parsedConfigToml = builtins.fromTOML (builtins.unsafeDiscardStringContext configToml);
   herdrAdoption = homeConfiguration.config.home.activation.adoptHerdrConfig.data;
   herdrAdoptionScript = pkgs.writeText "herdr-adoption" herdrAdoption;
 in
