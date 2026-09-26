@@ -118,7 +118,6 @@ lib.mkIf (sizeAtLeast "Medium") {
         opus-tools
         mediainfo
         mkvtoolnix
-        piper-tts
         espeak-ng
         python3Packages.scenedetect
         python3Packages.openai-whisper
