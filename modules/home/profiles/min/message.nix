@@ -62,6 +62,52 @@ let
     exec ${messagePackage}/bin/message-write-configuration \
       "{{$working_socket 432 $meta_socket 384 $router_socket [] UnixUser.$(${pkgs.coreutils}/bin/id -u)} ${databasePath} ${config.home.username} ${signalPath}}"
   '';
+  preserveLiveStoreScript = pkgs.writeShellScript "message-preserve-live-store" ''
+    set -eu
+    store=${lib.escapeShellArg databasePath}
+    preserve="$store.${messagePackage.name}.preopen"
+    preserve_directory="$(${pkgs.coreutils}/bin/dirname "$preserve")"
+
+    if [ ! -e "$store" ] && [ ! -L "$store" ]; then
+      exit 0
+    fi
+    if [ ! -f "$store" ] || [ -L "$store" ]; then
+      echo "Refusing Message pre-open preservation: $store is not a regular file" >&2
+      exit 1
+    fi
+    if [ -e "$preserve" ] || [ -L "$preserve" ]; then
+      if [ ! -f "$preserve" ] || [ -L "$preserve" ]; then
+        echo "Refusing Message pre-open preservation: $preserve is not a regular file" >&2
+        exit 1
+      fi
+      if ! ${pkgs.diffutils}/bin/cmp -s -- "$store" "$preserve"; then
+        echo "Refusing Message pre-open preservation: existing snapshot differs from live store" >&2
+        exit 1
+      fi
+      exit 0
+    fi
+
+    preserve_temp="$(${pkgs.coreutils}/bin/mktemp "$preserve_directory/.${messagePackage.name}.preopen.XXXXXX")"
+    cleanup_preserve_temp() {
+      ${pkgs.coreutils}/bin/rm -f -- "$preserve_temp"
+    }
+    trap cleanup_preserve_temp EXIT HUP INT TERM
+
+    ${pkgs.coreutils}/bin/cp --reflink=auto --preserve=mode,timestamps -- "$store" "$preserve_temp"
+    ${pkgs.diffutils}/bin/cmp -s -- "$store" "$preserve_temp"
+    if ${pkgs.coreutils}/bin/ln -- "$preserve_temp" "$preserve"; then
+      ${pkgs.coreutils}/bin/rm -f -- "$preserve_temp"
+      trap - EXIT HUP INT TERM
+      exit 0
+    fi
+
+    if [ -f "$preserve" ] && [ ! -L "$preserve" ] \
+      && ${pkgs.diffutils}/bin/cmp -s -- "$store" "$preserve"; then
+      exit 0
+    fi
+    echo "Refusing Message pre-open preservation: snapshot appeared but does not verify" >&2
+    exit 1
+  '';
 in
 {
   options.criomosHome.message = {
@@ -93,7 +139,10 @@ in
       Service = {
         RuntimeDirectory = "message";
         RuntimeDirectoryMode = "0700";
-        ExecStartPre = "${writeConfigurationScript} ${workingSocketPath} ${metaSocketPath} ${routerSocketPath}";
+        ExecStartPre = [
+          preserveLiveStoreScript
+          "${writeConfigurationScript} ${workingSocketPath} ${metaSocketPath} ${routerSocketPath}"
+        ];
         ExecStart = "${messagePackage}/bin/${daemonBinary} ${signalPath}";
         Restart = "on-failure";
         RestartSec = "2s";

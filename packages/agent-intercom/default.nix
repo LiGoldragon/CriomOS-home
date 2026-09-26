@@ -149,16 +149,29 @@ else
         --add-flags "$root/claude/claude-server.mjs"
       makeWrapper ${pkgs.nodejs}/bin/node "$out/bin/claude-intercom-worker" \
         --add-flags "$root/claude/worker-daemon.mjs" \
+        --unset CLAUDE_CODE_CHILD_SESSION \
+        --unset CLAUDE_CODE_SESSION_KIND \
+        --unset CLAUDE_CODE_SESSION_ID \
         --set CLAUDE_INTERCOM_CLAUDE_COMMAND ${claudeCodePackage}/bin/claude
       # `cci` is the distinct wakeable Claude bridge. Its own child process is
       # the upstream raw CLI; the package never publishes normal `claude`.
       makeWrapper ${pkgs.nodejs}/bin/node "$out/bin/cci" \
         --add-flags "$root/claude/cci.mjs --dangerously-skip-permissions" \
+        --unset CLAUDE_CODE_CHILD_SESSION \
+        --unset CLAUDE_CODE_SESSION_KIND \
+        --unset CLAUDE_CODE_SESSION_ID \
         --set CLAUDE_INTERCOM_CLAUDE_COMMAND ${claudeCodePackage}/bin/claude
       makeWrapper ${pkgs.nodejs}/bin/node "$out/bin/ccim" \
         --add-flags "$root/claude/ccim.mjs" \
+        --unset CLAUDE_CODE_CHILD_SESSION \
+        --unset CLAUDE_CODE_SESSION_KIND \
+        --unset CLAUDE_CODE_SESSION_ID \
         --set CLAUDE_INTERCOM_CLAUDE_COMMAND ${claudeCodePackage}/bin/claude
-      makeWrapper ${claudeCodePackage}/bin/claude "$out/bin/claude-raw"
+      makeWrapper ${claudeCodePackage}/bin/claude "$out/bin/claude-raw" \
+        --add-flags "--dangerously-skip-permissions" \
+        --unset CLAUDE_CODE_CHILD_SESSION \
+        --unset CLAUDE_CODE_SESSION_KIND \
+        --unset CLAUDE_CODE_SESSION_ID
 
       makeWrapper ${pkgs.nodejs}/bin/node "$out/bin/agent-intercom-fleet" \
         --add-flags "--experimental-strip-types $root/orchestrator/src/agent-fleet-cli.mjs"

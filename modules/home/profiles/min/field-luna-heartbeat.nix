@@ -3,7 +3,7 @@ let
   system = pkgs.stdenv.hostPlatform.system;
   runner = pkgs.writeShellApplication {
     name = "field-luna-heartbeat";
-    runtimeInputs = [ pkgs.nodejs pkgs.python3 pkgs.systemd inputs.herdr.packages.${system}.herdr inputs.orchestrate.packages.${system}.default config.criomos.corePackages.codex ];
+    runtimeInputs = [ pkgs.nodejs pkgs.python3 pkgs.systemd (config.criomosHome.herdr.package or inputs.herdr.packages.${system}.herdr) inputs.orchestrate.packages.${system}.default config.criomos.corePackages.codex ];
     text = ''
       exec ${pkgs.nodejs}/bin/node ${inputs.prompt-relay-source}/tools/field-luna-heartbeat.mjs "$@"
     '';

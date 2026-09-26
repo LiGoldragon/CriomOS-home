@@ -308,7 +308,8 @@ let
     pkgs.writeShellApplication {
       name = commandName;
       text = ''
-        exec ${package}/bin/${executableName} "$@"
+        unset CLAUDE_CODE_CHILD_SESSION CLAUDE_CODE_SESSION_KIND CLAUDE_CODE_SESSION_ID
+        exec ${package}/bin/${executableName} --dangerously-skip-permissions "$@"
       '';
     };
 
@@ -318,7 +319,7 @@ let
 
   AIPackages = [
     pkgs.gemini-cli
-    inputs.herdr.packages.${pkgs.stdenv.hostPlatform.system}.herdr
+    (config.criomosHome.herdr.package or inputs.herdr.packages.${pkgs.stdenv.hostPlatform.system}.herdr)
     inputs.orca-ide.packages.${pkgs.stdenv.hostPlatform.system}.orca-ide
     directClaude
     pkgs.llama-cpp

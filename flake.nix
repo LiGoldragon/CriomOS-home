@@ -167,7 +167,7 @@
     # the additive v2 -> v3 store migration — the deployed store, born at v2,
     # is preserved aside and re-stamped on first open — on the
     # incident-hardened sema-engine 0.11.2 orchestrate 0.14.1 runs.
-    message.url = "github:LiGoldragon/message/fe0d04561051";
+    message.url = "github:LiGoldragon/message/8aa6d7b465c9ba3720eb21f17b833c251b828353";
     message.inputs.nixpkgs.follows = "nixpkgs";
     message.inputs.crane.follows = "crane";
 
@@ -492,6 +492,7 @@
           };
           basePackages = {
             codex = ownedAgentPackages.codexPackage;
+            codex-next = ownedPkgs.callPackage ./owned-agents/codex-next { };
             claude-code = ownedAgentPackages.claudeCodePackage;
           };
         in
@@ -635,7 +636,10 @@
           messenger-clj-package = checkPkgs.callPackage ./checks/messenger-clj-package {
             inherit inputs;
           };
+          flow-service-path = checkPkgs.callPackage ./checks/flow-service-path { inherit inputs; };
           herdr-toast-delivery = checkPkgs.callPackage ./checks/herdr-toast-delivery { inherit inputs; };
+          herdr-agent-executable = checkPkgs.callPackage ./checks/herdr-agent-executable { inherit inputs; };
+          herdr-codex-integration = checkPkgs.callPackage ./checks/herdr-codex-integration { inherit inputs; };
           cluster-relay-package = checkPkgs.callPackage ./checks/cluster-relay-package { inherit inputs; };
           gws = checkPkgs.callPackage ./checks/gws { inherit inputs; };
           playwright-cli = checkPkgs.callPackage ./checks/playwright-cli { };
@@ -684,6 +688,7 @@
           ai-agent-launch-orchestration = checkPkgs.callPackage ./checks/ai-agent-launch-orchestration {
             inherit inputs;
           };
+          codex-next = checkPkgs.callPackage ./checks/codex-next { inherit inputs; };
           codex-remote-control = checkPkgs.callPackage ./checks/codex-remote-control {
             inherit inputs;
           };
