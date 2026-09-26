@@ -77,7 +77,7 @@
     claude-answers.inputs.nixpkgs.follows = "nixpkgs";
 
     # field-clj — fail-closed, path-scoped Jujutsu commit CLI for Field.
-    field-clj.url = "git+ssh://git@github.com/LiGoldragon/field-clj.git?rev=a2c278d36520ab898f492071f660a438d2a1bf32";
+    field-clj.url = "git+ssh://git@github.com/LiGoldragon/field-clj.git?rev=3e5f4501e2017b97b51c7cfaff2b2e8d2a504e05";
     field-clj.inputs.nixpkgs.follows = "nixpkgs";
 
     # Listener — CriomOS speech-to-text runtime for the daily dictation path.
