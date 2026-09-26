@@ -10,6 +10,7 @@ let
   package = pkgs.callPackage ../../../../owned-agents/codex-next { };
   nextHome = "${config.home.homeDirectory}/.codex-next";
   socket = "${nextHome}/app-server-control/app-server-control.sock";
+  recoveryUnit = "codex-remote-control-next-recovery.service";
   prepare = pkgs.writeShellScript "codex-next-prepare" ''
     set -eu
     umask 077
@@ -62,7 +63,18 @@ in
   config = lib.mkIf enabled {
     home.packages = [ client ];
     systemd.user.services.codex-remote-control-next = {
-      Unit.Description = "Codex Remote Control next server";
+      # The declared server is the single systemd owner of the next endpoint.
+      # A transient `codex-remote-control-next-recovery.service` (systemd-run)
+      # listening on the same socket is stopped before this unit starts,
+      # and a socket still held by anything else ends in a bounded `failed`
+      # state instead of an unbounded restart loop.
+      Unit = {
+        Description = "Codex Remote Control next server";
+        Conflicts = [ recoveryUnit ];
+        After = [ recoveryUnit ];
+        StartLimitIntervalSec = 60;
+        StartLimitBurst = 5;
+      };
       Service = {
         WorkingDirectory = "${config.home.homeDirectory}/primary";
         Environment = [ "CODEX_HOME=${nextHome}" ];

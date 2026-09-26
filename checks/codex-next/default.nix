@@ -22,6 +22,11 @@ let
 in
 assert service.Service.Environment == [ "CODEX_HOME=/home/next-test/.codex-next" ];
 assert service.Service.LimitNOFILE == 524288;
+assert service.Unit.Conflicts == [ "codex-remote-control-next-recovery.service" ];
+assert service.Unit.After == [ "codex-remote-control-next-recovery.service" ];
+assert service.Unit.StartLimitIntervalSec == 60;
+assert service.Unit.StartLimitBurst == 5;
+assert service.Service.Restart == "on-failure";
 assert service.Service.UMask == "0077";
 assert !(configuration.systemd.user.services ? codex-remote-control);
 assert
