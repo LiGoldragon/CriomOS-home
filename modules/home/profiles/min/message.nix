@@ -68,6 +68,46 @@ let
     preserve="$store.${messagePackage.name}.preopen"
     preserve_directory="$(${pkgs.coreutils}/bin/dirname "$preserve")"
 
+    preserve_temp=""
+    cleanup_preserve_temp() {
+      if [ -n "$preserve_temp" ]; then
+        ${pkgs.coreutils}/bin/rm -f -- "$preserve_temp"
+      fi
+    }
+    trap cleanup_preserve_temp EXIT HUP INT TERM
+
+    publish_snapshot() {
+      snapshot="$1"
+      if [ -e "$snapshot" ] || [ -L "$snapshot" ]; then
+        if [ ! -f "$snapshot" ] || [ -L "$snapshot" ]; then
+          echo "Refusing Message pre-open preservation: $snapshot is not a regular file" >&2
+          return 1
+        fi
+        ${pkgs.diffutils}/bin/cmp -s -- "$store" "$snapshot"
+        return
+      fi
+
+      preserve_temp="$(${pkgs.coreutils}/bin/mktemp "$preserve_directory/.${messagePackage.name}.preopen.XXXXXX")"
+      ${pkgs.coreutils}/bin/cp --reflink=auto --preserve=mode,timestamps -- "$store" "$preserve_temp"
+      ${pkgs.diffutils}/bin/cmp -s -- "$store" "$preserve_temp"
+      if ${pkgs.coreutils}/bin/ln -- "$preserve_temp" "$snapshot"; then
+        ${pkgs.coreutils}/bin/rm -f -- "$preserve_temp"
+        preserve_temp=""
+        return 0
+      fi
+
+      if [ -f "$snapshot" ] && [ ! -L "$snapshot" ] \
+        && ${pkgs.diffutils}/bin/cmp -s -- "$store" "$snapshot"; then
+        ${pkgs.coreutils}/bin/rm -f -- "$preserve_temp"
+        preserve_temp=""
+        return 0
+      fi
+      ${pkgs.coreutils}/bin/rm -f -- "$preserve_temp"
+      preserve_temp=""
+      echo "Refusing Message pre-open preservation: snapshot appeared but does not verify" >&2
+      return 1
+    }
+
     if [ ! -e "$store" ] && [ ! -L "$store" ]; then
       exit 0
     fi
@@ -75,38 +115,31 @@ let
       echo "Refusing Message pre-open preservation: $store is not a regular file" >&2
       exit 1
     fi
-    if [ -e "$preserve" ] || [ -L "$preserve" ]; then
+    if [ ! -e "$preserve" ] && [ ! -L "$preserve" ]; then
+      if publish_snapshot "$preserve"; then
+        exit 0
+      fi
       if [ ! -f "$preserve" ] || [ -L "$preserve" ]; then
         echo "Refusing Message pre-open preservation: $preserve is not a regular file" >&2
         exit 1
       fi
-      if ! ${pkgs.diffutils}/bin/cmp -s -- "$store" "$preserve"; then
-        echo "Refusing Message pre-open preservation: existing snapshot differs from live store" >&2
-        exit 1
-      fi
+      digest="$(${pkgs.coreutils}/bin/sha256sum -- "$store")"
+      digest="''${digest%% *}"
+      publish_snapshot "$preserve.$digest"
       exit 0
     fi
 
-    preserve_temp="$(${pkgs.coreutils}/bin/mktemp "$preserve_directory/.${messagePackage.name}.preopen.XXXXXX")"
-    cleanup_preserve_temp() {
-      ${pkgs.coreutils}/bin/rm -f -- "$preserve_temp"
-    }
-    trap cleanup_preserve_temp EXIT HUP INT TERM
-
-    ${pkgs.coreutils}/bin/cp --reflink=auto --preserve=mode,timestamps -- "$store" "$preserve_temp"
-    ${pkgs.diffutils}/bin/cmp -s -- "$store" "$preserve_temp"
-    if ${pkgs.coreutils}/bin/ln -- "$preserve_temp" "$preserve"; then
-      ${pkgs.coreutils}/bin/rm -f -- "$preserve_temp"
-      trap - EXIT HUP INT TERM
+    if [ ! -f "$preserve" ] || [ -L "$preserve" ]; then
+      echo "Refusing Message pre-open preservation: $preserve is not a regular file" >&2
+      exit 1
+    fi
+    if ${pkgs.diffutils}/bin/cmp -s -- "$store" "$preserve"; then
       exit 0
     fi
 
-    if [ -f "$preserve" ] && [ ! -L "$preserve" ] \
-      && ${pkgs.diffutils}/bin/cmp -s -- "$store" "$preserve"; then
-      exit 0
-    fi
-    echo "Refusing Message pre-open preservation: snapshot appeared but does not verify" >&2
-    exit 1
+    digest="$(${pkgs.coreutils}/bin/sha256sum -- "$store")"
+    digest="''${digest%% *}"
+    publish_snapshot "$preserve.$digest"
   '';
 in
 {

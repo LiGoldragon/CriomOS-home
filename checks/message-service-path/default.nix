@@ -74,18 +74,31 @@ pkgs.runCommand "message-service-path" { nativeBuildInputs = [ pkgs.coreutils pk
   ${preserver}
   cmp '${stateDirectory}/messenger.sema' '${preservePath}'
 
-  # A partial or mismatched prior snapshot cannot be silently accepted.
+  # A normal durable write leaves the original snapshot intact and publishes
+  # a verified immutable snapshot for the next pre-open boundary.
+  printf 'live-messenger-after-ordinary-write\n' > '${stateDirectory}/messenger.sema'
+  second_digest="$(${pkgs.coreutils}/bin/sha256sum '${stateDirectory}/messenger.sema')"
+  second_digest="''${second_digest%% *}"
+  secondPreservePath="${preservePath}.''${second_digest}"
+  ${preserver}
+  printf 'live-messenger-before-open\n' | cmp - '${preservePath}'
+  cmp '${stateDirectory}/messenger.sema' "$secondPreservePath"
+
+  # A partial fixed-name sidecar remains retained while the verified
+  # content-addressed snapshot permits the next pre-open boundary.
   rm '${preservePath}'
   printf 'partial-copy\n' > '${preservePath}'
-  if ${preserver}; then
-    echo 'Message preserver accepted a mismatched pre-open snapshot' >&2
-    exit 1
-  fi
+  ${preserver}
   printf 'partial-copy\n' | cmp - '${preservePath}'
+  cmp '${stateDirectory}/messenger.sema' "$secondPreservePath"
 
   # Simulate an interrupted competing publication after this invocation made
   # its private temporary copy. The final sidecar must remain unpromoted and
   # the invocation must remove its own temporary file through the EXIT trap.
+  printf 'live-messenger-race-write\n' > '${stateDirectory}/messenger.sema'
+  third_digest="$(${pkgs.coreutils}/bin/sha256sum '${stateDirectory}/messenger.sema')"
+  third_digest="''${third_digest%% *}"
+  thirdPreservePath="${preservePath}.''${third_digest}"
   rm '${preservePath}'
   (
     for _ in $(${pkgs.coreutils}/bin/seq 1 1000); do
@@ -99,17 +112,15 @@ pkgs.runCommand "message-service-path" { nativeBuildInputs = [ pkgs.coreutils pk
     exit 1
   ) &
   competitor=$!
-  if ${instrumentedPreserver}; then
-    echo 'Message preserver accepted a competing partial snapshot' >&2
-    exit 1
-  fi
+  ${instrumentedPreserver}
   wait "$competitor"
   printf 'competing-partial\n' | cmp - '${preservePath}'
   if ${pkgs.findutils}/bin/find '${stateDirectory}' -maxdepth 1 -name '.${messagePackage.name}.preopen.*' -print -quit | ${pkgs.gnugrep}/bin/grep -q .; then
     echo 'Message preserver left its interrupted temporary snapshot behind' >&2
     exit 1
   fi
-  printf 'live-messenger-before-open\n' | cmp - '${stateDirectory}/messenger.sema'
+  printf 'live-messenger-race-write\n' | cmp - '${stateDirectory}/messenger.sema'
+  cmp '${stateDirectory}/messenger.sema' "$thirdPreservePath"
 
   # Exercise the same packaged writer that ExecStartPre invokes. A successful
   # write proves the module's nested contract is a Datom Struct at the real
