@@ -17,7 +17,7 @@ let
 
   # Flow and Message as stable/next pairs. Stable is the pair the Home line
   # already runs (profiles/min/flow.nix and message.nix, untouched); next is
-  # Flow 0.16.0 and Message 0.16.0, which must move together (shared
+  # Flow 0.17.0 and Message 0.17.0, which must move together (shared
   # signal-flow and meta-signal-flow), on anchors of their own.
   flow = stableNext.pair {
     name = "flow";
@@ -95,7 +95,7 @@ let
   };
   codexSocket = endpoint: "${endpoint.home}/app-server-control/app-server-control.sock";
 
-  # The Flow 0.16 Nexus unit, for either slot. The Codex servers and the
+  # The Flow 0.16–0.17 Nexus unit, for either slot. The Codex servers and the
   # workspace are the user's own whichever slot runs: both Flows observe the
   # same Herdr and launch through the same Codex servers.
   flowNexusUnit = instance: {
@@ -129,7 +129,7 @@ let
     Install.WantedBy = [ "default.target" ];
   };
 
-  # Flow 0.16 takes MetaAspects and MessageNexusPath only through one meta
+  # Flow 0.16–0.17 takes MetaAspects and MessageNexusPath only through one meta
   # `Configure`, which replaces the record whole, so every field is stated.
   # The Message Nexus it admits is the one of the same slot.
   codexEndpointDatom =
@@ -188,7 +188,7 @@ let
     Install.WantedBy = [ "default.target" ];
   };
 
-  # The Message 0.16 Nexus unit, for either slot: no arguments; its store and
+  # The Message 0.16–0.17 Nexus unit, for either slot: no arguments; its store and
   # sockets follow from its anchors, and Flow's sockets from the same slot.
   messageNexusUnit = messageInstance: flowInstance: {
     Unit = {
