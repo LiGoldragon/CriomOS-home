@@ -1,0 +1,2 @@
+{"type":"user","uuid":"test-user","timestamp":"2026-09-16T16:00:00Z","message":{"content":[{"type":"text","text":"Please publish the ready successor package."}]}}
+{"type":"assistant","message":{"content":"Not the user turn."}}

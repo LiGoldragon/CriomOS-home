@@ -1,0 +1,11 @@
+[Unit]
+Description=Run the heartbeat proposal at its quota-gated cadence
+
+[Timer]
+OnBootSec=5m
+OnUnitActiveSec=5min
+Persistent=true
+Unit=heartbeat.service
+
+[Install]
+WantedBy=timers.target

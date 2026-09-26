@@ -627,6 +627,7 @@
           };
           message-service-path = checkPkgs.callPackage ./checks/message-service-path { inherit inputs; };
           cluster-relay-package = checkPkgs.callPackage ./checks/cluster-relay-package { inherit inputs; };
+          heartbeat-fixtures = checkPkgs.callPackage ./checks/heartbeat-fixtures { };
           core-checkup = checkPkgs.callPackage ./checks/core-checkup { inherit inputs; };
           gws = checkPkgs.callPackage ./checks/gws { inherit inputs; };
           playwright-cli = checkPkgs.callPackage ./checks/playwright-cli { };
