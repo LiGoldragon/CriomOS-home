@@ -469,6 +469,27 @@
         "type": "github"
       }
     },
+    "clj-build_2": {
+      "inputs": {
+        "nixpkgs": [
+          "messenger-clj",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1790372915,
+        "narHash": "sha256-5r/NvchgUrsMidcZpAEZ3cabwc7iIALwPn9q5Uv3S00=",
+        "owner": "LiGoldragon",
+        "repo": "clj-build",
+        "rev": "01126ad41b8f06ebd1469db30e89efc7dc74b649",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LiGoldragon",
+        "repo": "clj-build",
+        "type": "github"
+      }
+    },
     "crane": {
       "locked": {
         "lastModified": 1780532242,
@@ -1241,17 +1262,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1790386110,
-        "narHash": "sha256-UC9jfAr/pjNQ7CC/+HSFB608rb9SCgWlI7rTT6twl44=",
+        "lastModified": 1790390839,
+        "narHash": "sha256-KV/+AkJwZHEvk5LVKbemDZouhfR4jx38veU0jaVQ+qU=",
         "owner": "LiGoldragon",
         "repo": "flow",
-        "rev": "8df890ba1bc34a9bd575e75ab4796b4e0dc7b0fd",
+        "rev": "34aaf7875af11cb539218c61cf2fc51996db271b",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "flow",
-        "rev": "8df890ba1bc34a9bd575e75ab4796b4e0dc7b0fd",
+        "rev": "34aaf7875af11cb539218c61cf2fc51996db271b",
         "type": "github"
       }
     },
@@ -1510,6 +1531,28 @@
         "owner": "LiGoldragon",
         "ref": "fe0d04561051",
         "repo": "message",
+        "type": "github"
+      }
+    },
+    "messenger-clj": {
+      "inputs": {
+        "clj-build": "clj-build_2",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1790390181,
+        "narHash": "sha256-OllH6b3t/qJ3P045pfjp3KAANki8Qx4dmtqbZ3d4q9A=",
+        "owner": "LiGoldragon",
+        "repo": "messenger-clj",
+        "rev": "dfcf91f0ff8b4b8a5bb6edc18830fdc2d0323494",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LiGoldragon",
+        "repo": "messenger-clj",
+        "rev": "dfcf91f0ff8b4b8a5bb6edc18830fdc2d0323494",
         "type": "github"
       }
     },
@@ -2384,6 +2427,7 @@
         "listener": "listener",
         "mentci-src": "mentci-src",
         "message": "message",
+        "messenger-clj": "messenger-clj",
         "niri-flake": "niri-flake",
         "nixpkgs": "nixpkgs_2",
         "noctalia": "noctalia",

@@ -71,6 +71,9 @@
     # map + delivery registry in messenger.sema; systemd --user unit +
     # pinned flake input).
     ./profiles/min/message.nix
+    # Compatibility messenger CLI for live Flow routes. The package supplies
+    # messenger-clj and all ten hm-* command names from one immutable closure.
+    ./profiles/min/messenger-clj.nix
     # Flow Nexus remains disabled until its package, native launch receipt,
     # and durable store migration are validated for this host.
     ./profiles/min/flow.nix

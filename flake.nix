@@ -76,8 +76,14 @@
 
     # Flow Nexus is a pinned Home-managed service. Keep the package, client,
     # and user unit in one immutable closure.
-    flow.url = "github:LiGoldragon/flow/8df890ba1bc34a9bd575e75ab4796b4e0dc7b0fd";
+    flow.url = "github:LiGoldragon/flow/34aaf7875af11cb539218c61cf2fc51996db271b";
     flow.inputs.nixpkgs.follows = "nixpkgs";
+
+    # Standalone compatibility messenger used by the live Flow routes. Home
+    # installs its immutable package so messenger-clj and all ten hm-* command
+    # names share the same closure.
+    messenger-clj.url = "github:LiGoldragon/messenger-clj/dfcf91f0ff8b4b8a5bb6edc18830fdc2d0323494";
+    messenger-clj.inputs.nixpkgs.follows = "nixpkgs";
 
     # The public immutable recipe owns the audited proprietary installer source;
     # this lock identifies the exact v2 status-bridge producer.
@@ -626,6 +632,9 @@
             inherit inputs;
           };
           message-service-path = checkPkgs.callPackage ./checks/message-service-path { inherit inputs; };
+          messenger-clj-package = checkPkgs.callPackage ./checks/messenger-clj-package {
+            inherit inputs;
+          };
           herdr-toast-delivery = checkPkgs.callPackage ./checks/herdr-toast-delivery { inherit inputs; };
           cluster-relay-package = checkPkgs.callPackage ./checks/cluster-relay-package { inherit inputs; };
           gws = checkPkgs.callPackage ./checks/gws { inherit inputs; };
