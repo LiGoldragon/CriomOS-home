@@ -9,6 +9,7 @@ let
   codexPackage = pkgs.writeShellScriptBin "codex" "exit 0";
   claudePackage = pkgs.writeShellScriptBin "claude" "exit 0";
   inputs = {
+    flow.packages.${system}.default = flowPackage;
     herdr.packages.${system}.herdr = herdrPackage;
     harness.packages.${system}.default = flowIdPackage;
   };

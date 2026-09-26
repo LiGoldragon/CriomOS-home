@@ -17,6 +17,7 @@ let
   sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
   cfg = config.criomosHome.flow;
   system = pkgs.stdenv.hostPlatform.system;
+  flowPackage = inputs.flow.packages.${system}.default;
   flowRuntimePath = makeBinPath [
     inputs.herdr.packages.${system}.herdr
     inputs.harness.packages.${system}.default
@@ -28,12 +29,12 @@ in
   options.criomosHome.flow = {
     enable = mkOption {
       type = bool;
-      default = false;
+      default = config.home.username == "li";
       description = "Install and supervise a validated Flow Nexus package.";
     };
     package = mkOption {
       type = nullOr package;
-      default = null;
+      default = flowPackage;
       description = "Immutable Flow package selected after remote build and store compatibility checks.";
     };
   };

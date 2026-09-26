@@ -74,6 +74,11 @@
     harness.url = "github:LiGoldragon/harness/d022427938c0925e55e23dfb2d7ba470bbfea3c1";
     harness.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Flow Nexus is a pinned Home-managed service. Keep the package, client,
+    # and user unit in one immutable closure.
+    flow.url = "github:LiGoldragon/flow/8df890ba1bc34a9bd575e75ab4796b4e0dc7b0fd";
+    flow.inputs.nixpkgs.follows = "nixpkgs";
+
     # The public immutable recipe owns the audited proprietary installer source;
     # this lock identifies the exact v2 status-bridge producer.
     wispr-flow-linux.url = "github:LiGoldragon/wispr-flow-linux?rev=e97b9587a7186ad74c5d84b2da6abfb86645b68d";
