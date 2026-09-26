@@ -99,20 +99,21 @@ pkgs.runCommand "ai-agent-launch-orchestration"
     ${pkgs.yq-go}/bin/yq -p toml -o json -e '.' ${roleFile "explorer"} > /dev/null
 
     test "$( ${pkgs.yq-go}/bin/yq -p toml '.model' "$codexHome/.codex/config.toml" )" = "gpt-6-astra"
-    test "$( ${pkgs.yq-go}/bin/yq -p toml '.model_reasoning_effort' "$codexHome/.codex/config.toml" )" = "xhigh"
+    test "$( ${pkgs.yq-go}/bin/yq -p toml '.model_reasoning_effort' "$codexHome/.codex/config.toml" )" = "medium"
+    test "$( ${pkgs.yq-go}/bin/yq -p toml '.plan_mode_reasoning_effort' "$codexHome/.codex/config.toml" )" = "medium"
     test "$( ${pkgs.yq-go}/bin/yq -p toml '.agents.default_subagent_model' "$codexHome/.codex/config.toml" )" = "gpt-5.6-luna"
-    test "$( ${pkgs.yq-go}/bin/yq -p toml '.agents.default_subagent_reasoning_effort' "$codexHome/.codex/config.toml" )" = "xhigh"
+    test "$( ${pkgs.yq-go}/bin/yq -p toml '.agents.default_subagent_reasoning_effort' "$codexHome/.codex/config.toml" )" = "medium"
     test "$( ${pkgs.yq-go}/bin/yq -p toml '.approval_policy' "$codexHome/.codex/config.toml" )" = "never"
     test "$( ${pkgs.yq-go}/bin/yq -p toml '.sandbox_mode' "$codexHome/.codex/config.toml" )" = "danger-full-access"
     test "$( ${pkgs.yq-go}/bin/yq -p toml '.unrelated_setting' "$codexHome/.codex/config.toml" )" = "preserve-me"
     test "$( ${pkgs.yq-go}/bin/yq -p toml -o json 'has("orchestrator")' "$codexHome/.codex/config.toml" )" = false
 
     test "$( ${pkgs.yq-go}/bin/yq -p toml '.model' ${roleFile "default"} )" = "gpt-5.6-luna"
-    test "$( ${pkgs.yq-go}/bin/yq -p toml '.model_reasoning_effort' ${roleFile "default"} )" = "xhigh"
+    test "$( ${pkgs.yq-go}/bin/yq -p toml '.model_reasoning_effort' ${roleFile "default"} )" = "medium"
     test "$( ${pkgs.yq-go}/bin/yq -p toml '.model' ${roleFile "explorer"} )" = "gpt-5.6-luna"
-    test "$( ${pkgs.yq-go}/bin/yq -p toml '.model_reasoning_effort' ${roleFile "explorer"} )" = "xhigh"
+    test "$( ${pkgs.yq-go}/bin/yq -p toml '.model_reasoning_effort' ${roleFile "explorer"} )" = "medium"
     test "$( ${pkgs.yq-go}/bin/yq -p toml '.model' ${roleFile "worker"} )" = "gpt-5.6-terra"
-    test "$( ${pkgs.yq-go}/bin/yq -p toml '.model_reasoning_effort' ${roleFile "worker"} )" = "high"
+    test "$( ${pkgs.yq-go}/bin/yq -p toml '.model_reasoning_effort' ${roleFile "worker"} )" = "medium"
 
     touch "$out"
   ''
