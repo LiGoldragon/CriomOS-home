@@ -18,6 +18,7 @@ let
   cfg = config.criomosHome.flow;
   system = pkgs.stdenv.hostPlatform.system;
   flowPackage = inputs.flow.packages.${system}.default;
+  stableFlowPackage = inputs.flow-stable.packages.${system}.default;
   stableCodexClient =
     config.criomosHome.herdr.stableCodexClientPackage or config.criomos.corePackages.codex;
   nextCodexClient =
@@ -56,6 +57,19 @@ in
     ];
 
     home.packages = mkIf (sizeAtLeast "Min" && cfg.enable) (optional (cfg.package != null) cfg.package);
+
+    # Own the existing stable service override before activation. The exact
+    # clear-and-replace shape retains the live 0.12.2 command while the base
+    # unit below remains the owner of its environment and runtime contract.
+    home.file.".config/systemd/user/flow-nexus.service.d/override.conf" =
+      mkIf (sizeAtLeast "Min" && cfg.enable && cfg.package != null) {
+        force = true;
+        text = ''
+          [Service]
+          ExecStart=
+          ExecStart=${stableFlowPackage}/bin/flow-nexus
+        '';
+      };
 
     systemd.user.services.flow-nexus = mkIf (sizeAtLeast "Min" && cfg.enable && cfg.package != null) {
       Unit = {

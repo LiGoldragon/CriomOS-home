@@ -95,6 +95,11 @@
     flow.url = "github:LiGoldragon/flow/9fcd625ac7a0d44be58b9d365a94064e91f09219";
     flow.inputs.nixpkgs.follows = "nixpkgs";
 
+    # The stable service override keeps its independently pinned 0.12.2
+    # executable while the managed base unit remains on the 0.14 package.
+    flow-stable.url = "github:LiGoldragon/flow/34aaf7875af11cb539218c61cf2fc51996db271b";
+    flow-stable.inputs.nixpkgs.follows = "nixpkgs";
+
     # Next Flow: 0.17.4, run beside stable Flow on its own anchors by
     # profiles/min/flow-message-next.nix (lib/stable-next-service.nix). It
     # moves with message-next below: both share signal-flow 1c9e4b30 and
