@@ -55,6 +55,8 @@ lib.mkIf behavesAs.edge {
       plugins.enabled = [
         "criomos/wispr-status"
         "criomos/listener-level"
+        "criomos/solar-time"
+        "criomos/active-network"
       ];
       widget.wispr-status-widget.type = "criomos/wispr-status:wispr-status-widget";
       widget.listener-level.type = "criomos/listener-level:level";
@@ -95,6 +97,8 @@ lib.mkIf behavesAs.edge {
       plugins.enabled = [
         "criomos/wispr-status"
         "criomos/listener-level"
+        "criomos/solar-time"
+        "criomos/active-network"
       ];
     };
     modes = {

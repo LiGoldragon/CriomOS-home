@@ -10,7 +10,12 @@ pkgs.runCommand "solar-time-widget" { } ''
   sfwbar=${../../modules/home/profiles/min/sfwbar.nix}
 
   ${pkgs.jq}/bin/jq -e '.id == "solar-time" and .entryPoints.barWidget == "BarWidget.qml"' "$manifest"
-  ${pkgs.gnugrep}/bin/grep -F '{ id = "plugin:solar-time"; }' "$sfwbar"
+  ${pkgs.gawk}/bin/awk '
+    /plugins.enabled = \[/ { block += 1; enabled = 1; next }
+    enabled && /\];/ { enabled = 0; next }
+    enabled && /"criomos\/solar-time"/ { registered[block] = 1 }
+    END { exit !(block == 2 && registered[1] && registered[2]) }
+  ' "$sfwbar"
   ${pkgs.gnugrep}/bin/grep -F '/states/solar-time' "$sfwbar"
   ${pkgs.gnugrep}/bin/grep -F '"noctalia/plugins/solar-time/BarWidget.qml".source' "$sfwbar"
   ${pkgs.gnugrep}/bin/grep -F 'Time.now' "$widget"

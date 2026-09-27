@@ -19,7 +19,12 @@ pkgs.runCommand "active-network-widget" { } ''
   ${pkgs.nodejs}/bin/node status-validation-test.js ${fixtures}
   ${pkgs.jq}/bin/jq -e '.id == "active-network" and .entryPoints.barWidget == "BarWidget.qml"' ${manifest}
 
-  ${pkgs.gnugrep}/bin/grep -F '{ id = "plugin:active-network"; }' ${sfwbar}
+  ${pkgs.gawk}/bin/awk '
+    /plugins.enabled = \[/ { block += 1; enabled = 1; next }
+    enabled && /\];/ { enabled = 0; next }
+    enabled && /"criomos\/active-network"/ { registered[block] = 1 }
+    END { exit !(block == 2 && registered[1] && registered[2]) }
+  ' ${sfwbar}
   ${pkgs.gnugrep}/bin/grep -F '/states/active-network' ${sfwbar}
   ${pkgs.gnugrep}/bin/grep -F '"noctalia/plugins/active-network/BarWidget.qml".source' ${sfwbar}
   ${pkgs.gnugrep}/bin/grep -F '"noctalia/plugins/active-network/StatusValidation.js".source' ${sfwbar}
