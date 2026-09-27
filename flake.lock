@@ -477,11 +477,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1790372915,
-        "narHash": "sha256-5r/NvchgUrsMidcZpAEZ3cabwc7iIALwPn9q5Uv3S00=",
+        "lastModified": 1790438077,
+        "narHash": "sha256-+32wW0sv3yl0Z+oYOHGZ36X4NhpmGuSqN6HN9nSDcio=",
         "owner": "LiGoldragon",
         "repo": "clj-build",
-        "rev": "01126ad41b8f06ebd1469db30e89efc7dc74b649",
+        "rev": "8cc9991fcb840636215bf829ca6ed9489e3071d7",
         "type": "github"
       },
       "original": {
@@ -1701,17 +1701,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1790390181,
-        "narHash": "sha256-OllH6b3t/qJ3P045pfjp3KAANki8Qx4dmtqbZ3d4q9A=",
+        "lastModified": 1790438774,
+        "narHash": "sha256-OZ23SBVdFU97nA7FbqWP9b6u6bgnBYr6udw6xiqMzJM=",
         "owner": "LiGoldragon",
         "repo": "messenger-clj",
-        "rev": "dfcf91f0ff8b4b8a5bb6edc18830fdc2d0323494",
+        "rev": "93c12756f9c00dd3c13762590f17cee3a3712530",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "messenger-clj",
-        "rev": "dfcf91f0ff8b4b8a5bb6edc18830fdc2d0323494",
+        "rev": "93c12756f9c00dd3c13762590f17cee3a3712530",
         "type": "github"
       }
     },
