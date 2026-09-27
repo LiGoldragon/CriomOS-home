@@ -34,6 +34,6 @@ assert
   == "${package}/bin/codex app-server --remote-control --listen unix:///home/next-test/.codex-next/app-server-control/app-server-control.sock";
 pkgs.runCommand "codex-next-contract" { } ''
   ${package}/bin/codex --version > "$out"
-  test "$(cat "$out")" = "codex-cli 0.158.0-alpha.9"
+  test "$(cat "$out")" = "codex-cli 0.159.0-alpha.6"
   test -x ${package}/bin/codex-code-mode-host
 ''
