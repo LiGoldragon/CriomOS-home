@@ -39,11 +39,10 @@ let
       request=$1
       case "$request" in
         *'LOCAL_LLM_API_KEY'* | *'goldragon.criome/local-llm-api-token'*) exit 64 ;;
-        *'ProviderSeed (deepseek https://api.deepseek.com/v1 deepseek-v4-flash (Gopass platform.deepseek.com/api-key))'*) ;;
-        *) exit 65 ;;
       esac
       output_path=''${request##* }
-      output_path=''${output_path%))}
+      expected="AgentConfigurationWriteRequest.{/home/li/.local/state/agent/agent.sock /home/li/.local/state/agent/agent-meta.sock 384 /home/li/.local/state/agent/agent.sema [ProviderSeed.{deepseek https://api.deepseek.com/v1 deepseek-v4-flash Gopass.{platform.deepseek.com/api-key}}] $output_path}"
+      test "$request" = "$expected" || exit 65
       printf 'fake agent configuration archive\n' > "$output_path"
       printf '(AgentConfigurationWritten %s)\n' "$output_path"
       EOF
@@ -384,6 +383,22 @@ else
     agent_configuration_archive="$(${pkgs.gnused}/bin/sed -n 's|.*agent-daemon \([^ ]*agent.config.rkyv\).*|\1|p' agent-daemon-service)"
     test -n "$agent_configuration_archive"
     test -s "$agent_configuration_archive"
+
+    agent_writer=${fakeAgent.packages.${system}.default}/bin/agent-write-configuration
+    rejected_archive="$TMPDIR/rejected-agent.config.rkyv"
+    old_provider_seed="AgentConfigurationWriteRequest.{/home/li/.local/state/agent/agent.sock /home/li/.local/state/agent/agent-meta.sock 384 /home/li/.local/state/agent/agent.sema [ProviderSeed (deepseek https://api.deepseek.com/v1 deepseek-v4-flash (Gopass platform.deepseek.com/api-key))] $rejected_archive}"
+    if "$agent_writer" "$old_provider_seed"; then
+      echo 'agent fixture accepted the obsolete parenthesized ProviderSeed contract' >&2
+      exit 1
+    fi
+    test ! -e "$rejected_archive"
+
+    malformed_provider_seed="AgentConfigurationWriteRequest.{/home/li/.local/state/agent/agent.sock /home/li/.local/state/agent/agent-meta.sock 384 /home/li/.local/state/agent/agent.sema [ProviderSeed.{deepseek https://api.deepseek.com/v1 deepseek-v4-flash Gopass.{platform.deepseek.com/api-key}}] $rejected_archive"
+    if "$agent_writer" "$malformed_provider_seed"; then
+      echo 'agent fixture accepted a malformed dotted/braced ProviderSeed request' >&2
+      exit 1
+    fi
+    test ! -e "$rejected_archive"
     grep -q 'mkdir -p' "$agent_exec_start_pre"
     grep -q '/agent/agent.sock' "$agent_exec_start_pre"
 
