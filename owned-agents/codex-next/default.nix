@@ -4,17 +4,17 @@
   fetchurl,
 }:
 let
-  version = "0.158.0-alpha.9";
+  version = "0.159.0-alpha.6";
   targets = {
     x86_64-linux = {
       target = "x86_64-unknown-linux-musl";
-      hash = "sha256-r6jIHXWayHDyGbTKysFbpa1qERB7W3sQXI2Cg7jRFnw=";
-      hostHash = "sha256-CqTxMWD+Y4QmGMt8JHTw7bKNaN8lKiPWPuh0u0apP1Q=";
+      hash = "sha256-gEu0dHBirNkojFpgh+Kr6mplzyJvLP5qp31XV+9LE0I=";
+      hostHash = "sha256-0eAGHHFr0EoHbJ45NHU+IoNijCNcmRRL48I0p0dMhgw=";
     };
     aarch64-linux = {
       target = "aarch64-unknown-linux-musl";
-      hash = "sha256-e202MgQU0Atua8WVlJJ/rIYksCL6j9hNMw3zOoYqPxA=";
-      hostHash = "sha256-b77gtc0Hn8RGplFvIaCIs5+o7keUbfE+Hn+dH+AT+88=";
+      hash = "sha256-k9aDxjp3Un8HeE+/Cso8phb6Olua+p/WpsNNYCZyq3s=";
+      hostHash = "sha256-8NNTA6sUpTviDhKtrALJjv3srppVgeDuyOQcJvaF/yQ=";
     };
   };
   artifact = targets.${stdenvNoCC.hostPlatform.system};
