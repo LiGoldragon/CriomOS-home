@@ -95,11 +95,11 @@
     flow.url = "github:LiGoldragon/flow/9fcd625ac7a0d44be58b9d365a94064e91f09219";
     flow.inputs.nixpkgs.follows = "nixpkgs";
 
-    # Next Flow: 0.17.0, run beside stable Flow on its own anchors by
+    # Next Flow: 0.17.4, run beside stable Flow on its own anchors by
     # profiles/min/flow-message-next.nix (lib/stable-next-service.nix). It
     # moves with message-next below: both share signal-flow 1c9e4b30 and
     # meta-signal-flow 2ac045c2.
-    flow-next.url = "github:LiGoldragon/flow/ac216c899b8e43fa3401609e3ca2605d9856e7e4";
+    flow-next.url = "github:LiGoldragon/flow/bc464e5e1b94fcc179af73111f43b69db1f69fc5";
     flow-next.inputs.nixpkgs.follows = "nixpkgs";
 
     # Standalone compatibility messenger used by the live Flow routes. Home
