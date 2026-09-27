@@ -17,7 +17,7 @@ let
   expected = {
     stableFlow = "9fcd625ac7a0d44be58b9d365a94064e91f09219";
     stableMessage = "930c5169ffcf5fa3784b34b2751763009e926d1d";
-    nextFlow = "ac216c899b8e43fa3401609e3ca2605d9856e7e4";
+    nextFlow = "0b512ee0b6681b1925fee7b6435aa7c2eac26bfb";
     nextMessage = "481b579fcf72797ffa9ccf8ce4e2283a58cdff97";
   };
 
@@ -92,7 +92,8 @@ let
   hasPrefix = needle: text: lib.hasPrefix (plain needle) (plain text);
   plain = builtins.unsafeDiscardStringContext;
   resolve = lib.replaceStrings [ "%t" ] [ runtime ];
-  environment = service: lib.concatMapStringsSep " " (line: lib.escapeShellArg (resolve line)) service.Environment;
+  environment =
+    service: lib.concatMapStringsSep " " (line: lib.escapeShellArg (resolve line)) service.Environment;
 in
 assert inputs.flow.sourceInfo.rev == expected.stableFlow;
 assert inputs.message.sourceInfo.rev == expected.stableMessage;
@@ -112,7 +113,9 @@ assert stableMessageService.RuntimeDirectory == "message";
 assert flowNext.RuntimeDirectory == "flow-next";
 assert messageNext.RuntimeDirectory == "message-next";
 # Sockets are pairwise distinct across both slots.
-assert hasInfix "%t/message/message.sock %t/message/message-owner.sock" (lib.last stableMessageService.ExecStartPre);
+assert hasInfix "%t/message/message.sock %t/message/message-owner.sock" (
+  lib.last stableMessageService.ExecStartPre
+);
 assert builtins.length (lib.unique (stableSockets ++ nextSockets)) == 8;
 # Next runs the pinned 0.17 executables with no arguments, on its anchors.
 assert flowNext.ExecStart == "${flowNextPackage}/bin/flow-nexus";
@@ -125,12 +128,16 @@ assert builtins.elem "XDG_RUNTIME_DIR=%t/message-next" messageNext.Environment;
 assert configureNext.Unit.Requires == [ "flow-nexus-next.service" ];
 assert configureNext.Service.Type == "oneshot";
 assert hasInfix " %t/flow-next/flow/flow-meta.sock " configureNext.Service.ExecStart;
-assert hasInfix "Configure.{ %t/flow-next/flow/flow.sock %t/flow-next/flow/flow-meta.sock " configureNext.Service.ExecStart;
-assert hasInfix "[ Psyche ] ${messageNextPackage}/bin/message-nexus }" configureNext.Service.ExecStart;
+assert hasInfix "Configure.{ %t/flow-next/flow/flow.sock %t/flow-next/flow/flow-meta.sock "
+  configureNext.Service.ExecStart;
+assert hasInfix "[ Psyche ] ${messageNextPackage}/bin/message-nexus }"
+  configureNext.Service.ExecStart;
 assert nextUnits.message-nexus-next.Unit.After == [ "flow-nexus-next.service" ];
 # The stable units are the stable modules' own, pinned to stable packages.
 assert stableFlowService.ExecStart == "${inputs.flow.packages.${system}.default}/bin/flow-nexus";
-assert hasPrefix "${inputs.message.packages.${system}.default}/bin/message-daemon " stableMessageService.ExecStart;
+assert hasPrefix "${
+  inputs.message.packages.${system}.default
+}/bin/message-daemon " stableMessageService.ExecStart;
 pkgs.runCommand "flow-message-next"
   {
     nativeBuildInputs = [

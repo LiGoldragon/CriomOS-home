@@ -99,7 +99,7 @@
     # profiles/min/flow-message-next.nix (lib/stable-next-service.nix). It
     # moves with message-next below: both share signal-flow 1c9e4b30 and
     # meta-signal-flow 2ac045c2.
-    flow-next.url = "github:LiGoldragon/flow/ac216c899b8e43fa3401609e3ca2605d9856e7e4";
+    flow-next.url = "github:LiGoldragon/flow/0b512ee0b6681b1925fee7b6435aa7c2eac26bfb";
     flow-next.inputs.nixpkgs.follows = "nixpkgs";
 
     # Standalone compatibility messenger used by the live Flow routes. Home
@@ -660,7 +660,9 @@
           flow-message-next = checkPkgs.callPackage ./checks/flow-message-next { inherit inputs; };
           herdr-toast-delivery = checkPkgs.callPackage ./checks/herdr-toast-delivery { inherit inputs; };
           herdr-agent-executable = checkPkgs.callPackage ./checks/herdr-agent-executable { inherit inputs; };
-          herdr-codex-integration = checkPkgs.callPackage ./checks/herdr-codex-integration { inherit inputs; };
+          herdr-codex-integration = checkPkgs.callPackage ./checks/herdr-codex-integration {
+            inherit inputs;
+          };
           herdr-server = checkPkgs.callPackage ./checks/herdr-server { inherit inputs; };
           field-monitoring = checkPkgs.callPackage ./checks/field-monitoring { inherit inputs; };
           cluster-relay-package = checkPkgs.callPackage ./checks/cluster-relay-package { inherit inputs; };
