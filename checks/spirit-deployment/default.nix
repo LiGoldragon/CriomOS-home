@@ -41,7 +41,8 @@ let
         *'LOCAL_LLM_API_KEY'* | *'goldragon.criome/local-llm-api-token'*) exit 64 ;;
       esac
       output_path=''${request##* }
-      expected="AgentConfigurationWriteRequest.{/home/li/.local/state/agent/agent.sock /home/li/.local/state/agent/agent-meta.sock 384 /home/li/.local/state/agent/agent.sema [ProviderSeed.{deepseek https://api.deepseek.com/v1 deepseek-v4-flash Gopass.{platform.deepseek.com/api-key}}] $output_path}"
+      output_path=''${output_path%\}}
+      expected="AgentConfigurationWriteRequest.{/home/li/.local/state/agent/agent.sock /home/li/.local/state/agent/agent-meta.sock 384 /home/li/.local/state/agent/agent.sema [ProviderSeed.{deepseek https://api.deepseek.com/v1 deepseek-v4-flash Gopass.platform.deepseek.com/api-key}] $output_path}"
       test "$request" = "$expected" || exit 65
       printf 'fake agent configuration archive\n' > "$output_path"
       printf '(AgentConfigurationWritten %s)\n' "$output_path"
