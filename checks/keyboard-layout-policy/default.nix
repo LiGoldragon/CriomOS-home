@@ -18,16 +18,10 @@ let
     config.lib.niri.actions.spawn = spawnAction;
     constants = inputs.criomos-lib.lib.constants;
     horizon.node.behavesAs.edge = true;
-    horizon.node.machine.arch = "X86_64";
     textScale.fontPt = 12;
     user = {
       useFastRepeat = true;
-      size = {
-        min = true;
-        medium = false;
-        large = false;
-        max = false;
-      };
+      size = "Min";
     };
   };
 

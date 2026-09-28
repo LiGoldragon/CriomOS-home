@@ -23,7 +23,7 @@ let
   inherit (horizon) node;
   inherit (user)
     useColemak
-    hasPubKey
+    hasPublicKey
     gitSigningKey
     matrixId
     isMultimediaDev
@@ -31,7 +31,7 @@ let
     ;
   inherit (user) githubId name;
   sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
-  nodePublicKey = user.pubKeys.${node.name} or null;
+  nodePublicKey = lib.findFirst (key: key.node == node.name) null user.publicKeys;
   codexSkillReadDeduplicationInstruction = "Skill-read de-duplication: A pasted <skill ...>...</skill> block is complete when it has matching opening and closing <skill> tags, a skill name, a location, and non-empty body text. Treat a complete pasted skill block as already loaded for this session. Read the same skill location again only when the block is structurally missing content, the user asks to verify source or freshness, or a higher-priority instruction explicitly requires verification.";
 
   codexPermissionDefaults = import ./codex-permission-defaults.nix;
@@ -238,10 +238,10 @@ let
       parted # Disk utils
       wireguard-tools
     ]
-    # Horizon projects `machine.arch`, lowercase (`x86_64`,
+    # Horizon projects `machine.architecture`, lowercase (`x86_64`,
     # `aarch64`): see horizon-rs `lib/src/model.rs` `Machine` and
     # `projection.rs` `architecture_name`. There is no `machine.arch`.
-    ++ (optionals (node.machine.arch == "X86_64") [ i7z ]);
+    ++ (optionals (node.machine.architecture == "x86_64") [ i7z ]);
 
   programmingTools = with pkgs; [
     # C
@@ -470,7 +470,7 @@ in
         defaultCacheTtlSsh = 3600;
         maxCacheTtlSsh = 86400;
         enableSshSupport = true;
-        sshKeys = optional hasPubKey nodePublicKey.keygrip;
+        sshKeys = optional hasPublicKey nodePublicKey.keygrip;
       };
 
       mpd = {
@@ -536,7 +536,7 @@ in
 
       git = {
         enable = true;
-        signing = mkIf hasPubKey {
+        signing = mkIf hasPublicKey {
           key = gitSigningKey;
           signByDefault = true;
         };
@@ -589,7 +589,7 @@ in
             name = name;
             email = emailAddress;
           };
-          signing = mkIf hasPubKey {
+          signing = mkIf hasPublicKey {
             behavior = "own";
             backend = "gpg";
             key = gitSigningKey;

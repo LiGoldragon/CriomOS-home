@@ -25,30 +25,15 @@ let
 
   belowMediumHome = mkHome {
     name = "below-medium-profile-check";
-    size = {
-      min = true;
-      medium = false;
-      large = false;
-      max = false;
-    };
+    size = "Min";
   };
   mediumHome = mkHome {
     name = "medium-profile-check";
-    size = {
-      min = true;
-      medium = true;
-      large = false;
-      max = false;
-    };
+    size = "Medium";
   };
   maximumHome = mkHome {
     name = "maximum-profile-check";
-    size = {
-      min = true;
-      medium = true;
-      large = true;
-      max = true;
-    };
+    size = "Max";
   };
 in
 let

@@ -12,7 +12,7 @@ let
     specialArgs = {
       inputs = fixtureInputs;
       inherit pkgs;
-      user.size = { min = true; medium = false; large = false; max = false; };
+      user.size = "Min";
     };
     modules = [
       ../../modules/home/deployments/cf7879-cluster-relay.nix

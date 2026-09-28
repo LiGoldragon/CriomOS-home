@@ -8,7 +8,6 @@ let
       inherit inputs;
       hexis = hexisPackage;
       horizon.node.behavesAs.edge = true;
-    horizon.node.machine.arch = "X86_64";
     };
     modules = [
       inputs.stylix.homeModules.stylix

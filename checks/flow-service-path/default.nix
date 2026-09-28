@@ -27,12 +27,7 @@ let
   enabledByDefault = import module {
     inputs = moduleInputs;
     inherit lib pkgs;
-    user.size = {
-      min = true;
-      medium = false;
-      large = false;
-      max = false;
-    };
+    user.size = "Min";
     config.home.username = "li";
     config.criomos.corePackages = corePackages;
     config.criomosHome.flow = {
@@ -43,12 +38,7 @@ let
   disabled = import module {
     inputs = moduleInputs;
     inherit lib pkgs;
-    user.size = {
-      min = true;
-      medium = false;
-      large = false;
-      max = false;
-    };
+    user.size = "Min";
     config.home.username = "li";
     config.criomos.corePackages = corePackages;
     config.criomosHome.flow = {
@@ -59,12 +49,7 @@ let
   wrongUser = import module {
     inputs = moduleInputs;
     inherit lib pkgs;
-    user.size = {
-      min = true;
-      medium = false;
-      large = false;
-      max = false;
-    };
+    user.size = "Min";
     config.home.username = "another-user";
     config.criomos.corePackages = corePackages;
     config.criomosHome.flow = {

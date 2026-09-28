@@ -136,12 +136,7 @@ let
         workspacePaths = [ fakeWorkspace ];
       };
     };
-    user.size = {
-      min = true;
-      medium = false;
-      large = false;
-      max = false;
-    };
+    user.size = "Min";
   };
 
   moduleConfiguration =

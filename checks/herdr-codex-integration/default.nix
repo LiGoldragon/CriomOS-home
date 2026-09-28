@@ -5,11 +5,11 @@ let
     extraSpecialArgs = {
       inherit inputs;
       user = {
-        size = { min = true; medium = false; large = false; max = false; }; useColemak = false; hasPubKey = false; gitSigningKey = "";
+        size = "Min"; useColemak = false; hasPublicKey = false; gitSigningKey = "";
         matrixId = ""; isMultimediaDev = false; emailAddress = "herdr-codex-check@example.invalid";
         githubId = "herdr-codex-check"; name = "herdr-codex-check"; publicKeys = [ ];
       };
-      horizon.node = { name = "herdr-codex-check"; machine.arch = "X86_64"; };
+      horizon.node = { name = "herdr-codex-check"; machine.architecture = "x86_64"; };
       hexis = inputs.hexis.packages.${pkgs.stdenv.hostPlatform.system}.default;
       rustToolchain = pkgs.rustc;
     };

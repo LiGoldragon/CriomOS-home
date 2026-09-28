@@ -9,7 +9,7 @@ let
     Medium = 14;
     Large = 16;
     ExtraLarge = 18;
-  }.${user.textSize};
+  }.${user.resolvedTextSize};
 in
 {
   _module.args.textScale = {

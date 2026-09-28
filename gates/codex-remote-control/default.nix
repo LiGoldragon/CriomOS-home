@@ -31,30 +31,15 @@ let
     }).config;
   codexUser = {
     name = "codex-remote-control-test";
-    size = {
-      min = true;
-      medium = false;
-      large = false;
-      max = false;
-    };
+    size = "Min";
   };
   nonCodexUser = {
     name = "codex-remote-control-test";
-    size = {
-      min = false;
-      medium = false;
-      large = false;
-      max = false;
-    };
+    size = "Zero";
   };
   secondCodexUser = {
     name = "codex-remote-control-second";
-    size = {
-      min = true;
-      medium = false;
-      large = false;
-      max = false;
-    };
+    size = "Min";
   };
   configuration = mkConfiguration codexUser;
   nonCodexConfiguration = mkConfiguration nonCodexUser;
@@ -62,17 +47,12 @@ let
   embeddedUserName = "embedded-codex-test";
   embeddedHorizon = {
     node.services = [ ];
-    users = {
-      ${embeddedUserName} = {
+    users = [
+      {
         name = embeddedUserName;
-        size = {
-          min = true;
-          medium = false;
-          large = false;
-          max = false;
-        };
-      };
-    };
+        size = "Min";
+      }
+    ];
   };
   embeddedConfiguration = inputs.nixpkgs.lib.nixosSystem {
     inherit system;
@@ -93,7 +73,7 @@ let
             codexRemoteControlModule
           ];
           users.${embeddedUserName} = {
-            _module.args.user = embeddedHorizon.users.${embeddedUserName};
+            _module.args.user = builtins.head embeddedHorizon.users;
             home = {
               username = embeddedUserName;
               homeDirectory = "/home/${embeddedUserName}";

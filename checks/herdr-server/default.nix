@@ -18,14 +18,9 @@ let
       extraSpecialArgs = {
         inherit inputs;
         user = {
-          size = {
-            min = true;
-            medium = false;
-            large = false;
-            max = false;
-          };
+          size = "Min";
           useColemak = false;
-          hasPubKey = false;
+          hasPublicKey = false;
           gitSigningKey = "";
           matrixId = "";
           isMultimediaDev = false;
@@ -36,7 +31,7 @@ let
         };
         horizon.node = {
           name = "herdr-server-check";
-          machine.arch = "X86_64";
+          machine.architecture = "x86_64";
         };
         hexis = inputs.hexis.packages.${pkgs.stdenv.hostPlatform.system}.default;
         rustToolchain = pkgs.rustc;

@@ -32,11 +32,11 @@ let
     criomos-lib = null;
     user = {
       useColemak = false;
-      hasPubKey = false;
+      hasPublicKey = false;
       publicKeys = [ ];
       gitSigningKey = null;
       matrixId = null;
-      size = { min = true; medium = true; large = false; max = false; };
+      size = "Medium";
       isMultimediaDev = false;
       emailAddress = "yt-dlp-check@example.invalid";
       githubId = "yt-dlp-check";
@@ -55,7 +55,7 @@ let
     user = {
       githubId = "yt-dlp-check";
       useColemak = false;
-      size = { min = true; medium = true; large = false; max = false; };
+      size = "Medium";
     };
   };
   moduleContent =

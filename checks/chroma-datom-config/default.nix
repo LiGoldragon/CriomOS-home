@@ -37,9 +37,8 @@ let
       stylix.base16.mkSchemeAttrs = _scheme: { withHashtag = colors; };
     };
     horizon.node.behavesAs.edge = true;
-    horizon.node.machine.arch = "X86_64";
     textScale.fontPt = 12;
-    user.size = { min = true; medium = false; large = false; max = false; };
+    user.size = "Min";
   };
   moduleContent = if moduleResult ? content then moduleResult.content else moduleResult;
   activation = builtins.unsafeDiscardStringContext moduleContent.home.activation.chromaConfigSeed.data;

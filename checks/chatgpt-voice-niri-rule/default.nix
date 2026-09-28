@@ -11,15 +11,9 @@ let
       inherit inputs;
       constants = inputs.criomos-lib.lib.constants;
       horizon.node.behavesAs.edge = true;
-    horizon.node.machine.arch = "X86_64";
       user = {
         useFastRepeat = false;
-        size = {
-          min = true;
-          medium = true;
-          large = false;
-          max = false;
-        };
+        size = "Medium";
       };
     };
     modules = [

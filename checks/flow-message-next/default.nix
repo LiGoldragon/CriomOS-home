@@ -48,7 +48,7 @@ let
         inputs = moduleInputs;
         inherit lib pkgs;
         config = moduleConfig;
-        user.size = { min = true; medium = false; large = false; max = false; };
+        user.size = "Min";
       };
     in
     if result.config ? content then result.config.content else result.config;

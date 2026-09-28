@@ -1,6 +1,6 @@
 { pkgs, inputs, ... }:
 let
-  user = { name = "li"; size = { min = true; medium = false; large = false; max = false; }; };
+  user = { name = "li"; size = "Min"; };
   configuration =
     (inputs.home-manager.lib.homeManagerConfiguration {
       inherit pkgs;

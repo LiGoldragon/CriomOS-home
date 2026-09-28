@@ -19,13 +19,7 @@ let
     inherit inputs lib pkgs;
     config.lib.niri.actions.spawn = spawnAction;
     horizon.node.behavesAs.edge = true;
-    horizon.node.machine.arch = "X86_64";
-    user.size = {
-      min = true;
-      medium = false;
-      large = false;
-      max = false;
-    };
+    user.size = "Min";
   };
 
   moduleContent = if moduleResult ? content then moduleResult.content else moduleResult;
