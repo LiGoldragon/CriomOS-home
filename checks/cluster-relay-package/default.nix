@@ -39,7 +39,7 @@ in
 pkgs.runCommand "cluster-relay-package" { nativeBuildInputs = [ pkgs.coreutils ]; } ''
   set -eu
   test -x ${package}/bin/cluster-relay
-  test -x ${inputs.message.packages.${system}.default}/bin/relay
+  test -x ${fixtureInputs.message.packages.${system}.default}/bin/relay
   test "$(${package}/bin/cluster-relay one two 2>&1 || true)" = "cluster-relay: FLOW_ID is not a configured cf7879 member"
   FLOW_ID=57a7aa ${package}/bin/cluster-relay 'first six words are supplied here' 'last six words are supplied here' > "$TMPDIR/output"
   grep -F '57a7aa02-e52d-4266-8746-6770ff770d11|/build/cluster-relay-home/.claude/projects/-git-github-com-LiGoldragon-secondary/57a7aa02-e52d-4266-8746-6770ff770d11.jsonl' "$TMPDIR/output"
