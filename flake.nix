@@ -203,7 +203,7 @@
     # Mentci approval daemon source, packaged locally because it does not
     # expose a flake.
     mentci-src = {
-      url = "github:LiGoldragon/mentci/235b1b44ecd93857df60c36a2ca4fa16fab5984f";
+      url = "github:LiGoldragon/mentci/a1eb5e2bb1a3658df530d7eea4862f94f556fc61";
       flake = false;
     };
 

@@ -1629,17 +1629,17 @@
     "mentci-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1786575526,
-        "narHash": "sha256-cq+0oZxqL0p0yAcx9/gljfZW89+U83g4b1dDZ7ilqvE=",
+        "lastModified": 1790627604,
+        "narHash": "sha256-kHgU1mxni6/Hcw2Jc4vb4LqA47NOvhbQXtaipZ1Dd5c=",
         "owner": "LiGoldragon",
         "repo": "mentci",
-        "rev": "235b1b44ecd93857df60c36a2ca4fa16fab5984f",
+        "rev": "a1eb5e2bb1a3658df530d7eea4862f94f556fc61",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "mentci",
-        "rev": "235b1b44ecd93857df60c36a2ca4fa16fab5984f",
+        "rev": "a1eb5e2bb1a3658df530d7eea4862f94f556fc61",
         "type": "github"
       }
     },
