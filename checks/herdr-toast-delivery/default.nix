@@ -140,8 +140,9 @@ pkgs.runCommand "herdr-toast-delivery" {
   cmp "$TMPDIR/mismatched-config.toml" "$mismatch_home/.config/herdr/config.toml"
 
   missing_home="$TMPDIR/missing-home"
-  mkdir -p "$missing_home/.config/herdr"
+  mkdir -p "$missing_home"
   HOME="$missing_home" ${pkgs.bash}/bin/bash ${herdrAdoptionScript}
+  test ! -e "$missing_home/.config"
   test ! -e "$missing_home/.config/herdr/config.toml"
   test ! -e "$missing_home/.local/state/criomos/herdr-adoption/config.toml.pre-home-manager"
   test ! -e "$missing_home/.local/state/criomos/herdr-adoption/config.toml.pre-home-manager.sha256"
