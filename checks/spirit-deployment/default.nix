@@ -39,7 +39,7 @@ let
       request=$1
       case "$request" in
         *'LOCAL_LLM_API_KEY'* | *'goldragon.criome/local-llm-api-token'*) exit 64 ;;
-        *'ProviderSeed (deepseek https://api.deepseek.com/v1 deepseek-v4-flash (Gopass platform.deepseek.com/api-key))'*) ;;
+        *'ProviderSeed.{deepseek https://api.deepseek.com/v1 deepseek-v4-flash Gopass.platform.deepseek.com/api-key}'*) ;;
         *) exit 65 ;;
       esac
       output_path=''${request##* }
