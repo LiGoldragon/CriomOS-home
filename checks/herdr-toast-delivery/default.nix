@@ -70,6 +70,8 @@ let
   parsedConfigToml = builtins.fromTOML (builtins.unsafeDiscardStringContext configToml);
   herdrAdoption = homeConfiguration.config.home.activation.adoptHerdrConfig.data;
   herdrAdoptionScript = pkgs.writeText "herdr-adoption" herdrAdoption;
+  checkLinkTargets = homeConfiguration.config.home.activation.checkLinkTargets.data;
+  checkLinkTargetsScript = pkgs.writeText "herdr-check-link-targets" checkLinkTargets;
 in
 assert parsedConfigToml.ui.toast.delivery == "terminal";
 assert parsedConfigToml.theme.auto_switch;
@@ -146,6 +148,24 @@ pkgs.runCommand "herdr-toast-delivery" {
   test ! -e "$missing_home/.config/herdr/config.toml"
   test ! -e "$missing_home/.local/state/criomos/herdr-adoption/config.toml.pre-home-manager"
   test ! -e "$missing_home/.local/state/criomos/herdr-adoption/config.toml.pre-home-manager.sha256"
+
+  # First activation has no target to adopt.  Home Manager then creates its
+  # declared managed link.  Re-running the same generated activation must
+  # keep that link, and the later normal link-target phase must still accept
+  # it.  This covers the persistent service's ordinary repeat path without
+  # resetting any user state.
+  managed_repeat_home="$TMPDIR/managed-repeat-home"
+  mkdir -p "$managed_repeat_home/.config/herdr"
+  HOME="$managed_repeat_home" ${pkgs.bash}/bin/bash ${herdrAdoptionScript}
+  ln -s ${homeConfiguration.config.xdg.configFile."herdr/config.toml".source} \
+    "$managed_repeat_home/.config/herdr/config.toml"
+  HOME="$managed_repeat_home" ${pkgs.bash}/bin/bash ${herdrAdoptionScript}
+  test -L "$managed_repeat_home/.config/herdr/config.toml"
+  test "$(readlink -f "$managed_repeat_home/.config/herdr/config.toml")" = \
+    ${homeConfiguration.config.xdg.configFile."herdr/config.toml".source}
+  HOME="$managed_repeat_home" ${pkgs.bash}/bin/bash ${herdrAdoptionScript}
+  HOME="$managed_repeat_home" ${pkgs.bash}/bin/bash ${checkLinkTargetsScript}
+  test -L "$managed_repeat_home/.config/herdr/config.toml"
 
   directory_home="$TMPDIR/directory-home"
   mkdir -p "$directory_home/.config/herdr/config.toml"
