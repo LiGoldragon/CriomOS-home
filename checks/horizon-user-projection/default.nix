@@ -6,7 +6,7 @@ let
     test-user = {
       name = "test-user";
       size = { min = true; medium = true; large = true; max = false; };
-      hasPublicKey = true;
+      hasPubKey = true;
       pubKeys = {
         test-node = {
           ssh = "ssh-ed25519 test";
@@ -28,7 +28,7 @@ assert lib.assertMsg (
   !(horizonUser.sizeAtLeast projected.size "Max")
 ) "Large Horizon users must not include the maximum Home profile";
 assert lib.assertMsg (
-  projected.hasPublicKey && projected.pubKeys.test-node.keygrip == "TESTKEYGRIP"
+  projected.hasPubKey && projected.pubKeys.test-node.keygrip == "TESTKEYGRIP"
 ) "Home must retain current Horizon public-key fields";
 assert lib.assertMsg (
   projected.textSize == "ExtraLarge"

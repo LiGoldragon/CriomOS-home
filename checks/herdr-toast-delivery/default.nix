@@ -12,7 +12,7 @@ let
           max = false;
         };
         useColemak = false;
-        hasPublicKey = false;
+        hasPubKey = false;
         gitSigningKey = "";
         matrixId = "";
         isMultimediaDev = false;

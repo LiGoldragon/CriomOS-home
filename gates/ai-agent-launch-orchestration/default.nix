@@ -9,7 +9,7 @@ let
   claudeCodePackage = pkgs.callPackage ../../owned-agents/claude-code { inherit inputs; };
   fixtureUser = {
     useColemak = false;
-    hasPublicKey = false;
+    hasPubKey = false;
     publicKeys = [ ];
     gitSigningKey = null;
     matrixId = null;

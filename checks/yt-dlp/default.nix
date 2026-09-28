@@ -32,7 +32,7 @@ let
     criomos-lib = null;
     user = {
       useColemak = false;
-      hasPublicKey = false;
+      hasPubKey = false;
       publicKeys = [ ];
       gitSigningKey = null;
       matrixId = null;

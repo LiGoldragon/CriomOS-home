@@ -23,7 +23,7 @@ let
   inherit (horizon) node;
   inherit (user)
     useColemak
-    hasPublicKey
+    hasPubKey
     gitSigningKey
     matrixId
     isMultimediaDev
@@ -470,7 +470,7 @@ in
         defaultCacheTtlSsh = 3600;
         maxCacheTtlSsh = 86400;
         enableSshSupport = true;
-        sshKeys = optional hasPublicKey nodePublicKey.keygrip;
+        sshKeys = optional hasPubKey nodePublicKey.keygrip;
       };
 
       mpd = {
@@ -536,7 +536,7 @@ in
 
       git = {
         enable = true;
-        signing = mkIf hasPublicKey {
+        signing = mkIf hasPubKey {
           key = gitSigningKey;
           signByDefault = true;
         };
@@ -589,7 +589,7 @@ in
             name = name;
             email = emailAddress;
           };
-          signing = mkIf hasPublicKey {
+          signing = mkIf hasPubKey {
             behavior = "own";
             backend = "gpg";
             key = gitSigningKey;
