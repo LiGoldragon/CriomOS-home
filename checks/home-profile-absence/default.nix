@@ -66,6 +66,7 @@ let
         inputs = fakeInputs;
         hexis = pkgs.hello;
         horizon.node.behavesAs.edge = edge;
+        horizon.node.machine.arch = "X86_64";
         user = {
           isMultimediaDev = false;
           size = if large then {
