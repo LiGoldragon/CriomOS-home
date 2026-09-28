@@ -277,7 +277,8 @@ agent_panel_sort = "spaces"
 ```
 
 On the first authorized Home activation, the generated adoption gate accepts
-only this observed unmanaged legacy configuration:
+either an absent target (there is no user state to preserve) or this observed
+unmanaged legacy configuration:
 
 ```toml
 [ui.toast]
@@ -287,15 +288,16 @@ delivery = "terminal"
 agent_panel_sort = "spaces"
 ```
 
-It copies that file and its SHA-256 record to
+For the legacy configuration, it copies the file and its SHA-256 record to
 `$XDG_STATE_HOME/criomos/herdr-adoption/config.toml.pre-home-manager` (or
 `$HOME/.local/state/...` when XDG state is unset), then removes the original so
 Home Manager can create the themed managed link shown above. An existing
 regular, nonsymlinked backup must still match the legacy file and its checksum
-record must match the backup.
+record must match the backup. For an absent target, it creates no backup and
+leaves the path absent for Home Manager to create its managed link.
 
-A missing, unreadable, changed, or foreign-symlinked target stops activation
-without touching it. Review and resolve that state before retrying; do not
-force, delete, or overwrite it. Roll back by activating the previous Home
-generation, then restore the retained backup deliberately if an unmanaged file
-is required.
+An unreadable or non-regular present target, a changed file, or a
+foreign-symlinked target stops activation without touching it. Review and
+resolve that state before retrying; do not force, delete, or overwrite it. Roll
+back by activating the previous Home generation, then restore the retained
+backup deliberately if an unmanaged file is required.

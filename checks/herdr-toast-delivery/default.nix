@@ -141,10 +141,18 @@ pkgs.runCommand "herdr-toast-delivery" {
 
   missing_home="$TMPDIR/missing-home"
   mkdir -p "$missing_home/.config/herdr"
-  if HOME="$missing_home" ${pkgs.bash}/bin/bash ${herdrAdoptionScript}; then
-    echo "Herdr adoption accepted a missing configuration" >&2
+  HOME="$missing_home" ${pkgs.bash}/bin/bash ${herdrAdoptionScript}
+  test ! -e "$missing_home/.config/herdr/config.toml"
+  test ! -e "$missing_home/.local/state/criomos/herdr-adoption/config.toml.pre-home-manager"
+  test ! -e "$missing_home/.local/state/criomos/herdr-adoption/config.toml.pre-home-manager.sha256"
+
+  directory_home="$TMPDIR/directory-home"
+  mkdir -p "$directory_home/.config/herdr/config.toml"
+  if HOME="$directory_home" ${pkgs.bash}/bin/bash ${herdrAdoptionScript}; then
+    echo "Herdr adoption accepted a directory target" >&2
     exit 1
   fi
+  test -d "$directory_home/.config/herdr/config.toml"
 
   touch "$out"
 ''

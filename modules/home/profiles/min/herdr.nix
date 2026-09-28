@@ -237,17 +237,22 @@ in
         exit 1
       fi
     else
-      if [ ! -f "$herdr_config" ]; then
-        echo "Refusing Herdr adoption: $herdr_config is missing or is not a regular file" >&2
+      # A first managed Home generation may have no user-created Herdr
+      # configuration. There is then no state to preserve: leave the target
+      # absent so Home Manager's following checkLinkTargets step creates its
+      # managed link. A present non-regular target remains unsafe to replace.
+      if [ ! -e "$herdr_config" ]; then
+        :
+      elif [ ! -f "$herdr_config" ]; then
+        echo "Refusing Herdr adoption: $herdr_config is not a regular file" >&2
         exit 1
-      fi
-
-      if ! cmp -s "$herdr_config" "${legacyHerdrConfig}"; then
+      elif ! cmp -s "$herdr_config" "${legacyHerdrConfig}"; then
         echo "Refusing Herdr adoption: $herdr_config does not match the observed legacy configuration" >&2
         exit 1
+      else
+        verify_legacy_herdr_backup
+        rm -- "$herdr_config"
       fi
-      verify_legacy_herdr_backup
-      rm -- "$herdr_config"
     fi
     '';
     }
