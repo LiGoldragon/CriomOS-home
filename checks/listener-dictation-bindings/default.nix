@@ -19,6 +19,7 @@ let
     inherit inputs lib pkgs;
     config.lib.niri.actions.spawn = spawnAction;
     horizon.node.behavesAs.edge = true;
+    horizon.node.machine.arch = "X86_64";
     user.size = {
       min = true;
       medium = false;

@@ -37,6 +37,7 @@ let
       stylix.base16.mkSchemeAttrs = _scheme: { withHashtag = colors; };
     };
     horizon.node.behavesAs.edge = true;
+    horizon.node.machine.arch = "X86_64";
     textScale.fontPt = 12;
     user.size = { min = true; medium = false; large = false; max = false; };
   };

@@ -20,6 +20,7 @@ let
       inherit inputs;
       constants = inputs.criomos-lib.lib.constants;
       horizon.node.behavesAs.edge = true;
+    horizon.node.machine.arch = "X86_64";
       user = {
         useFastRepeat = false;
         size = {
