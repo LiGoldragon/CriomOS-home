@@ -150,6 +150,8 @@ pkgs.runCommand "noctalia-settings-composition" { nativeBuildInputs = [ noctalia
   assert settings["plugins"]["enabled"] == [
       "criomos/wispr-status",
       "criomos/listener-level",
+      "criomos/solar-time",
+      "criomos/active-network",
   ]
   assert settings["preserved"]["value"] == "user-state"
   PY
