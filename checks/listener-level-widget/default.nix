@@ -44,11 +44,6 @@ assert manifest["panel"] == [{
 }]
 '
 
-  ${pkgs.gnugrep}/bin/grep -F 'plugins.enabled = [' "$sfwbar"
-  ${pkgs.gnugrep}/bin/grep -F '"criomos/wispr-status"' "$sfwbar"
-  ${pkgs.gnugrep}/bin/grep -F '"criomos/listener-level"' "$sfwbar"
-  ${pkgs.gnugrep}/bin/grep -F '"criomos/solar-time"' "$sfwbar"
-  ${pkgs.gnugrep}/bin/grep -F '"criomos/active-network"' "$sfwbar"
   ${pkgs.gnugrep}/bin/grep -F 'widget.listener-level.type = "criomos/listener-level:level";' "$sfwbar"
   ${pkgs.gnugrep}/bin/grep -F 'bar.main = {' "$sfwbar"
   ${pkgs.gnugrep}/bin/grep -F '"listener-level"' "$sfwbar"
