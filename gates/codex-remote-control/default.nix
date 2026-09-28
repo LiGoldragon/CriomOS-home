@@ -47,12 +47,12 @@ let
   embeddedUserName = "embedded-codex-test";
   embeddedHorizon = {
     node.services = [ ];
-    users = [
-      {
+    users = {
+      ${embeddedUserName} = {
         name = embeddedUserName;
         size = "Min";
-      }
-    ];
+      };
+    };
   };
   embeddedConfiguration = inputs.nixpkgs.lib.nixosSystem {
     inherit system;
@@ -73,7 +73,7 @@ let
             codexRemoteControlModule
           ];
           users.${embeddedUserName} = {
-            _module.args.user = builtins.head embeddedHorizon.users;
+            _module.args.user = embeddedHorizon.users.${embeddedUserName};
             home = {
               username = embeddedUserName;
               homeDirectory = "/home/${embeddedUserName}";

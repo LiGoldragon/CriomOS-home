@@ -2,8 +2,8 @@
 let
   lib = pkgs.lib;
   horizonUser = import ../../lib/horizon-user.nix { inherit lib; };
-  users = horizonUser.usersByName [
-    {
+  users = horizonUser.usersByName {
+    test-user = {
       name = "test-user";
       size = "Large";
       hasPublicKey = true;
@@ -15,8 +15,8 @@ let
         }
       ];
       resolvedTextSize = "ExtraLarge";
-    }
-  ];
+    };
+  };
   projected = users.test-user;
 in
 assert lib.assertMsg (horizonUser.sizeAtLeast projected.size "Min")

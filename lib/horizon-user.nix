@@ -12,7 +12,7 @@ let
   ];
 in
 {
-  usersByName = users: builtins.listToAttrs (map (user: lib.nameValuePair user.name user) users);
+  usersByName = users: users;
 
   sizeAtLeast =
     actual: required:
