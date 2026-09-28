@@ -9,7 +9,7 @@ let
         matrixId = ""; isMultimediaDev = false; emailAddress = "herdr-codex-check@example.invalid";
         githubId = "herdr-codex-check"; name = "herdr-codex-check"; publicKeys = [ ];
       };
-      horizon.node = { name = "herdr-codex-check"; machine.architecture = "x86_64"; };
+      horizon.node = { name = "herdr-codex-check"; machine.arch = "X86_64"; };
       hexis = inputs.hexis.packages.${pkgs.stdenv.hostPlatform.system}.default;
       rustToolchain = pkgs.rustc;
     };
