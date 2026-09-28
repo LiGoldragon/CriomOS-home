@@ -43,7 +43,7 @@ let
         *) exit 65 ;;
       esac
       output_path=''${request##* }
-      output_path=''${output_path%))}
+      output_path=''${output_path%\}}
       printf 'fake agent configuration archive\n' > "$output_path"
       printf '(AgentConfigurationWritten %s)\n' "$output_path"
       EOF
