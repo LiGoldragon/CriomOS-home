@@ -663,7 +663,6 @@
           herdr-codex-integration = checkPkgs.callPackage ./checks/herdr-codex-integration { inherit inputs; };
           herdr-server = checkPkgs.callPackage ./checks/herdr-server { inherit inputs; };
           field-monitoring = checkPkgs.callPackage ./checks/field-monitoring { inherit inputs; };
-          cluster-relay-package = checkPkgs.callPackage ./checks/cluster-relay-package { inherit inputs; };
           gws = checkPkgs.callPackage ./checks/gws { inherit inputs; };
           playwright-cli = checkPkgs.callPackage ./checks/playwright-cli { };
           plannotator = checkPkgs.callPackage ./checks/plannotator { };
