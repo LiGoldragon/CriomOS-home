@@ -19,7 +19,12 @@ let
       xdg.stateHome = stateHome;
       criomosHome.message.enable = true;
     };
-    user.size = "Min";
+    user.size = {
+      min = true;
+      medium = false;
+      large = false;
+      max = false;
+    };
   };
 
   moduleConfiguration =
@@ -46,7 +51,12 @@ let
         daemonBinary = "message-nexus";
       };
     };
-    user.size = "Min";
+    user.size = {
+      min = true;
+      medium = false;
+      large = false;
+      max = false;
+    };
   };
   nexusModuleConfiguration =
     if nexusModuleResult.config ? content then

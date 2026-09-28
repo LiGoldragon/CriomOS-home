@@ -31,15 +31,30 @@ let
     }).config;
   codexUser = {
     name = "codex-remote-control-test";
-    size = "Min";
+    size = {
+      min = true;
+      medium = false;
+      large = false;
+      max = false;
+    };
   };
   nonCodexUser = {
     name = "codex-remote-control-test";
-    size = "Zero";
+    size = {
+      min = false;
+      medium = false;
+      large = false;
+      max = false;
+    };
   };
   secondCodexUser = {
     name = "codex-remote-control-second";
-    size = "Min";
+    size = {
+      min = true;
+      medium = false;
+      large = false;
+      max = false;
+    };
   };
   configuration = mkConfiguration codexUser;
   nonCodexConfiguration = mkConfiguration nonCodexUser;
@@ -50,7 +65,12 @@ let
     users = {
       ${embeddedUserName} = {
         name = embeddedUserName;
-        size = "Min";
+        size = {
+          min = true;
+          medium = false;
+          large = false;
+          max = false;
+        };
       };
     };
   };

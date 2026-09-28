@@ -13,7 +13,12 @@ let
       horizon.node.behavesAs.edge = true;
       user = {
         useFastRepeat = false;
-        size = "Medium";
+        size = {
+          min = true;
+          medium = true;
+          large = false;
+          max = false;
+        };
       };
     };
     modules = [

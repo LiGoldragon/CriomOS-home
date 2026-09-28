@@ -38,7 +38,7 @@ let
     };
     horizon.node.behavesAs.edge = true;
     textScale.fontPt = 12;
-    user.size = "Min";
+    user.size = { min = true; medium = false; large = false; max = false; };
   };
   moduleContent = if moduleResult ? content then moduleResult.content else moduleResult;
   activation = builtins.unsafeDiscardStringContext moduleContent.home.activation.chromaConfigSeed.data;

@@ -13,7 +13,12 @@ let
     publicKeys = [ ];
     gitSigningKey = null;
     matrixId = null;
-    size = "Min";
+    size = {
+      min = true;
+      medium = false;
+      large = false;
+      max = false;
+    };
     isMultimediaDev = false;
     emailAddress = "ai-agent-launch-check@example.invalid";
     githubId = "ai-agent-launch-check";

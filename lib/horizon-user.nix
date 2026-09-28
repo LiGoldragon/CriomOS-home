@@ -1,6 +1,6 @@
 # Home consumes Horizon's current user projection directly. These functions
 # perform only the two operations required at the flake/module boundary:
-# naming vector entries for Nix outputs and comparing the declared size enum.
+# naming map entries for Nix outputs and querying the declared size ladder.
 { lib }:
 let
   sizeOrder = [
@@ -17,11 +17,9 @@ in
   sizeAtLeast =
     actual: required:
     let
-      index = size: lib.lists.findFirstIndex (candidate: candidate == size) null sizeOrder;
-      actualIndex = index actual;
-      requiredIndex = index required;
+      field = lib.toLower required;
     in
-    assert lib.assertMsg (actualIndex != null) "Unknown Horizon user size ${actual}";
-    assert lib.assertMsg (requiredIndex != null) "Unknown required Horizon user size ${required}";
-    actualIndex >= requiredIndex;
+    assert lib.assertMsg (builtins.elem required (builtins.tail sizeOrder)) "Unknown required Horizon user size ${required}";
+    assert lib.assertMsg (builtins.hasAttr field actual) "Horizon user size lacks ${field}";
+    actual.${field};
 }

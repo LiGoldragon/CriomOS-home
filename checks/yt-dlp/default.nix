@@ -36,7 +36,7 @@ let
       publicKeys = [ ];
       gitSigningKey = null;
       matrixId = null;
-      size = "Medium";
+      size = { min = true; medium = true; large = false; max = false; };
       isMultimediaDev = false;
       emailAddress = "yt-dlp-check@example.invalid";
       githubId = "yt-dlp-check";
@@ -55,7 +55,7 @@ let
     user = {
       githubId = "yt-dlp-check";
       useColemak = false;
-      size = "Medium";
+      size = { min = true; medium = true; large = false; max = false; };
     };
   };
   moduleContent =

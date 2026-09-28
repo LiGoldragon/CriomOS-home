@@ -5,7 +5,7 @@ let
     extraSpecialArgs = {
       inherit inputs;
       user = {
-        size = "Min"; useColemak = false; hasPublicKey = false; gitSigningKey = "";
+        size = { min = true; medium = false; large = false; max = false; }; useColemak = false; hasPublicKey = false; gitSigningKey = "";
         matrixId = ""; isMultimediaDev = false; emailAddress = "herdr-codex-check@example.invalid";
         githubId = "herdr-codex-check"; name = "herdr-codex-check"; publicKeys = [ ];
       };

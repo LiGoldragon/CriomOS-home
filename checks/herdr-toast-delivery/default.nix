@@ -5,7 +5,12 @@ let
     extraSpecialArgs = {
       inherit inputs;
       user = {
-        size = "Min";
+        size = {
+          min = true;
+          medium = false;
+          large = false;
+          max = false;
+        };
         useColemak = false;
         hasPublicKey = false;
         gitSigningKey = "";

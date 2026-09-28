@@ -16,7 +16,7 @@ let
     horizon.node.behavesAs.edge = true;
     user = {
       useFastRepeat = true;
-      size = "Min";
+      size = { min = true; medium = false; large = false; max = false; };
     };
   };
   niriModule =

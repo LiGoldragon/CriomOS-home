@@ -21,7 +21,12 @@ let
     textScale.fontPt = 12;
     user = {
       useFastRepeat = true;
-      size = "Min";
+      size = {
+        min = true;
+        medium = false;
+        large = false;
+        max = false;
+      };
     };
   };
 

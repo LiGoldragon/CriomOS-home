@@ -5,7 +5,7 @@ let
   users = horizonUser.usersByName {
     test-user = {
       name = "test-user";
-      size = "Large";
+      size = { min = true; medium = true; large = true; max = false; };
       hasPublicKey = true;
       publicKeys = [
         {

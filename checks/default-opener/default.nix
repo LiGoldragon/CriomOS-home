@@ -6,7 +6,12 @@ let
       lib = pkgs.lib;
       inherit pkgs;
       criomos-lib = null;
-      user.size = "Min";
+      user.size = {
+        min = true;
+        medium = false;
+        large = false;
+        max = false;
+      };
       horizon = null;
       config = { };
       inputs = { };
@@ -15,7 +20,7 @@ let
     }).imports;
   openerConfiguration = inputs.home-manager.lib.homeManagerConfiguration {
     inherit pkgs;
-    extraSpecialArgs.user.size = "Min";
+    extraSpecialArgs.user.size = { min = true; medium = false; large = false; max = false; };
     modules = [
       defaultOpenerModule
       {

@@ -7,7 +7,12 @@ let
   testUser = "codex-remote-control-test";
   user = {
     name = testUser;
-    size = "Min";
+    size = {
+      min = true;
+      medium = false;
+      large = false;
+      max = false;
+    };
   };
   testHome = "/home/${testUser}";
   testUid = 1000;

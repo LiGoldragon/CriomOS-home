@@ -2,7 +2,12 @@
 let
   user = {
     name = "next-test";
-    size = "Min";
+    size = {
+      min = true;
+      medium = false;
+      large = false;
+      max = false;
+    };
   };
   configuration =
     (inputs.home-manager.lib.homeManagerConfiguration {

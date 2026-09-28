@@ -10,7 +10,12 @@ let
     users = {
       test-user = {
         name = "test-user";
-        size = "Medium";
+        size = {
+          min = true;
+          medium = true;
+          large = false;
+          max = false;
+        };
       };
     };
     node = {

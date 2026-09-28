@@ -33,7 +33,7 @@ let
   };
   remoteUser = {
     name = "remote-user";
-    size = "Min";
+    size = { min = true; medium = false; large = false; max = false; };
   };
   fakeOrchestrate = {
     packages.${system}.default = pkgs.writeShellScriptBin "orchestrate" "exit 0";
