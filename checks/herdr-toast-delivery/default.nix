@@ -24,6 +24,9 @@ let
       rustToolchain = pkgs.rustc;
     };
     modules = [
+      inputs.stylix.homeModules.stylix
+      inputs.niri-flake.homeModules.config
+      inputs.noctalia.homeModules.default
       # The Home deployment supplies criomos.corePackages and the Codex-next
       # client; this standalone fixture imports the same modules so herdr.nix
       # can resolve both Codex executables.
