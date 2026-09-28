@@ -7,14 +7,13 @@ let
       name = "test-user";
       size = { min = true; medium = true; large = true; max = false; };
       hasPublicKey = true;
-      publicKeys = [
-        {
-          node = "test-node";
+      pubKeys = {
+        test-node = {
           ssh = "ssh-ed25519 test";
           keygrip = "TESTKEYGRIP";
-        }
-      ];
-      resolvedTextSize = "ExtraLarge";
+        };
+      };
+      textSize = "ExtraLarge";
     };
   };
   projected = users.test-user;
@@ -29,10 +28,10 @@ assert lib.assertMsg (
   !(horizonUser.sizeAtLeast projected.size "Max")
 ) "Large Horizon users must not include the maximum Home profile";
 assert lib.assertMsg (
-  projected.hasPublicKey && (builtins.head projected.publicKeys).keygrip == "TESTKEYGRIP"
+  projected.hasPublicKey && projected.pubKeys.test-node.keygrip == "TESTKEYGRIP"
 ) "Home must retain current Horizon public-key fields";
 assert lib.assertMsg (
-  projected.resolvedTextSize == "ExtraLarge"
+  projected.textSize == "ExtraLarge"
 ) "Home must retain Horizon's resolved text size";
 pkgs.runCommand "horizon-user-projection-check" { } ''
   touch "$out"
