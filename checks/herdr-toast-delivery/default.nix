@@ -72,6 +72,7 @@ let
   herdrAdoptionScript = pkgs.writeText "herdr-adoption" herdrAdoption;
   checkLinkTargets = homeConfiguration.config.home.activation.checkLinkTargets.data;
   checkLinkTargetsScript = pkgs.writeText "herdr-check-link-targets" checkLinkTargets;
+  activationPackage = homeConfiguration.activationPackage;
 in
 assert parsedConfigToml.ui.toast.delivery == "terminal";
 assert parsedConfigToml.theme.auto_switch;
@@ -81,6 +82,7 @@ assert parsedConfigToml.ui.agent_panel_sort == "spaces";
 assert configToml != legacyConfigToml;
 pkgs.runCommand "herdr-toast-delivery" {
   nativeBuildInputs = [ pkgs.coreutils ];
+  inherit activationPackage;
 } ''
   set -eu
 
@@ -157,14 +159,15 @@ pkgs.runCommand "herdr-toast-delivery" {
   managed_repeat_home="$TMPDIR/managed-repeat-home"
   mkdir -p "$managed_repeat_home/.config/herdr"
   HOME="$managed_repeat_home" ${pkgs.bash}/bin/bash ${herdrAdoptionScript}
-  ln -s ${homeConfiguration.config.xdg.configFile."herdr/config.toml".source} \
+  ln -s "$activationPackage/home-files/.config/herdr/config.toml" \
     "$managed_repeat_home/.config/herdr/config.toml"
   HOME="$managed_repeat_home" ${pkgs.bash}/bin/bash ${herdrAdoptionScript}
   test -L "$managed_repeat_home/.config/herdr/config.toml"
   test "$(readlink -f "$managed_repeat_home/.config/herdr/config.toml")" = \
     ${homeConfiguration.config.xdg.configFile."herdr/config.toml".source}
   HOME="$managed_repeat_home" ${pkgs.bash}/bin/bash ${herdrAdoptionScript}
-  HOME="$managed_repeat_home" ${pkgs.bash}/bin/bash ${checkLinkTargetsScript}
+  HOME="$managed_repeat_home" newGenPath="$activationPackage" \
+    ${pkgs.bash}/bin/bash ${checkLinkTargetsScript}
   test -L "$managed_repeat_home/.config/herdr/config.toml"
 
   directory_home="$TMPDIR/directory-home"
