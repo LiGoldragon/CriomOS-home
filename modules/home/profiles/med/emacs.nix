@@ -13,6 +13,18 @@ let
 
   emacsBase = pkgs.emacs-pgtk;
   emacsPackageSet = pkgs.emacsPackagesFor emacsBase;
+  # Nixpkgs' pinned elisp-autofmt source revision was removed upstream and
+  # Codeberg now answers its archive URL with 404. Keep the package's existing
+  # build logic, but take its source from the current authoritative revision.
+  elispAutofmt = emacsPackageSet.elisp-autofmt.overrideAttrs (_: {
+    src = pkgs.fetchFromGitea {
+      domain = "codeberg.org";
+      owner = "ideasman42";
+      repo = "emacs-elisp-autofmt";
+      rev = "c4cd57b2599ec82a4363ae322aa734e34a719404";
+      hash = "sha256-jbluzmLskrvsRXKlX7KPA67u27okNQ9nDzpVDS/M/tQ=";
+    };
+  });
   chromaTheme = inputs.chroma-emacs.lib.mkChromaTheme {
     inherit emacsPackageSet;
   };
@@ -78,7 +90,7 @@ let
 
       # Formatting
       format-all
-      elisp-autofmt
+      elispAutofmt
       shfmt
       apheleia
 
