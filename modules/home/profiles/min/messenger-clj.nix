@@ -40,10 +40,11 @@ in
       activation.retireProvenLegacyMessengerBindings = lib.hm.dag.entryBefore [ "linkGeneration" ] ''
         set -eu
         legacy_package=${lib.escapeShellArg legacyMessengerPackage}
+        legacy_root="$HOME/.local/libexec/messenger-clj"
         for command in ${lib.escapeShellArgs managedCommands}; do
           target="$HOME/.local/bin/$command"
           if [ -e "$target" ] || [ -L "$target" ]; then
-            if [ ! -L "$target" ] || [ "$(readlink -f "$target")" != "$legacy_package/bin/$command" ]; then
+            if [ ! -L "$legacy_root" ] || [ "$(readlink "$legacy_root")" != "$legacy_package" ] || [ ! -L "$target" ] || [ "$(readlink "$target")" != "$legacy_root/bin/$command" ]; then
               echo "refusing to replace non-legacy messenger binding: $target" >&2
               exit 1
             fi
