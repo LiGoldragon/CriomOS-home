@@ -4,7 +4,7 @@ let
   ownedAgentPackages = import ../../lib/owned-agent-packages.nix { inherit inputs pkgs; };
   ownedAgentModule = { ... }: { _module.args.ownedAgentPackages = ownedAgentPackages; };
   piModelsModule = ../../modules/home/profiles/min/pi-models.nix;
-  agentIntercomModule = ../../modules/home/profiles/min/agent-intercom.nix;
+  codexRemoteControlModule = ../../modules/home/profiles/min/codex-remote-control.nix;
   orchestrateModule = ../../modules/home/profiles/min/orchestrate.nix;
   spiritModule = ../../modules/home/profiles/min/spirit.nix;
 
@@ -104,7 +104,7 @@ let
 
   remoteConfiguration = mkHome remoteHorizon { } [
     piModelsModule
-    agentIntercomModule
+    codexRemoteControlModule
     orchestrateModule
     spiritModule
   ];

@@ -14,9 +14,6 @@ let
   primaryWorkspacePointer = lib.replaceStrings [ "~" "/" ] [ "~0" "~1" ] primaryWorkspace;
   mediumEnabled = sizeAtLeast "Medium";
   edgeEnabled = ((horizon.node.behavesAs or { }).edge or false);
-  # Desktop selection is generic projected Edge ownership plus cumulative user
-  # size. Individual desktop derivations declare their own availability; this
-  # module has no architecture, node-service, or node-identity gate.
   desktopEnabled = edgeEnabled && mediumEnabled;
   codexCliPackage = config.criomos.corePackages.codex;
   codexRemote = pkgs.callPackage ../../../../owned-agents/codex/remote.nix {
@@ -29,48 +26,14 @@ let
   chatgpt = pkgs.callPackage ../../../../owned-agents/chatgpt {
     commandLineArgs = "--ozone-platform=wayland";
   };
-  # Codex remains the shared terminal, Remote Control, Agent Intercom, and
-  # editor package. ChatGPT Desktop carries its vendor Core independently.
-  agentIntercom = pkgs.callPackage ../../../../packages/agent-intercom {
-    inherit inputs codexCliPackage claudeCodePackage;
-  };
-  # Agent Intercom owns its operational entry points (`coi`, `cci`, MCP
-  # servers, and fleet tools). The producer never exports normal command
-  # names; this runtime view hides its Claude-only recovery alias from the
-  # user union.
-  agentIntercomRuntime = pkgs.symlinkJoin {
-    name = "agent-intercom-runtime";
-    paths = [ agentIntercom ];
-    postBuild = ''
-      rm \
-        "$out/bin/claude-raw"
-    '';
-  };
 in
 lib.mkMerge [
   {
-    # Keep Intercom-specific operational entry points available without
-    # letting their aliases shadow the canonical upstream commands.
     home.packages = [
-      agentIntercomRuntime
       claudeCodePackage
       codexCliPackage
     ];
 
-    home.activation.mergeAgentIntercomCodexMcp = inputs.hexis.lib.mkManagedConfig {
-      inherit lib pkgs hexis;
-      file = "$HOME/.codex/config.toml";
-      declared = {
-        mcp_servers.agent-intercom = {
-          command = "${agentIntercom}/bin/codex-intercom-mcp";
-        };
-      };
-      modes."/mcp_servers/agent-intercom" = "always";
-    };
-
-    # Claude Code reads this managed default before it enters a session. Keep
-    # the declaration separate from the launcher so regular and Intercom
-    # invocations share the same user-authorized permission mode.
     home.activation.mergeClaudePermissionDefaults = inputs.hexis.lib.mkManagedConfig {
       inherit lib pkgs hexis;
       file = "$HOME/.claude/settings.json";
@@ -78,13 +41,8 @@ lib.mkMerge [
       modes."/permissions/defaultMode" = "always";
     };
 
-    # Hexis v1 walks declared object leaves. A legacy Claude project entry
-    # recorded as a scalar therefore blocks its leaf-only trust write: it is
-    # an intermediate path segment, not an object. Canonicalize only that
-    # one legacy entry before Hexis owns the trust leaf; existing project
-    # objects and all unrelated Claude state remain untouched.
     home.activation.canonicalizeClaudeWorkspaceTrust =
-      lib.hm.dag.entryBefore [ "mergeAgentIntercomClaudeMcp" ]
+      lib.hm.dag.entryBefore [ "mergeClaudeWorkspaceTrust" ]
         ''
           claude_config="$HOME/.claude.json"
           workspace=${lib.escapeShellArg primaryWorkspace}
@@ -104,26 +62,14 @@ lib.mkMerge [
           fi
         '';
 
-    home.activation.mergeAgentIntercomClaudeMcp = inputs.hexis.lib.mkManagedConfig {
+    home.activation.mergeClaudeWorkspaceTrust = inputs.hexis.lib.mkManagedConfig {
       inherit lib pkgs hexis;
       file = "$HOME/.claude.json";
-      declared = {
-        mcpServers.agent-intercom = {
-          command = "${agentIntercom}/bin/claude-intercom-mcp";
-        };
-        projects.${primaryWorkspace}.hasTrustDialogAccepted = true;
-      };
-      modes = {
-        "/mcpServers/agent-intercom" = "always";
-        "/projects/${primaryWorkspacePointer}/hasTrustDialogAccepted" = "always";
-      };
+      declared.projects.${primaryWorkspace}.hasTrustDialogAccepted = true;
+      modes."/projects/${primaryWorkspacePointer}/hasTrustDialogAccepted" = "always";
     };
-
   }
   (lib.mkIf (sizeAtLeast "Min") {
-    # Codex's app-server is the single owner of every normal terminal TUI
-    # session.  Its default Unix socket is local to the user, while remote
-    # control reaches the phone through Codex's authenticated relay.
     home.packages = [ codexRemote ];
 
     systemd.user.services.codex-remote-control = {
@@ -145,16 +91,9 @@ lib.mkMerge [
       chatgpt
     ];
 
-    # The package owns the Claude desktop entry.  Link that exact entry into
-    # the active XDG applications directory so the `claude://` callback
-    # is discoverable by the desktop MIME database.  The shared Home desktop
-    # database activation hook refreshes its cache after link generation.
     xdg.dataFile."applications/claude-desktop.desktop".source =
       "${claudeDesktopPackage}/share/applications/claude-desktop.desktop";
     xdg.mimeApps.defaultApplications."x-scheme-handler/claude" = "claude-desktop.desktop";
-
-    # The official Linux ChatGPT package owns this entry.  Keep the entry in
-    # the active XDG applications directory and use its executable wrapper.
     xdg.dataFile."applications/chatgpt.desktop".source =
       "${chatgpt}/share/applications/chatgpt.desktop";
     xdg.mimeApps.defaultApplications."x-scheme-handler/codex" = "chatgpt.desktop";

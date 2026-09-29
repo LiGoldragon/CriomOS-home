@@ -217,34 +217,6 @@
       flake = false;
     };
 
-    # Agent Intercom is a coordinated upstream family. These immutable
-    # source inputs deliberately move as one protocol-v3 set; the package
-    # derivation assembles their supported Pi, Codex, Claude, OpenCode, and
-    # orchestrator surfaces without mutable npm installation.
-    agent-intercom-pi-src = {
-      url = "github:dataforxyz/agent-intercom-pi/b6f8f9d08c8c5ec7141a0258ce61cda59d327a20";
-      flake = false;
-    };
-    agent-intercom-codex-src = {
-      url = "github:dataforxyz/agent-intercom-codex/ea1c5b538c95b89af3fd36344396779e2eadbadb";
-      flake = false;
-    };
-    agent-intercom-claude-src = {
-      url = "github:dataforxyz/agent-intercom-claude/d62b3c85547b8b83fdfe06afb38968646fe813b8";
-      flake = false;
-    };
-    agent-intercom-opencode-src = {
-      url = "github:dataforxyz/agent-intercom-opencode/9d81100ea074f68f6466656c65536504209eb060";
-      flake = false;
-    };
-    agent-intercom-orchestrator-src = {
-      url = "github:dataforxyz/agent-intercom-orchestrator/a7e16bd4386726002ab6880b35ebacdeef00fd0d";
-      flake = false;
-    };
-    agent-intercom-core-src = {
-      url = "github:dataforxyz/agent-intercom-core/8316cbab548f422ad11c78ed887fabeef94817c1";
-      flake = false;
-    };
     # Pi extension packages. Kept as flake inputs so source revisions and
     # content hashes live in flake.lock, not in package Nix code.
     pi-linkup-src = {
@@ -261,41 +233,6 @@
     # acceptance behavior and validation witnesses.
     pi-subagents-src = {
       url = "github:LiGoldragon/pi-subagents-nicobailon/bfca4f8317551fa9e8e8ef82c2608a6216953216";
-      flake = false;
-    };
-    agent-intercom-tsx-src = {
-      type = "file";
-      url = "https://registry.npmjs.org/tsx/-/tsx-4.20.0.tgz";
-      flake = false;
-    };
-    agent-intercom-typebox-src = {
-      type = "file";
-      url = "https://registry.npmjs.org/typebox/-/typebox-1.1.38.tgz";
-      flake = false;
-    };
-    agent-intercom-esbuild-src = {
-      type = "file";
-      url = "https://registry.npmjs.org/esbuild/-/esbuild-0.25.0.tgz";
-      flake = false;
-    };
-    agent-intercom-esbuild-linux-x64-src = {
-      type = "file";
-      url = "https://registry.npmjs.org/@esbuild/linux-x64/-/linux-x64-0.25.0.tgz";
-      flake = false;
-    };
-    agent-intercom-esbuild-linux-arm64-src = {
-      type = "file";
-      url = "https://registry.npmjs.org/@esbuild/linux-arm64/-/linux-arm64-0.25.0.tgz";
-      flake = false;
-    };
-    agent-intercom-get-tsconfig-src = {
-      type = "file";
-      url = "https://registry.npmjs.org/get-tsconfig/-/get-tsconfig-4.7.5.tgz";
-      flake = false;
-    };
-    agent-intercom-resolve-pkg-maps-src = {
-      type = "file";
-      url = "https://registry.npmjs.org/resolve-pkg-maps/-/resolve-pkg-maps-1.0.0.tgz";
       flake = false;
     };
     pi-ultra-subagents-src = {
@@ -532,23 +469,12 @@
               chatgpt = ownedAgentPackages.chatgptPackage;
               claude-desktop = ownedAgentPackages.claudeDesktopPackage;
             }
-        // lib.optionalAttrs (lib.elem system agentIntercomSystems) {
-          agent-intercom = ownedPkgs.callPackage ./packages/agent-intercom {
-            inherit inputs;
-            claudeCodePackage = ownedAgentPackages.claudeCodePackage;
-            codexCliPackage = ownedAgentPackages.codexPackage;
-          };
-        };
+        ;
       ownedPackageSystems = [
         "x86_64-linux"
         "aarch64-linux"
         "aarch64-darwin"
       ];
-      agentIntercomSystems = [
-        "x86_64-linux"
-        "aarch64-linux"
-      ];
-      agentIntercomSupported = system: lib.elem system agentIntercomSystems;
       desktopAppSupported =
         system:
         let
@@ -560,11 +486,7 @@
         let
           systemPackages =
             if lib.elem system ownedPackageSystems then packages // ownedPackagesForSystem system else packages;
-        in
-        if agentIntercomSupported system then
-          systemPackages
-        else
-          builtins.removeAttrs systemPackages [ "agent-intercom" ]
+        in systemPackages
       ) bp.packages;
       blueprintGeneratedChecks =
         system:
@@ -688,9 +610,6 @@
             inherit inputs;
             homePkgs = checkPkgs;
           };
-        }
-        // lib.optionalAttrs (agentIntercomSupported _system) {
-          agent-intercom = checkPkgs.callPackage ./gates/agent-intercom { inherit inputs; };
         }
         // lib.optionalAttrs (desktopAppSupported _system) {
           claude-desktop-declared-cli = checkPkgs.callPackage ./gates/claude-desktop-declared-cli {

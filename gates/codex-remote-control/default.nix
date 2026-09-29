@@ -3,7 +3,7 @@ let
   system = pkgs.stdenv.hostPlatform.system;
   codexCliPackage = pkgs.callPackage ../../owned-agents/codex { inherit inputs; };
   corePackagesModule = ../../modules/home/core-packages.nix;
-  codexRemoteControlModule = ../../modules/home/profiles/min/agent-intercom.nix;
+  codexRemoteControlModule = ../../modules/home/profiles/min/codex-remote-control.nix;
   mkConfiguration =
     user:
     (inputs.home-manager.lib.homeManagerConfiguration {
@@ -85,9 +85,12 @@ let
     ];
   };
   remoteControlService = configuration.systemd.user.services.codex-remote-control;
+  activationPackage = configuration.home.activationPackage;
 in
 assert configuration.systemd.user.services ? codex-remote-control;
 assert !(nonCodexConfiguration.systemd.user.services ? codex-remote-control);
+assert !(configuration.home.activation ? mergeAgentIntercomCodexMcp);
+assert !(configuration.home.activation ? mergeAgentIntercomClaudeMcp);
 assert
   embeddedConfiguration.config.home-manager.users.${embeddedUserName}.systemd.user.services
   ? codex-remote-control;
@@ -98,8 +101,12 @@ assert
   secondConfiguration.systemd.user.services.codex-remote-control.Service.WorkingDirectory
   == "/home/codex-remote-control-second/primary";
 assert builtins.length remoteControlService.Service.ExecStart == 1;
-pkgs.runCommand "codex-remote-control-contract" { } ''
+pkgs.runCommand "codex-remote-control-contract" { inherit activationPackage; } ''
   set -eu
   test "${builtins.head remoteControlService.Service.ExecStart}" = "${codexCliPackage}/bin/codex app-server --remote-control --listen unix://"
+  test -f "$activationPackage/home-files/.config/systemd/user/codex-remote-control.service"
+  grep -F 'codex app-server --remote-control --listen unix://' \
+    "$activationPackage/home-files/.config/systemd/user/codex-remote-control.service"
+  ! grep -R -F 'agent-intercom' "$activationPackage"
   touch "$out"
 ''

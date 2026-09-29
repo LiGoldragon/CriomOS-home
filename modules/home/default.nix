@@ -37,12 +37,8 @@
     ./desktop-database.nix
     ./base.nix
     ./profiles/min
-    # Agent Intercom adapters are user-local. They do not depend on a node
-    # service; generic Edge plus medium profile capability selects optional
-    # desktop-app support, with no node identity, remote transport, or
-    # credential control.
     ./profiles/min/codex-next.nix
-    ./profiles/min/agent-intercom.nix
+    ./profiles/min/codex-remote-control.nix
     ./profiles/min/opencode.nix
     ./profiles/min/field-luna-heartbeat.nix
     # Field monitors: declared from the hand-made units, each off unless enabled.

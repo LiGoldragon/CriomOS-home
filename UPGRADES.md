@@ -154,13 +154,12 @@ mix a 0.25 client with a 0.26 Nexus (or conversely), and do not roll back if a
 subsequent release has changed the declared Sema schema without a separately
 approved migration review.
 
-## Agent Intercom service-gate removal
+## Agent messaging consolidation
 
-This generation removes the two retired Agent Intercom node-service gates.
-Agent Intercom wrappers, Pi adapters, MCP registration, and OpenCode plugins
-are now available in every Home profile, while ordinary `codex` and `claude`
-remain separately owned by their canonical pinned packages. There is no
-compatibility service declaration to retain or migrate.
+This generation removes Agent Intercom packages, Pi adapters, and Claude and
+Codex MCP registration from Home. Messenger is the sole supported agent
+message route. Ordinary `codex`, `claude`, and Codex Remote Control remain
+separately owned by their canonical pinned packages.
 
 Desktop-app support is independently selected only when the projected node
 behaves as Edge, the user has cumulative medium capability, and the package
@@ -194,9 +193,9 @@ private Core; it is not a client of `codex-remote-control` and does not share
 that owner's process-local state.
 
 The independent persistent owner remains for terminal Codex routing and phone
-Remote Control. Agent Intercom, the VSCodium sidebar, and full-access defaults
-are unchanged. Do not restart `codex-remote-control` merely for this Desktop
-rollback. The package check compares the delivered ASAR and bundled Core with
+Remote Control. The VSCodium sidebar and full-access defaults are unchanged.
+Do not restart `codex-remote-control` merely for this Desktop rollback. The
+package check compares the delivered ASAR and bundled Core with
 an independently extracted fixed-output OpenAI archive and exercises the
 generated wrapper with inherited vendor variables plus Wayland selection.
 

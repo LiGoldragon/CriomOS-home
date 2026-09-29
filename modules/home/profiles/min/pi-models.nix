@@ -25,11 +25,6 @@ let
   pi-subagents = pkgs.callPackage ../../../../packages/pi-subagents {
     inherit inputs;
   };
-  agent-intercom = pkgs.callPackage ../../../../packages/agent-intercom {
-    inherit inputs;
-    codexCliPackage = config.criomos.corePackages.codex;
-    claudeCodePackage = config.criomos.corePackages.claude;
-  };
   pi-continue = pkgs.callPackage ../../../../packages/pi-continue { inherit inputs; };
   pi-session-namer = pkgs.callPackage ../../../../packages/pi-session-namer { inherit inputs; };
   piPackageHomePath = "$HOME/.local/share/criomos/pi/package";
@@ -58,8 +53,6 @@ let
     piCriomosPackage
     "packages/pi-linkup"
     "packages/pi-subagents"
-    "packages/agent-intercom-pi"
-    "packages/agent-intercom-orchestrator"
     "packages/pi-continue"
     "packages/pi-session-namer"
   ];
@@ -108,18 +101,6 @@ let
     )
   );
 
-  piIntercomConfig = {
-    enabled = true;
-    brokerCommand = "${pkgs.nodejs}/bin/node";
-    brokerArgs = [
-      "${agent-intercom}/share/agent-intercom/pi/node_modules/tsx/dist/cli.mjs"
-    ];
-    confirmSend = false;
-    inboundTrigger = "always";
-    replyHint = true;
-    legacyTool = false;
-  };
-
   piSubagentsConfigFile = pkgs.writeText "pi-subagents-config.json" (
     builtins.toJSON {
       toolDescriptionMode = "compact";
@@ -154,9 +135,9 @@ let
   piTestingSettingsConfig = piSettingsConfig;
 in
 # Pi is a user-profile surface, not a host service capability.  In particular,
-# an edge user environment must retain its .pi and .pi-testing state even when
-# the host does not run Agent Intercom locally.  The projected node roles still
-# determine whether a local provider record is available above.
+# an edge user environment must retain its .pi and .pi-testing state. The
+# projected node roles still determine whether a local provider record is
+# available above.
 lib.mkIf (sizeAtLeast "Min") {
   home.activation.preparePiPackageSymlink = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
     if [ -d "${piPackageHomePath}" ] && [ ! -L "${piPackageHomePath}" ]; then
@@ -198,10 +179,6 @@ lib.mkIf (sizeAtLeast "Min") {
   home.file.".pi/agent/packages/pi-subagents".force = true;
   home.file.".pi/agent/extensions/subagent/config.json".source = piSubagentsConfigFile;
   home.file.".pi/agent/extensions/subagent/config.json".force = true;
-
-  # Pi resolves the pinned Agent Intercom adapter before historic extension
-  # locations. The broker protocol remains local at broker.sock.
-  home.sessionVariables.PI_INTERCOM_EXTENSION_DIR = "${agent-intercom}/share/agent-intercom/pi";
 
   home.file.".pi/agent/packages/pi-continue".source = "${pi-continue}/share/pi-packages/pi-continue";
   home.file.".pi/agent/packages/pi-continue".force = true;
@@ -253,15 +230,6 @@ lib.mkIf (sizeAtLeast "Min") {
     );
   };
 
-  home.activation.mergePiIntercomConfig = inputs.hexis.lib.mkManagedConfig {
-    inherit lib pkgs hexis;
-    file = "$HOME/.pi/agent/intercom/config.json";
-    declared = piIntercomConfig;
-    modes = {
-      "/enabled" = "always";
-    };
-  };
-
   home.activation.mergePiSettings = inputs.hexis.lib.mkManagedConfig {
     inherit lib pkgs hexis;
     file = "$HOME/.pi/agent/settings.json";
@@ -296,15 +264,6 @@ lib.mkIf (sizeAtLeast "Min") {
         value = "always";
       }) ([ providerName ] ++ legacyLocalProviderNames)
     );
-  };
-
-  home.activation.mergePiTestingIntercomConfig = inputs.hexis.lib.mkManagedConfig {
-    inherit lib pkgs hexis;
-    file = "$HOME/.pi-testing/agent/intercom/config.json";
-    declared = piIntercomConfig;
-    modes = {
-      "/enabled" = "always";
-    };
   };
 
   home.activation.mergePiTestingSettings = inputs.hexis.lib.mkManagedConfig {

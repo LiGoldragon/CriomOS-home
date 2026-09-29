@@ -2,7 +2,7 @@
 let
   system = pkgs.stdenv.hostPlatform.system;
   codexCliPackage = pkgs.callPackage ../../owned-agents/codex { inherit inputs; };
-  codexRemoteControlModule = ../../modules/home/profiles/min/agent-intercom.nix;
+  codexRemoteControlModule = ../../modules/home/profiles/min/codex-remote-control.nix;
   corePackagesModule = ../../modules/home/core-packages.nix;
   testUser = "codex-remote-control-test";
   user = {

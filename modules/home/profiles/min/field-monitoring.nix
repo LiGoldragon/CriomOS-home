@@ -12,9 +12,6 @@
 # is off unless enabled: whether a monitor is kept, and on which host or
 # profile it runs, is a data decision made outside this module.
 #
-# agent-intercom-fleet-cleanup is not declared: its script
-# (~/.pi/agent/packages/agent-intercom-orchestrator/src/agent-fleet-cleanup.mjs)
-# no longer exists, and agent-intercom.nix owns what remains of that feature.
 let
   inherit (lib)
     concatStringsSep

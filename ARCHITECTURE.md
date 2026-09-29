@@ -184,21 +184,13 @@ wholesale. Persona Pi agent-chain automation in the user profile runs
 without a manual UI approval for already-authorized work, so the agent can
 start automated work without the operator in the loop.
 
-Agent Intercom is installed as one pinned protocol-v3 family in every Home
-profile: Pi is the primary manager with its native adapter and orchestrator,
-while Codex, Claude Code, and OpenCode receive their supported local adapters.
-The user profile owns only local broker state, adapters, MCP registration, and
-OpenCode plugin configuration. This user-local integration does not read a
-node-service declaration. `broker.sock` remains host-local. No gateway, peer,
-listener, SSH tunnel, authorization key, remote identity, enrollment,
-reconnect, OAuth, pairing, or private-key configuration exists in the profile
-or its derivations.
+Messenger is the sole route for agent messages. Home does not install an
+additional client-local messaging family into Pi, Codex, Claude Code, or
+OpenCode.
 
 Normal `codex` and `claude` are the direct, pinned upstream CLIs.
 `codex-remote` explicitly attaches a terminal session to the persistent local
-Codex app-server. Agent Intercom exposes the distinct `coi` and
-`cci --dangerously-skip-permissions` bridges; their child processes invoke the
-canonical upstream CLIs. `claude-raw` and `direct-claude` are recovery/debug-only.
+Codex app-server. `claude-raw` and `direct-claude` are recovery/debug-only.
 
 ### desktop-app support
 
@@ -207,9 +199,8 @@ where the projected node behaves as Edge, the user has cumulative medium
 profile capability, and each desktop package is available for that platform.
 This is generic graphical ownership; it does not retain a shared architecture
 or node-service gate.
-Home's canonical
-`criomos.corePackages.codex` derivation supplies terminal, Desktop, Agent
-Intercom, and editor paths; `criomos.corePackages.claude` does the same for
+Home's canonical `criomos.corePackages.codex` derivation supplies terminal,
+Desktop, and editor paths; `criomos.corePackages.claude` does the same for
 Claude Code consumers.
 Claude Desktop is a declarative derivative whose every local Code session
 resolves to Home's same pinned `claudeCodePackage` executable. Home activates

@@ -88,8 +88,7 @@ let
   lunaRunner = lib.head (lib.splitString " " (text services.field-luna-research.Service.ExecStart));
 
   checks = [
-    # Default off: no unit of any monitor, no hand-made-unit warning, and no
-    # declaration for the dropped agent-intercom-fleet-cleanup.
+    # Default off: no unit of any monitor or hand-made-unit warning.
     {
       ok = lib.all (name: !(off.systemd.user.services ? ${name}) && !(off.systemd.user.timers ? ${name})) monitors;
       msg = "a Field monitor is declared while its enable option is off";
@@ -97,10 +96,6 @@ let
     {
       ok = !(off.home.activation ? fieldMonitoringHandMadeUnits) || off.home.activation.fieldMonitoringHandMadeUnits == { };
       msg = "hand-made-unit warning present with every monitor off";
-    }
-    {
-      ok = !(on.systemd.user.services ? agent-intercom-fleet-cleanup);
-      msg = "agent-intercom-fleet-cleanup must not be declared (its script is gone)";
     }
     {
       ok = lib.all (name: services ? ${name} && timers ? ${name} && timers.${name}.Install.WantedBy == [ "timers.target" ]) monitors;
