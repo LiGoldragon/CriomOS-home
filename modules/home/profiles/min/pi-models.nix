@@ -212,6 +212,41 @@ lib.mkIf (sizeAtLeast "Min") {
     "${pi-session-namer}/share/pi-packages/pi-session-namer";
   home.file.".pi-testing/agent/packages/pi-session-namer".force = true;
 
+  # Agent Intercom used to force Pi through its packaged tsx runner. The
+  # package and managed merge are gone, so retire only that paired store-path
+  # override while leaving every other mutable Pi setting in user ownership.
+  home.activation.retireLegacyPiIntercomBrokerOverrides = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    set -eu
+
+    retire_legacy_intercom_broker_override() {
+      config_path="$1"
+      if [ ! -f "$config_path" ] || [ -L "$config_path" ]; then
+        return
+      fi
+
+      if ${pkgs.jq}/bin/jq -e '
+        (.brokerCommand | type) == "string"
+        and (.brokerCommand | test("^/nix/store/[0-9a-df-np-sv-z]{32}-nodejs-[^/]+/bin/node$"))
+        and (.brokerArgs | type) == "array"
+        and (.brokerArgs | length) == 1
+        and (.brokerArgs[0] | type) == "string"
+        and (.brokerArgs[0] | test("^/nix/store/[0-9a-df-np-sv-z]{32}-agent-intercom-[^/]+/share/agent-intercom/pi/node_modules/tsx/dist/cli\\.mjs$"))
+      ' "$config_path" >/dev/null 2>&1; then
+        temporary_config="$(${pkgs.coreutils}/bin/mktemp "$config_path.XXXXXX")"
+        trap '${pkgs.coreutils}/bin/rm -f "$temporary_config"' EXIT HUP INT TERM
+        ${pkgs.jq}/bin/jq 'del(.brokerCommand, .brokerArgs)' \
+          "$config_path" > "$temporary_config"
+        ${pkgs.coreutils}/bin/chmod --reference="$config_path" "$temporary_config"
+        ${pkgs.coreutils}/bin/chown --reference="$config_path" "$temporary_config"
+        ${pkgs.coreutils}/bin/mv "$temporary_config" "$config_path"
+        trap - EXIT HUP INT TERM
+      fi
+    }
+
+    retire_legacy_intercom_broker_override "$HOME/.pi/agent/intercom/config.json"
+    retire_legacy_intercom_broker_override "$HOME/.pi-testing/agent/intercom/config.json"
+  '';
+
   home.activation.mergePiModels = inputs.hexis.lib.mkManagedConfig {
     inherit lib pkgs hexis;
     file = "$HOME/.pi/agent/models.json";
