@@ -125,11 +125,15 @@ assert remoteFiles ? ".pi/agent/packages/pi-linkup";
 assert remoteFiles ? ".pi-testing/agent/packages/pi-linkup";
 assert remoteFiles ? ".pi/agent/packages/pi-subagents";
 assert remoteFiles ? ".pi-testing/agent/packages/pi-subagents";
+assert !(remoteFiles ? ".pi/agent/intercom/config.json");
+assert !(remoteFiles ? ".pi-testing/agent/intercom/config.json");
 assert remoteActivation ? preparePiPackageSymlink;
 assert
   builtins.length (
     builtins.filter (name: pkgs.lib.hasPrefix "mergePi" name) (builtins.attrNames remoteActivation)
-  ) == 8;
+  ) == 6;
+assert !(remoteActivation ? mergePiIntercomConfig);
+assert !(remoteActivation ? mergePiTestingIntercomConfig);
 assert remoteConfiguration.config.systemd.user.services ? orchestrate-nexus;
 assert remoteConfiguration.config.systemd.user.services ? codex-remote-control;
 assert !(remoteConfiguration.config.systemd.user.services ? spirit-judge);
