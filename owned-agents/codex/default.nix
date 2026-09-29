@@ -1,124 +1,59 @@
 {
-  pkgs,
-  inputs ? null,
-  codexVersionData ? builtins.fromJSON (builtins.readFile ./hashes.json),
-  version ? codexVersionData.version,
-  hash ? codexVersionData.hash,
-  sourceRoot ? "source/codex-rs",
-  cargoVendor ? {
-    cargoHash = codexVersionData.cargoHash;
-  },
-  preBuild ? ''
-    # Keep rustc's peak RSS bounded on the configured ARM builder.
-    substituteInPlace Cargo.toml \
-      --replace-fail 'codegen-units = 4' 'codegen-units = 16'
-  '',
-  doInstallCheck ? true,
+  lib,
+  stdenvNoCC,
+  fetchurl,
+  ...
 }:
-
 let
-  inherit (pkgs)
-    lib
-    stdenv
-    fetchurl
-    installShellFiles
-    makeWrapper
-    rustPlatform
-    pkg-config
-    openssl
-    bubblewrap
-    libcap
-    versionCheckHook
-    ;
-  mkRustyV8Archive = import ../../lib/rusty-v8.nix {
-    inherit lib stdenv;
-    inherit fetchurl;
+  # This stable role is a deliberate local promotion of the prior isolated
+  # candidate. It is not an assertion about upstream release maturity.
+  version = "0.158.0-alpha.9";
+  targets = {
+    x86_64-linux = {
+      target = "x86_64-unknown-linux-musl";
+      hash = "sha256-r6jIHXWayHDyGbTKysFbpa1qERB7W3sQXI2Cg7jRFnw=";
+      hostHash = "sha256-CqTxMWD+Y4QmGMt8JHTw7bKNaN8lKiPWPuh0u0apP1Q=";
+    };
+    aarch64-linux = {
+      target = "aarch64-unknown-linux-musl";
+      hash = "sha256-e202MgQU0Atua8WVlJJ/rIYksCL6j9hNMw3zOoYqPxA=";
+      hostHash = "sha256-b77gtc0Hn8RGplFvIaCIs5+o7keUbfE+Hn+dH+AT+88=";
+    };
   };
-  actualSrc = fetchurl {
-    url = "https://github.com/openai/codex/archive/refs/tags/rust-v${version}.tar.gz";
-    inherit hash;
-  };
-  librustyV8Package = mkRustyV8Archive codexVersionData.librusty_v8;
+  artifact = targets.${stdenvNoCC.hostPlatform.system};
 in
-rustPlatform.buildRustPackage (
-  {
-    pname = "codex";
-    inherit version sourceRoot;
-    src = actualSrc;
-    unpackPhase = ''
-      runHook preUnpack
-      mkdir source
-      tar --extract --file "$src" --gzip --strip-components=1 --directory source
-      runHook postUnpack
-    '';
-
-    cargoBuildFlags = [
-      "--package"
-      "codex-cli"
-      "--package"
-      "codex-code-mode-host"
-    ];
-
-    nativeBuildInputs = [
-      installShellFiles
-      makeWrapper
-      pkg-config
-    ]
-    ++ lib.optionals stdenv.hostPlatform.isDarwin [ rustPlatform.bindgenHook ];
-    buildInputs = [ openssl ] ++ lib.optionals stdenv.hostPlatform.isLinux [ libcap ];
-    env = {
-      RUSTY_V8_ARCHIVE = librustyV8Package;
-    }
-    // lib.optionalAttrs (librustyV8Package ? srcBinding) {
-      RUSTY_V8_SRC_BINDING_PATH = librustyV8Package.srcBinding;
-    }
-    // {
-      CARGO_BUILD_JOBS = "2";
-      CARGO_PROFILE_RELEASE_DEBUG = "false";
-      CARGO_PROFILE_RELEASE_STRIP = "symbols";
-    };
-    inherit preBuild;
-    postFixup = lib.optionalString stdenv.hostPlatform.isLinux ''
-      mkdir -p $out/codex-resources
-      ln -s ${lib.getExe bubblewrap} $out/codex-resources/bwrap
-      wrapProgram $out/bin/codex --prefix PATH : ${lib.makeBinPath [ bubblewrap ]}
-    '';
-    doCheck = false;
-    postInstall =
-      lib.optionalString (doInstallCheck && stdenv.buildPlatform.canExecute stdenv.hostPlatform)
-        ''
-          installShellCompletion --cmd codex \
-            --bash <($out/bin/codex completion bash) \
-            --fish <($out/bin/codex completion fish) \
-            --zsh <($out/bin/codex completion zsh)
-        '';
-    inherit doInstallCheck;
-    nativeInstallCheckInputs = [ versionCheckHook ];
-    passthru = {
-      category = "AI Coding Agents";
-      updater = {
-        kind = "github-source";
-        purl = "pkg:github/openai/codex";
-        depHashKey = "cargoHash";
-        script = ./update.py;
-      };
-      updateScript = [
-        (lib.getExe pkgs.python3)
-        ./update.py
-      ];
-    };
-    meta = {
-      description = "OpenAI Codex CLI - a coding agent that runs locally on your computer";
-      homepage = "https://github.com/openai/codex";
-      changelog = "https://github.com/openai/codex/releases/tag/rust-v${version}";
-      sourceProvenance = with lib.sourceTypes; [
-        fromSource
-        binaryNativeCode
-      ];
-      license = lib.licenses.asl20;
-      mainProgram = "codex";
-      platforms = lib.platforms.unix;
-    };
-  }
-  // cargoVendor
-)
+stdenvNoCC.mkDerivation {
+  pname = "codex";
+  inherit version;
+  src = fetchurl {
+    url = "https://github.com/openai/codex/releases/download/rust-v${version}/codex-${artifact.target}.tar.gz";
+    inherit (artifact) hash;
+  };
+  codeModeHost = fetchurl {
+    url = "https://github.com/openai/codex/releases/download/rust-v${version}/codex-code-mode-host-${artifact.target}.tar.gz";
+    hash = artifact.hostHash;
+  };
+  sourceRoot = ".";
+  dontConfigure = true;
+  dontBuild = true;
+  installPhase = ''
+    runHook preInstall
+    install -Dm755 codex-${artifact.target} "$out/bin/codex"
+    tar -xOzf "$codeModeHost" codex-code-mode-host-${artifact.target} > codex-code-mode-host
+    install -Dm755 codex-code-mode-host "$out/bin/codex-code-mode-host"
+    runHook postInstall
+  '';
+  doInstallCheck = true;
+  installCheckPhase = ''
+    test "$("$out/bin/codex" --version)" = "codex-cli ${version}"
+    test -x "$out/bin/codex-code-mode-host"
+  '';
+  meta = {
+    description = "Locally promoted, reproducibly pinned Codex CLI";
+    homepage = "https://github.com/openai/codex";
+    changelog = "https://github.com/openai/codex/releases/tag/rust-v${version}";
+    license = lib.licenses.asl20;
+    platforms = builtins.attrNames targets;
+    mainProgram = "codex";
+  };
+}

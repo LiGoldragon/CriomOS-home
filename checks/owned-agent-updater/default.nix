@@ -57,8 +57,10 @@ pkgs.runCommand "owned-agent-updater-negative-path"
         "${pkgs.gnupg}/bin/gpg", "${pkgs.gnupg}/bin/gpgv"
     ))
 
-    # Codex follows the latest stable upstream release rather than moving a
-    # declarative profile onto a vendor prerelease channel.
+    # The historical source-package updater continues to reject vendor
+    # prereleases. The canonical package is now an explicit local promotion,
+    # so this test preserves that old updater contract without using it to
+    # move the managed stable role.
     original_fetch_json = codex.fetch_json
     codex.fetch_json = lambda _url: [
         {"tag_name": "rust-v0.152.0-alpha.5", "prerelease": True},
