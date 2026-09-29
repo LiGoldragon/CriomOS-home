@@ -72,10 +72,12 @@ in
       };
       Service = {
         Type = "simple";
-        RuntimeDirectory = "opencode-testing";
+        # systemd creates RuntimeDirectory before changing into WorkingDirectory.
+        # Keeping the scratch directory there avoids asking ExecStartPre to run
+        # from a directory it has not yet created.
+        RuntimeDirectory = "opencode-testing/scratch";
         RuntimeDirectoryMode = "0700";
         WorkingDirectory = "%t/opencode-testing/scratch";
-        ExecStartPre = "${pkgs.coreutils}/bin/mkdir -p %t/opencode-testing/scratch";
         Environment = [ "OPENCODE_CONFIG=${testingConfig}" ];
         LoadCredential = [ "opencode-server-password:${credentialSource}" ];
         ExecStart = "${runner}/bin/opencode-testing-server";

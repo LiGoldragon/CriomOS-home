@@ -592,6 +592,7 @@
           flow-id = checkPkgs.callPackage ./checks/flow-id { inherit inputs; };
           aggregator-deployment = checkPkgs.callPackage ./checks/aggregator-deployment { inherit inputs; };
           owned-agent-updater = checkPkgs.callPackage ./checks/owned-agent-updater { inherit inputs; };
+          opencode-testing-startup = checkPkgs.callPackage ./checks/opencode-testing-startup { };
           system-projection-boundary = checkPkgs.callPackage ./checks/system-projection-boundary { };
           main-contract-pins = checkPkgs.callPackage ./checks/main-contract-pins {
             inherit inputs;
