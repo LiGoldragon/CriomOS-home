@@ -57,8 +57,25 @@ pkgs.runCommand "messenger-clj-home-package" { } ''
   test ${toString (builtins.length compatibilityCommands)} -eq 10
 
   run_retirement_guard() {
-    HOME="$1" ${pkgs.bash}/bin/bash -eu -c ${pkgs.lib.escapeShellArg retireLegacyBindings}
+    PATH="$readlink_bin:$PATH" HOME="$1" ${pkgs.bash}/bin/bash -eu -c ${pkgs.lib.escapeShellArg retireLegacyBindings}
   }
+
+  readlink_bin="$TMPDIR/readlink-bin"
+  mkdir -p "$readlink_bin"
+  cat > "$readlink_bin/readlink" <<'EOF'
+  #!${pkgs.runtimeShell}
+  if [ "$1" = -f ]; then
+    case "$2" in
+      "$TEST_LEGACY_HOME"/.local/bin/*)
+        command="''${2##*/}"
+        printf '%s\n' "$TEST_LEGACY_PACKAGE/bin/$command"
+        exit 0
+        ;;
+    esac
+  fi
+  exec ${pkgs.coreutils}/bin/readlink "$@"
+  EOF
+  chmod +x "$readlink_bin/readlink"
 
   absent_home="$TMPDIR/absent"
   mkdir -p "$absent_home/.local/bin"
@@ -71,6 +88,8 @@ pkgs.runCommand "messenger-clj-home-package" { } ''
     command:
     "ln -s \"$legacy_home/.local/libexec/messenger-clj/bin/${command}\" \"$legacy_home/.local/bin/${command}\""
   ) managedCommands}
+  export TEST_LEGACY_HOME="$legacy_home"
+  export TEST_LEGACY_PACKAGE=${legacyMessengerClj}
   run_retirement_guard "$legacy_home"
 
   foreign_home="$TMPDIR/foreign"
