@@ -43,6 +43,27 @@ let
     [ui]
     agent_panel_sort = "spaces"
   '';
+  # A prior managed generation added the two Flow client wrappers before
+  # this rotation. Its exact generated config is an admitted predecessor only
+  # when the separately recorded legacy backup still verifies.
+  rotationPredecessorManagedHerdrConfig = pkgs.writeText "herdr-rotation-predecessor-config.toml" ''
+    [agents]
+    codex_executables = [
+      "/nix/store/0s199vn7jivakb7kqkcc2znxw4klv840-codex-stable-flow-client/bin/codex-stable-flow-client",
+      "/nix/store/x74szg3cbsn5s41nan43kfs6wb4xww61-codex-next-flow-client/bin/codex-next-flow-client",
+    ]
+
+    [theme]
+    auto_switch = true
+    dark_name = "catppuccin"
+    light_name = "catppuccin-latte"
+
+    [ui.toast]
+    delivery = "terminal"
+
+    [ui]
+    agent_panel_sort = "spaces"
+  '';
   herdrConfig = pkgs.writeText "herdr-config.toml" ''
     [agents]
     codex_executables = [
@@ -226,8 +247,9 @@ in
         # recorded the pre-Home-Manager backup. It is safe to replace only after
         # the link and that existing backup both verify; the linked file is
         # Home Manager's own output and is never recorded as the backup.
-        if ! cmp -s "$herdr_config" "${predecessorManagedHerdrConfig}"; then
-          echo "Refusing Herdr adoption: $herdr_config does not match the recorded predecessor configuration" >&2
+        if ! cmp -s "$herdr_config" "${predecessorManagedHerdrConfig}" \
+          && ! cmp -s "$herdr_config" "${rotationPredecessorManagedHerdrConfig}"; then
+          echo "Refusing Herdr adoption: $herdr_config does not match an admitted predecessor configuration" >&2
           exit 1
         fi
         if [ ! -f "$herdr_backup" ] || [ -L "$herdr_backup" ]; then

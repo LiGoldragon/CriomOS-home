@@ -68,6 +68,29 @@ let
     mkdir -p "$out/.config/herdr"
     cp ${predecessorManagedConfig} "$out/.config/herdr/config.toml"
   '';
+  rotationPredecessorManagedConfigToml = ''
+    [agents]
+    codex_executables = [
+      "/nix/store/0s199vn7jivakb7kqkcc2znxw4klv840-codex-stable-flow-client/bin/codex-stable-flow-client",
+      "/nix/store/x74szg3cbsn5s41nan43kfs6wb4xww61-codex-next-flow-client/bin/codex-next-flow-client",
+    ]
+
+    [theme]
+    auto_switch = true
+    dark_name = "catppuccin"
+    light_name = "catppuccin-latte"
+
+    [ui.toast]
+    delivery = "terminal"
+
+    [ui]
+    agent_panel_sort = "spaces"
+  '';
+  rotationPredecessorManagedConfig = pkgs.writeText "herdr-rotation-predecessor-config.toml" rotationPredecessorManagedConfigToml;
+  rotationPriorHomeManagerFiles = pkgs.runCommand "rotation-home-manager-files" { } ''
+    mkdir -p "$out/.config/herdr"
+    cp ${rotationPredecessorManagedConfig} "$out/.config/herdr/config.toml"
+  '';
   # The managed config names store paths (the Codex clients); parsing only
   # inspects keys, so the string context is dropped before fromTOML.
   parsedConfigToml = builtins.fromTOML (builtins.unsafeDiscardStringContext configToml);
@@ -115,6 +138,21 @@ pkgs.runCommand "herdr-toast-delivery" {
     "$predecessor_link_home/.local/state/criomos/herdr-adoption/config.toml.pre-home-manager"
   sha256sum --check --status \
     "$predecessor_link_home/.local/state/criomos/herdr-adoption/config.toml.pre-home-manager.sha256"
+
+  # The witnessed former managed configuration carries the old two-client
+  # routing tuple. It is admitted only with the legacy backup, so no local
+  # configuration is overwritten by this migration.
+  rotation_predecessor_home="$TMPDIR/rotation-predecessor-home"
+  mkdir -p "$rotation_predecessor_home/.config/herdr" \
+    "$rotation_predecessor_home/.local/state/criomos/herdr-adoption"
+  cp ${legacyConfig} \
+    "$rotation_predecessor_home/.local/state/criomos/herdr-adoption/config.toml.pre-home-manager"
+  ln -s ${rotationPriorHomeManagerFiles}/.config/herdr/config.toml \
+    "$rotation_predecessor_home/.config/herdr/config.toml"
+  HOME="$rotation_predecessor_home" ${pkgs.bash}/bin/bash ${herdrAdoptionScript}
+  test ! -e "$rotation_predecessor_home/.config/herdr/config.toml"
+  cmp ${legacyConfig} \
+    "$rotation_predecessor_home/.local/state/criomos/herdr-adoption/config.toml.pre-home-manager"
 
   unbacked_link_home="$TMPDIR/unbacked-link-home"
   mkdir -p "$unbacked_link_home/.config/herdr"
