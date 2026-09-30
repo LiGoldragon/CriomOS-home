@@ -301,6 +301,7 @@ let
   flowIdPackage = config.criomos.corePackages.flowId;
   codexRemote = pkgs.callPackage ../../../../owned-agents/codex/remote.nix {
     inherit codexCliPackage;
+    endpoint = "unix://${config.home.homeDirectory}/.codex-next/app-server-control/app-server-control.sock";
   };
 
   mkRawRecoveryCommand =

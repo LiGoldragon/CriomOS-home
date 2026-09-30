@@ -38,6 +38,7 @@
     ./base.nix
     ./profiles/min
     ./profiles/min/codex-next.nix
+    ./profiles/min/codex-next-candidate.nix
     ./profiles/min/codex-remote-control.nix
     ./profiles/min/opencode.nix
     ./profiles/min/field-luna-heartbeat.nix

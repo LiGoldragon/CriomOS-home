@@ -1,0 +1,23 @@
+{ config, lib, pkgs, user, ... }:
+let
+  enabled = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size "Min";
+  package = pkgs.callPackage ../../../../owned-agents/codex-next-candidate { };
+  hash = builtins.substring 0 12 (builtins.baseNameOf package.drvPath);
+  candidateHome = "${config.home.homeDirectory}/.codex-next-${hash}";
+  socket = "${candidateHome}/app-server-control/app-server-control.sock";
+  unit = "codex-remote-control-next-${hash}";
+  client = pkgs.writeShellApplication { name = "codex-next"; text = ''export CODEX_HOME=${lib.escapeShellArg candidateHome}; exec ${package}/bin/codex --remote ${lib.escapeShellArg "unix://${socket}"} "$@"''; };
+  flowClient = pkgs.writeShellApplication { name = "codex-next-flow-client"; text = ''export CODEX_HOME=${lib.escapeShellArg candidateHome}; exec ${package}/bin/codex "$@"''; };
+in {
+  options.criomosHome.codexNextCandidate = {
+    package = lib.mkOption { type = lib.types.package; readOnly = true; default = package; };
+    hash = lib.mkOption { type = lib.types.str; readOnly = true; default = hash; };
+    clientPackage = lib.mkOption { type = lib.types.package; readOnly = true; default = flowClient; };
+    remoteClientPackage = lib.mkOption { type = lib.types.package; readOnly = true; default = client; };
+    unit = lib.mkOption { type = lib.types.str; readOnly = true; default = unit; };
+  };
+  config = lib.mkIf enabled {
+    home.packages = [ client ];
+    systemd.user.services.${unit} = { Unit.Description = "Codex Remote Control next candidate ${hash}"; Service = { WorkingDirectory = "${config.home.homeDirectory}/primary"; Environment = [ "CODEX_HOME=${candidateHome}" ]; ExecStartPre = "${pkgs.coreutils}/bin/mkdir -p ${candidateHome}"; ExecStart = "${package}/bin/codex app-server --remote-control --listen unix://${socket}"; UMask = "0077"; LimitNOFILE = 524288; Restart = "on-failure"; RestartSec = "2s"; }; Install.WantedBy = [ "default.target" ]; };
+  };
+}

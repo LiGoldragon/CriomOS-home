@@ -21,7 +21,7 @@ let
   stableCodexClient =
     config.criomosHome.herdr.stableCodexClientPackage or config.criomos.corePackages.codex;
   nextCodexClient =
-    config.criomosHome.codexNext.clientPackage or config.criomos.corePackages.codex;
+    config.criomosHome.codexNextCandidate.clientPackage or config.criomos.corePackages.codex;
   flowRuntimePath = makeBinPath [
     (config.criomosHome.herdr.package or inputs.herdr.packages.${system}.herdr)
     inputs.harness.packages.${system}.default
@@ -60,8 +60,8 @@ in
     systemd.user.services.flow-nexus = mkIf (sizeAtLeast "Min" && cfg.enable && cfg.package != null) {
       Unit = {
         Description = "Flow Nexus";
-        After = [ "codex-remote-control.service" ];
-        Requires = [ "codex-remote-control.service" ];
+        After = [ "codex-remote-control-next.service" ];
+        Requires = [ "codex-remote-control-next.service" ];
       };
       Service = {
         Type = "simple";
@@ -74,7 +74,7 @@ in
           "FLOW_CODEX_STABLE_HOME=/home/li/.codex"
           "FLOW_CODEX_STABLE_MODELS=gpt-5.6-terra,gpt-5.6-sol,gpt-5.6-luna"
           "FLOW_CODEX_NEXT_CLIENT=${nextCodexClient}/bin/codex-next-flow-client"
-          "FLOW_CODEX_NEXT_SOCKET=/home/li/.codex-next/app-server-control/app-server-control.sock"
+          "FLOW_CODEX_NEXT_SOCKET=/home/li/.codex-next-${config.criomosHome.codexNextCandidate.hash}/app-server-control/app-server-control.sock"
           "FLOW_CODEX_NEXT_HOME=/home/li/.codex-next"
           "FLOW_CODEX_NEXT_MODELS=gpt-6-sol,gpt-6-luna,gpt-6-astra"
           "PATH=${flowRuntimePath}"

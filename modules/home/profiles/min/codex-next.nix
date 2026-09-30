@@ -8,6 +8,7 @@
 let
   enabled = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size "Min";
   package = pkgs.callPackage ../../../../owned-agents/codex-next { };
+  # This is the occupied 0.158 endpoint. It remains physically unchanged; after migration it is the stable role.
   nextHome = "${config.home.homeDirectory}/.codex-next";
   socket = "${nextHome}/app-server-control/app-server-control.sock";
   recoveryUnit = "codex-remote-control-next-recovery.service";
@@ -50,7 +51,7 @@ in
       type = lib.types.package;
       readOnly = true;
       default = flowClient;
-      description = "Immutable Flow client wrapper that sets only the isolated next CODEX_HOME and forwards argv unchanged.";
+      description = "Immutable client wrapper for the occupied endpoint, retained as the promoted stable role.";
     };
     remoteClientPackage = lib.mkOption {
       type = lib.types.package;

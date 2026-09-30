@@ -12,7 +12,7 @@ let
   stableCodexClientPackage = pkgs.writeShellApplication {
     name = "codex-stable-flow-client";
     text = ''
-      export CODEX_HOME=${lib.escapeShellArg "${config.home.homeDirectory}/.codex"}
+      export CODEX_HOME=${lib.escapeShellArg "${config.home.homeDirectory}/.codex-next"}
       exec ${config.criomos.corePackages.codex}/bin/codex "$@"
     '';
   };

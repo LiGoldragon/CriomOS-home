@@ -18,6 +18,7 @@ let
   codexCliPackage = config.criomos.corePackages.codex;
   codexRemote = pkgs.callPackage ../../../../owned-agents/codex/remote.nix {
     inherit codexCliPackage;
+    endpoint = "unix://${config.home.homeDirectory}/.codex-next/app-server-control/app-server-control.sock";
   };
   claudeCodePackage = config.criomos.corePackages.claude;
   claudeDesktopPackage = pkgs.callPackage ../../../../owned-agents/claude-desktop {

@@ -4,18 +4,19 @@
   ghostty ? pkgs.ghostty,
   systemctl ? pkgs.systemd,
   systemdRun ? pkgs.systemd,
+  endpoint ? "unix://",
 }:
 let
   codexRemote = pkgs.writeShellApplication {
     name = "codex-remote";
     text = ''
-      exec ${codexCliPackage}/bin/codex --remote unix:// "$@"
+      exec ${codexCliPackage}/bin/codex --remote ${endpoint} "$@"
     '';
   };
   codexDesktop = pkgs.writeShellApplication {
     name = "codex-desktop";
     text = ''
-      service=codex-remote-control.service
+      service=codex-remote-control-next.service
 
       usage() {
         cat >&2 <<'USAGE'

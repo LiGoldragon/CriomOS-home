@@ -64,7 +64,7 @@ let
   stableCodexClient =
     config.criomosHome.herdr.stableCodexClientPackage or config.criomos.corePackages.codex;
   nextCodexClient =
-    config.criomosHome.codexNext.clientPackage or config.criomos.corePackages.codex;
+    config.criomosHome.codexNextCandidate.clientPackage or config.criomos.corePackages.codex;
   flowRuntimePath = lib.makeBinPath [
     (config.criomosHome.herdr.package or inputs.herdr.packages.${system}.herdr)
     inputs.harness.packages.${system}.default
@@ -89,7 +89,7 @@ let
     };
     next = {
       client = "${nextCodexClient}/bin/codex-next-flow-client";
-      home = "${homeDirectory}/.codex-next";
+      home = "${homeDirectory}/.codex-next-${config.criomosHome.codexNextCandidate.hash}";
       models = nextModels;
     };
   };
@@ -101,8 +101,8 @@ let
   flowNexusUnit = instance: {
     Unit = {
       Description = "Flow Nexus (${instance.slot})";
-      After = [ "codex-remote-control.service" ];
-      Requires = [ "codex-remote-control.service" ];
+      After = [ "codex-remote-control-next.service" ];
+      Requires = [ "codex-remote-control-next.service" ];
     };
     Service = {
       Type = "simple";
