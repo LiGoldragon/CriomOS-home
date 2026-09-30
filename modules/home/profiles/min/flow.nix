@@ -79,17 +79,17 @@ in
         RuntimeDirectoryMode = "0700";
         Environment = [
           "FLOW_SOURCE_ROOT=/home/li/primary"
-          "FLOW_CODEX_STABLE_CLIENT=${if occupied then occupiedStableClient else "${stableCodexClient}/bin/codex-stable-flow-client"}"
-          "FLOW_CODEX_STABLE_SOCKET=${if occupied then "/home/li/.codex/app-server-control/app-server-control.sock" else "/home/li/.codex-next/app-server-control/app-server-control.sock"}"
-          "FLOW_CODEX_STABLE_HOME=${if occupied then "/home/li/.codex" else "/home/li/.codex-next"}"
+          "FLOW_CODEX_STABLE_CLIENT=${stableCodexClient}/bin/codex-stable-flow-client"
+          "FLOW_CODEX_STABLE_SOCKET=/home/li/.codex-next/app-server-control/app-server-control.sock"
+          "FLOW_CODEX_STABLE_HOME=/home/li/.codex-next"
           "FLOW_CODEX_STABLE_MODELS=gpt-5.6-terra,gpt-5.6-sol,gpt-5.6-luna"
-          "FLOW_CODEX_NEXT_CLIENT=${if occupied then occupiedNextClient else "${nextCodexClient}/bin/codex-next-flow-client"}"
-          "FLOW_CODEX_NEXT_SOCKET=${if occupied then "/home/li/.codex-next/app-server-control/app-server-control.sock" else "/home/li/.codex-next-${config.criomosHome.codexNextCandidate.hash}/app-server-control/app-server-control.sock"}"
-          "FLOW_CODEX_NEXT_HOME=${if occupied then "/home/li/.codex-next" else "/home/li/.codex-next-${config.criomosHome.codexNextCandidate.hash}"}"
+          "FLOW_CODEX_NEXT_CLIENT=${nextCodexClient}/bin/codex-next-flow-client"
+          "FLOW_CODEX_NEXT_SOCKET=/home/li/.codex-next-${config.criomosHome.codexNextCandidate.hash}/app-server-control/app-server-control.sock"
+          "FLOW_CODEX_NEXT_HOME=/home/li/.codex-next-${config.criomosHome.codexNextCandidate.hash}"
           "FLOW_CODEX_NEXT_MODELS=gpt-6-sol,gpt-6-luna,gpt-6-astra"
-          "PATH=${if occupied then occupiedPath else flowRuntimePath}"
+          "PATH=${flowRuntimePath}"
         ];
-        ExecStart = if occupied then occupiedFlow else "${cfg.package}/bin/flow-nexus";
+        ExecStart = "${cfg.package}/bin/flow-nexus";
         Restart = "on-failure";
         RestartSec = 2;
       };

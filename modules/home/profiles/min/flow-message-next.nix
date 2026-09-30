@@ -287,10 +287,8 @@ in
     ];
 
     systemd.user.services = {
-      ${flow.next.serviceUnit} =
-        if homeDirectory == "/home/li" then occupiedNextFlowUnit else flowNexusUnit flow.next;
-      ${flow.next.unitName "flow-configuration"} =
-        if homeDirectory == "/home/li" then occupiedNextFlowConfigurationUnit else flowConfigurationUnit flow.next message.next;
+      ${flow.next.serviceUnit} = flowNexusUnit flow.next;
+      ${flow.next.unitName "flow-configuration"} = flowConfigurationUnit flow.next message.next;
       ${message.next.serviceUnit} = messageNexusUnit message.next flow.next;
     };
   };
