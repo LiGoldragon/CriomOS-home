@@ -15,6 +15,7 @@ let
   ];
   managedCommands = [ "messenger-clj" ] ++ compatibilityCommands;
   legacyMessengerClj = "/nix/store/p8mz1msm8lxiahnw6sfipi8m258x1q3z-messenger-clj-0.2.5";
+  predecessorManagedFiles = "/nix/store/9ajs6aji25akz3dfrzpffj7j4kpqjjzv-home-manager-files";
   configuration = inputs.home-manager.lib.homeManagerConfiguration {
     inherit pkgs;
     extraSpecialArgs = {
@@ -72,6 +73,25 @@ pkgs.runCommand "messenger-clj-home-package" { } ''
     "ln -s \"$legacy_home/.local/libexec/messenger-clj/bin/${command}\" \"$legacy_home/.local/bin/${command}\""
   ) managedCommands}
   run_retirement_guard "$legacy_home"
+
+  # The known preceding Home generation is safe to replace only when both
+  # the generated-files link and its resolved package match exactly.
+  predecessor_home="$TMPDIR/predecessor"
+  mkdir -p "$predecessor_home/.local/bin"
+  ${pkgs.lib.concatMapStringsSep "
+  " (
+    command:
+    "ln -s ${predecessorManagedFiles}/.local/bin/${command} \"$predecessor_home/.local/bin/${command}\""
+  ) managedCommands}
+  run_retirement_guard "$predecessor_home"
+
+  predecessor_wrong_root_home="$TMPDIR/predecessor-wrong-root"
+  mkdir -p "$predecessor_wrong_root_home/.local/bin"
+  ln -s /tmp/not-the-generated-files-root "$predecessor_wrong_root_home/.local/bin/messenger-clj"
+  if run_retirement_guard "$predecessor_wrong_root_home"; then
+    echo "the retirement guard accepted a non-predecessor generated-files link" >&2
+    exit 1
+  fi
 
   foreign_home="$TMPDIR/foreign"
   mkdir -p "$foreign_home/.local/bin"
