@@ -43,7 +43,7 @@ let
     [agents]
     codex_executables = [
       "${stableCodexClientPackage}/bin/codex-stable-flow-client",
-      "${config.criomosHome.codexNext.clientPackage}/bin/codex-next-flow-client",
+      "${config.criomosHome.codexNextCandidate.clientPackage}/bin/codex-next-flow-client",
     ]
 
     [theme]

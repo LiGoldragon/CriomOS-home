@@ -84,7 +84,7 @@ let
   codex = {
     stable = {
       client = "${stableCodexClient}/bin/codex-stable-flow-client";
-      home = "${homeDirectory}/.codex";
+      home = "${homeDirectory}/.codex-next";
       models = stableModels;
     };
     next = {

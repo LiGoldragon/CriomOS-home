@@ -70,12 +70,12 @@ in
         Environment = [
           "FLOW_SOURCE_ROOT=/home/li/primary"
           "FLOW_CODEX_STABLE_CLIENT=${stableCodexClient}/bin/codex-stable-flow-client"
-          "FLOW_CODEX_STABLE_SOCKET=/home/li/.codex/app-server-control/app-server-control.sock"
-          "FLOW_CODEX_STABLE_HOME=/home/li/.codex"
+          "FLOW_CODEX_STABLE_SOCKET=/home/li/.codex-next/app-server-control/app-server-control.sock"
+          "FLOW_CODEX_STABLE_HOME=/home/li/.codex-next"
           "FLOW_CODEX_STABLE_MODELS=gpt-5.6-terra,gpt-5.6-sol,gpt-5.6-luna"
           "FLOW_CODEX_NEXT_CLIENT=${nextCodexClient}/bin/codex-next-flow-client"
           "FLOW_CODEX_NEXT_SOCKET=/home/li/.codex-next-${config.criomosHome.codexNextCandidate.hash}/app-server-control/app-server-control.sock"
-          "FLOW_CODEX_NEXT_HOME=/home/li/.codex-next"
+          "FLOW_CODEX_NEXT_HOME=/home/li/.codex-next-${config.criomosHome.codexNextCandidate.hash}"
           "FLOW_CODEX_NEXT_MODELS=gpt-6-sol,gpt-6-luna,gpt-6-astra"
           "PATH=${flowRuntimePath}"
         ];
