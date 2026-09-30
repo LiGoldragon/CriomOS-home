@@ -30,6 +30,7 @@ let
     user.size = "Min";
     config.home.username = "li";
     config.criomos.corePackages = corePackages;
+    config.criomosHome.codexNextCandidate = { hash = "candidatehash"; clientPackage = codexPackage; };
     config.criomosHome.flow = {
       enable = true;
       package = flowPackage;
@@ -41,6 +42,7 @@ let
     user.size = "Min";
     config.home.username = "li";
     config.criomos.corePackages = corePackages;
+    config.criomosHome.codexNextCandidate = { hash = "candidatehash"; clientPackage = codexPackage; };
     config.criomosHome.flow = {
       enable = false;
       package = null;
@@ -52,6 +54,7 @@ let
     user.size = "Min";
     config.home.username = "another-user";
     config.criomos.corePackages = corePackages;
+    config.criomosHome.codexNextCandidate = { hash = "candidatehash"; clientPackage = codexPackage; };
     config.criomosHome.flow = {
       enable = true;
       package = flowPackage;
@@ -68,9 +71,9 @@ assert unit.content.Service.ExecStart == "${flowPackage}/bin/flow-nexus";
 assert unit.content.Service.RuntimeDirectory == "flow";
 assert builtins.elem "FLOW_SOURCE_ROOT=/home/li/primary" unit.content.Service.Environment;
 assert builtins.elem "PATH=${expectedPath}" unit.content.Service.Environment;
-assert builtins.elem "FLOW_CODEX_NEXT_SOCKET=/home/li/.codex-next/app-server-control/app-server-control.sock" unit.content.Service.Environment;
-assert unit.content.Unit.After == [ "codex-remote-control.service" ];
-assert unit.content.Unit.Requires == [ "codex-remote-control.service" ];
+assert builtins.elem "FLOW_CODEX_NEXT_SOCKET=/home/li/.codex-next-candidatehash/app-server-control/app-server-control.sock" unit.content.Service.Environment;
+assert unit.content.Unit.After == [ "codex-remote-control-next.service" ];
+assert unit.content.Unit.Requires == [ "codex-remote-control-next.service" ];
 assert !disabledUnit.condition;
 assert !(builtins.elemAt wrongUser.config.assertions 1).assertion;
 pkgs.runCommand "flow-service-path" { } ''

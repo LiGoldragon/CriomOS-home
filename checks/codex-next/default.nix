@@ -10,6 +10,7 @@ let
       extraSpecialArgs = { inherit user; };
       modules = [
         ../../modules/home/profiles/min/codex-next.nix
+        ../../modules/home/profiles/min/codex-next-candidate.nix
         {
           home.username = user.name;
           home.homeDirectory = "/home/${user.name}";
@@ -35,5 +36,7 @@ assert
 pkgs.runCommand "codex-next-contract" { } ''
   ${package}/bin/codex --version > "$out"
   test "$(cat "$out")" = "codex-cli 0.158.0-alpha.9"
+  test -n "${configuration.criomosHome.codexNextCandidate.hash}"
+  test -x ${configuration.criomosHome.codexNextCandidate.remoteClientPackage}/bin/codex-next
   test -x ${package}/bin/codex-code-mode-host
 ''
