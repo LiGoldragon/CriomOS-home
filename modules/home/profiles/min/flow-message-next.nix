@@ -164,6 +164,23 @@ let
     };
     Install.WantedBy = [ "default.target" ];
   };
+  # This oneshot configures the already-running next Flow over its meta socket.
+  # Replacing it would reconfigure that process during activation, so retain the
+  # exact installed payload while its existing sessions are protected.
+  occupiedNextFlowConfigurationUnit = {
+    Unit = {
+      Description = "Flow Nexus configuration (next) — MetaAspects and the admitted Message Nexus";
+      After = [ "flow-nexus-next.service" ];
+      Requires = [ "flow-nexus-next.service" ];
+      PartOf = [ "flow-nexus-next.service" ];
+    };
+    Service = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = "/nix/store/5fg9dagqyfb2cwgjh79hkkhyn90142b6-flow-configure-next %t/flow-next/flow/flow-meta.sock 'Configure.{ %t/flow-next/flow/flow.sock %t/flow-next/flow/flow-meta.sock /home/li/primary { /nix/store/0s199vn7jivakb7kqkcc2znxw4klv840-codex-stable-flow-client/bin/codex-stable-flow-client /home/li/.codex /home/li/.codex/app-server-control/app-server-control.sock [ gpt-5.6-terra gpt-5.6-sol gpt-5.6-luna ] } { /nix/store/x74szg3cbsn5s41nan43kfs6wb4xww61-codex-next-flow-client/bin/codex-next-flow-client /home/li/.codex-next /home/li/.codex-next/app-server-control/app-server-control.sock [ gpt-6-sol gpt-6-luna gpt-6-astra ] } [ { Claude [ / «!» # ] [ esc esc ] [ enter ] } { Codex [ / «!» ] [ esc ] [] } ] [ Psyche ] /nix/store/3v8qs8h4ydmcrjjw29arzb0qk9qxqicq-message-0.17.0/bin/message-nexus }'";
+    };
+    Install.WantedBy = [ "default.target" ];
+  };
 
   # Flow 0.16–0.17 takes MetaAspects and MessageNexusPath only through one meta
   # `Configure`, which replaces the record whole, so every field is stated.
@@ -272,7 +289,8 @@ in
     systemd.user.services = {
       ${flow.next.serviceUnit} =
         if homeDirectory == "/home/li" then occupiedNextFlowUnit else flowNexusUnit flow.next;
-      ${flow.next.unitName "flow-configuration"} = flowConfigurationUnit flow.next message.next;
+      ${flow.next.unitName "flow-configuration"} =
+        if homeDirectory == "/home/li" then occupiedNextFlowConfigurationUnit else flowConfigurationUnit flow.next message.next;
       ${message.next.serviceUnit} = messageNexusUnit message.next flow.next;
     };
   };
