@@ -2,10 +2,14 @@
 let
   enabled = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size "Min";
   package = pkgs.callPackage ../../../../owned-agents/codex-next-candidate { };
-  hash = builtins.substring 0 12 (builtins.baseNameOf package.drvPath);
+  # Unit names and state directories need the derivation identity, but a
+  # systemd filename cannot retain the derivation's store-path context.
+  hash = builtins.unsafeDiscardStringContext (builtins.substring 0 12 (builtins.baseNameOf package.drvPath));
   candidateHome = "${config.home.homeDirectory}/.codex-next-${hash}";
   socket = "${candidateHome}/app-server-control/app-server-control.sock";
   unit = "codex-remote-control-next-${hash}";
+  # The future `codex-next` command is the only launcher selecting the new,
+  # hash-identified candidate endpoint.  Plain `codex` remains on stable.
   client = pkgs.writeShellApplication { name = "codex-next"; text = ''export CODEX_HOME=${lib.escapeShellArg candidateHome}; exec ${package}/bin/codex --remote ${lib.escapeShellArg "unix://${socket}"} "$@"''; };
   flowClient = pkgs.writeShellApplication { name = "codex-next-flow-client"; text = ''export CODEX_HOME=${lib.escapeShellArg candidateHome}; exec ${package}/bin/codex "$@"''; };
 in {

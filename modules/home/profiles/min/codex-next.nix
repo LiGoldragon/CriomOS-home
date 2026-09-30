@@ -8,6 +8,12 @@
 let
   enabled = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size "Min";
   package = pkgs.callPackage ../../../../owned-agents/codex-next { };
+  occupied = config.home.homeDirectory == "/home/li";
+  # Receipt-pinned executable of the occupied endpoint.  `package` remains the
+  # reproducible source package for checks; the occupied process is deliberately
+  # not rebound to a rebuilt output during this rotation.
+  occupiedCodex = "/nix/store/zbznvqk2746igprz4753clizppww5551-codex-next-0.158.0-alpha.9/bin/codex";
+  occupiedPrepare = "/nix/store/dxqsqx4bq1ghgjf9s5yb8hzwa0krr7kd-codex-next-prepare";
   # This is the occupied 0.158 endpoint. It remains physically unchanged; after migration it is the stable role.
   nextHome = "${config.home.homeDirectory}/.codex-next";
   socket = "${nextHome}/app-server-control/app-server-control.sock";
@@ -25,7 +31,7 @@ let
     done
   '';
   client = pkgs.writeShellApplication {
-    name = "codex-next";
+    name = "codex-stable-remote";
     text = ''
       export CODEX_HOME=${lib.escapeShellArg nextHome}
       exec ${package}/bin/codex --remote ${lib.escapeShellArg "unix://${socket}"} "$@"
@@ -79,8 +85,9 @@ in
       Service = {
         WorkingDirectory = "${config.home.homeDirectory}/primary";
         Environment = [ "CODEX_HOME=${nextHome}" ];
-        ExecStartPre = "${prepare}";
-        ExecStart = "${package}/bin/codex app-server --remote-control --listen unix://${socket}";
+        # Frozen exact live service: its PID owns the promoted stable endpoint.
+        ExecStartPre = if occupied then occupiedPrepare else "${prepare}";
+        ExecStart = "${if occupied then occupiedCodex else "${package}/bin/codex"} app-server --remote-control --listen unix://${socket}";
         UMask = "0077";
         LimitNOFILE = 524288;
         Restart = "on-failure";

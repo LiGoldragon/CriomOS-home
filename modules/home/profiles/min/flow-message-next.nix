@@ -128,6 +128,42 @@ let
     };
     Install.WantedBy = [ "default.target" ];
   };
+  occupiedNextFlowUnit = {
+    Unit = {
+      Description = "Flow Nexus (next)";
+      After = [ "codex-remote-control.service" ];
+      Requires = [ "codex-remote-control.service" ];
+    };
+    Service = {
+      Type = "simple";
+      RuntimeDirectory = "flow-next";
+      RuntimeDirectoryMode = "0700";
+      Environment = [
+        "HOME=/home/li/.local/state/flow-next"
+        "XDG_RUNTIME_DIR=%t/flow-next"
+        "XDG_CONFIG_HOME=/home/li/.config"
+        "XDG_DATA_HOME=/home/li/.local/share"
+        "XDG_STATE_HOME=/home/li/.local/state"
+        "XDG_CACHE_HOME=/home/li/.cache"
+        "CLAUDE_CONFIG_DIR=/home/li/.claude"
+        "CODEX_HOME=/home/li/.codex"
+        "FLOW_SOURCE_ROOT=/home/li/primary"
+        "FLOW_CODEX_STABLE_CLIENT=/nix/store/0s199vn7jivakb7kqkcc2znxw4klv840-codex-stable-flow-client/bin/codex-stable-flow-client"
+        "FLOW_CODEX_STABLE_SOCKET=/home/li/.codex/app-server-control/app-server-control.sock"
+        "FLOW_CODEX_STABLE_HOME=/home/li/.codex"
+        "FLOW_CODEX_STABLE_MODELS=gpt-5.6-terra,gpt-5.6-sol,gpt-5.6-luna"
+        "FLOW_CODEX_NEXT_CLIENT=/nix/store/x74szg3cbsn5s41nan43kfs6wb4xww61-codex-next-flow-client/bin/codex-next-flow-client"
+        "FLOW_CODEX_NEXT_SOCKET=/home/li/.codex-next/app-server-control/app-server-control.sock"
+        "FLOW_CODEX_NEXT_HOME=/home/li/.codex-next"
+        "FLOW_CODEX_NEXT_MODELS=gpt-6-sol,gpt-6-luna,gpt-6-astra"
+        "PATH=/nix/store/9x03bz0q0a978zrzcshrlmmb4fvcmdb6-herdr-0.8.2/bin:/nix/store/b4wzlwmzbfis6ys2b1svh531dplxxyd3-harness-0.3.4/bin:/nix/store/wdj0sc69r4n9is1idfb32vcx5739ijkh-codex-0.153.4/bin:/nix/store/qsq3lh2i05dz77dakipwy9f1fkssq1zw-claude-code-2.1.284/bin"
+      ];
+      ExecStart = "/nix/store/7z15aqi46rk73v0ahaaazg6nq1hb0vjc-flow-0.17.4/bin/flow-nexus";
+      Restart = "on-failure";
+      RestartSec = 2;
+    };
+    Install.WantedBy = [ "default.target" ];
+  };
 
   # Flow 0.16–0.17 takes MetaAspects and MessageNexusPath only through one meta
   # `Configure`, which replaces the record whole, so every field is stated.
@@ -234,7 +270,8 @@ in
     ];
 
     systemd.user.services = {
-      ${flow.next.serviceUnit} = flowNexusUnit flow.next;
+      ${flow.next.serviceUnit} =
+        if homeDirectory == "/home/li" then occupiedNextFlowUnit else flowNexusUnit flow.next;
       ${flow.next.unitName "flow-configuration"} = flowConfigurationUnit flow.next message.next;
       ${message.next.serviceUnit} = messageNexusUnit message.next flow.next;
     };

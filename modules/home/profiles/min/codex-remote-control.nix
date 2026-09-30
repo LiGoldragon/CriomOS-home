@@ -15,7 +15,20 @@ let
   mediumEnabled = sizeAtLeast "Medium";
   edgeEnabled = ((horizon.node.behavesAs or { }).edge or false);
   desktopEnabled = edgeEnabled && mediumEnabled;
+  occupied = config.home.homeDirectory == "/home/li";
   codexCliPackage = config.criomos.corePackages.codex;
+  # This server has an unregistered client attached.  It is frozen until that
+  # client has moved; do not replace its executable with the current package.
+  # The literal is the executable in the preserved live-unit receipt.
+  occupiedCodex = "/nix/store/wdj0sc69r4n9is1idfb32vcx5739ijkh-codex-0.153.4/bin/codex";
+  occupiedNextCodex = "/nix/store/zbznvqk2746igprz4753clizppww5551-codex-next-0.158.0-alpha.9/bin/codex";
+  codexStable = pkgs.writeShellApplication {
+    name = "codex";
+    text = ''
+      export CODEX_HOME=${lib.escapeShellArg "${config.home.homeDirectory}/.codex-next"}
+      exec ${occupiedNextCodex} --remote ${lib.escapeShellArg "unix://${config.home.homeDirectory}/.codex-next/app-server-control/app-server-control.sock"} "$@"
+    '';
+  };
   codexRemote = pkgs.callPackage ../../../../owned-agents/codex/remote.nix {
     inherit codexCliPackage;
     endpoint = "unix://${config.home.homeDirectory}/.codex-next/app-server-control/app-server-control.sock";
@@ -32,7 +45,7 @@ lib.mkMerge [
   {
     home.packages = [
       claudeCodePackage
-      codexCliPackage
+      (if occupied then codexStable else codexCliPackage)
     ];
 
     home.activation.mergeClaudePermissionDefaults = inputs.hexis.lib.mkManagedConfig {
@@ -77,7 +90,10 @@ lib.mkMerge [
       Unit.Description = "Codex Remote Control app-server";
       Service = {
         WorkingDirectory = primaryWorkspace;
-        ExecStart = "${codexCliPackage}/bin/codex app-server --remote-control --listen unix://";
+        # Keep this definition byte-for-byte compatible with the occupied
+        # service.  A later role transition may replace it only after its
+        # unregistered client is gone.
+        ExecStart = "${if occupied then occupiedCodex else "${codexCliPackage}/bin/codex"} app-server --remote-control --listen unix://";
         UMask = "0077";
         LimitNOFILE = 524288;
         Restart = "always";
