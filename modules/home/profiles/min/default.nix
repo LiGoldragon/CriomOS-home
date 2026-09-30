@@ -327,7 +327,8 @@ let
     (pkgs.callPackage ../../../../packages/gws { inherit inputs; })
     (pkgs.callPackage ../../../../packages/playwright-cli { })
     (pkgs.callPackage ../../../../packages/plannotator { })
-    codexCliPackage
+    # `codex-remote-control.nix` owns the sole logical `codex` launcher.
+    # Adding the raw package here would race it in the profile PATH.
     codexRemote
     flowIdPackage
   ];
