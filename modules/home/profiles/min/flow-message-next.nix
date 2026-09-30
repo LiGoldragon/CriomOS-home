@@ -101,8 +101,8 @@ let
   flowNexusUnit = instance: {
     Unit = {
       Description = "Flow Nexus (${instance.slot})";
-      After = [ "codex-remote-control-next.service" ];
-      Requires = [ "codex-remote-control-next.service" ];
+      After = [ "codex-remote-control.service" ];
+      Requires = [ "codex-remote-control.service" ];
     };
     Service = {
       Type = "simple";

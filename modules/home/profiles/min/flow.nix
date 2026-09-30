@@ -60,8 +60,8 @@ in
     systemd.user.services.flow-nexus = mkIf (sizeAtLeast "Min" && cfg.enable && cfg.package != null) {
       Unit = {
         Description = "Flow Nexus";
-        After = [ "codex-remote-control-next.service" ];
-        Requires = [ "codex-remote-control-next.service" ];
+        After = [ "codex-remote-control.service" ];
+        Requires = [ "codex-remote-control.service" ];
       };
       Service = {
         Type = "simple";

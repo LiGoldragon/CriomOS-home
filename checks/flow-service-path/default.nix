@@ -72,8 +72,8 @@ assert unit.content.Service.RuntimeDirectory == "flow";
 assert builtins.elem "FLOW_SOURCE_ROOT=/home/li/primary" unit.content.Service.Environment;
 assert builtins.elem "PATH=${expectedPath}" unit.content.Service.Environment;
 assert builtins.elem "FLOW_CODEX_NEXT_SOCKET=/home/li/.codex-next-candidatehash/app-server-control/app-server-control.sock" unit.content.Service.Environment;
-assert unit.content.Unit.After == [ "codex-remote-control-next.service" ];
-assert unit.content.Unit.Requires == [ "codex-remote-control-next.service" ];
+assert unit.content.Unit.After == [ "codex-remote-control.service" ];
+assert unit.content.Unit.Requires == [ "codex-remote-control.service" ];
 assert !disabledUnit.condition;
 assert !(builtins.elemAt wrongUser.config.assertions 1).assertion;
 pkgs.runCommand "flow-service-path" { } ''
