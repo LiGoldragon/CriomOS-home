@@ -26,6 +26,7 @@ let
     herdr.packages.${system}.herdr = stub "herdr";
     harness.packages.${system}.default = stub "flow-id";
   };
+  candidateCodex = stub "codex-next-flow-client";
   moduleConfig = {
     home.username = "li";
     home.homeDirectory = homeDirectory;
@@ -37,6 +38,12 @@ let
     criomosHome.flow = {
       enable = true;
       package = inputs.flow.packages.${system}.default;
+    };
+    # This direct-module check has no Home module fixed point. Supply the
+    # candidate contract that production receives from codex-next-candidate.
+    criomosHome.codexNextCandidate = {
+      hash = "candidatehash";
+      clientPackage = candidateCodex;
     };
     criomosHome.message.enable = true;
     criomosHome.flowMessageNext.enable = true;

@@ -16,6 +16,10 @@ let
       exec ${config.criomos.corePackages.codex}/bin/codex "$@"
     '';
   };
+  # Keep independent Herdr/module evaluations total; the complete Home
+  # profile supplies the candidate package.
+  nextCodexClientPackage =
+    config.criomosHome.codexNextCandidate.clientPackage or config.criomos.corePackages.codex;
   # Keep the hook byte-for-byte with the pinned Herdr integration that owns
   # its protocol. The Flow next client sets CODEX_HOME=.codex-next, so the
   # ordinary .codex installation is deliberately not reused for this seat.
@@ -43,7 +47,7 @@ let
     [agents]
     codex_executables = [
       "${stableCodexClientPackage}/bin/codex-stable-flow-client",
-      "${config.criomosHome.codexNextCandidate.clientPackage}/bin/codex-next-flow-client",
+      "${nextCodexClientPackage}/bin/codex-next-flow-client",
     ]
 
     [theme]
