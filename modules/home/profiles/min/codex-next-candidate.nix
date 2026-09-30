@@ -18,6 +18,6 @@ in {
   };
   config = lib.mkIf enabled {
     home.packages = [ client ];
-    systemd.user.services.${unit} = { Unit.Description = "Codex Remote Control next candidate ${hash}"; Service = { WorkingDirectory = "${config.home.homeDirectory}/primary"; Environment = [ "CODEX_HOME=${candidateHome}" ]; ExecStartPre = "${pkgs.bash}/bin/bash -c 'set -eu; mkdir -p ${candidateHome}; for f in auth.json config.toml; do if [ ! -e ${candidateHome}/$f ] && [ -f ${config.home.homeDirectory}/.codex-next/$f ]; then install -m600 ${config.home.homeDirectory}/.codex-next/$f ${candidateHome}/$f; fi; done'"; ExecStart = "${package}/bin/codex app-server --remote-control --listen unix://${socket}"; UMask = "0077"; LimitNOFILE = 524288; Restart = "on-failure"; RestartSec = "2s"; }; Install.WantedBy = [ "default.target" ]; };
+    systemd.user.services.${unit} = { Unit.Description = "Codex Remote Control next candidate ${hash}"; Service = { WorkingDirectory = "${config.home.homeDirectory}/primary"; Environment = [ "CODEX_HOME=${candidateHome}" ]; ExecStartPre = "${pkgs.bash}/bin/bash -c 'set -eu; mkdir -p ${candidateHome}; for f in auth.json; do if [ ! -e ${candidateHome}/$f ] && [ -f ${config.home.homeDirectory}/.codex-next/$f ]; then install -m600 ${config.home.homeDirectory}/.codex-next/$f ${candidateHome}/$f; fi; done'"; ExecStart = "${package}/bin/codex app-server --remote-control --listen unix://${socket}"; UMask = "0077"; LimitNOFILE = 524288; Restart = "on-failure"; RestartSec = "2s"; }; Install.WantedBy = [ "default.target" ]; };
   };
 }
