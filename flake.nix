@@ -95,11 +95,11 @@
     flow.url = "github:LiGoldragon/flow/9fcd625ac7a0d44be58b9d365a94064e91f09219";
     flow.inputs.nixpkgs.follows = "nixpkgs";
 
-    # Next Flow: 0.17.4, run beside stable Flow on its own anchors by
+    # Next Flow: 0.23.0, run beside stable Flow on its own anchors by
     # profiles/min/flow-message-next.nix (lib/stable-next-service.nix). It
-    # moves with message-next below: both share signal-flow 1c9e4b30 and
-    # meta-signal-flow 2ac045c2.
-    flow-next.url = "github:LiGoldragon/flow/bc464e5e1b94fcc179af73111f43b69db1f69fc5";
+    # moves with message-next below: both share signal-flow 10.0.0 f95034de
+    # and meta-signal-flow 14.0.0 54eb5618.
+    flow-next.url = "github:LiGoldragon/flow/636214e515f7c09d32ae614033224aa40944423f";
     flow-next.inputs.nixpkgs.follows = "nixpkgs";
 
     # Standalone compatibility messenger used by the live Flow routes. Home
@@ -194,9 +194,9 @@
     message.inputs.nixpkgs.follows = "nixpkgs";
     message.inputs.crane.follows = "crane";
 
-    # Next Message: 0.17.0, the argument-less message-nexus, beside the stable
+    # Next Message: 0.19.0, the argument-less message-nexus, beside the stable
     # messenger with a fresh store of its own; it delivers through next Flow.
-    message-next.url = "github:LiGoldragon/message/481b579fcf72797ffa9ccf8ce4e2283a58cdff97";
+    message-next.url = "github:LiGoldragon/message/ce3eb6c65a0244672b34d8e91df2e840865d64e5";
     message-next.inputs.nixpkgs.follows = "nixpkgs";
     message-next.inputs.crane.follows = "crane";
 

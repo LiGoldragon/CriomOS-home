@@ -23,18 +23,9 @@ let
   nextRaw = configuration.criomosHome.codexNextCandidate.package;
   nextClient = configuration.criomosHome.codexNextCandidate.clientPackage;
   nextRemoteClient = configuration.criomosHome.codexNextCandidate.remoteClientPackage;
-  flowEnvironment = configuration.systemd.user.services.flow-nexus.Service.Environment;
   configToml = builtins.readFile configuration.xdg.configFile."herdr/config.toml".source;
 in
 assert builtins.match ".*codex_executables.*codex-stable-flow-client.*codex-next-flow-client.*" configToml != null;
-assert builtins.elem "FLOW_CODEX_STABLE_CLIENT=${stableClient}/bin/codex-stable-flow-client" flowEnvironment;
-assert builtins.elem "FLOW_CODEX_STABLE_SOCKET=/home/li/.codex-next/app-server-control/app-server-control.sock" flowEnvironment;
-assert builtins.elem "FLOW_CODEX_STABLE_HOME=/home/li/.codex-next" flowEnvironment;
-assert builtins.elem "FLOW_CODEX_STABLE_MODELS=gpt-5.6-terra,gpt-5.6-sol,gpt-5.6-luna" flowEnvironment;
-assert builtins.elem "FLOW_CODEX_NEXT_CLIENT=${nextClient}/bin/codex-next-flow-client" flowEnvironment;
-assert builtins.elem "FLOW_CODEX_NEXT_SOCKET=/home/li/.codex-next-${configuration.criomosHome.codexNextCandidate.hash}/app-server-control/app-server-control.sock" flowEnvironment;
-assert builtins.elem "FLOW_CODEX_NEXT_HOME=/home/li/.codex-next-${configuration.criomosHome.codexNextCandidate.hash}" flowEnvironment;
-assert builtins.elem "FLOW_CODEX_NEXT_MODELS=gpt-6-sol,gpt-6-luna,gpt-6-astra" flowEnvironment;
 pkgs.runCommand "herdr-agent-executable-contract" { } ''
   set -eu
   stable=${stableClient}/bin/codex-stable-flow-client

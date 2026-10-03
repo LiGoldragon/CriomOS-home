@@ -17,7 +17,7 @@ let
 
   # Flow and Message as stable/next pairs. Stable is the pair the Home line
   # already runs (profiles/min/flow.nix and message.nix, untouched); next is
-  # Flow 0.17.0 and Message 0.17.0, which must move together (shared
+  # Flow 0.23.0 and Message 0.19.0, which must move together (shared
   # signal-flow and meta-signal-flow), on anchors of their own.
   flow = stableNext.pair {
     name = "flow";
@@ -111,15 +111,6 @@ let
       Environment = instance.anchorEnvironment ++ [
         "CLAUDE_CONFIG_DIR=${homeDirectory}/.claude"
         "CODEX_HOME=${codex.stable.home}"
-        "FLOW_SOURCE_ROOT=${homeDirectory}/primary"
-        "FLOW_CODEX_STABLE_CLIENT=${codex.stable.client}"
-        "FLOW_CODEX_STABLE_SOCKET=${codexSocket codex.stable}"
-        "FLOW_CODEX_STABLE_HOME=${codex.stable.home}"
-        "FLOW_CODEX_STABLE_MODELS=${lib.concatStringsSep "," codex.stable.models}"
-        "FLOW_CODEX_NEXT_CLIENT=${codex.next.client}"
-        "FLOW_CODEX_NEXT_SOCKET=${codexSocket codex.next}"
-        "FLOW_CODEX_NEXT_HOME=${codex.next.home}"
-        "FLOW_CODEX_NEXT_MODELS=${lib.concatStringsSep "," codex.next.models}"
         "PATH=${flowRuntimePath}"
       ];
       ExecStart = "${instance.package}/bin/flow-nexus";

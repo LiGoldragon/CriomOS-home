@@ -28,10 +28,6 @@ let
   occupiedStableClient = "/nix/store/0s199vn7jivakb7kqkcc2znxw4klv840-codex-stable-flow-client/bin/codex-stable-flow-client";
   occupiedNextClient = "/nix/store/x74szg3cbsn5s41nan43kfs6wb4xww61-codex-next-flow-client/bin/codex-next-flow-client";
   occupiedPath = "/nix/store/9x03bz0q0a978zrzcshrlmmb4fvcmdb6-herdr-0.8.2/bin:/nix/store/b4wzlwmzbfis6ys2b1svh531dplxxyd3-harness-0.3.4/bin:/nix/store/wdj0sc69r4n9is1idfb32vcx5739ijkh-codex-0.153.4/bin:/nix/store/qsq3lh2i05dz77dakipwy9f1fkssq1zw-claude-code-2.1.284/bin";
-  stableCodexClient =
-    config.criomosHome.herdr.stableCodexClientPackage or config.criomos.corePackages.codex;
-  nextCodexClient =
-    config.criomosHome.codexNextCandidate.clientPackage or config.criomos.corePackages.codex;
   flowRuntimePath = makeBinPath [
     (config.criomosHome.herdr.package or inputs.herdr.packages.${system}.herdr)
     inputs.harness.packages.${system}.default
@@ -78,15 +74,6 @@ in
         RuntimeDirectory = "flow";
         RuntimeDirectoryMode = "0700";
         Environment = [
-          "FLOW_SOURCE_ROOT=/home/li/primary"
-          "FLOW_CODEX_STABLE_CLIENT=${stableCodexClient}/bin/codex-stable-flow-client"
-          "FLOW_CODEX_STABLE_SOCKET=/home/li/.codex-next/app-server-control/app-server-control.sock"
-          "FLOW_CODEX_STABLE_HOME=/home/li/.codex-next"
-          "FLOW_CODEX_STABLE_MODELS=gpt-5.6-terra,gpt-5.6-sol,gpt-5.6-luna"
-          "FLOW_CODEX_NEXT_CLIENT=${nextCodexClient}/bin/codex-next-flow-client"
-          "FLOW_CODEX_NEXT_SOCKET=/home/li/.codex-next-${config.criomosHome.codexNextCandidate.hash}/app-server-control/app-server-control.sock"
-          "FLOW_CODEX_NEXT_HOME=/home/li/.codex-next-${config.criomosHome.codexNextCandidate.hash}"
-          "FLOW_CODEX_NEXT_MODELS=gpt-6-sol,gpt-6-luna,gpt-6-astra"
           "PATH=${flowRuntimePath}"
         ];
         ExecStart = "${cfg.package}/bin/flow-nexus";

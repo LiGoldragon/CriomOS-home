@@ -17,8 +17,8 @@ let
   expected = {
     stableFlow = "9fcd625ac7a0d44be58b9d365a94064e91f09219";
     stableMessage = "930c5169ffcf5fa3784b34b2751763009e926d1d";
-    nextFlow = "bc464e5e1b94fcc179af73111f43b69db1f69fc5";
-    nextMessage = "481b579fcf72797ffa9ccf8ce4e2283a58cdff97";
+    nextFlow = "636214e515f7c09d32ae614033224aa40944423f";
+    nextMessage = "ce3eb6c65a0244672b34d8e91df2e840865d64e5";
   };
 
   stub = name: pkgs.writeShellScriptBin name "exit 0";
