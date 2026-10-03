@@ -36,6 +36,17 @@ let
   };
   managedFiles = configuration.config.home.file;
   homeFiles = configuration.config.home-files;
+  # Distinct store roots model two earlier Home Manager generations. Their
+  # names intentionally retain Home Manager's generated-files suffix because
+  # checkLinkTargets recognizes ownership by that path class.
+  priorHomeFiles = pkgs.runCommand "prior-home-manager-files" { } ''
+    mkdir -p "$out/.local/bin"
+    ${pkgs.lib.concatMapStringsSep "\n    " (command: "touch \"$out/.local/bin/${command}\"") managedCommands}
+  '';
+  secondPriorHomeFiles = pkgs.runCommand "second-prior-home-manager-files" { } ''
+    mkdir -p "$out/.local/bin"
+    ${pkgs.lib.concatMapStringsSep "\n    " (command: "touch \"$out/.local/bin/${command}\"") managedCommands}
+  '';
   checkLinkTargets = configuration.config.home.activation.checkLinkTargets.data;
 in
 # The bindings carry no force: Home Manager's own collision check guards them,
@@ -73,15 +84,22 @@ pkgs.runCommand "messenger-clj-home-package" { } ''
   mkdir -p "$absent_home/.local/bin"
   run_link_check "$absent_home"
 
-  # The bindings of a preceding Home generation, whichever it was, are Home's
-  # own: they link into a Home Manager generated-files root.
-  predecessor_home="$TMPDIR/predecessor"
-  mkdir -p "$predecessor_home/.local/bin"
+  # Two consecutive Home deployments may leave either preceding
+  # generated-files root in place when checkLinkTargets runs. Both are Home
+  # Manager-owned links and must be admitted without forcing a replacement.
+  consecutive_home="$TMPDIR/consecutive"
+  mkdir -p "$consecutive_home/.local/bin"
   ${pkgs.lib.concatMapStringsSep "\n  " (
     command:
-    "ln -s ${homeFiles}/.local/bin/${command} \"$predecessor_home/.local/bin/${command}\""
+    "ln -s ${priorHomeFiles}/.local/bin/${command} \"$consecutive_home/.local/bin/${command}\""
   ) managedCommands}
-  run_link_check "$predecessor_home"
+  run_link_check "$consecutive_home"
+  rm "$consecutive_home/.local/bin/"*
+  ${pkgs.lib.concatMapStringsSep "\n  " (
+    command:
+    "ln -s ${secondPriorHomeFiles}/.local/bin/${command} \"$consecutive_home/.local/bin/${command}\""
+  ) managedCommands}
+  run_link_check "$consecutive_home"
 
   foreign_home="$TMPDIR/foreign"
   mkdir -p "$foreign_home/.local/bin"
