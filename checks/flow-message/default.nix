@@ -96,6 +96,11 @@ assert flowService.RuntimeDirectory == "flow";
 assert messageService.RuntimeDirectory == "message";
 assert flowService.ExecStart == "${flowPackage}/bin/flow-nexus";
 assert messageService.ExecStart == "${messagePackage}/bin/message-nexus";
+# PATH-first managed clients come from the exact regular Nexus packages.
+assert regular.home.file.".local/bin/flow".source == "${flowPackage}/bin/flow";
+assert regular.home.file.".local/bin/flow-meta".source == "${flowPackage}/bin/flow-meta";
+assert regular.home.file.".local/bin/message".source == "${messagePackage}/bin/message";
+assert regular.home.file.".local/bin/message-meta".source == "${messagePackage}/bin/message-meta";
 assert !(builtins.any (line: lib.hasPrefix "HOME=" line || lib.hasPrefix "XDG_RUNTIME_DIR=" line) flowService.Environment);
 assert !(messageService ? ExecStartPre);
 assert messageService.Environment == [ ];

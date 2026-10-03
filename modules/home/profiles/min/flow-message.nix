@@ -253,6 +253,15 @@ in
       message.next.clients
     ];
 
+    # The inherited user profile can retain an older client. These managed
+    # PATH-first links select the exact packages that run the regular pair.
+    home.file = {
+      ".local/bin/flow".source = "${flow.stable.package}/bin/flow";
+      ".local/bin/flow-meta".source = "${flow.stable.package}/bin/flow-meta";
+      ".local/bin/message".source = "${message.stable.package}/bin/message";
+      ".local/bin/message-meta".source = "${message.stable.package}/bin/message-meta";
+    };
+
     # The previous unmanaged drop-in replaces the generated regular Flow
     # ExecStart with 0.12.2.  Preserve only that exact stale byte sequence in
     # Flow's recovery state before Home Manager reloads systemd; any other
