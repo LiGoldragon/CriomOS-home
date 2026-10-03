@@ -90,15 +90,16 @@
     harness.url = "github:LiGoldragon/harness/d022427938c0925e55e23dfb2d7ba470bbfea3c1";
     harness.inputs.nixpkgs.follows = "nixpkgs";
 
-    # Flow Nexus is a pinned Home-managed service. Keep the package, client,
-    # and user unit in one immutable closure.
-    flow.url = "github:LiGoldragon/flow/9fcd625ac7a0d44be58b9d365a94064e91f09219";
+    # Regular Flow: 0.23.0, the stable slot of profiles/min/flow-message.nix
+    # (flow-nexus, flow-configuration; sockets %t/flow/). It moves with
+    # message below: both share signal-flow 10.0.0 f95034de and
+    # meta-signal-flow 14.0.0 54eb5618.
+    flow.url = "github:LiGoldragon/flow/636214e515f7c09d32ae614033224aa40944423f";
     flow.inputs.nixpkgs.follows = "nixpkgs";
 
-    # Next Flow: 0.23.0, run beside stable Flow on its own anchors by
-    # profiles/min/flow-message-next.nix (lib/stable-next-service.nix). It
-    # moves with message-next below: both share signal-flow 10.0.0 f95034de
-    # and meta-signal-flow 14.0.0 54eb5618.
+    # Next Flow: the next slot of profiles/min/flow-message.nix, off
+    # (criomosHome.flowMessage.next.enable). Pinned to the regular revision
+    # until a next version is staged; it then moves with message-next.
     flow-next.url = "github:LiGoldragon/flow/636214e515f7c09d32ae614033224aa40944423f";
     flow-next.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -181,21 +182,15 @@
     orchestrate.url = "github:LiGoldragon/orchestrate/c7c44cb39934b0727d724a6aa03a36a2a94cacf9";
     orchestrate.inputs.nixpkgs.follows = "nixpkgs";
 
-    # Message — the messenger: stateful local messaging daemon owning the
-    # durable agent-identity map, delivery registry, message ledger,
-    # per-recipient inboxes, and thread index (messenger.sema). Consumed in
-    # modules/home/profiles/min/message.nix, which gives it a systemd --user
-    # supervisor. Pinned coherently with the cluster relay client: the messenger
-    # (converged contracts, delivery legs, PTY control-socket delivery) plus
-    # the additive v2 -> v3 store migration — the deployed store, born at v2,
-    # is preserved aside and re-stamped on first open — on the
-    # incident-hardened sema-engine 0.11.2 orchestrate 0.14.1 runs.
-    message.url = "github:LiGoldragon/message/930c5169ffcf5fa3784b34b2751763009e926d1d";
+    # Regular Message: 0.19.0, the argument-less message-nexus, the stable
+    # slot of profiles/min/flow-message.nix (message-nexus; sockets
+    # %t/message/). It delivers through regular Flow and moves with flow.
+    message.url = "github:LiGoldragon/message/ce3eb6c65a0244672b34d8e91df2e840865d64e5";
     message.inputs.nixpkgs.follows = "nixpkgs";
     message.inputs.crane.follows = "crane";
 
-    # Next Message: 0.19.0, the argument-less message-nexus, beside the stable
-    # messenger with a fresh store of its own; it delivers through next Flow.
+    # Next Message: the next slot, off; pinned to the regular revision until
+    # a next version is staged, then it delivers through next Flow.
     message-next.url = "github:LiGoldragon/message/ce3eb6c65a0244672b34d8e91df2e840865d64e5";
     message-next.inputs.nixpkgs.follows = "nixpkgs";
     message-next.inputs.crane.follows = "crane";
@@ -574,12 +569,10 @@
           orchestrate-wrapper-fallback = checkPkgs.callPackage ./checks/orchestrate-wrapper-fallback {
             inherit inputs;
           };
-          message-service-path = checkPkgs.callPackage ./checks/message-service-path { inherit inputs; };
           messenger-clj-package = checkPkgs.callPackage ./checks/messenger-clj-package {
             inherit inputs;
           };
-          flow-service-path = checkPkgs.callPackage ./checks/flow-service-path { inherit inputs; };
-          flow-message-next = checkPkgs.callPackage ./checks/flow-message-next { inherit inputs; };
+          flow-message = checkPkgs.callPackage ./checks/flow-message { inherit inputs; };
           herdr-toast-delivery = checkPkgs.callPackage ./checks/herdr-toast-delivery { inherit inputs; };
           herdr-agent-executable = checkPkgs.callPackage ./checks/herdr-agent-executable { inherit inputs; };
           herdr-codex-integration = checkPkgs.callPackage ./checks/herdr-codex-integration { inherit inputs; };

@@ -1,5 +1,59 @@
 # Upgrades
 
+## Flow 0.23.0 and Message 0.19.0 become the regular pair; next slot off
+
+The next pair is promoted to the regular names. `profiles/min/flow-message.nix`
+(was `flow-message-next.nix`) runs the stable slot of the stable/next pattern
+as `flow-nexus`, `flow-configuration` and `message-nexus`, on the user's own
+anchors: sockets `%t/flow/{flow,flow-meta}.sock` and
+`%t/message/{message,message-owner}.sock`, stores
+`~/.local/state/flow/flow.sema` and `~/.local/state/message/message.sema`,
+clients `flow`, `flow-meta`, `message`, `message-meta`. The `flow` and
+`message` inputs move to Flow 0.23.0 (`636214e5`) and Message 0.19.0
+(`ce3eb6c6`); `flow-next`/`message-next` are pinned to the same revisions and
+their units are off (`criomosHome.flowMessage.next.enable = false`). The old
+modules `profiles/min/flow.nix` (Flow 0.14 `flow-nexus`) and
+`profiles/min/message.nix` (Message 0.14 `message-daemon`, `messenger.sema`)
+and their checks are removed; the option `criomosHome.flowMessageNext`
+becomes `criomosHome.flowMessage`.
+
+Breaking for the host: both stores record their socket paths (and Message
+its Flow's), and resume them; the 0.14 messenger ledger is not migrated.
+
+### Activating
+
+From the generation that ran the next pair (Flow 0.23.0, Message 0.19.0):
+
+1. Reconfigure the running next Nexuses to the regular paths, so their stores
+   name them: `flow-next-meta` with the `flow-configuration` unit's datom
+   (the `%t/flow/` sockets; answers `Configured.{ … NexusRestartRequired }`),
+   and `message-next-meta 'Configure.{ %t/message/message.sock
+   %t/message/message-owner.sock %t/flow/flow.sock %t/flow/flow-meta.sock
+   [ Psyche ] }'` with `%t` written out.
+2. Stop `message-nexus-next`, `flow-nexus-next`, the old `message-daemon`
+   and the old `flow-nexus`; remove any hand drop-in under
+   `~/.config/systemd/user/flow-nexus.service.d/`, and any `nix profile`
+   element that installs `flow`.
+3. Move the old stable state aside (never delete): `~/.local/state/flow/flow.sema`
+   and its `launch-bundles/`; a `messenger.sema.*.preopen` snapshot.
+   Move the next stores to the regular paths:
+   `~/.local/state/flow-next/.local/state/flow/*` → `~/.local/state/flow/`,
+   `~/.local/state/message-next/.local/state/message/message.sema` →
+   `~/.local/state/message/message.sema`.
+4. Activate, then `systemctl --user start flow-nexus flow-configuration
+   message-nexus` in that order.
+
+Verify: `flow 'List.{}'` lists the next store's rows, `message
+'QueryReceipts.m-0000'` answers `MessageRejected.UnknownMessage`, and
+`message-meta` on an unknown recipient answers `SendRejected.UnknownRecipient`.
+Seats launched before the switch keep `FLOW_SOCKET` at the next path until
+relaunched.
+
+Rollback: stop the three regular units, move the stores back to the next
+paths and the old ones back, reconfigure the stores to the next paths (or
+restore the copies taken before step 1), and activate the previous
+generation.
+
 ## Orchestrate 0.35.0 to 0.36.1 (signal 7 exchange layer)
 
 Breaking wire change on both Orchestrate sockets, with no compatibility path:

@@ -67,19 +67,13 @@
     # Orchestrate — supervises the multi-agent claim/coordination daemon
     # (systemd --user unit + pinned flake input).
     ./profiles/min/orchestrate.nix
-    # Message — supervises the messenger daemon (durable agent-identity
-    # map + delivery registry in messenger.sema; systemd --user unit +
-    # pinned flake input).
-    ./profiles/min/message.nix
     # Compatibility messenger CLI for live Flow routes. The package supplies
     # messenger-clj and all ten hm-* command names from one immutable closure.
     ./profiles/min/messenger-clj.nix
-    # Flow Nexus remains disabled until its package, native launch receipt,
-    # and durable store migration are validated for this host.
-    ./profiles/min/flow.nix
-    # Next Flow and next Message beside the stable pair, on their own
-    # sockets and stores (the stable/next pattern, lib/stable-next-service.nix).
-    ./profiles/min/flow-message-next.nix
+    # Flow and Message: the regular pair on the user's own sockets and
+    # stores, and an optional next pair beside it (the stable/next pattern,
+    # lib/stable-next-service.nix).
+    ./profiles/min/flow-message.nix
     # Chroma — visual-state daemon (theme + warmth + brightness).
     # Replaces darkman + nightshift + the brightness shell wrapper.
     # Per-user systemd unit + apply script + default config.nota.

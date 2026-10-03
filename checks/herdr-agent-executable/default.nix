@@ -10,7 +10,6 @@ let
         ../../modules/home/profiles/min/codex-next.nix
         ../../modules/home/profiles/min/codex-next-candidate.nix
         ../../modules/home/profiles/min/herdr.nix
-        ../../modules/home/profiles/min/flow.nix
         {
           home.username = user.name;
           home.homeDirectory = "/home/li";
