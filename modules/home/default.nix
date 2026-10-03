@@ -67,6 +67,9 @@
     # Orchestrate — supervises the multi-agent claim/coordination daemon
     # (systemd --user unit + pinned flake input).
     ./profiles/min/orchestrate.nix
+# Harness — the user's own harness-daemon (systemd --user unit) and its
+    # clients, from the same package revision as flow-id.
+    ./profiles/min/harness.nix
     # Compatibility messenger CLI for live Flow routes. The package supplies
     # messenger-clj and all ten hm-* command names from one immutable closure.
     ./profiles/min/messenger-clj.nix
