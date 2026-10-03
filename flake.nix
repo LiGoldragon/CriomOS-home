@@ -85,9 +85,11 @@
     listener.inputs.nixpkgs.follows = "nixpkgs";
     listener.inputs.crane.follows = "crane";
 
-    # Harness owns parent-only flow identity claims. Home installs the pinned
-    # helper in the minimum profile beside the Codex and Claude clients.
-    harness.url = "github:LiGoldragon/harness/d022427938c0925e55e23dfb2d7ba470bbfea3c1";
+    # Harness owns parent-only flow identity claims and the user's
+    # harness-daemon (the one-call usage snapshot). Home installs the pinned
+    # package in the minimum profile beside the Codex and Claude clients and
+    # runs the daemon from the same revision (modules/home/profiles/min/harness.nix).
+    harness.url = "github:LiGoldragon/harness/5a5c37129f4782af075f90ae09ba7b58e73a327a";
     harness.inputs.nixpkgs.follows = "nixpkgs";
 
     # Flow Nexus is a pinned Home-managed service. Keep the package, client,
@@ -550,6 +552,7 @@
           };
           terminal-oom-policy = checkPkgs.callPackage ./checks/terminal-oom-policy { inherit inputs; };
           bird-home-isolation = checkPkgs.callPackage ./checks/bird-home-isolation { inherit inputs; };
+          harness-user-service = checkPkgs.callPackage ./checks/harness-user-service { inherit inputs; };
           desktop-shell-launch = checkPkgs.callPackage ./checks/desktop-shell-launch { inherit inputs; };
           chatgpt-voice-niri-rule = checkPkgs.callPackage ./checks/chatgpt-voice-niri-rule {
             inherit inputs;
