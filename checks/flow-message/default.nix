@@ -64,6 +64,7 @@ let
   flowService = units.flow-nexus.Service;
   configure = units.flow-configuration;
   messageService = units.message-nexus.Service;
+  legacyOverrideRetirement = regular.home.activation.retireLegacyFlowNexusOverride;
   nextUnitNames = lib.subtractLists (builtins.attrNames units) (
     builtins.attrNames withNext.systemd.user.services
   );
@@ -106,6 +107,13 @@ assert hasInfix " %t/flow/flow-meta.sock " configure.Service.ExecStart;
 assert hasInfix "Configure.{ %t/flow/flow.sock %t/flow/flow-meta.sock " configure.Service.ExecStart;
 assert hasInfix "[ Psyche ] ${messagePackage}/bin/message-nexus }" configure.Service.ExecStart;
 assert units.message-nexus.Unit.After == [ "flow-nexus.service" ];
+# The known unmanaged 0.12.2 override is preserved before Home Manager reloads
+# systemd; an unrecognized override must stop activation rather than shadowing
+# the generated regular Flow service.
+assert lib.elem "reloadSystemd" legacyOverrideRetirement.after;
+assert lib.elem "linkGeneration" legacyOverrideRetirement.before;
+assert hasInfix "refusing to retire an unrecognized flow-nexus override" legacyOverrideRetirement.data;
+assert hasInfix "retired-overrides" legacyOverrideRetirement.data;
 # Next, when on, stays on its own anchors.
 assert withNext.systemd.user.services.flow-nexus-next.Service.RuntimeDirectory == "flow-next";
 assert withNext.systemd.user.services.message-nexus-next.Service.RuntimeDirectory == "message-next";

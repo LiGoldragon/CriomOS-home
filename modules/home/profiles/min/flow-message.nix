@@ -14,13 +14,21 @@ let
   cfg = config.criomosHome.flowMessage;
   system = pkgs.stdenv.hostPlatform.system;
   homeDirectory = config.home.homeDirectory;
+  legacyFlowOverride = "${config.xdg.configHome}/systemd/user/flow-nexus.service.d/override.conf";
+  legacyFlowOverrideContents = pkgs.writeText "flow-nexus-0.12.2-override" ''
+    [Service]
+    ExecStart=
+    ExecStart=/nix/store/c044v5pa2qh4xcjkbiqiqb9qax6l36bd-flow-0.12.2/bin/flow-nexus
+  '';
+  retiredFlowOverridesDirectory = "${config.xdg.stateHome}/flow/retired-overrides";
 
   # Flow and Message as stable/next pairs. Stable is the regular pair: Flow
   # 0.23.0 and Message 0.19.0, which move together (shared signal-flow and
   # meta-signal-flow), on the user's own anchors (sockets under
   # %t/flow/ and %t/message/, stores under ~/.local/state/{flow,message}/).
-  # Next is off until a next version is staged; its inputs then move ahead
-  # of stable's, on anchors of their own.
+  # Next shares the staged Flow/Message revision for this deployment and runs
+  # beside stable on anchors of its own.  A later staged revision may move its
+  # inputs ahead of stable's without changing either slot's anchors.
   flow = stableNext.pair {
     name = "flow";
     unit = "flow-nexus";
@@ -223,8 +231,8 @@ in
     };
     next.enable = mkOption {
       type = bool;
-      default = false;
-      description = "Also run next Flow and next Message beside the regular pair, on sockets and stores of their own.";
+      default = config.home.username == "li";
+      description = "Run the staged next Flow and next Message beside the regular pair, on sockets and stores of their own.";
     };
   };
 
@@ -244,6 +252,36 @@ in
       flow.next.clients
       message.next.clients
     ];
+
+    # The previous unmanaged drop-in replaces the generated regular Flow
+    # ExecStart with 0.12.2.  Preserve only that exact stale byte sequence in
+    # Flow's recovery state before Home Manager reloads systemd; any other
+    # user-owned override remains a hard activation refusal.
+    home.activation.retireLegacyFlowNexusOverride =
+      lib.hm.dag.entryBetween [ "reloadSystemd" ] [ "linkGeneration" ] ''
+        set -eu
+
+        override_path=${lib.escapeShellArg legacyFlowOverride}
+        expected_override=${lib.escapeShellArg legacyFlowOverrideContents}
+        retired_directory=${lib.escapeShellArg retiredFlowOverridesDirectory}
+        retired_override="$retired_directory/flow-nexus-0.12.2.override.conf"
+
+        if [ ! -e "$override_path" ] && [ ! -L "$override_path" ]; then
+          exit 0
+        fi
+        if [ -L "$override_path" ] || ! ${pkgs.diffutils}/bin/cmp -s "$override_path" "$expected_override"; then
+          echo "refusing to retire an unrecognized flow-nexus override: $override_path" >&2
+          exit 1
+        fi
+        if [ -e "$retired_override" ] || [ -L "$retired_override" ]; then
+          echo "refusing to overwrite preserved flow-nexus override: $retired_override" >&2
+          exit 1
+        fi
+
+        $DRY_RUN_CMD ${pkgs.coreutils}/bin/mkdir -p "$retired_directory"
+        $DRY_RUN_CMD ${pkgs.coreutils}/bin/mv "$override_path" "$retired_override"
+        $DRY_RUN_CMD ${pkgs.coreutils}/bin/rmdir --ignore-fail-on-non-empty "$( ${pkgs.coreutils}/bin/dirname "$override_path" )"
+      '';
 
     systemd.user.services =
       slotUnits flow.stable message.stable
