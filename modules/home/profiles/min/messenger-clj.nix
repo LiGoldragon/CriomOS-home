@@ -26,7 +26,7 @@ let
   # The profile already contains this exact Home-managed 0.2.8 generation.
   # Admit it during this one migration only by its immutable generated-files
   # root; arbitrary local links remain rejected.
-  predecessorManagedFiles = "/nix/store/9ajs6aji25akz3dfrzpffj7j4kpqjjzv-home-manager-files";
+  predecessorManagedFiles = "/nix/store/ddp041ij4iz528qrxiz1nli5r8si6rzg-home-manager-files";
 in
 {
   config = lib.mkIf (sizeAtLeast "Min" && system == "x86_64-linux") {

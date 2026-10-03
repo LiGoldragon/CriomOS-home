@@ -15,7 +15,7 @@ let
   ];
   managedCommands = [ "messenger-clj" ] ++ compatibilityCommands;
   legacyMessengerClj = "/nix/store/p8mz1msm8lxiahnw6sfipi8m258x1q3z-messenger-clj-0.2.5";
-  predecessorManagedFiles = "/nix/store/9ajs6aji25akz3dfrzpffj7j4kpqjjzv-home-manager-files";
+  predecessorManagedFiles = "/nix/store/ddp041ij4iz528qrxiz1nli5r8si6rzg-home-manager-files";
   configuration = inputs.home-manager.lib.homeManagerConfiguration {
     inherit pkgs;
     extraSpecialArgs = {
