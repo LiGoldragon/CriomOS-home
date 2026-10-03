@@ -7,14 +7,17 @@ let
   system = pkgs.stdenv.hostPlatform.system;
   orchestratePackage = inputs.orchestrate.packages.${system}.default;
 
+  # A caller-set ORCHESTRATE_SOCKET / ORCHESTRATE_META_SOCKET is honoured, so a
+  # sandboxed or relocated Nexus can be addressed through the installed client;
+  # otherwise the sockets resolve under XDG_RUNTIME_DIR.
   orchestrateProfilePackage =
     pkgs.runCommand "${orchestratePackage.name}-profile" { nativeBuildInputs = [ pkgs.makeWrapper ]; }
       ''
         mkdir -p $out/bin
         makeWrapper ${orchestratePackage}/bin/orchestrate $out/bin/orchestrate \
-          --run 'export ORCHESTRATE_SOCKET="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/orchestrate-nexus/orchestrate.sock"'
+          --run 'export ORCHESTRATE_SOCKET="''${ORCHESTRATE_SOCKET:-''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/orchestrate-nexus/orchestrate.sock}"'
         makeWrapper ${orchestratePackage}/bin/orchestrate-meta $out/bin/orchestrate-meta \
-          --run 'export ORCHESTRATE_META_SOCKET="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/orchestrate-nexus/orchestrate-meta.sock"'
+          --run 'export ORCHESTRATE_META_SOCKET="''${ORCHESTRATE_META_SOCKET:-''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/orchestrate-nexus/orchestrate-meta.sock}"'
       '';
 in
 {

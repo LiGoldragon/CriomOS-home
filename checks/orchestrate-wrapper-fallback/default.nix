@@ -62,16 +62,39 @@ pkgs.runCommand "orchestrate-wrapper-fallback" { nativeBuildInputs = [ pkgs.core
     exit 1
   fi
 
-  ${pkgs.coreutils}/bin/env -u XDG_RUNTIME_DIR \
+  # No caller value and no XDG_RUNTIME_DIR: the per-uid runtime root.
+  ${pkgs.coreutils}/bin/env -u XDG_RUNTIME_DIR -u ORCHESTRATE_SOCKET \
     ORCHESTRATE_WRAPPER_WITNESS="$ordinary_witness" \
     ${profilePackage}/bin/orchestrate
-  ${pkgs.coreutils}/bin/env -u XDG_RUNTIME_DIR \
+  ${pkgs.coreutils}/bin/env -u XDG_RUNTIME_DIR -u ORCHESTRATE_META_SOCKET \
     ORCHESTRATE_WRAPPER_WITNESS="$meta_witness" \
     ${profilePackage}/bin/orchestrate-meta
 
   runtime_root="/run/user/$(${pkgs.coreutils}/bin/id -u)"
   test "$(< "$ordinary_witness")" = "$runtime_root/orchestrate-nexus/orchestrate.sock"
   test "$(< "$meta_witness")" = "$runtime_root/orchestrate-nexus/orchestrate-meta.sock"
+
+  # No caller value: XDG_RUNTIME_DIR decides.
+  ${pkgs.coreutils}/bin/env -u ORCHESTRATE_SOCKET XDG_RUNTIME_DIR=/xdg-runtime \
+    ORCHESTRATE_WRAPPER_WITNESS="$ordinary_witness" \
+    ${profilePackage}/bin/orchestrate
+  ${pkgs.coreutils}/bin/env -u ORCHESTRATE_META_SOCKET XDG_RUNTIME_DIR=/xdg-runtime \
+    ORCHESTRATE_WRAPPER_WITNESS="$meta_witness" \
+    ${profilePackage}/bin/orchestrate-meta
+  test "$(< "$ordinary_witness")" = /xdg-runtime/orchestrate-nexus/orchestrate.sock
+  test "$(< "$meta_witness")" = /xdg-runtime/orchestrate-nexus/orchestrate-meta.sock
+
+  # A caller-set socket wins over XDG_RUNTIME_DIR.
+  ${pkgs.coreutils}/bin/env XDG_RUNTIME_DIR=/xdg-runtime \
+    ORCHESTRATE_SOCKET=/caller/ordinary.sock \
+    ORCHESTRATE_WRAPPER_WITNESS="$ordinary_witness" \
+    ${profilePackage}/bin/orchestrate
+  ${pkgs.coreutils}/bin/env XDG_RUNTIME_DIR=/xdg-runtime \
+    ORCHESTRATE_META_SOCKET=/caller/meta.sock \
+    ORCHESTRATE_WRAPPER_WITNESS="$meta_witness" \
+    ${profilePackage}/bin/orchestrate-meta
+  test "$(< "$ordinary_witness")" = /caller/ordinary.sock
+  test "$(< "$meta_witness")" = /caller/meta.sock
 
   touch "$out"
 ''

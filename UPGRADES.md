@@ -1,5 +1,24 @@
 # Upgrades
 
+## Orchestrate 0.35.0 to 0.36.1 (signal 7 exchange layer)
+
+Breaking wire change on both Orchestrate sockets, with no compatibility path:
+a 0.35 client cannot talk to a 0.36 Nexus, or the reverse. The Nexus and both
+CLIs come from the one `orchestrate` input (`bc5cd36e`), so they move together
+in one switch; the store format is unchanged and the 0.35 store opens as it is.
+
+Activating: switch only while `orchestrate 'Observe.Locks'` shows no Lock
+held. The `orchestrate-nexus` unit's ExecStart changes, so the switch restarts
+it. A store that predates 0.34.0 still binds the legacy
+`meta-orchestrate.sock`; reach it once with
+`ORCHESTRATE_META_SOCKET=$XDG_RUNTIME_DIR/orchestrate-nexus/meta-orchestrate.sock`,
+`Configure` the designed `orchestrate-meta.sock`, then restart
+`orchestrate-nexus`. The installed wrappers now honour a caller-set
+`ORCHESTRATE_SOCKET` / `ORCHESTRATE_META_SOCKET` and fall back to
+`XDG_RUNTIME_DIR` otherwise, so this override works through them.
+Verify with `orchestrate 'Observe.Locks'` and one `orchestrate-meta` call.
+Rollback: the previous Home generation (its 0.35 Nexus opens the same store).
+
 ## Next Flow 0.17.0 and next Message 0.17.0 (next slot moves together)
 
 The next slot moves from Flow 0.16.0 / Message 0.16.0 to Flow 0.17.0
