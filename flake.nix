@@ -89,7 +89,7 @@
     # harness-daemon (the one-call usage snapshot). Home installs the pinned
     # package in the minimum profile beside the Codex and Claude clients and
     # runs the daemon from the same revision (modules/home/profiles/min/harness.nix).
-    harness.url = "github:LiGoldragon/harness/5a5c37129f4782af075f90ae09ba7b58e73a327a";
+    harness.url = "github:LiGoldragon/harness/45eb38cb8678d9ebe1a9c40bc88f08da81f0a585";
     harness.inputs.nixpkgs.follows = "nixpkgs";
 
     # Regular Flow: 0.23.0, the stable slot of profiles/min/flow-message.nix
