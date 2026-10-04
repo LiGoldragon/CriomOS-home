@@ -1,4 +1,4 @@
-{ config, lib, pkgs, user, ... }:
+{ config, inputs, lib, pkgs, user, ... }:
 let
   enabled = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size "Min";
   package = pkgs.callPackage ../../../../owned-agents/codex-next-candidate { };
@@ -22,6 +22,15 @@ in {
   };
   config = lib.mkIf enabled {
     home.packages = [ client ];
+    # The app-used home gets the same permission defaults as ~/.codex and
+    # ~/.codex-next; without them its threads ran on-request and asked the
+    # living (24 prompts on 2026-09-30, flow 28d847 inventory).
+    home.activation.mergeCodexNextCandidatePermissionDefaults = inputs.hexis.lib.mkManagedConfig {
+      inherit lib pkgs;
+      hexis = inputs.hexis.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      file = "${candidateHome}/config.toml";
+      declared = import ./codex-permission-defaults.nix;
+    };
     systemd.user.services.${unit} = { Unit.Description = "Codex Remote Control next candidate ${hash}"; Service = { WorkingDirectory = "${config.home.homeDirectory}/primary"; Environment = [ "CODEX_HOME=${candidateHome}" ]; ExecStartPre = "${pkgs.bash}/bin/bash -c 'set -eu; mkdir -p ${candidateHome}; for f in auth.json; do if [ ! -e ${candidateHome}/$f ] && [ -f ${config.home.homeDirectory}/.codex-next/$f ]; then install -m600 ${config.home.homeDirectory}/.codex-next/$f ${candidateHome}/$f; fi; done'"; ExecStart = "${package}/bin/codex app-server --remote-control --listen unix://${socket}"; UMask = "0077"; LimitNOFILE = 524288; Restart = "on-failure"; RestartSec = "2s"; }; Install.WantedBy = [ "default.target" ]; };
   };
 }
