@@ -16,7 +16,7 @@ writeShellApplication {
     coreutils
   ];
   text = ''
-    message="Destructive commands name literal paths, never shell variables; rewrite the path as a literal and run again."
+    message="Destructive commands name their paths through guarded variables, \''${VAR:?}, or literal paths, never outside the scratchpad or the flow's own lane; rewrite the path and run again."
     input="$(cat)"
     mode="$(jq -r '.permission_mode // ""' <<<"$input" 2>/dev/null || true)"
     tool="$(jq -r '.tool_name // ""' <<<"$input" 2>/dev/null || true)"
