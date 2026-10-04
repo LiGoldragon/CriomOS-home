@@ -42,7 +42,7 @@ let
       ];
     }).config;
   mergeSettings = configuration.home.activation.mergeClaudePermissionDefaults.data;
-  message = "Destructive commands name literal paths, never shell variables; rewrite the path as a literal and run again.";
+  message = "Destructive commands name their paths through guarded variables, \${VAR:?}, or literal paths, never outside the scratchpad or the flow's own lane; rewrite the path and run again.";
 in
 pkgs.runCommand "claude-permission-request-hook"
   {
