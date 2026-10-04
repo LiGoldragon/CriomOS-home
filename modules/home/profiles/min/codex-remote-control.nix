@@ -34,7 +34,8 @@ let
     endpoint = "unix://${config.home.homeDirectory}/.codex-next/app-server-control/app-server-control.sock";
   };
   claudeCodePackage = config.criomos.corePackages.claude;
-  claudeDesktopPackage = pkgs.callPackage ../../../../owned-agents/claude-desktop {
+  claudePermissionRequestHook = pkgs.callPackage ../../../../owned-agents/claude-code/permission-request-hook.nix { };
+  claudeDesktopPackage =pkgs.callPackage ../../../../owned-agents/claude-desktop {
     inherit claudeCodePackage;
   };
   chatgpt = pkgs.callPackage ../../../../owned-agents/chatgpt {
@@ -48,11 +49,32 @@ lib.mkMerge [
       (if occupied then codexStable else codexCliPackage)
     ];
 
+    # Bypass still asks a human for the dangerous-removal check.  The
+    # PermissionRequest hook denies it with a rewrite message and logs every
+    # request to ~/.local/state/claude/permission-requests.jsonl.  Only this
+    # event key is asserted; Herdr's SessionStart hook and other events stay
+    # user state.
     home.activation.mergeClaudePermissionDefaults = inputs.hexis.lib.mkManagedConfig {
       inherit lib pkgs hexis;
       file = "$HOME/.claude/settings.json";
-      declared.permissions.defaultMode = "bypassPermissions";
-      modes."/permissions/defaultMode" = "always";
+      declared = {
+        permissions.defaultMode = "bypassPermissions";
+        hooks.PermissionRequest = [
+          {
+            matcher = "Bash";
+            hooks = [
+              {
+                type = "command";
+                command = "${claudePermissionRequestHook}/bin/claude-permission-request-hook";
+              }
+            ];
+          }
+        ];
+      };
+      modes = {
+        "/permissions/defaultMode" = "always";
+        "/hooks/PermissionRequest" = "always";
+      };
     };
 
     home.activation.canonicalizeClaudeWorkspaceTrust =
