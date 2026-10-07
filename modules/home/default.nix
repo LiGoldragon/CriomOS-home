@@ -68,6 +68,9 @@
     # Orchestrate — supervises the multi-agent claim/coordination daemon
     # (systemd --user unit + pinned flake input).
     ./profiles/min/orchestrate.nix
+    # Curriculum — serves the live skill registry and rebuilds projections
+    # after each Nexus start.
+    ./profiles/min/curriculum.nix
     # Harness — the user's own harness-daemon (systemd --user unit) and its
     # clients, from the same package revision as flow-id.
     ./profiles/min/harness.nix

@@ -22,6 +22,19 @@
       flake = false;
     };
 
+    # Primary's immutable Curriculum package provides the user CLI and Nexus.
+    primary = {
+      url = "github:LiGoldragon/primary?ref=main";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # The CLI reads role configuration at the process boundary; keep the
+    # matching authored Curriculum source available to the Home service.
+    curriculum-source = {
+      url = "github:LiGoldragon/Curriculum/73414b693b6331e4d5398ced576b765efeed1763";
+      flake = false;
+    };
+
     # Field monitoring script sources (modules/home/profiles/min/field-monitoring.nix).
     # core-checkup is pinned to the revision the hand-made unit ran; the Field
     # census, checkup, and 98eb43 monitor to primary main; Luna research to field main.
@@ -470,8 +483,7 @@
             {
               chatgpt = ownedAgentPackages.chatgptPackage;
               claude-desktop = ownedAgentPackages.claudeDesktopPackage;
-            }
-        ;
+            };
       ownedPackageSystems = [
         "x86_64-linux"
         "aarch64-linux"
@@ -488,7 +500,8 @@
         let
           systemPackages =
             if lib.elem system ownedPackageSystems then packages // ownedPackagesForSystem system else packages;
-        in systemPackages
+        in
+        systemPackages
       ) bp.packages;
       blueprintGeneratedChecks =
         system:
@@ -585,7 +598,9 @@
           flow-message-next = checkPkgs.callPackage ./checks/flow-message-next { inherit inputs; };
           herdr-toast-delivery = checkPkgs.callPackage ./checks/herdr-toast-delivery { inherit inputs; };
           herdr-agent-executable = checkPkgs.callPackage ./checks/herdr-agent-executable { inherit inputs; };
-          herdr-codex-integration = checkPkgs.callPackage ./checks/herdr-codex-integration { inherit inputs; };
+          herdr-codex-integration = checkPkgs.callPackage ./checks/herdr-codex-integration {
+            inherit inputs;
+          };
           herdr-server = checkPkgs.callPackage ./checks/herdr-server { inherit inputs; };
           field-monitoring = checkPkgs.callPackage ./checks/field-monitoring { inherit inputs; };
           gws = checkPkgs.callPackage ./checks/gws { inherit inputs; };
