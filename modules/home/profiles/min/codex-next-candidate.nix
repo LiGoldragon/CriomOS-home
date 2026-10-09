@@ -1,6 +1,7 @@
 { config, inputs, lib, pkgs, user, ... }:
 let
   enabled = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size "Min";
+  birdTarget = user.name == "bird" && user.hasPublicKey && user.size == "Max" && config.home.username == "bird" && config.home.homeDirectory == "/home/bird";
   package = pkgs.callPackage ../../../../owned-agents/codex-next-candidate { };
   # Unit names and state directories need the derivation identity, but a
   # systemd filename cannot retain the derivation's store-path context.
@@ -20,7 +21,7 @@ in {
     remoteClientPackage = lib.mkOption { type = lib.types.package; readOnly = true; default = client; };
     unit = lib.mkOption { type = lib.types.str; readOnly = true; default = unit; };
   };
-  config = lib.mkIf enabled {
+  config = lib.mkIf (enabled && !birdTarget) {
     home.packages = [ client ];
     # The app-used home gets the same permission defaults as ~/.codex and
     # ~/.codex-next; without them its threads ran on-request and asked the

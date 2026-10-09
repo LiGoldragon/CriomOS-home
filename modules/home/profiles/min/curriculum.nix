@@ -1,10 +1,12 @@
 {
   config,
   inputs,
+  lib,
   pkgs,
   ...
 }:
 let
+  cfg = config.criomosHome.curriculum;
   system = pkgs.stdenv.hostPlatform.system;
   curriculumPackage = inputs.primary.packages.${system}.curriculum;
   homeDirectory = config.home.homeDirectory;
@@ -39,9 +41,16 @@ let
   '';
 in
 {
-  home.packages = [ curriculumCli ];
+  options.criomosHome.curriculum.enable = lib.mkOption {
+    type = lib.types.bool;
+    default = false;
+    description = "Run Curriculum only for a target with declared roots and workspace.";
+  };
 
-  systemd.user.services.curriculum-nexus = {
+  config = {
+    home.packages = [ curriculumCli ];
+
+    systemd.user.services.curriculum-nexus = lib.mkIf cfg.enable {
     Unit = {
       Description = "Curriculum skill registry and projection Nexus";
       StartLimitIntervalSec = 60;
@@ -59,6 +68,7 @@ in
       RestartSec = "2s";
     };
 
-    Install.WantedBy = [ "default.target" ];
+      Install.WantedBy = [ "default.target" ];
+    };
   };
 }

@@ -15,7 +15,8 @@ let
   mediumEnabled = sizeAtLeast "Medium";
   edgeEnabled = ((horizon.node.behavesAs or { }).edge or false);
   desktopEnabled = edgeEnabled && mediumEnabled;
-  occupied = config.home.homeDirectory == "/home/li";
+  birdTarget = user.name == "bird" && user.hasPublicKey && user.size == "Max" && config.home.username == "bird" && config.home.homeDirectory == "/home/bird";
+  occupied = (config.home.username == "li" && config.home.homeDirectory == "/home/li") || birdTarget;
   codexCliPackage = config.criomos.corePackages.codex;
   # This server has an unregistered client attached.  It is frozen until that
   # client has moved; do not replace its executable with the current package.

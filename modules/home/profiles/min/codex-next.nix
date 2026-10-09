@@ -8,12 +8,13 @@
 let
   enabled = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size "Min";
   package = pkgs.callPackage ../../../../owned-agents/codex-next { };
-  occupied = config.home.homeDirectory == "/home/li";
+  birdTarget = user.name == "bird" && user.hasPublicKey && user.size == "Max" && config.home.username == "bird" && config.home.homeDirectory == "/home/bird";
+  occupied = (config.home.username == "li" && config.home.homeDirectory == "/home/li") || birdTarget;
   # Receipt-pinned executable of the occupied endpoint.  `package` remains the
   # reproducible source package for checks; the occupied process is deliberately
   # not rebound to a rebuilt output during this rotation.
   occupiedCodex = "/nix/store/zbznvqk2746igprz4753clizppww5551-codex-next-0.158.0-alpha.9/bin/codex";
-  occupiedPrepare = "/nix/store/dxqsqx4bq1ghgjf9s5yb8hzwa0krr7kd-codex-next-prepare";
+  occupiedPrepare = if birdTarget then "/nix/store/58axnpgidzhnm7kdvfkikkjdhaycpxvg-codex-next-prepare" else "/nix/store/dxqsqx4bq1ghgjf9s5yb8hzwa0krr7kd-codex-next-prepare";
   # This is the occupied 0.158 endpoint. It remains physically unchanged; after migration it is the stable role.
   nextHome = "${config.home.homeDirectory}/.codex-next";
   socket = "${nextHome}/app-server-control/app-server-control.sock";
