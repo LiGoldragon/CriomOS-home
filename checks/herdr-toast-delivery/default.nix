@@ -39,6 +39,46 @@ let
           homeDirectory = "/home/herdr-toast-check";
           stateVersion = "26.11";
         };
+        criomosHome.herdr.predecessorGeneration.homeFiles = priorHomeManagerFiles;
+      }
+    ];
+  };
+  untrustedHomeConfiguration = inputs.home-manager.lib.homeManagerConfiguration {
+    inherit pkgs;
+    extraSpecialArgs = {
+      inherit inputs;
+      user = {
+        size = "Min";
+        useColemak = false;
+        hasPublicKey = false;
+        gitSigningKey = "";
+        matrixId = "";
+        isMultimediaDev = false;
+        emailAddress = "herdr-toast-check@example.invalid";
+        githubId = "herdr-toast-check";
+        name = "herdr-toast-check";
+        publicKeys = [ ];
+      };
+      horizon.node = {
+        name = "herdr-toast-check";
+        machine.architecture = "x86_64";
+      };
+      hexis = inputs.hexis.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      rustToolchain = pkgs.rustc;
+    };
+    modules = [
+      inputs.stylix.homeModules.stylix
+      inputs.niri-flake.homeModules.config
+      inputs.noctalia.homeModules.default
+      ../../modules/home/core-packages.nix
+      ../../modules/home/profiles/min/codex-next.nix
+      ../../modules/home/profiles/min/default.nix
+      {
+        home = {
+          username = "herdr-toast-check";
+          homeDirectory = "/home/herdr-toast-check";
+          stateVersion = "26.11";
+        };
       }
     ];
   };
@@ -65,8 +105,10 @@ let
   '';
   predecessorManagedConfig = pkgs.writeText "herdr-predecessor-managed-config.toml" predecessorManagedConfigToml;
   priorHomeManagerFiles = pkgs.runCommand "home-manager-files" { } ''
-    mkdir -p "$out/.config/herdr"
+    mkdir -p "$out/.config/herdr" "$out/.config/Kvantum/Base16Kvantum"
     cp ${predecessorManagedConfig} "$out/.config/herdr/config.toml"
+    printf '%s\n' '[General]' 'theme=Base16Kvantum' \
+      > "$out/.config/Kvantum/Base16Kvantum/Base16Kvantum.kvconfig"
   '';
   rotationPredecessorManagedConfigToml = ''
     [agents]
@@ -96,6 +138,12 @@ let
   parsedConfigToml = builtins.fromTOML (builtins.unsafeDiscardStringContext configToml);
   herdrAdoption = homeConfiguration.config.home.activation.adoptHerdrConfig.data;
   herdrAdoptionScript = pkgs.writeText "herdr-adoption" herdrAdoption;
+  untrustedHerdrAdoption = untrustedHomeConfiguration.config.home.activation.adoptHerdrConfig.data;
+  untrustedHerdrAdoptionScript = pkgs.writeText "untrusted-herdr-adoption" untrustedHerdrAdoption;
+  kvantumAdoption = homeConfiguration.config.home.activation.adoptManagedKvantumDirectory.data;
+  kvantumAdoptionScript = pkgs.writeText "kvantum-adoption" kvantumAdoption;
+  untrustedKvantumAdoption = untrustedHomeConfiguration.config.home.activation.adoptManagedKvantumDirectory.data;
+  untrustedKvantumAdoptionScript = pkgs.writeText "untrusted-kvantum-adoption" untrustedKvantumAdoption;
   checkLinkTargets = homeConfiguration.config.home.activation.checkLinkTargets.data;
   checkLinkTargetsScript = pkgs.writeText "herdr-check-link-targets" checkLinkTargets;
   activationPackage = homeConfiguration.activationPackage;
@@ -122,22 +170,15 @@ pkgs.runCommand "herdr-toast-delivery" {
   sha256sum --check --status \
     "$exact_home/.local/state/criomos/herdr-adoption/config.toml.pre-home-manager.sha256"
 
-  # A predecessor generation follows the first adoption, so its home already
-  # holds the recorded legacy backup; the adoption verifies that backup and
-  # never records the linked managed file in its place.
+  # A trusted managed predecessor is a multi-hop transition: its exact
+  # home-files member may be replaced without inventing a legacy backup.
   predecessor_link_home="$TMPDIR/predecessor-link-home"
-  mkdir -p "$predecessor_link_home/.config/herdr" \
-    "$predecessor_link_home/.local/state/criomos/herdr-adoption"
-  cp ${legacyConfig} \
-    "$predecessor_link_home/.local/state/criomos/herdr-adoption/config.toml.pre-home-manager"
+  mkdir -p "$predecessor_link_home/.config/herdr"
   ln -s ${priorHomeManagerFiles}/.config/herdr/config.toml \
     "$predecessor_link_home/.config/herdr/config.toml"
   HOME="$predecessor_link_home" ${pkgs.bash}/bin/bash ${herdrAdoptionScript}
   test ! -e "$predecessor_link_home/.config/herdr/config.toml"
-  cmp ${legacyConfig} \
-    "$predecessor_link_home/.local/state/criomos/herdr-adoption/config.toml.pre-home-manager"
-  sha256sum --check --status \
-    "$predecessor_link_home/.local/state/criomos/herdr-adoption/config.toml.pre-home-manager.sha256"
+  test ! -e "$predecessor_link_home/.local/state/criomos/herdr-adoption/config.toml.pre-home-manager"
 
   # The witnessed former managed configuration carries the old two-client
   # routing tuple. It is admitted only with the legacy backup, so no local
@@ -154,16 +195,15 @@ pkgs.runCommand "herdr-toast-delivery" {
   cmp ${legacyConfig} \
     "$rotation_predecessor_home/.local/state/criomos/herdr-adoption/config.toml.pre-home-manager"
 
-  unbacked_link_home="$TMPDIR/unbacked-link-home"
-  mkdir -p "$unbacked_link_home/.config/herdr"
+  untrusted_link_home="$TMPDIR/untrusted-link-home"
+  mkdir -p "$untrusted_link_home/.config/herdr"
   ln -s ${priorHomeManagerFiles}/.config/herdr/config.toml \
-    "$unbacked_link_home/.config/herdr/config.toml"
-  if HOME="$unbacked_link_home" ${pkgs.bash}/bin/bash ${herdrAdoptionScript}; then
-    echo "Herdr adoption accepted a predecessor link without a recorded backup" >&2
+    "$untrusted_link_home/.config/herdr/config.toml"
+  if HOME="$untrusted_link_home" ${pkgs.bash}/bin/bash ${untrustedHerdrAdoptionScript}; then
+    echo "Herdr adoption accepted a managed link without a trusted predecessor generation" >&2
     exit 1
   fi
-  test -L "$unbacked_link_home/.config/herdr/config.toml"
-  test ! -e "$unbacked_link_home/.local/state/criomos/herdr-adoption/config.toml.pre-home-manager"
+  test -L "$untrusted_link_home/.config/herdr/config.toml"
 
   unrelated_link_home="$TMPDIR/unrelated-link-home"
   mkdir -p "$unrelated_link_home/.config/herdr"
@@ -218,6 +258,51 @@ pkgs.runCommand "herdr-toast-delivery" {
     exit 1
   fi
   test -d "$directory_home/.config/herdr/config.toml"
+
+  # Home Manager now creates child links in this directory. Preserve the old
+  # exact predecessor directory link by rename before those children exist.
+  kvantum_transition_home="$TMPDIR/kvantum-transition-home"
+  mkdir -p "$kvantum_transition_home/.config/Kvantum"
+  ln -s ${priorHomeManagerFiles}/.config/Kvantum/Base16Kvantum \
+    "$kvantum_transition_home/.config/Kvantum/Base16Kvantum"
+  HOME="$kvantum_transition_home" ${pkgs.bash}/bin/bash ${kvantumAdoptionScript}
+  test ! -e "$kvantum_transition_home/.config/Kvantum/Base16Kvantum"
+  test -L "$kvantum_transition_home/.local/state/criomos/kvantum-adoption/Base16Kvantum.pre-home-manager"
+  test "$(readlink "$kvantum_transition_home/.local/state/criomos/kvantum-adoption/Base16Kvantum.pre-home-manager")" = \
+    ${priorHomeManagerFiles}/.config/Kvantum/Base16Kvantum
+  mkdir -p "$kvantum_transition_home/.config/Kvantum/Base16Kvantum"
+  ln -s ${priorHomeManagerFiles}/.config/Kvantum/Base16Kvantum/Base16Kvantum.kvconfig \
+    "$kvantum_transition_home/.config/Kvantum/Base16Kvantum/Base16Kvantum.kvconfig"
+
+  foreign_kvantum_home="$TMPDIR/foreign-kvantum-home"
+  mkdir -p "$foreign_kvantum_home/.config/Kvantum"
+  ln -s ${priorHomeManagerFiles}/.config/herdr \
+    "$foreign_kvantum_home/.config/Kvantum/Base16Kvantum"
+  if HOME="$foreign_kvantum_home" ${pkgs.bash}/bin/bash ${kvantumAdoptionScript}; then
+    echo "Kvantum transition accepted a foreign directory symlink" >&2
+    exit 1
+  fi
+  test -L "$foreign_kvantum_home/.config/Kvantum/Base16Kvantum"
+
+  untrusted_kvantum_home="$TMPDIR/untrusted-kvantum-home"
+  mkdir -p "$untrusted_kvantum_home/.config/Kvantum"
+  ln -s ${priorHomeManagerFiles}/.config/Kvantum/Base16Kvantum \
+    "$untrusted_kvantum_home/.config/Kvantum/Base16Kvantum"
+  if HOME="$untrusted_kvantum_home" ${pkgs.bash}/bin/bash ${untrustedKvantumAdoptionScript}; then
+    echo "Kvantum transition accepted a directory without a trusted predecessor generation" >&2
+    exit 1
+  fi
+  test -L "$untrusted_kvantum_home/.config/Kvantum/Base16Kvantum"
+
+  dangling_kvantum_home="$TMPDIR/dangling-kvantum-home"
+  mkdir -p "$dangling_kvantum_home/.config/Kvantum"
+  ln -s "$TMPDIR/missing-Base16Kvantum" \
+    "$dangling_kvantum_home/.config/Kvantum/Base16Kvantum"
+  if HOME="$dangling_kvantum_home" ${pkgs.bash}/bin/bash ${kvantumAdoptionScript}; then
+    echo "Kvantum transition accepted a dangling directory symlink" >&2
+    exit 1
+  fi
+  test -L "$dangling_kvantum_home/.config/Kvantum/Base16Kvantum"
 
   touch "$out"
 ''
