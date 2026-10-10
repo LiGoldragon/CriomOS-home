@@ -89,6 +89,14 @@ let
       }
     ];
   };
+  recordedDanglingKvantumTarget = "recorded-$(touch \"$TMPDIR/kvantum-literal-executed\")-target";
+  recordedDanglingKvantumHomeConfiguration = homeConfiguration.extendModules {
+    modules = [
+      {
+        criomosHome.herdr.kvantumDanglingLink.literalTarget = recordedDanglingKvantumTarget;
+      }
+    ];
+  };
   configToml = builtins.readFile homeConfiguration.config.xdg.configFile."herdr/config.toml".source;
   legacyConfigToml = ''
     [ui.toast]
@@ -151,6 +159,10 @@ let
   untrustedHerdrAdoptionScript = pkgs.writeText "untrusted-herdr-adoption" untrustedHerdrAdoption;
   kvantumAdoption = homeConfiguration.config.home.activation.adoptManagedKvantumDirectory.data;
   kvantumAdoptionScript = pkgs.writeText "kvantum-adoption" kvantumAdoption;
+  recordedDanglingKvantumAdoption =
+    recordedDanglingKvantumHomeConfiguration.config.home.activation.adoptManagedKvantumDirectory.data;
+  recordedDanglingKvantumAdoptionScript =
+    pkgs.writeText "recorded-dangling-kvantum-adoption" recordedDanglingKvantumAdoption;
   untrustedKvantumAdoption = untrustedHomeConfiguration.config.home.activation.adoptManagedKvantumDirectory.data;
   untrustedKvantumAdoptionScript = pkgs.writeText "untrusted-kvantum-adoption" untrustedKvantumAdoption;
   checkLinkTargets = homeConfiguration.config.home.activation.checkLinkTargets.data;
@@ -312,6 +324,59 @@ pkgs.runCommand "herdr-toast-delivery" {
     exit 1
   fi
   test -L "$dangling_kvantum_home/.config/Kvantum/Base16Kvantum"
+
+  mismatched_recorded_target_home="$TMPDIR/mismatched-recorded-target-home"
+  mkdir -p "$mismatched_recorded_target_home/.config/Kvantum"
+  ln -s "different-dangling-target" \
+    "$mismatched_recorded_target_home/.config/Kvantum/Base16Kvantum"
+  if HOME="$mismatched_recorded_target_home" \
+    ${pkgs.bash}/bin/bash ${recordedDanglingKvantumAdoptionScript}; then
+    echo "Kvantum transition accepted a mismatched recorded target" >&2
+    exit 1
+  fi
+  test -L "$mismatched_recorded_target_home/.config/Kvantum/Base16Kvantum"
+  test ! -e "$mismatched_recorded_target_home/.local/state/criomos/kvantum-adoption/Base16Kvantum.pre-home-manager"
+
+  recorded_dangling_kvantum_home="$TMPDIR/recorded-dangling-kvantum-home"
+  mkdir -p "$recorded_dangling_kvantum_home/.config/Kvantum"
+  ln -s ${pkgs.lib.escapeShellArg recordedDanglingKvantumTarget} \
+    "$recorded_dangling_kvantum_home/.config/Kvantum/Base16Kvantum"
+  HOME="$recorded_dangling_kvantum_home" \
+    ${pkgs.bash}/bin/bash ${recordedDanglingKvantumAdoptionScript}
+  test ! -e "$recorded_dangling_kvantum_home/.config/Kvantum/Base16Kvantum"
+  test -L "$recorded_dangling_kvantum_home/.local/state/criomos/kvantum-adoption/Base16Kvantum.pre-home-manager"
+  test "$(readlink "$recorded_dangling_kvantum_home/.local/state/criomos/kvantum-adoption/Base16Kvantum.pre-home-manager")" = \
+    ${pkgs.lib.escapeShellArg recordedDanglingKvantumTarget}
+  test ! -e "$TMPDIR/kvantum-literal-executed"
+  mkdir -p "$recorded_dangling_kvantum_home/.config/Kvantum/Base16Kvantum"
+  ln -s ${priorHomeManagerFiles}/.config/Kvantum/Base16Kvantum/Base16Kvantum.kvconfig \
+    "$recorded_dangling_kvantum_home/.config/Kvantum/Base16Kvantum/Base16Kvantum.kvconfig"
+
+  extant_recorded_target_home="$TMPDIR/extant-recorded-target-home"
+  mkdir -p "$extant_recorded_target_home/.config/Kvantum"/${pkgs.lib.escapeShellArg recordedDanglingKvantumTarget}
+  ln -s ${pkgs.lib.escapeShellArg recordedDanglingKvantumTarget} \
+    "$extant_recorded_target_home/.config/Kvantum/Base16Kvantum"
+  if HOME="$extant_recorded_target_home" \
+    ${pkgs.bash}/bin/bash ${recordedDanglingKvantumAdoptionScript}; then
+    echo "Kvantum transition accepted an extant recorded target" >&2
+    exit 1
+  fi
+  test -L "$extant_recorded_target_home/.config/Kvantum/Base16Kvantum"
+  test ! -e "$extant_recorded_target_home/.local/state/criomos/kvantum-adoption/Base16Kvantum.pre-home-manager"
+
+  occupied_kvantum_recovery_home="$TMPDIR/occupied-kvantum-recovery-home"
+  mkdir -p "$occupied_kvantum_recovery_home/.config/Kvantum" \
+    "$occupied_kvantum_recovery_home/.local/state/criomos/kvantum-adoption"
+  ln -s ${pkgs.lib.escapeShellArg recordedDanglingKvantumTarget} \
+    "$occupied_kvantum_recovery_home/.config/Kvantum/Base16Kvantum"
+  : > "$occupied_kvantum_recovery_home/.local/state/criomos/kvantum-adoption/Base16Kvantum.pre-home-manager"
+  if HOME="$occupied_kvantum_recovery_home" \
+    ${pkgs.bash}/bin/bash ${recordedDanglingKvantumAdoptionScript}; then
+    echo "Kvantum transition overwrote an occupied recovery path" >&2
+    exit 1
+  fi
+  test -L "$occupied_kvantum_recovery_home/.config/Kvantum/Base16Kvantum"
+  test -f "$occupied_kvantum_recovery_home/.local/state/criomos/kvantum-adoption/Base16Kvantum.pre-home-manager"
 
   touch "$out"
 ''

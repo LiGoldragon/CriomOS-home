@@ -89,6 +89,8 @@ let
     if cfg.predecessorGeneration == null then "" else cfg.predecessorGeneration.herdrConfig;
   configuredPredecessorHerdrConfigSha256 =
     if cfg.predecessorGeneration == null then "" else cfg.predecessorGeneration.herdrConfigSha256;
+  configuredKvantumDanglingLinkTarget =
+    if cfg.kvantumDanglingLink == null then "" else cfg.kvantumDanglingLink.literalTarget;
 in
 {
   options.criomosHome.herdr = {
@@ -129,6 +131,16 @@ in
       });
       default = null;
       description = "Source-controlled trusted predecessor Home Manager generation for one-time managed-file transitions.";
+    };
+    kvantumDanglingLink = lib.mkOption {
+      type = lib.types.nullOr (lib.types.submodule {
+        options.literalTarget = lib.mkOption {
+          type = lib.types.str;
+          description = "The exact recorded literal target of one dangling Base16Kvantum symlink.";
+        };
+      });
+      default = null;
+      description = "Source-controlled recovery record for one known dangling Base16Kvantum symlink.";
     };
     # The Herdr server holds every open pane. Enabling this replaces a
     # server started by hand (a transient `systemd-run herdr server` unit):
@@ -334,6 +346,7 @@ in
     kvantum_directory="$HOME/.config/Kvantum/Base16Kvantum"
     kvantum_recovery_directory="''${XDG_STATE_HOME:-$HOME/.local/state}/criomos/kvantum-adoption"
     kvantum_recovery="$kvantum_recovery_directory/Base16Kvantum.pre-home-manager"
+    recorded_dangling_target=${lib.escapeShellArg configuredKvantumDanglingLinkTarget}
     configured_predecessor_home_files="${configuredPredecessorHomeFiles}"
     if [ -n "$configured_predecessor_home_files" ]; then
       predecessor_home_files="$configured_predecessor_home_files"
@@ -343,19 +356,28 @@ in
       predecessor_home_files=""
     fi
 
-    if [ -L "$kvantum_directory" ]; then
-      if [ -z "$predecessor_home_files" ] \
-        || [ ! -d "$predecessor_home_files/.config/Kvantum/Base16Kvantum" ] \
-        || [ "$(readlink -f "$kvantum_directory")" != "$(readlink -f "$predecessor_home_files/.config/Kvantum/Base16Kvantum")" ]; then
-        echo "Refusing Kvantum transition: $kvantum_directory is not the trusted predecessor directory" >&2
-        exit 1
-      fi
+    preserve_kvantum_link() {
       mkdir -p "$kvantum_recovery_directory"
       if [ -e "$kvantum_recovery" ] || [ -L "$kvantum_recovery" ]; then
         echo "Refusing Kvantum transition: recovery path already exists at $kvantum_recovery" >&2
         exit 1
       fi
       mv -- "$kvantum_directory" "$kvantum_recovery"
+    }
+
+    if [ -L "$kvantum_directory" ]; then
+      if [ -n "$recorded_dangling_target" ] \
+        && [ "$(readlink "$kvantum_directory")" = "$recorded_dangling_target" ] \
+        && [ ! -e "$kvantum_directory" ]; then
+        preserve_kvantum_link
+      elif [ -n "$predecessor_home_files" ] \
+        && [ -d "$predecessor_home_files/.config/Kvantum/Base16Kvantum" ] \
+        && [ "$(readlink -f "$kvantum_directory")" = "$(readlink -f "$predecessor_home_files/.config/Kvantum/Base16Kvantum")" ]; then
+        preserve_kvantum_link
+      else
+        echo "Refusing Kvantum transition: $kvantum_directory is not an admitted predecessor or recorded dangling link" >&2
+        exit 1
+      fi
     fi
   '';
     }
