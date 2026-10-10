@@ -82,6 +82,13 @@ let
       }
     ];
   };
+  rotationHomeConfiguration = homeConfiguration.extendModules {
+    modules = [
+      {
+        criomosHome.herdr.predecessorGeneration.homeFiles = pkgs.lib.mkForce (toString rotationPriorHomeManagerFiles);
+      }
+    ];
+  };
   configToml = builtins.readFile homeConfiguration.config.xdg.configFile."herdr/config.toml".source;
   legacyConfigToml = ''
     [ui.toast]
@@ -138,6 +145,8 @@ let
   parsedConfigToml = builtins.fromTOML (builtins.unsafeDiscardStringContext configToml);
   herdrAdoption = homeConfiguration.config.home.activation.adoptHerdrConfig.data;
   herdrAdoptionScript = pkgs.writeText "herdr-adoption" herdrAdoption;
+  rotationHerdrAdoption = rotationHomeConfiguration.config.home.activation.adoptHerdrConfig.data;
+  rotationHerdrAdoptionScript = pkgs.writeText "rotation-herdr-adoption" rotationHerdrAdoption;
   untrustedHerdrAdoption = untrustedHomeConfiguration.config.home.activation.adoptHerdrConfig.data;
   untrustedHerdrAdoptionScript = pkgs.writeText "untrusted-herdr-adoption" untrustedHerdrAdoption;
   kvantumAdoption = homeConfiguration.config.home.activation.adoptManagedKvantumDirectory.data;
@@ -190,7 +199,7 @@ pkgs.runCommand "herdr-toast-delivery" {
     "$rotation_predecessor_home/.local/state/criomos/herdr-adoption/config.toml.pre-home-manager"
   ln -s ${rotationPriorHomeManagerFiles}/.config/herdr/config.toml \
     "$rotation_predecessor_home/.config/herdr/config.toml"
-  HOME="$rotation_predecessor_home" ${pkgs.bash}/bin/bash ${herdrAdoptionScript}
+  HOME="$rotation_predecessor_home" ${pkgs.bash}/bin/bash ${rotationHerdrAdoptionScript}
   test ! -e "$rotation_predecessor_home/.config/herdr/config.toml"
   cmp ${legacyConfig} \
     "$rotation_predecessor_home/.local/state/criomos/herdr-adoption/config.toml.pre-home-manager"
