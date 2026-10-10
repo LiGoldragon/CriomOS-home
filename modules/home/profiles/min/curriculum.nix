@@ -11,14 +11,14 @@ let
   curriculumPackage = inputs.primary.packages.${system}.curriculum;
   homeDirectory = config.home.homeDirectory;
   curriculumEnvironment = [
-    "CURRICULUM_PSYCHES_SKILLS_DIR=/git/github.com/LiGoldragon/psyche-skills/skills"
+    "CURRICULUM_PSYCHES_REPOSITORY_DIR=${inputs.psyche-skills}"
     "CURRICULUM_MIND_SKILLS_DIR=/git/github.com/LiGoldragon/mind-skills/skills"
     "CURRICULUM_FIELD_SKILLS_DIR=/git/github.com/LiGoldragon/field-skills/skills"
     "CURRICULUM_ROLES_FILE=${inputs."curriculum-source"}/roles.datom"
     "CURRICULUM_WORKSPACE=${homeDirectory}/primary"
   ];
   curriculumCli = pkgs.writeShellScriptBin "curriculum" ''
-    export CURRICULUM_PSYCHES_SKILLS_DIR=/git/github.com/LiGoldragon/psyche-skills/skills
+    export CURRICULUM_PSYCHES_REPOSITORY_DIR=${inputs.psyche-skills}
     export CURRICULUM_MIND_SKILLS_DIR=/git/github.com/LiGoldragon/mind-skills/skills
     export CURRICULUM_FIELD_SKILLS_DIR=/git/github.com/LiGoldragon/field-skills/skills
     export CURRICULUM_ROLES_FILE=${inputs."curriculum-source"}/roles.datom
