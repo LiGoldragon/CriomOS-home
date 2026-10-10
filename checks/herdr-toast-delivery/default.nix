@@ -39,7 +39,7 @@ let
           homeDirectory = "/home/herdr-toast-check";
           stateVersion = "26.11";
         };
-        criomosHome.herdr.predecessorGeneration.homeFiles = priorHomeManagerFiles;
+        criomosHome.herdr.predecessorGeneration.homeFiles = toString priorHomeManagerFiles;
       }
     ];
   };
