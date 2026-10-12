@@ -7,6 +7,7 @@ in pkgs.runCommand "primary-committer-hook-trust-contract" {
   nativeBuildInputs = [ pkgs.yq-go pkgs.jq ];
 } ''
   set -eu
+  export XDG_STATE_HOME="$TMPDIR/hexis-state"
   fixture="$TMPDIR/config.toml"
   printf '%s\n' 'model = "preserved-model"' 'unrelated = "preserved"' '[hooks.state."foreign"]' 'enabled = false' 'trusted_hash = "foreign-hash"' > "$fixture"
   ${hexis}/bin/hexis apply --file "$fixture" --declared ${activation.declared}
