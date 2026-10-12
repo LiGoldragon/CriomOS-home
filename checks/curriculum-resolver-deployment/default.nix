@@ -9,13 +9,13 @@ in pkgs.runCommand "curriculum-resolver-contract" { } ''
   export CURRICULUM_FIELD_SKILLS_DIR=${deployment.field-skills}/skills
   export CURRICULUM_ROLES_FILE=${inputs.curriculum-source}/roles.datom
   export CURRICULUM_WORKSPACE="$TMPDIR/workspace"
-  mkdir -p "$XDG_RUNTIME_DIR" "$CURRICULUM_WORKSPACE"
+  mkdir -m 0700 -p "$XDG_RUNTIME_DIR/curriculum" "$CURRICULUM_WORKSPACE"
   ${deployment.runtime}/bin/curriculum-nexus > "$TMPDIR/nexus.log" 2>&1 &
   resolver_pid=$!
-  trap 'kill "$resolver_pid"; wait "$resolver_pid" || true' EXIT
+  trap 'kill "$resolver_pid" 2>/dev/null || true; wait "$resolver_pid" || true' EXIT
   attempts=200
   while [ ! -S "$XDG_RUNTIME_DIR/curriculum/curriculum.sock" ]; do
-    kill -0 "$resolver_pid"
+    if ! kill -0 "$resolver_pid" 2>/dev/null; then cat "$TMPDIR/nexus.log"; exit 1; fi
     attempts=$((attempts - 1)); test "$attempts" -gt 0
     sleep 0.05
   done
