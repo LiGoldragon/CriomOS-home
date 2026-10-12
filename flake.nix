@@ -24,14 +24,14 @@
 
     # Primary's immutable Curriculum package provides the user CLI and Nexus.
     primary = {
-      url = "github:LiGoldragon/primary/2f95001c653957f97fb5beec4816d9655deb09c5";
+      url = "github:LiGoldragon/primary/86d174cf80a76d77a9798bd2b97ac4ab981b0ff7";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # The CLI reads role configuration at the process boundary; keep the
     # matching authored Curriculum source available to the Home service.
     curriculum-source = {
-      url = "github:LiGoldragon/Curriculum/c86bc953e391cf178e3fc49dbc8f73498ba10839";
+      url = "github:LiGoldragon/Curriculum/679564be9ee30e3833dc2946201d68e223b7587b";
       flake = false;
     };
 
