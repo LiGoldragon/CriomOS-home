@@ -24,14 +24,14 @@
 
     # Primary's immutable Curriculum package provides the user CLI and Nexus.
     primary = {
-      url = "github:LiGoldragon/primary/52b3fd898e001cf384dea87bdf6704be42ee5e63";
+      url = "github:LiGoldragon/primary/bf837f63af9eaeb3ccda444b68912735568b512e";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # The CLI reads role configuration at the process boundary; keep the
     # matching authored Curriculum source available to the Home service.
     curriculum-source = {
-      url = "github:LiGoldragon/Curriculum/679564be9ee30e3833dc2946201d68e223b7587b";
+      url = "github:LiGoldragon/Curriculum/391404e757b5d5d22fcb9140ae8433b737953fa7";
       flake = false;
     };
 
@@ -125,7 +125,7 @@
     # Standalone compatibility messenger used by the live Flow routes. Home
     # installs its immutable package so messenger-clj and all ten hm-* command
     # names share the same closure.
-    messenger-clj.url = "github:LiGoldragon/messenger-clj/85e71b15a93360507cdcce8c2605f6479d650426";
+    messenger-clj.url = "github:LiGoldragon/messenger-clj/faf70ea5d1b09fac04f5aeec94dc18ccb9c383c9";
     messenger-clj.inputs.nixpkgs.follows = "nixpkgs";
 
     # The public immutable recipe owns the audited proprietary installer source;
