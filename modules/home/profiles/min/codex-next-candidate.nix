@@ -9,6 +9,7 @@ let
   candidateHome = "${config.home.homeDirectory}/.codex-next-${hash}";
   socket = "${candidateHome}/app-server-control/app-server-control.sock";
   unit = "codex-remote-control-next-${hash}";
+  committerHookTrust = import ../../../../lib/primary-committer-hook-trust.nix { inherit lib; };
   # The future `codex-next` command is the only launcher selecting the new,
   # hash-identified candidate endpoint.  Plain `codex` remains on stable.
   client = pkgs.writeShellApplication { name = "codex-next"; text = ''export CODEX_HOME=${lib.escapeShellArg candidateHome}; exec ${package}/bin/codex --remote ${lib.escapeShellArg "unix://${socket}"} "$@"''; };
@@ -31,7 +32,8 @@ in {
       inherit lib pkgs;
       hexis = inputs.hexis.packages.${pkgs.stdenv.hostPlatform.system}.default;
       file = "${candidateHome}/config.toml";
-      declared = import ./codex-permission-defaults.nix;
+      declared = lib.recursiveUpdate (import ./codex-permission-defaults.nix) committerHookTrust.declared;
+      modes = committerHookTrust.modes;
     };
     systemd.user.services.${unit} = { Unit.Description = "Codex Remote Control next candidate ${hash}"; Service = { WorkingDirectory = "${config.home.homeDirectory}/primary"; Environment = [ "CODEX_HOME=${candidateHome}" ]; ExecStartPre = "${pkgs.bash}/bin/bash -c 'set -eu; mkdir -p ${candidateHome}; for f in auth.json; do if [ ! -e ${candidateHome}/$f ] && [ -f ${config.home.homeDirectory}/.codex-next/$f ]; then install -m600 ${config.home.homeDirectory}/.codex-next/$f ${candidateHome}/$f; fi; done'"; ExecStart = "${package}/bin/codex app-server --remote-control --listen unix://${socket}"; UMask = "0077"; LimitNOFILE = 524288; Restart = "on-failure"; RestartSec = "2s"; }; Install.WantedBy = [ "default.target" ]; };
   };
