@@ -2,7 +2,7 @@
 let
   # Exact accounted Ouranos baseline. Its other applications are preserved;
   # harness names come exclusively from the current Home source inputs.
-  baseline = /nix/store/k6mwx3ys3sxava5ghys588ps97lblik5-home-manager-path;
+  baseline = builtins.storePath "/nix/store/k6mwx3ys3sxava5ghys588ps97lblik5-home-manager-path";
   flow = pkgs.callPackage ../flow-deployment { inherit inputs; };
   message = pkgs.callPackage ../message-deployment { inherit inputs; };
   curriculum = pkgs.callPackage ../curriculum-resolver-deployment { inherit inputs; };
