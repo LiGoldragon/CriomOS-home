@@ -24,7 +24,7 @@
 
     # Primary's immutable Curriculum package provides the user CLI and Nexus.
     primary = {
-      url = "github:LiGoldragon/primary/bf837f63af9eaeb3ccda444b68912735568b512e";
+      url = "github:LiGoldragon/primary/d003ecb5fd5dd3314a064f1032248b8a7c71beeb";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -112,15 +112,8 @@
 
     # Flow Nexus is a pinned Home-managed service. Keep the package, client,
     # and user unit in one immutable closure.
-    flow.url = "github:LiGoldragon/flow/9fcd625ac7a0d44be58b9d365a94064e91f09219";
+    flow.url = "github:LiGoldragon/flow/9f159d03ae0bf5aa7f2a8d1c86ba7f386f69a057";
     flow.inputs.nixpkgs.follows = "nixpkgs";
-
-    # Next Flow: 0.17.4, run beside stable Flow on its own anchors by
-    # profiles/min/flow-message-next.nix (lib/stable-next-service.nix). It
-    # moves with message-next below: both share signal-flow 1c9e4b30 and
-    # meta-signal-flow 2ac045c2.
-    flow-next.url = "github:LiGoldragon/flow/bc464e5e1b94fcc179af73111f43b69db1f69fc5";
-    flow-next.inputs.nixpkgs.follows = "nixpkgs";
 
     # Standalone compatibility messenger used by the live Flow routes. Home
     # installs its immutable package so messenger-clj and all ten hm-* command
@@ -210,15 +203,11 @@
     # the additive v2 -> v3 store migration — the deployed store, born at v2,
     # is preserved aside and re-stamped on first open — on the
     # incident-hardened sema-engine 0.11.2 orchestrate 0.14.1 runs.
-    message.url = "github:LiGoldragon/message/930c5169ffcf5fa3784b34b2751763009e926d1d";
+    message.url = "github:LiGoldragon/message/990f5bc931891d7ab6fc28a3d243b4fae291bc5e";
     message.inputs.nixpkgs.follows = "nixpkgs";
     message.inputs.crane.follows = "crane";
 
-    # Next Message: 0.17.0, the argument-less message-nexus, beside the stable
-    # messenger with a fresh store of its own; it delivers through next Flow.
-    message-next.url = "github:LiGoldragon/message/481b579fcf72797ffa9ccf8ce4e2283a58cdff97";
-    message-next.inputs.nixpkgs.follows = "nixpkgs";
-    message-next.inputs.crane.follows = "crane";
+    # One declared Message main package peers with the single Flow service.
 
     # Mentci approval daemon source, packaged locally because it does not
     # expose a flake.
