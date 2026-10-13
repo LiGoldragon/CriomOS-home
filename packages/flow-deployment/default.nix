@@ -36,13 +36,18 @@ let
       store="$state/flow.sema"
       mkdir -p "$state" "$runtime_dir"
       chmod 700 "$state" "$runtime_dir"
-      start="Start.{ $runtime_dir/flow.sock $runtime_dir/flow-meta.sock $store }"
+      start="{ $runtime_dir/flow.sock $runtime_dir/flow-meta.sock $store }"
       ${runtime}/bin/flow-nexus --configure-only "$start" &
       child=$!
       trap 'kill "$child" 2>/dev/null || true' EXIT
       for _attempt in $(seq 1 100); do
         if [ -S "$runtime_dir/flow-meta.sock" ]; then break; fi
-        kill -0 "$child"
+        if ! kill -0 "$child" 2>/dev/null; then
+          status=0
+          wait "$child" || status=$?
+          echo "Flow configuration child exited before socket readiness (status $status)" >&2
+          if [ "$status" -eq 0 ]; then exit 1; else exit "$status"; fi
+        fi
         sleep 0.05
       done
       test -S "$runtime_dir/flow-meta.sock"
@@ -61,7 +66,7 @@ let
     Type=simple
     Environment=PATH=%h/.local/bin:%h/.nix-profile/bin:/etc/profiles/per-user/%u/bin:/run/current-system/sw/bin
     ExecStartPre=${initialize}/bin/initialize-declared-flow
-    ExecStart=${runtime}/bin/flow-nexus "Start.{ %t/flow/flow.sock %t/flow/flow-meta.sock %h/.local/state/flow-production/flow.sema }"
+    ExecStart=${runtime}/bin/flow-nexus "{ %t/flow/flow.sock %t/flow/flow-meta.sock %h/.local/state/flow-production/flow.sema }"
     Restart=on-failure
     RestartSec=2
     [Install]

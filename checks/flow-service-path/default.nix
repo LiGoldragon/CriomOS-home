@@ -3,7 +3,7 @@ let
   deployment = pkgs.callPackage ../../packages/flow-deployment { inherit inputs; };
   runtime = inputs.flow.packages.${pkgs.stdenv.hostPlatform.system}.default;
 in
-assert inputs.flow.sourceInfo.rev == "9f159d03ae0bf5aa7f2a8d1c86ba7f386f69a057";
+assert inputs.flow.sourceInfo.rev == "d190e10aee27e4af45d5b8a5844c10e59e57b12b";
 assert !(inputs ? flow-next);
 pkgs.runCommand "flow-service-path"
   {

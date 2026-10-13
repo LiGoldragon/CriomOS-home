@@ -4,16 +4,16 @@ let
   runtime = inputs.primary.packages.${system}.curriculum;
   cohort = inputs.primary.inputs;
   environment = homeDirectory: [
-    "CURRICULUM_PSYCHES_REPOSITORY_DIR=${cohort.psyche-skills}"
-    "CURRICULUM_MIND_SKILLS_DIR=${cohort.mind-skills}/skills"
-    "CURRICULUM_FIELD_SKILLS_DIR=${cohort.field-skills}/skills"
+    "CURRICULUM_PSYCHES_REPOSITORY_DIR=${cohort.psyche-context}"
+    "CURRICULUM_MIND_SKILLS_DIR=${cohort.mind-context}/skills"
+    "CURRICULUM_FIELD_SKILLS_DIR=${cohort.field-context}/skills"
     "CURRICULUM_ROLES_FILE=${inputs.curriculum-source}/roles.datom"
     "CURRICULUM_WORKSPACE=${homeDirectory}/primary"
   ];
   cli = pkgs.writeShellScriptBin "curriculum" ''
-    export CURRICULUM_PSYCHES_REPOSITORY_DIR=${cohort.psyche-skills}
-    export CURRICULUM_MIND_SKILLS_DIR=${cohort.mind-skills}/skills
-    export CURRICULUM_FIELD_SKILLS_DIR=${cohort.field-skills}/skills
+    export CURRICULUM_PSYCHES_REPOSITORY_DIR=${cohort.psyche-context}
+    export CURRICULUM_MIND_SKILLS_DIR=${cohort.mind-context}/skills
+    export CURRICULUM_FIELD_SKILLS_DIR=${cohort.field-context}/skills
     export CURRICULUM_ROLES_FILE=${inputs.curriculum-source}/roles.datom
     export CURRICULUM_WORKSPACE="$HOME/primary"
     exec ${runtime}/bin/curriculum "$@"
@@ -30,7 +30,7 @@ let
     ExecStartPost=
   '');
 in pkgs.runCommand "curriculum-resolver-deployment" {
-  passthru = { inherit runtime environment unit; inherit (cohort) psyche-skills mind-skills field-skills; };
+  passthru = { inherit runtime environment unit; inherit (cohort) psyche-context mind-context field-context; };
 } ''
   mkdir -p "$out/bin" "$out/share/systemd/user/curriculum-nexus.service.d"
   ln -s ${cli}/bin/curriculum "$out/bin/curriculum"

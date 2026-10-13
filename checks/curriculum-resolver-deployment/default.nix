@@ -4,9 +4,9 @@ let
 in pkgs.runCommand "curriculum-resolver-contract" { } ''
   set -eu
   export XDG_RUNTIME_DIR="$TMPDIR/runtime"
-  export CURRICULUM_PSYCHES_REPOSITORY_DIR=${deployment.psyche-skills}
-  export CURRICULUM_MIND_SKILLS_DIR=${deployment.mind-skills}/skills
-  export CURRICULUM_FIELD_SKILLS_DIR=${deployment.field-skills}/skills
+  export CURRICULUM_PSYCHES_REPOSITORY_DIR=${deployment.psyche-context}
+  export CURRICULUM_MIND_SKILLS_DIR=${deployment.mind-context}/skills
+  export CURRICULUM_FIELD_SKILLS_DIR=${deployment.field-context}/skills
   export CURRICULUM_ROLES_FILE=${inputs.curriculum-source}/roles.datom
   export CURRICULUM_WORKSPACE="$TMPDIR/workspace"
   mkdir -m 0700 -p "$XDG_RUNTIME_DIR/curriculum" "$CURRICULUM_WORKSPACE"
@@ -19,8 +19,8 @@ in pkgs.runCommand "curriculum-resolver-contract" { } ''
     attempts=$((attempts - 1)); test "$attempts" -gt 0
     sleep 0.05
   done
-  ${deployment.runtime}/bin/curriculum 'ResolveSkills.[ spirit-core vision-design intent-psyche operation-main-flow compensation-book-distillation compensation-truth compensation-orders compensation-prose compensation-understanding compensation-launch compensation-design compensation-default-effort compensation-messenger-clj compensation-temporary knowledge-psyche operation-psyche-interraction knowledge-vocabulary operation-edit-coordination ]' > "$TMPDIR/skills.datom"
-  for skill in spirit-core vision-design intent-psyche operation-main-flow; do
+  ${deployment.runtime}/bin/curriculum 'ResolveSkills.[ spirit-core vision-design intent-psyche compensation-main-flow compensation-book-crystallization compensation-truth compensation-orders compensation-prose compensation-understanding compensation-launch compensation-design compensation-default-effort compensation-messenger-clj compensation-temporary knowledge-psyche compensation-psyche-interraction knowledge-vocabulary compensation-edit-coordination ]' > "$TMPDIR/skills.datom"
+  for skill in spirit-core vision-design intent-psyche compensation-main-flow; do
     grep -q "$skill" "$TMPDIR/skills.datom"
   done
   touch "$out"
