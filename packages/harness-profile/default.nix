@@ -3,6 +3,10 @@ let
   # Exact accounted Ouranos baseline. Its other applications are preserved;
   # harness names come exclusively from the current Home source inputs.
   baseline = builtins.storePath "/nix/store/k6mwx3ys3sxava5ghys588ps97lblik5-home-manager-path";
+  oldChatgpt = builtins.storePath "/nix/store/kds5yvpql0jkpbpq5j6ln8gxpybz5fnj-chatgpt-26.901.51231";
+  chatgpt = (import ../../lib/owned-agent-packages.nix { inherit pkgs inputs; }).chatgptPackage;
+  chatgptLeaves = [ "applications/chatgpt.desktop" "pixmaps/chatgpt.png" ];
+  chatgptManifest = builtins.toJSON { old = chatgptLeaves; new = chatgptLeaves; };
   flow = pkgs.callPackage ../flow-deployment { inherit inputs; };
   message = pkgs.callPackage ../message-deployment { inherit inputs; };
   curriculum = pkgs.callPackage ../curriculum-resolver-deployment { inherit inputs; };
@@ -17,6 +21,9 @@ pkgs.runCommand "harness-home-profile"
         curriculum
         messenger
         baseline
+        chatgpt
+        oldChatgpt
+        chatgptLeaves
         ;
     };
   }
@@ -24,16 +31,20 @@ pkgs.runCommand "harness-home-profile"
     mkdir -p "$out/bin"
     for path in ${baseline}/*; do
       name=$(basename "$path")
-      test "$name" = bin || ln -s "$path" "$out/$name"
+      case "$name" in bin|share) continue ;; esac
+      ln -s "$path" "$out/$name"
     done
+    ${pkgs.python3}/bin/python ${./merge-owned-share.py} \
+      ${baseline}/share ${oldChatgpt}/share ${chatgpt}/share "$out/share" \
+      ${pkgs.lib.escapeShellArg chatgptManifest}
     for path in ${baseline}/bin/*; do
       name=$(basename "$path")
       case "$name" in
-        flow|flow-meta|flow-nexus|flow-next|flow-next-meta|message|message-meta|meta-message|message-nexus|message-daemon|message-write-configuration|message-next|message-next-meta|curriculum|messenger-clj|hm-*) continue ;;
+        chatgpt|flow|flow-meta|flow-nexus|flow-next|flow-next-meta|message|message-meta|meta-message|message-nexus|message-daemon|message-write-configuration|message-next|message-next-meta|curriculum|messenger-clj|hm-*) continue ;;
       esac
       ln -s "$path" "$out/bin/$name"
     done
-    for package in ${flow} ${message} ${curriculum} ${messenger}; do
+    for package in ${flow} ${message} ${curriculum} ${messenger} ${chatgpt}; do
       for path in "$package/bin/"*; do
         name=$(basename "$path")
         test ! -e "$out/bin/$name"
