@@ -2,6 +2,7 @@
 
 let
   rustToolchain = inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.rust-toolchain;
+  formatterSentinel = pkgs.writeShellScript "format-only-sentinel" "exit 0";
   sentinel = pkgs.runCommand "rust-toolchain-sentinel" { } ''
     mkdir -p "$out/bin" "$out/lib/rustlib/src"
     for name in ${pkgs.lib.concatStringsSep " " rustToolchain.guardedCommands}; do
@@ -12,7 +13,7 @@ let
     SCRIPT
       chmod +x "$out/bin/$name"
     done
-    ln -s ${pkgs.coreutils}/bin/true "$out/bin/rustfmt"
+    ln -s ${formatterSentinel} "$out/bin/rustfmt"
   '';
   client = rustToolchain.withRaw sentinel;
 in
