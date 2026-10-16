@@ -29,7 +29,7 @@ let
   nextHomeName = ".codex-next-${clientConfiguration.criomosHome.codexNextCandidate.hash}";
   initialize = pkgs.writeShellApplication {
     name = "initialize-declared-flow";
-    runtimeInputs = [ pkgs.coreutils ];
+    runtimeInputs = [ pkgs.coreutils pkgs.gawk ];
     text = ''
       state="$HOME/.local/state/flow-production"
       runtime_dir="''${XDG_RUNTIME_DIR:?}/flow"
@@ -40,8 +40,23 @@ let
       ${runtime}/bin/flow-nexus --configure-only "$start" &
       child=$!
       trap 'kill "$child" 2>/dev/null || true' EXIT
+      # A stale pathname is not readiness. Observe the listening socket
+      # held by this exact child without consuming its one request.
+      child_listens() {
+        local inode fd target
+        [ -S "$runtime_dir/flow-meta.sock" ] || return 1
+        for inode in $(awk -v socket="$runtime_dir/flow-meta.sock" \
+          '$4 == "00010000" && $5 == "0001" && $6 == "01" && $8 == socket { print $7 }' \
+          "/proc/$child/net/unix"); do
+          for fd in /proc/"$child"/fd/*; do
+            target=$(readlink "$fd" 2>/dev/null) || continue
+            if [ "$target" = "socket:[$inode]" ]; then return 0; fi
+          done
+        done
+        return 1
+      }
       for _attempt in $(seq 1 100); do
-        if [ -S "$runtime_dir/flow-meta.sock" ]; then break; fi
+        if child_listens; then break; fi
         if ! kill -0 "$child" 2>/dev/null; then
           status=0
           wait "$child" || status=$?
@@ -50,7 +65,7 @@ let
         fi
         sleep 0.05
       done
-      test -S "$runtime_dir/flow-meta.sock"
+      child_listens
       FLOW_META_SOCKET="$runtime_dir/flow-meta.sock" ${runtime}/bin/flow-meta \
         "Configure.Nexus.{ $HOME/primary { ${stableClient}/bin/codex-stable-flow-client $HOME/.codex-next $HOME/.codex-next/app-server-control/app-server-control.sock [ gpt-5.6-sol gpt-5.6-luna ] } { ${nextClient}/bin/codex-next-flow-client $HOME/${nextHomeName} $HOME/${nextHomeName}/app-server-control/app-server-control.sock [ gpt-6-sol gpt-6-luna gpt-6-astra ] } [ { Claude [ / «!» # ] [ esc esc ] [ enter ] } { Codex [ / «!» ] [ esc ] [] } ] [ Psyche ] $XDG_RUNTIME_DIR/message/message.sock ${message}/bin/message-nexus 60 }"
       wait "$child"

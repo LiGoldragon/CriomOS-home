@@ -22,6 +22,7 @@ pkgs.runCommand "flow-service-path"
       pkgs.coreutils
       pkgs.gnugrep
       pkgs.gnused
+      pkgs.python3
     ];
   }
   ''
@@ -38,6 +39,29 @@ pkgs.runCommand "flow-service-path"
       echo "retired Terra capability in Flow initializer" >&2
       exit 1
     fi
+    # A foreign store and stale socket must report the child's refusal,
+    # never send the single Configure request to a dead socket.
+    export HOME="$TMPDIR/refused-home"
+    export XDG_RUNTIME_DIR="$TMPDIR/refused-runtime"
+    mkdir -p "$HOME/.local/state/flow-production" "$XDG_RUNTIME_DIR/flow"
+    printf 'foreign-store-preserve' > "$HOME/.local/state/flow-production/flow.sema"
+    cp "$HOME/.local/state/flow-production/flow.sema" foreign-before
+    python -c 'import os,socket; s=socket.socket(socket.AF_UNIX); s.bind(os.environ["XDG_RUNTIME_DIR"]+"/flow/flow-meta.sock"); s.close()'
+    if "$initializer" > refused.log 2>&1; then
+      echo "initializer accepted a foreign store" >&2
+      exit 1
+    fi
+    grep -F 'Flow configuration child exited before socket readiness' refused.log
+    ! grep -F 'Connection refused' refused.log
+    cmp foreign-before "$HOME/.local/state/flow-production/flow.sema"
+
+    # A real configure-only child must become ready and consume exactly its
+    # Configure request; no readiness connection is sent by the initializer.
+    export HOME="$TMPDIR/accepted-home"
+    export XDG_RUNTIME_DIR="$TMPDIR/accepted-runtime"
+    mkdir -p "$HOME" "$XDG_RUNTIME_DIR"
+    "$initializer" > accepted.log 2>&1
+    grep -Fx 'Configured' accepted.log
     mkdir -p "$out"
     cp cli-version nexus-version "$out/"
   ''
