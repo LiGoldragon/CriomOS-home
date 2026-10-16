@@ -13,7 +13,7 @@ let
   };
   homeStart = module.config.content.systemd.user.services.flow-nexus.Service.ExecStart;
 in
-assert inputs.flow.sourceInfo.rev == "1f6c5a1e1792c7f4aa7a19267c7469ff4ad0040b";
+assert inputs.flow.sourceInfo.rev == "eda217424f1d377954478a7076aae457df090caf";
 assert !(inputs ? flow-next);
 assert homeStart == "${runtime}/bin/flow-nexus \"{ %t/flow/flow.sock %t/flow/flow-meta.sock %h/.local/state/flow-production/flow.sema }\"";
 pkgs.runCommand "flow-service-path"
@@ -21,6 +21,7 @@ pkgs.runCommand "flow-service-path"
     nativeBuildInputs = [
       pkgs.coreutils
       pkgs.gnugrep
+      pkgs.gnused
     ];
   }
   ''
@@ -31,6 +32,12 @@ pkgs.runCommand "flow-service-path"
     ${deployment}/bin/flow --version > cli-version
     ${deployment}/bin/flow-nexus --version > nexus-version
     test "$(cut -d ' ' -f 2 cli-version)" = "$(cut -d ' ' -f 2 nexus-version)"
+    initializer=$(sed -n 's/^ExecStartPre=//p' ${deployment}/share/systemd/user/flow-nexus.service)
+    grep -F '[ gpt-5.6-sol gpt-5.6-luna ]' "$initializer"
+    if grep -F 'gpt-5.6-terra' "$initializer"; then
+      echo "retired Terra capability in Flow initializer" >&2
+      exit 1
+    fi
     mkdir -p "$out"
     cp cli-version nexus-version "$out/"
   ''

@@ -63,7 +63,7 @@ let
     worker = codexBuiltinAgent {
       name = "worker";
       description = "Codex implementation collaboration agent.";
-      model = "gpt-5.6-terra";
+      model = "gpt-5.6-luna";
       effort = "high";
     };
     explorer = codexBuiltinAgent {
@@ -121,7 +121,6 @@ let
         "weekly-limit"
       ];
       status_line_use_colors = true;
-      model_availability_nux."gpt-5.6-terra" = 4;
     };
 
     plugins = {
