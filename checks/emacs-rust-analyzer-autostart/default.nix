@@ -5,7 +5,7 @@ pkgs.runCommand "emacs-rust-analyzer-autostart-check" { } ''
 
   emacsModule=${../../modules/home/profiles/med/emacs.nix}
 
-  grep -F -- '((rust-mode rust-ts-mode) . ("rust-analyzer"))' "$emacsModule"
+  ! grep -F -- '((rust-mode rust-ts-mode) . ("rust-analyzer"))' "$emacsModule"
   ! grep -F -- ':hook (rust-mode . eglot-ensure)' "$emacsModule"
   ! grep -F -- 'projectile-mode +1' "$emacsModule"
   ! grep -F -- 'org-roam-db-autosync-mode 1' "$emacsModule"

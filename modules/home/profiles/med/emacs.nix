@@ -258,7 +258,9 @@ let
      :custom (eglot-extend-to-xref t)
      :config
      (add-to-list 'eglot-server-programs '(nix-ts-mode . ("nil")))
-     (add-to-list 'eglot-server-programs '((rust-mode rust-ts-mode) . ("rust-analyzer"))))
+     ;; Rust analyzer integration is withheld: it can start Cargo, build scripts
+     ;; and proc macros outside the declared remote build path.
+     )
 
     (use-package consult-eglot :after (consult eglot))
     (use-package imenu-list)

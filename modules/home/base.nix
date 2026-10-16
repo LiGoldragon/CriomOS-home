@@ -159,16 +159,9 @@ in
         run ${nixProfileCompatibility}/bin/criomos-ensure-nix-profile-link
       '';
 
-      activation.mergeCargoConfig = inputs.hexis.lib.mkManagedConfig {
-        inherit lib pkgs hexis;
-        file = "$HOME/.cargo/config.toml";
-        declared = {
-          build.jobs = 2;
-        };
-        modes = {
-          "/build/jobs" = "always";
-        };
-      };
+      activation.retireLocalCargoJobs = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        run ${inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.rust-toolchain.retireLegacyConfig}/bin/retire-managed-local-cargo-jobs "$HOME/.cargo/config.toml"
+      '';
     };
 
     gtk.enable = false;
