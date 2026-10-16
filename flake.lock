@@ -491,17 +491,17 @@
     "curriculum": {
       "flake": false,
       "locked": {
-        "lastModified": 1791919750,
-        "narHash": "sha256-gAP9syx1iPDVGD/bEpCx6nigJ0qDuooKhESSNh6anTA=",
+        "lastModified": 1792109048,
+        "narHash": "sha256-7f8lndpfmEmD2NDRmx2UG894WFJ0Yx/HoSmLOMxbAzo=",
         "owner": "LiGoldragon",
         "repo": "Curriculum",
-        "rev": "d3df664d9cde7c1a1f465a749e502159d4229f69",
+        "rev": "7c638ec9c75fe2c46869a81035af5bf47698fe60",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "Curriculum",
-        "rev": "d3df664d9cde7c1a1f465a749e502159d4229f69",
+        "rev": "7c638ec9c75fe2c46869a81035af5bf47698fe60",
         "type": "github"
       }
     },
@@ -866,17 +866,17 @@
     "field-context": {
       "flake": false,
       "locked": {
-        "lastModified": 1791992306,
-        "narHash": "sha256-xklv0+WO9KWDxAOcMnJsBS1cArggdxZqb0R3qeLfdLE=",
+        "lastModified": 1792112627,
+        "narHash": "sha256-Egi97e8rxOSEOmVnDzzk/NQB1Sa7YCA/1Q/7tOJxUz8=",
         "owner": "LiGoldragon",
         "repo": "field-context",
-        "rev": "ff56797f9d118f862fcd0b8eae46eb21d9d5a16f",
+        "rev": "a9164432e6c76f26d184b5f441b6db32250175e8",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "field-context",
-        "rev": "ff56797f9d118f862fcd0b8eae46eb21d9d5a16f",
+        "rev": "a9164432e6c76f26d184b5f441b6db32250175e8",
         "type": "github"
       }
     },
@@ -2347,17 +2347,17 @@
         "tree-sitter-dotos": "tree-sitter-dotos"
       },
       "locked": {
-        "lastModified": 1791992609,
-        "narHash": "sha256-cDV55krpJHrfjWhCBhQTSEps1YxH73hH3ppPh7addLM=",
+        "lastModified": 1792112743,
+        "narHash": "sha256-LXo2OvyMdNDW7MU0UR/uykEdzUfTEo1FbhUKiwkks/I=",
         "owner": "LiGoldragon",
         "repo": "primary",
-        "rev": "c95c6f48af898c4b1ad44bd8c906f9e698066214",
+        "rev": "62aed81ad01f53ec4cd5c1d2eb23873caa4cbcd5",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "primary",
-        "rev": "c95c6f48af898c4b1ad44bd8c906f9e698066214",
+        "rev": "62aed81ad01f53ec4cd5c1d2eb23873caa4cbcd5",
         "type": "github"
       }
     },

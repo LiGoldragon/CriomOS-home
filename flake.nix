@@ -24,7 +24,7 @@
 
     # Primary's immutable Curriculum package provides the user CLI and Nexus.
     primary = {
-      url = "github:LiGoldragon/primary/c95c6f48af898c4b1ad44bd8c906f9e698066214";
+      url = "github:LiGoldragon/primary/62aed81ad01f53ec4cd5c1d2eb23873caa4cbcd5";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
