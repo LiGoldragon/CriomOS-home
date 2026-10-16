@@ -1,6 +1,5 @@
-# OpenCode, the third harness, seized as Claude Code and Codex are: it never
-# asks for a permission, its sessions report to Herdr, it reads only its own
-# generated skill tree, and it runs an open-weight model.
+# OpenCode reports its sessions to Herdr and reads its own generated skill tree.
+# Inference hosting is explicitly selected separately from the CLI and testing.
 {
   config,
   inputs,
@@ -45,8 +44,7 @@ let
   modelReference = "${providerName}/${localModel.id}";
 
   # Qwen3.6-35B-A3B (Apache-2.0): a mixture of experts with 3B active
-  # parameters, the strongest open agentic model whose weights fit a 32 GB
-  # laptop beside its desktop, at the Unsloth dynamic 3-bit quantization.
+  # parameters, at the Unsloth dynamic 3-bit quantization.
   modelFile = pkgs.fetchurl {
     name = "Qwen3.6-35B-A3B-UD-Q3_K_XL.gguf";
     url = "https://huggingface.co/unsloth/Qwen3.6-35B-A3B-GGUF/resolve/a483e9e6cbd595906af30beda3187c2663a1118c/Qwen3.6-35B-A3B-UD-Q3_K_XL.gguf";
@@ -92,10 +90,8 @@ in
     localModel = {
       enable = lib.mkOption {
         type = lib.types.bool;
-        # The node the cluster gives the OpenCode testing role serves it.
-        default = lib.any (capability: (capability.kind or null) == "openCodeTesting") (
-          horizon.node.capabilities or [ ]
-        );
+        # Hosting is explicitly selected independently of testing.
+        default = false;
         description = "Serve the local open-weight model OpenCode uses by default.";
       };
       id = lib.mkOption {

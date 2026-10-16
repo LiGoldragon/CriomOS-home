@@ -40,7 +40,6 @@
     ./profiles/min/codex-next.nix
     ./profiles/min/codex-next-candidate.nix
     ./profiles/min/codex-remote-control.nix
-    ./profiles/min/opencode.nix
     ./profiles/min/opencode-harness.nix
     ./profiles/min/field-luna-heartbeat.nix
     # Field monitors: declared from the hand-made units, each off unless enabled.

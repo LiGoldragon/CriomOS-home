@@ -6,7 +6,7 @@ let
   inherit (pkgs) lib;
   system = pkgs.stdenv.hostPlatform.system;
   homeFor =
-    capabilities:
+    capabilities: hosting:
     inputs.home-manager.lib.homeManagerConfiguration {
       inherit pkgs;
       extraSpecialArgs = {
@@ -33,10 +33,13 @@ let
             stateVersion = "26.11";
           };
         }
-      ];
+      ] ++ lib.optional (hosting != null) {
+        criomosHome.opencode.localModel.enable = hosting;
+      };
     };
-  served = (homeFor [ { kind = "openCodeTesting"; } ]).config;
-  unserved = (homeFor [ ]).config;
+  served = (homeFor [ ] true).config;
+  unserved = (homeFor [ ] null).config;
+  testingOnly = (homeFor [ { kind = "openCodeTesting"; } ] null).config;
   opencode = served.criomosHome.opencode.package;
   service = served.systemd.user.services.opencode-local-model.Service;
   configMerge = pkgs.writeText "opencode-config-merge" served.home.activation.mergeOpenCodeHarnessConfig.data;
@@ -46,6 +49,7 @@ let
 in
 assert builtins.elem opencode served.home.packages;
 assert !(unserved.systemd.user.services ? opencode-local-model);
+assert !(testingOnly.systemd.user.services ? opencode-local-model);
 assert lib.hasInfix "--sleep-idle-seconds" (toString service.ExecStart);
 assert lib.hasInfix "--host 127.0.0.1" (toString service.ExecStart);
 pkgs.runCommand "opencode-harness"
