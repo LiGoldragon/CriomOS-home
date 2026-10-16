@@ -866,17 +866,17 @@
     "field-context": {
       "flake": false,
       "locked": {
-        "lastModified": 1792113682,
-        "narHash": "sha256-Gau2UoBA0zz2j6whLo6a3FWjxLh/ENxXGVz/ISacMmk=",
+        "lastModified": 1792114166,
+        "narHash": "sha256-nMZiy8C77p86gY2lOq/warIRl+J2jFR8AxCrHyHLbP0=",
         "owner": "LiGoldragon",
         "repo": "field-context",
-        "rev": "f8c06dcdbc4cf3fca98a40f6bee404e97a99d720",
+        "rev": "ca367409a5ea79876e097de55241deb1672b0a39",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "field-context",
-        "rev": "f8c06dcdbc4cf3fca98a40f6bee404e97a99d720",
+        "rev": "ca367409a5ea79876e097de55241deb1672b0a39",
         "type": "github"
       }
     },
@@ -2347,17 +2347,17 @@
         "tree-sitter-dotos": "tree-sitter-dotos"
       },
       "locked": {
-        "lastModified": 1792113785,
-        "narHash": "sha256-jLR0UNFi5DfKPxf00SVbUkwGPyoPk33M7cj/UuXaCjU=",
+        "lastModified": 1792115372,
+        "narHash": "sha256-5Yzhy6AWC4MxCxr4K362ezOy4XDGhLUj6hEfF8FWjEM=",
         "owner": "LiGoldragon",
         "repo": "primary",
-        "rev": "c05a738f6e74bc9c209a5aaf5301f2d9f2682814",
+        "rev": "c26c6f7bba0d79035197bafc358586511dbabed7",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "primary",
-        "rev": "c05a738f6e74bc9c209a5aaf5301f2d9f2682814",
+        "rev": "c26c6f7bba0d79035197bafc358586511dbabed7",
         "type": "github"
       }
     },
@@ -2381,17 +2381,17 @@
     "psyche-context": {
       "flake": false,
       "locked": {
-        "lastModified": 1792113429,
-        "narHash": "sha256-mRCoCbCG3FthU6DeLgfsd+qmeKZkzbl5JDDXW1ZCX2w=",
+        "lastModified": 1792114571,
+        "narHash": "sha256-/y2DoFHZ+QDGTAAGT806Jahh7ZEe/CgkETXxrYlqZyY=",
         "owner": "LiGoldragon",
         "repo": "psyche-context",
-        "rev": "e1a300e5f03551f23ab40d7bc75c2213609e8256",
+        "rev": "8bf1b253cd543f9ebec4c41a26f65e3a4b862e4d",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "psyche-context",
-        "rev": "e1a300e5f03551f23ab40d7bc75c2213609e8256",
+        "rev": "8bf1b253cd543f9ebec4c41a26f65e3a4b862e4d",
         "type": "github"
       }
     },
