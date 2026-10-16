@@ -24,7 +24,7 @@
 
     # Primary's immutable Curriculum package provides the user CLI and Nexus.
     primary = {
-      url = "github:LiGoldragon/primary/62aed81ad01f53ec4cd5c1d2eb23873caa4cbcd5";
+      url = "github:LiGoldragon/primary/c05a738f6e74bc9c209a5aaf5301f2d9f2682814";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -107,7 +107,7 @@
 
     # Flow Nexus is a pinned Home-managed service. Keep the package, client,
     # and user unit in one immutable closure.
-    flow.url = "github:LiGoldragon/flow/da17d491aa1fa5b9a0e67bc9b1b16190eb7995cf";
+    flow.url = "github:LiGoldragon/flow/1f6c5a1e1792c7f4aa7a19267c7469ff4ad0040b";
     flow.inputs.nixpkgs.follows = "nixpkgs";
 
     # Standalone compatibility messenger used by the live Flow routes. Home

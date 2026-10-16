@@ -13,7 +13,7 @@ let
   };
   homeStart = module.config.content.systemd.user.services.flow-nexus.Service.ExecStart;
 in
-assert inputs.flow.sourceInfo.rev == "da17d491aa1fa5b9a0e67bc9b1b16190eb7995cf";
+assert inputs.flow.sourceInfo.rev == "1f6c5a1e1792c7f4aa7a19267c7469ff4ad0040b";
 assert !(inputs ? flow-next);
 assert homeStart == "${runtime}/bin/flow-nexus \"{ %t/flow/flow.sock %t/flow/flow-meta.sock %h/.local/state/flow-production/flow.sema }\"";
 pkgs.runCommand "flow-service-path"
