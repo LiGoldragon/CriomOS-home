@@ -70,9 +70,21 @@ let
       done
       child_listens
       FLOW_META_SOCKET="$runtime_dir/flow-meta.sock" ${runtime}/bin/flow-meta \
-        "Configure.Nexus.{ $HOME/primary { ${stableClient}/bin/codex-stable-flow-client $HOME/.codex-next $HOME/.codex-next/app-server-control/app-server-control.sock [ gpt-5.6-sol gpt-5.6-luna ] } { ${nextClient}/bin/codex-next-flow-client $HOME/${nextHomeName} $HOME/${nextHomeName}/app-server-control/app-server-control.sock [ gpt-6-sol gpt-6-luna gpt-6-astra ] } [ { Claude [ / «!» # ] [ esc esc ] [ enter ] } { Codex [ / «!» ] [ esc ] [] } ] [ Psyche ] $XDG_RUNTIME_DIR/message/message.sock ${message}/bin/message-nexus 60 }"
+        "Configure.Nexus.{ $HOME/primary { ${stableClient}/bin/codex-stable-flow-client $HOME/.codex-next $HOME/.codex-next/app-server-control/app-server-control.sock [ gpt-5.6-sol gpt-5.6-luna ] } { ${nextClient}/bin/codex-next-flow-client $HOME/${nextHomeName} $HOME/${nextHomeName}/app-server-control/app-server-control.sock [ gpt-6.1-sol gpt-6-sol gpt-6-luna gpt-6-astra ] } [ { Claude [ / «!» # ] [ esc esc ] [ enter ] } { Codex [ / «!» ] [ esc ] [] } ] [ Psyche ] $XDG_RUNTIME_DIR/message/message.sock ${message}/bin/message-nexus 60 }"
       wait "$child"
       trap - EXIT
+    '';
+  };
+  leaveOutDefaults = pkgs.writeShellApplication {
+    name = "configure-declared-flow-leave-outs";
+    runtimeInputs = [ pkgs.coreutils ];
+    text = ''
+      queries=$(mktemp)
+      trap 'rm -f "$queries"' EXIT
+      ${pkgs.babashka}/bin/bb ${./leave-outs.clj} ${inputs.primary}/config/main-flow > "$queries"
+      while IFS= read -r query; do
+        FLOW_META_SOCKET="''${XDG_RUNTIME_DIR:?}/flow/flow-meta.sock" ${runtime}/bin/flow-meta "$query"
+      done < "$queries"
     '';
   };
   ready = pkgs.writeShellApplication {
@@ -103,6 +115,7 @@ let
           exit 1
         fi
         if owns_listener "$runtime_dir/flow.sock" && owns_listener "$runtime_dir/flow-meta.sock"; then
+          ${leaveOutDefaults}/bin/configure-declared-flow-leave-outs
           exit 0
         fi
         sleep 0.1
@@ -115,7 +128,8 @@ let
     [Unit]
     Description=Flow Nexus
     Wants=codex-remote-control.service
-    After=codex-remote-control.service
+    Requires=curriculum-nexus.service
+    After=codex-remote-control.service curriculum-nexus.service
     [Service]
     Type=simple
     Environment=PATH=%h/.local/bin:%h/.nix-profile/bin:/etc/profiles/per-user/%u/bin:/run/current-system/sw/bin
@@ -136,6 +150,7 @@ pkgs.runCommand "flow-deployment"
         unit
         initialize
         ready
+        leaveOutDefaults
         ;
     };
   }

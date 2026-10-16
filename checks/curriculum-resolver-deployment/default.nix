@@ -4,12 +4,8 @@ let
 in pkgs.runCommand "curriculum-resolver-contract" { } ''
   set -eu
   export XDG_RUNTIME_DIR="$TMPDIR/runtime"
-  export CURRICULUM_PSYCHES_REPOSITORY_DIR=${deployment.psyche-context}
-  export CURRICULUM_MIND_SKILLS_DIR=${deployment.mind-context}/skills
-  export CURRICULUM_FIELD_SKILLS_DIR=${deployment.field-context}/skills
-  export CURRICULUM_ROLES_FILE=${inputs.curriculum-source}/roles.datom
-  export CURRICULUM_WORKSPACE="$TMPDIR/workspace"
-  mkdir -m 0700 -p "$XDG_RUNTIME_DIR/curriculum" "$CURRICULUM_WORKSPACE"
+  ${pkgs.lib.concatMapStringsSep "\n" (value: "export " + pkgs.lib.escapeShellArg value) (deployment.environment "$TMPDIR/workspace")}
+  mkdir -m 0700 -p "$XDG_RUNTIME_DIR/curriculum"
   ${deployment.runtime}/bin/curriculum-nexus > "$TMPDIR/nexus.log" 2>&1 &
   resolver_pid=$!
   trap 'kill "$resolver_pid" 2>/dev/null || true; wait "$resolver_pid" || true' EXIT
@@ -19,9 +15,23 @@ in pkgs.runCommand "curriculum-resolver-contract" { } ''
     attempts=$((attempts - 1)); test "$attempts" -gt 0
     sleep 0.05
   done
-  ${deployment.runtime}/bin/curriculum 'ResolveSkills.[ spirit-core vision-design intent-psyche compensation-main-flow compensation-book-crystallization compensation-truth compensation-orders compensation-prose compensation-understanding compensation-launch compensation-design compensation-default-effort compensation-messenger-clj compensation-temporary knowledge-psyche compensation-psyche-interraction knowledge-vocabulary compensation-edit-coordination ]' > "$TMPDIR/skills.datom"
-  for skill in spirit-core vision-design intent-psyche compensation-main-flow; do
-    grep -q "$skill" "$TMPDIR/skills.datom"
-  done
+  query=$(${pkgs.babashka}/bin/bb -e '(require (quote [clojure.edn :as edn]) (quote [clojure.string :as str])) (let [m (:modules (edn/read-string (slurp (first *command-line-args*))))] (println (str "ComposeStartup.{ { Psyche core Secondary } Claude [ " (str/join " " (map name (:system m))) " ] [ " (str/join " " (map name (:user m))) " ] }")))' ${inputs.primary}/config/main-flow/psyche.edn)
+  ${deployment.runtime}/bin/curriculum "$query" > "$TMPDIR/composed.datom"
+  grep -q '^StartupComposed\.' "$TMPDIR/composed.datom"
+  grep -q 'These are your skills, given here; do not reload them.' "$TMPDIR/composed.datom"
+  ${deployment.runtime}/bin/curriculum 'ComposeRole.{ illustrator ClaudeAgent }' > "$TMPDIR/role.datom"
+  grep -q '^RoleComposed\.' "$TMPDIR/role.datom"
+  if ${deployment.runtime}/bin/curriculum 'ComposeStartup.{ { Psyche core Secondary } Claude [ spirit-core intent-main-flow ] [ /tmp/inline-context ] }' > "$TMPDIR/path.out" 2>&1; then
+    echo "Curriculum admitted a path-shaped module ID" >&2
+    exit 1
+  fi
+  if ${deployment.runtime}/bin/curriculum 'ComposeStartup.{ { Psyche core Secondary } Claude [ intent-main-flow ] [ spirit-core ] }' > "$TMPDIR/placement.out" 2>&1; then
+    echo "Curriculum admitted USER spirit" >&2
+    exit 1
+  fi
+  if ${deployment.runtime}/bin/curriculum RebuildSkills > "$TMPDIR/retired.out" 2>&1; then
+    echo "Curriculum retained the retired file-projection API" >&2
+    exit 1
+  fi
   touch "$out"
 ''

@@ -24,14 +24,14 @@
 
     # Primary's immutable Curriculum package provides the user CLI and Nexus.
     primary = {
-      url = "github:LiGoldragon/primary/5e349531fc944090a7da3679bf5f4b79d956321e";
+      url = "github:LiGoldragon/primary/8307d45338992e875b075b7e73abc8d6584ab996";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # The CLI reads role configuration at the process boundary; keep the
     # matching authored Curriculum source available to the Home service.
     curriculum-source = {
-      url = "github:LiGoldragon/Curriculum/af528cd2dc54d132bc559f96a6b82016bdabaebf";
+      url = "github:LiGoldragon/Curriculum/691852aa07cbfcd1f76dda61422ee73e080c5ebf";
       flake = false;
     };
 
@@ -107,13 +107,13 @@
 
     # Flow Nexus is a pinned Home-managed service. Keep the package, client,
     # and user unit in one immutable closure.
-    flow.url = "github:LiGoldragon/flow/d0f6f07ff2adec52c4df34ceb992e36a8111f184";
+    flow.url = "github:LiGoldragon/flow/80df5f5668bb157e4d38e65607cd121c4e0cbfe8";
     flow.inputs.nixpkgs.follows = "nixpkgs";
 
     # Standalone compatibility messenger used by the live Flow routes. Home
     # installs its immutable package so messenger-clj and all ten hm-* command
     # names share the same closure.
-    messenger-clj.url = "github:LiGoldragon/messenger-clj/faf70ea5d1b09fac04f5aeec94dc18ccb9c383c9";
+    messenger-clj.url = "github:LiGoldragon/messenger-clj/7985ac4fc297acbf5cce798031de6d476f53dcad";
     messenger-clj.inputs.nixpkgs.follows = "nixpkgs";
 
     # The public immutable recipe owns the audited proprietary installer source;
@@ -198,7 +198,7 @@
     # the additive v2 -> v3 store migration — the deployed store, born at v2,
     # is preserved aside and re-stamped on first open — on the
     # incident-hardened sema-engine 0.11.2 orchestrate 0.14.1 runs.
-    message.url = "github:LiGoldragon/message/2b30bbde60a7399319a6cb8fb31ad9895ae72b0a";
+    message.url = "github:LiGoldragon/message/bd8a78cd87f05b19a655ef0170619311542283a5";
     message.inputs.nixpkgs.follows = "nixpkgs";
     message.inputs.crane.follows = "crane";
 

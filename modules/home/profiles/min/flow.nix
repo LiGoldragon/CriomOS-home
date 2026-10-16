@@ -36,7 +36,8 @@ in
       Unit = {
         Description = "Flow Nexus";
         Wants = [ "codex-remote-control.service" ];
-        After = [ "codex-remote-control.service" ];
+        Requires = [ "curriculum-nexus.service" ];
+        After = [ "codex-remote-control.service" "curriculum-nexus.service" ];
       };
       Service = {
         Type = "simple";
