@@ -45,14 +45,14 @@ let
       child_listens() {
         local inode fd target
         [ -S "$runtime_dir/flow-meta.sock" ] || return 1
-        for inode in $(awk -v socket="$runtime_dir/flow-meta.sock" \
-          '$4 == "00010000" && $5 == "0001" && $6 == "01" && $8 == socket { print $7 }' \
-          "/proc/$child/net/unix"); do
+        while IFS= read -r inode; do
           for fd in /proc/"$child"/fd/*; do
             target=$(readlink "$fd" 2>/dev/null) || continue
             if [ "$target" = "socket:[$inode]" ]; then return 0; fi
           done
-        done
+        done < <(awk -v socket="$runtime_dir/flow-meta.sock" \
+          '$4 == "00010000" && $5 == "0001" && $6 == "01" && $8 == socket { print $7 }' \
+          "/proc/$child/net/unix")
         return 1
       }
       for _attempt in $(seq 1 100); do
