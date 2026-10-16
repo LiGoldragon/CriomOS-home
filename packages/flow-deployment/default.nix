@@ -75,7 +75,7 @@ let
 in
 pkgs.runCommand "flow-deployment" { passthru = { inherit runtime unit initialize; }; } ''
   mkdir -p "$out/bin" "$out/share/systemd/user"
-  for name in flow flow-meta flow-nexus; do
+  for name in flow flow-meta flow-nexus flow-hook; do
     test -x "${runtime}/bin/$name"
     ln -s "${runtime}/bin/$name" "$out/bin/$name"
   done

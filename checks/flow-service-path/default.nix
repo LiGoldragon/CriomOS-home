@@ -2,9 +2,20 @@
 let
   deployment = pkgs.callPackage ../../packages/flow-deployment { inherit inputs; };
   runtime = inputs.flow.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  module = import ../../modules/home/profiles/min/flow.nix {
+    inherit inputs pkgs;
+    lib = pkgs.lib;
+    user = { name = "li"; size = "Min"; };
+    config = {
+      home.username = "li";
+      criomosHome.flow = { enable = true; package = runtime; };
+    };
+  };
+  homeStart = module.config.content.systemd.user.services.flow-nexus.Service.ExecStart;
 in
-assert inputs.flow.sourceInfo.rev == "d190e10aee27e4af45d5b8a5844c10e59e57b12b";
+assert inputs.flow.sourceInfo.rev == "da17d491aa1fa5b9a0e67bc9b1b16190eb7995cf";
 assert !(inputs ? flow-next);
+assert homeStart == "${runtime}/bin/flow-nexus \"{ %t/flow/flow.sock %t/flow/flow-meta.sock %h/.local/state/flow-production/flow.sema }\"";
 pkgs.runCommand "flow-service-path"
   {
     nativeBuildInputs = [
@@ -13,7 +24,7 @@ pkgs.runCommand "flow-service-path"
     ];
   }
   ''
-    for name in flow flow-meta flow-nexus; do
+    for name in flow flow-meta flow-nexus flow-hook; do
       test "$(readlink -f ${deployment}/bin/$name)" = "${runtime}/bin/$name"
     done
     grep -F 'ExecStart=${runtime}/bin/flow-nexus ' ${deployment}/share/systemd/user/flow-nexus.service

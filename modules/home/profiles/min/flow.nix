@@ -44,7 +44,7 @@ in
           "PATH=%h/.local/bin:%h/.nix-profile/bin:/etc/profiles/per-user/%u/bin:/run/current-system/sw/bin"
         ];
         ExecStartPre = "${deployment.initialize}/bin/initialize-declared-flow";
-        ExecStart = "${runtime}/bin/flow-nexus \"Start.{ %t/flow/flow.sock %t/flow/flow-meta.sock %h/.local/state/flow-production/flow.sema }\"";
+        ExecStart = "${runtime}/bin/flow-nexus \"{ %t/flow/flow.sock %t/flow/flow-meta.sock %h/.local/state/flow-production/flow.sema }\"";
         Restart = "on-failure";
         RestartSec = 2;
       };
