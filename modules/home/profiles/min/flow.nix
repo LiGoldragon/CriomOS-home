@@ -45,6 +45,7 @@ in
         ];
         ExecStartPre = "${deployment.initialize}/bin/initialize-declared-flow";
         ExecStart = "${runtime}/bin/flow-nexus \"{ %t/flow/flow.sock %t/flow/flow-meta.sock %h/.local/state/flow-production/flow.sema }\"";
+        ExecStartPost = "${deployment.ready}/bin/wait-declared-flow-ready";
         Restart = "on-failure";
         RestartSec = 2;
       };

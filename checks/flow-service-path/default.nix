@@ -5,17 +5,28 @@ let
   module = import ../../modules/home/profiles/min/flow.nix {
     inherit inputs pkgs;
     lib = pkgs.lib;
-    user = { name = "li"; size = "Min"; };
+    user = {
+      name = "li";
+      size = "Min";
+    };
     config = {
       home.username = "li";
-      criomosHome.flow = { enable = true; package = runtime; };
+      criomosHome.flow = {
+        enable = true;
+        package = runtime;
+      };
     };
   };
   homeStart = module.config.content.systemd.user.services.flow-nexus.Service.ExecStart;
 in
 assert inputs.flow.sourceInfo.rev == "98297941cc114e0ace65972c557441202a163c47";
 assert !(inputs ? flow-next);
-assert homeStart == "${runtime}/bin/flow-nexus \"{ %t/flow/flow.sock %t/flow/flow-meta.sock %h/.local/state/flow-production/flow.sema }\"";
+assert
+  module.config.content.systemd.user.services.flow-nexus.Service.ExecStartPost
+  == "${deployment.ready}/bin/wait-declared-flow-ready";
+assert
+  homeStart
+  == "${runtime}/bin/flow-nexus \"{ %t/flow/flow.sock %t/flow/flow-meta.sock %h/.local/state/flow-production/flow.sema }\"";
 pkgs.runCommand "flow-service-path"
   {
     nativeBuildInputs = [
@@ -33,6 +44,7 @@ pkgs.runCommand "flow-service-path"
     ${deployment}/bin/flow --version > cli-version
     ${deployment}/bin/flow-nexus --version > nexus-version
     test "$(cut -d ' ' -f 2 cli-version)" = "$(cut -d ' ' -f 2 nexus-version)"
+    grep -Fx 'ExecStartPost=${deployment.ready}/bin/wait-declared-flow-ready' ${deployment}/share/systemd/user/flow-nexus.service
     initializer=$(sed -n 's/^ExecStartPre=//p' ${deployment}/share/systemd/user/flow-nexus.service)
     grep -F '[ gpt-5.6-sol gpt-5.6-luna ]' "$initializer"
     if grep -F 'gpt-5.6-terra' "$initializer"; then
@@ -62,6 +74,33 @@ pkgs.runCommand "flow-service-path"
     mkdir -p "$HOME" "$XDG_RUNTIME_DIR"
     "$initializer" > accepted.log 2>&1
     grep -Fx 'Configured' accepted.log
+    # Startup ordering must wait for this actual daemon, not a stale pathname.
+    ${runtime}/bin/flow-nexus "{ $XDG_RUNTIME_DIR/flow/flow.sock $XDG_RUNTIME_DIR/flow/flow-meta.sock $HOME/.local/state/flow-production/flow.sema }" >daemon.log 2>&1 &
+    daemon_pid=$!
+    trap 'kill "$daemon_pid" 2>/dev/null || true; wait "$daemon_pid" || true' EXIT
+    MAINPID="$daemon_pid" ${deployment.ready}/bin/wait-declared-flow-ready
+    FLOW_SOCKET="$XDG_RUNTIME_DIR/flow/flow.sock" ${runtime}/bin/flow Metaflows >metaflows.datom
+    grep -F 'Listed.' metaflows.datom
+    kill "$daemon_pid"
+    wait "$daemon_pid"
+    trap - EXIT
+    python -c 'import os,signal,socket; root=os.environ["XDG_RUNTIME_DIR"]+"/flow/"; sockets=[socket.socket(socket.AF_UNIX) for _ in range(2)]; [(s.bind(root+n),s.listen()) for s,n in zip(sockets,["flow.sock","flow-meta.sock"])]; signal.pause()' >foreign-listener.log 2>&1 &
+    foreign_pid=$!
+    trap 'kill "$foreign_pid" 2>/dev/null || true; wait "$foreign_pid" || true' EXIT
+    status=0
+    MAINPID="$$" ${deployment.ready}/bin/wait-declared-flow-ready >foreign.log 2>&1 || status=$?
+    test "$status" -ne 0
+    grep -F 'did not own both listeners' foreign.log
+    kill -0 "$foreign_pid"
+    test -S "$XDG_RUNTIME_DIR/flow/flow.sock"
+    test -S "$XDG_RUNTIME_DIR/flow/flow-meta.sock"
+    kill "$foreign_pid"
+    wait "$foreign_pid" || true
+    trap - EXIT
+    status=0
+    MAINPID="$daemon_pid" ${deployment.ready}/bin/wait-declared-flow-ready >dead.log 2>&1 || status=$?
+    test "$status" -ne 0
+    grep -F 'Flow main process exited before readiness' dead.log
     mkdir -p "$out"
     cp cli-version nexus-version "$out/"
   ''

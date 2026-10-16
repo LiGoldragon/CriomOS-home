@@ -29,7 +29,10 @@ let
   nextHomeName = ".codex-next-${clientConfiguration.criomosHome.codexNextCandidate.hash}";
   initialize = pkgs.writeShellApplication {
     name = "initialize-declared-flow";
-    runtimeInputs = [ pkgs.coreutils pkgs.gawk ];
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.gawk
+    ];
     text = ''
       state="$HOME/.local/state/flow-production"
       runtime_dir="''${XDG_RUNTIME_DIR:?}/flow"
@@ -72,6 +75,42 @@ let
       trap - EXIT
     '';
   };
+  ready = pkgs.writeShellApplication {
+    name = "wait-declared-flow-ready";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.gawk
+    ];
+    text = ''
+      nexus_pid="''${MAINPID:?systemd main PID required}"
+      runtime_dir="''${XDG_RUNTIME_DIR:?}/flow"
+      owns_listener() {
+        local socket="$1" inode fd target
+        [ -S "$socket" ] || return 1
+        while IFS= read -r inode; do
+          for fd in /proc/"$nexus_pid"/fd/*; do
+            target=$(readlink "$fd" 2>/dev/null) || continue
+            if [ "$target" = "socket:[$inode]" ]; then return 0; fi
+          done
+        done < <(awk -v socket="$socket" \
+          '$4 == "00010000" && $5 == "0001" && $6 == "01" && $8 == socket { print $7 }' \
+          "/proc/$nexus_pid/net/unix")
+        return 1
+      }
+      for _attempt in $(seq 1 300); do
+        if ! kill -0 "$nexus_pid" 2>/dev/null; then
+          echo "Flow main process exited before readiness" >&2
+          exit 1
+        fi
+        if owns_listener "$runtime_dir/flow.sock" && owns_listener "$runtime_dir/flow-meta.sock"; then
+          exit 0
+        fi
+        sleep 0.1
+      done
+      echo "Flow main process did not own both listeners before readiness timeout" >&2
+      exit 1
+    '';
+  };
   unit = pkgs.writeText "flow-nexus.service" ''
     [Unit]
     Description=Flow Nexus
@@ -82,17 +121,29 @@ let
     Environment=PATH=%h/.local/bin:%h/.nix-profile/bin:/etc/profiles/per-user/%u/bin:/run/current-system/sw/bin
     ExecStartPre=${initialize}/bin/initialize-declared-flow
     ExecStart=${runtime}/bin/flow-nexus "{ %t/flow/flow.sock %t/flow/flow-meta.sock %h/.local/state/flow-production/flow.sema }"
+    ExecStartPost=${ready}/bin/wait-declared-flow-ready
     Restart=on-failure
     RestartSec=2
     [Install]
     WantedBy=default.target
   '';
 in
-pkgs.runCommand "flow-deployment" { passthru = { inherit runtime unit initialize; }; } ''
-  mkdir -p "$out/bin" "$out/share/systemd/user"
-  for name in flow flow-meta flow-nexus flow-hook; do
-    test -x "${runtime}/bin/$name"
-    ln -s "${runtime}/bin/$name" "$out/bin/$name"
-  done
-  cp ${unit} "$out/share/systemd/user/flow-nexus.service"
-''
+pkgs.runCommand "flow-deployment"
+  {
+    passthru = {
+      inherit
+        runtime
+        unit
+        initialize
+        ready
+        ;
+    };
+  }
+  ''
+    mkdir -p "$out/bin" "$out/share/systemd/user"
+    for name in flow flow-meta flow-nexus flow-hook; do
+      test -x "${runtime}/bin/$name"
+      ln -s "${runtime}/bin/$name" "$out/bin/$name"
+    done
+    cp ${unit} "$out/share/systemd/user/flow-nexus.service"
+  ''
