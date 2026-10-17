@@ -19,7 +19,7 @@ let
   };
   homeStart = module.config.content.systemd.user.services.flow-nexus.Service.ExecStart;
 in
-assert inputs.flow.sourceInfo.rev == "146534545bd6f657eade412deef6e80682d7a776";
+assert inputs.flow.sourceInfo.rev == "cf72e9939317ac0dff03e5acd9432155ede48cfd";
 assert !(inputs ? flow-next);
 assert
   module.config.content.systemd.user.services.flow-nexus.Service.ExecStartPost
