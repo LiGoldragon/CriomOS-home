@@ -2347,17 +2347,17 @@
         "tree-sitter-dotos": "tree-sitter-dotos"
       },
       "locked": {
-        "lastModified": 1792203381,
-        "narHash": "sha256-AUf1T0uKKrBIzMuRKk6/mEv70GmKp3tOJS2pmFwy/Nc=",
+        "lastModified": 1792203895,
+        "narHash": "sha256-5rxkrRm/PWDkhlaRf2NITPxk8IBMY30/zdwv0PQ1uvo=",
         "owner": "LiGoldragon",
         "repo": "primary",
-        "rev": "c1f1d8c158c394a3a994d9737ec5371e60d3592b",
+        "rev": "330ee63a4ab1e677cf7c588bbb9c76a0e4eef5f4",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "primary",
-        "rev": "c1f1d8c158c394a3a994d9737ec5371e60d3592b",
+        "rev": "330ee63a4ab1e677cf7c588bbb9c76a0e4eef5f4",
         "type": "github"
       }
     },
