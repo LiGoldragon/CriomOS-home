@@ -82,9 +82,8 @@ let
       queries=$(mktemp)
       trap 'rm -f "$queries"' EXIT
       ${pkgs.babashka}/bin/bb ${./leave-outs.clj} ${inputs.primary}/config/main-flow > "$queries"
-      while IFS= read -r query; do
-        FLOW_META_SOCKET="''${XDG_RUNTIME_DIR:?}/flow/flow-meta.sock" ${runtime}/bin/flow-meta "$query"
-      done < "$queries"
+      FLOW_META_SOCKET="''${XDG_RUNTIME_DIR:?}/flow/flow-meta.sock" \
+        ${pkgs.bash}/bin/bash ${./apply-leave-outs.sh} ${runtime}/bin/flow-meta "$queries"
     '';
   };
   ready = pkgs.writeShellApplication {

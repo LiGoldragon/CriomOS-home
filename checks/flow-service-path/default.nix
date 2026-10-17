@@ -37,6 +37,34 @@ pkgs.runCommand "flow-service-path"
     ];
   }
   ''
+    # A typed refusal has exit zero at the CLI; the helper must still fail
+    # and must not submit the following configuration query.
+    cat > fake-flow-meta <<'SH'
+    #!${pkgs.bash}/bin/bash
+    printf '%s\n' "$1" >> "$CALL_LOG"
+    case "$REPLY_MODE" in
+      configured) printf '%s\n' Configured ;;
+      refused) printf '%s\n' ConfigureRejected.Conflict ;;
+      transport) exit 7 ;;
+      empty) : ;;
+    esac
+    SH
+    chmod +x fake-flow-meta
+    printf '%s\n' first second > default-queries
+    export CALL_LOG="$PWD/default-calls"
+    for mode in configured refused transport empty; do
+      export REPLY_MODE="$mode"
+      : > "$CALL_LOG"
+      status=0
+      ${pkgs.bash}/bin/bash ${../../packages/flow-deployment/apply-leave-outs.sh} "$PWD/fake-flow-meta" default-queries >default-reply 2>default-error || status=$?
+      if test "$mode" = configured; then
+        test "$status" -eq 0
+        test "$(wc -l < "$CALL_LOG")" -eq 2
+      else
+        test "$status" -ne 0
+        test "$(wc -l < "$CALL_LOG")" -eq 1
+      fi
+    done
     for name in flow flow-meta flow-nexus flow-hook; do
       test "$(readlink -f ${deployment}/bin/$name)" = "${runtime}/bin/$name"
     done
