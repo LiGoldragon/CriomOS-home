@@ -7,14 +7,16 @@ if [[ $# -ne 2 ]]; then
 fi
 flow_meta=$1
 query_file=$2
-while IFS= read -r query; do
-  if ! reply=$("$flow_meta" "$query"); then
-    printf '%s\n' 'Flow leave-out configuration command failed' >&2
-    exit 1
-  fi
-  if [[ $reply != Configured ]]; then
-    printf 'Flow leave-out configuration refused: %s\n' "$reply" >&2
-    exit 1
-  fi
-  printf '%s\n' "$reply"
-done < "$query_file"
+mapfile -t queries < "$query_file"
+if [[ ${#queries[@]} -ne 1 || -z ${queries[0]} ]]; then
+  printf '%s\n' 'Expected one whole Flow leave-out declaration' >&2
+  exit 1
+fi
+if ! reply=$("$flow_meta" "${queries[0]}"); then
+  printf '%s\n' 'Flow leave-out configuration command failed' >&2
+  exit 1
+fi
+case "$reply" in
+  Configured.Replaced|Configured.Unchanged) printf '%s\n' "$reply" ;;
+  *) printf 'Flow leave-out configuration refused: %s\n' "$reply" >&2; exit 1 ;;
+esac

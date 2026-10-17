@@ -19,7 +19,7 @@ let
   };
   homeStart = module.config.content.systemd.user.services.flow-nexus.Service.ExecStart;
 in
-assert inputs.flow.sourceInfo.rev == "f624723140907e9a4efbc00453ad13f43fd39f65";
+assert inputs.flow.sourceInfo.rev == "f111805de99494addb7cb3c3f668723373cfa123";
 assert !(inputs ? flow-next);
 assert
   module.config.content.systemd.user.services.flow-nexus.Service.ExecStartPost
@@ -37,29 +37,30 @@ pkgs.runCommand "flow-service-path"
     ];
   }
   ''
-    # A typed refusal has exit zero at the CLI; the helper must still fail
-    # and must not submit the following configuration query.
+    # One family declaration is atomic; accept only the two typed successes.
+    # Zero-exit refusals and empty/transport replies must fail.
     cat > fake-flow-meta <<'SH'
     #!${pkgs.bash}/bin/bash
     printf '%s\n' "$1" >> "$CALL_LOG"
     case "$REPLY_MODE" in
-      configured) printf '%s\n' Configured ;;
-      refused) printf '%s\n' ConfigureRejected.Conflict ;;
+      replaced) printf '%s\n' Configured.Replaced ;;
+      unchanged) printf '%s\n' Configured.Unchanged ;;
+      refused) printf '%s\n' ConfigureRejected.DuplicateEntry ;;
       transport) exit 7 ;;
       empty) : ;;
     esac
     SH
     chmod +x fake-flow-meta
-    printf '%s\n' first second > default-queries
+    printf '%s\n' 'Configure.LeaveOuts.[ ]' > default-queries
     export CALL_LOG="$PWD/default-calls"
-    for mode in configured refused transport empty; do
+    for mode in replaced unchanged refused transport empty; do
       export REPLY_MODE="$mode"
       : > "$CALL_LOG"
       status=0
       ${pkgs.bash}/bin/bash ${../../packages/flow-deployment/apply-leave-outs.sh} "$PWD/fake-flow-meta" default-queries >default-reply 2>default-error || status=$?
-      if test "$mode" = configured; then
+      if test "$mode" = replaced || test "$mode" = unchanged; then
         test "$status" -eq 0
-        test "$(wc -l < "$CALL_LOG")" -eq 2
+        test "$(wc -l < "$CALL_LOG")" -eq 1
       else
         test "$status" -ne 0
         test "$(wc -l < "$CALL_LOG")" -eq 1
@@ -101,7 +102,7 @@ pkgs.runCommand "flow-service-path"
     export XDG_RUNTIME_DIR="$TMPDIR/accepted-runtime"
     mkdir -p "$HOME" "$XDG_RUNTIME_DIR"
     "$initializer" > accepted.log 2>&1
-    grep -Fx 'Configured' accepted.log
+    grep -Fx 'Configured.Replaced' accepted.log
     # Startup ordering must wait for this actual daemon, not a stale pathname.
     ${runtime}/bin/flow-nexus "{ $XDG_RUNTIME_DIR/flow/flow.sock $XDG_RUNTIME_DIR/flow/flow-meta.sock $HOME/.local/state/flow-production/flow.sema }" >daemon.log 2>&1 &
     daemon_pid=$!

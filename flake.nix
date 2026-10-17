@@ -24,7 +24,7 @@
 
     # Primary's immutable Curriculum package provides the user CLI and Nexus.
     primary = {
-      url = "github:LiGoldragon/primary/330ee63a4ab1e677cf7c588bbb9c76a0e4eef5f4";
+      url = "github:LiGoldragon/primary/41443c729e34f550351989eaca1adc3ddbe9e084";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -107,7 +107,7 @@
 
     # Flow Nexus is a pinned Home-managed service. Keep the package, client,
     # and user unit in one immutable closure.
-    flow.url = "github:LiGoldragon/flow/f624723140907e9a4efbc00453ad13f43fd39f65";
+    flow.url = "github:LiGoldragon/flow/f111805de99494addb7cb3c3f668723373cfa123";
     flow.inputs.nixpkgs.follows = "nixpkgs";
 
     # Standalone compatibility messenger used by the live Flow routes. Home
@@ -198,7 +198,7 @@
     # the additive v2 -> v3 store migration — the deployed store, born at v2,
     # is preserved aside and re-stamped on first open — on the
     # incident-hardened sema-engine 0.11.2 orchestrate 0.14.1 runs.
-    message.url = "github:LiGoldragon/message/f27d622dda6e918dec70babf1444c985fd4d4911";
+    message.url = "github:LiGoldragon/message/95ec0d890be74b697d296c4625a1c89b44648382";
     message.inputs.nixpkgs.follows = "nixpkgs";
     message.inputs.crane.follows = "crane";
 

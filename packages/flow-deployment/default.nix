@@ -69,8 +69,12 @@ let
         sleep 0.05
       done
       child_listens
-      FLOW_META_SOCKET="$runtime_dir/flow-meta.sock" ${runtime}/bin/flow-meta \
-        "Configure.Nexus.{ $HOME/primary { ${stableClient}/bin/codex-stable-flow-client $HOME/.codex-next $HOME/.codex-next/app-server-control/app-server-control.sock [ gpt-5.6-sol gpt-5.6-luna ] } { ${nextClient}/bin/codex-next-flow-client $HOME/${nextHomeName} $HOME/${nextHomeName}/app-server-control/app-server-control.sock [ gpt-6.1-sol gpt-6-sol gpt-6-luna gpt-6-astra ] } [ { Claude [ / «!» # ] [ esc esc ] [ enter ] } { Codex [ / «!» ] [ esc ] [] } ] [ Psyche ] $XDG_RUNTIME_DIR/message/message.sock ${message}/bin/message-nexus 60 }"
+      reply=$(FLOW_META_SOCKET="$runtime_dir/flow-meta.sock" ${runtime}/bin/flow-meta \
+        "Configure.Nexus.{ $HOME/primary { ${stableClient}/bin/codex-stable-flow-client $HOME/.codex-next $HOME/.codex-next/app-server-control/app-server-control.sock [ gpt-5.6-sol gpt-5.6-luna ] } { ${nextClient}/bin/codex-next-flow-client $HOME/${nextHomeName} $HOME/${nextHomeName}/app-server-control/app-server-control.sock [ gpt-6.1-sol gpt-6-sol gpt-6-luna gpt-6-astra ] } [ { Claude [ / «!» # ] [ esc esc ] [ enter ] } { Codex [ / «!» ] [ esc ] [] } ] [ Psyche ] $XDG_RUNTIME_DIR/message/message.sock ${message}/bin/message-nexus 60 }")
+      case "$reply" in
+        Configured.Replaced|Configured.Unchanged) printf '%s\n' "$reply" ;;
+        *) printf 'Flow Nexus configuration refused: %s\n' "$reply" >&2; exit 1 ;;
+      esac
       wait "$child"
       trap - EXIT
     '';
