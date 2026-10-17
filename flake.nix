@@ -107,7 +107,7 @@
 
     # Flow Nexus is a pinned Home-managed service. Keep the package, client,
     # and user unit in one immutable closure.
-    flow.url = "github:LiGoldragon/flow/b4990e0692c48b9c64baa77fb5b7bf2bfb6c861e";
+    flow.url = "github:LiGoldragon/flow/146534545bd6f657eade412deef6e80682d7a776";
     flow.inputs.nixpkgs.follows = "nixpkgs";
 
     # Standalone compatibility messenger used by the live Flow routes. Home
@@ -198,7 +198,7 @@
     # the additive v2 -> v3 store migration — the deployed store, born at v2,
     # is preserved aside and re-stamped on first open — on the
     # incident-hardened sema-engine 0.11.2 orchestrate 0.14.1 runs.
-    message.url = "github:LiGoldragon/message/d60ce580a6d65d98c08f742ab512a05615d2869a";
+    message.url = "github:LiGoldragon/message/d6146bb3bd8b449d54950a6af1ec45bca05ba76a";
     message.inputs.nixpkgs.follows = "nixpkgs";
     message.inputs.crane.follows = "crane";
 
