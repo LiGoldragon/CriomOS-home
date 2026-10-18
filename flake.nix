@@ -26,8 +26,12 @@
     primary = {
       url = "github:LiGoldragon/primary/a459999f599a9ecce341c3e710fd87f57cc1d119";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.curriculum = {
+        url = "github:LiGoldragon/Curriculum/2ec28623bac79e1a0b7f692c845e0f3ab5d11714";
+        flake = false;
+      };
       inputs.field-context = {
-        url = "github:LiGoldragon/field-context/f2abe483af1e5f55a441a691a068925b47593fb1";
+        url = "github:LiGoldragon/field-context/8ef1ca40221d948e1364cbe5493d32148c5ad2cd";
         flake = false;
       };
     };
@@ -35,7 +39,7 @@
     # The CLI reads role configuration at the process boundary; keep the
     # matching authored Curriculum source available to the Home service.
     curriculum-source = {
-      url = "github:LiGoldragon/Curriculum/d7bb1375338cb9da30d29f1f7f5182b4766fea26";
+      url = "github:LiGoldragon/Curriculum/2ec28623bac79e1a0b7f692c845e0f3ab5d11714";
       flake = false;
     };
 
