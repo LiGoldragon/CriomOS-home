@@ -48,6 +48,10 @@ let
 in
 lib.mkMerge [
   {
+    home.sessionVariables = lib.mkIf (builtins.elem config.home.username [ "li" "bird" ]) {
+      CLAUDE_CODE_ARTIFACT_AUTO_OPEN = "0";
+    };
+
     home.packages = [
       claudeCodePackage
       (if occupied then codexStable else codexCliPackage)
