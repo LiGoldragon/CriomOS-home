@@ -7,9 +7,9 @@
 }:
 let
   enabled = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size "Min";
-  package = pkgs.callPackage ../../../../owned-agents/codex-next { };
+  package = if birdTarget then config.criomos.corePackages.codex else pkgs.callPackage ../../../../owned-agents/codex-next { };
   birdTarget = user.name == "bird" && user.hasPublicKey && user.size == "Max" && config.home.username == "bird" && config.home.homeDirectory == "/home/bird";
-  occupied = (config.home.username == "li" && config.home.homeDirectory == "/home/li") || birdTarget;
+  occupied = config.home.username == "li" && config.home.homeDirectory == "/home/li";
   # Receipt-pinned executable of the occupied endpoint.  `package` remains the
   # reproducible source package for checks; the occupied process is deliberately
   # not rebound to a rebuilt output during this rotation.
@@ -24,12 +24,16 @@ let
     umask 077
     ${pkgs.coreutils}/bin/mkdir -p ${lib.escapeShellArg nextHome}
     ${pkgs.coreutils}/bin/chmod 700 ${lib.escapeShellArg nextHome}
+    # Bird keeps the existing auth and session data in place. Never bootstrap
+    # another authentication copy as a side effect of her package upgrade.
+    ${lib.optionalString (!birdTarget) ''
     # Bootstrap account data once; never share the mutable session database.
     for file in auth.json config.toml; do
       if [ ! -e ${lib.escapeShellArg nextHome}/"$file" ] && [ -f ${lib.escapeShellArg config.home.homeDirectory}/.codex/"$file" ]; then
         ${pkgs.coreutils}/bin/install -m600 ${lib.escapeShellArg config.home.homeDirectory}/.codex/"$file" ${lib.escapeShellArg nextHome}/"$file"
       fi
     done
+    ''}
   '';
   client = pkgs.writeShellApplication {
     name = "codex-stable-remote";

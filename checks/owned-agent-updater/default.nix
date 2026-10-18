@@ -57,19 +57,10 @@ pkgs.runCommand "owned-agent-updater-negative-path"
         "${pkgs.gnupg}/bin/gpg", "${pkgs.gnupg}/bin/gpgv"
     ))
 
-    # The historical source-package updater continues to reject vendor
-    # prereleases. The canonical package is now an explicit local promotion,
-    # so this test preserves that old updater contract without using it to
-    # move the managed stable role.
-    original_fetch_json = codex.fetch_json
-    codex.fetch_json = lambda _url: [
-        {"tag_name": "rust-v0.152.0-alpha.5", "prerelease": True},
-        {"tag_name": "rust-v0.152.1"},
-    ]
-    try:
-        assert codex.latest_version() == "0.152.1"
-    finally:
-        codex.fetch_json = original_fetch_json
+    # The consumed prebuilt strategy refuses prereleases before any fetch.
+    must_fail(lambda: codex.release_manifest(
+        {"tag_name": "rust-v0.163.0-alpha.1", "prerelease": True}
+    ))
 
     assert claude_desktop.same_release_content(b"release", b"release\n")
     assert not claude_desktop.same_release_content(b"release-a", b"release-b\n")

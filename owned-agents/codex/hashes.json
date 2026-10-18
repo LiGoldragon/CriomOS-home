@@ -1,20 +1,28 @@
 {
-  "cargoHash": "sha256-GG6kOXmCdq+bZLU2ul0DIVL8lDuweayvZvXn6+bcUZw=",
-  "hash": "sha256-dNmIwOFUqtK40Myk6VD8l/4qKf9evjsAcMzm2UnJowc=",
-  "librusty_v8": {
-    "baseUrl": "https://github.com/openai/codex/releases/download/rusty-v8-v150.4.0",
-    "hashes": {
-      "aarch64-darwin": "sha256-AK27SHmISMd1UEQcaGc6XoUpuOG3PqvN7iMss5tA9KE=",
-      "aarch64-linux": "sha256-0VF+7UBUaFNwKbAF1f6ZfsdNXI01H5FrOm3yC30oEbo=",
-      "x86_64-linux": "sha256-o1x10fJuapg4haRbM0kKTr5U8FBQVosyuJz7QhswtYM="
+  "strategy": "prebuilt",
+  "targets": {
+    "aarch64-linux": {
+      "cli": {
+        "hash": "sha256-pyYeZfSpbY9MploGnGzy3Cwz3vw0HkgHis79qUYf/+Q=",
+        "url": "https://github.com/openai/codex/releases/download/rust-v0.163.0/codex-aarch64-unknown-linux-musl.tar.gz"
+      },
+      "codeModeHost": {
+        "hash": "sha256-KENWrvsZfwC3a5Eu/f266Mzz6h+JuXbd4GS3zLQyFO8=",
+        "url": "https://github.com/openai/codex/releases/download/rust-v0.163.0/codex-code-mode-host-aarch64-unknown-linux-musl.tar.gz"
+      },
+      "target": "aarch64-unknown-linux-musl"
     },
-    "profile": "ptrcomp_sandbox_release",
-    "srcBindingHashes": {
-      "aarch64-darwin": "sha256-ylrfDPicmnCtRgrnNkiy/om3SqETs8t/dXtqArdYOU8=",
-      "aarch64-linux": "sha256-dyeCauR5vbZF6Acjn7EtH44uI956bPFvXuWSaQ0dhQY=",
-      "x86_64-linux": "sha256-dyeCauR5vbZF6Acjn7EtH44uI956bPFvXuWSaQ0dhQY="
-    },
-    "version": "150.4.0"
+    "x86_64-linux": {
+      "cli": {
+        "hash": "sha256-vrM56OzZugV6a7Lcga2MpHSBLt+/D8UFbKgYeXZI3eQ=",
+        "url": "https://github.com/openai/codex/releases/download/rust-v0.163.0/codex-x86_64-unknown-linux-musl.tar.gz"
+      },
+      "codeModeHost": {
+        "hash": "sha256-MUJjEoumWS5+gHwmXe6vkoppK3Lcv+teCyDJQjtwNSk=",
+        "url": "https://github.com/openai/codex/releases/download/rust-v0.163.0/codex-code-mode-host-x86_64-unknown-linux-musl.tar.gz"
+      },
+      "target": "x86_64-unknown-linux-musl"
+    }
   },
-  "version": "0.153.4"
+  "version": "0.163.0"
 }

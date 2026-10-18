@@ -5,34 +5,22 @@
   ...
 }:
 let
-  # This stable role is a deliberate local promotion of the prior isolated
-  # candidate. It is not an assertion about upstream release maturity.
-  version = "0.158.0-alpha.9";
-  targets = {
-    x86_64-linux = {
-      target = "x86_64-unknown-linux-musl";
-      hash = "sha256-r6jIHXWayHDyGbTKysFbpa1qERB7W3sQXI2Cg7jRFnw=";
-      hostHash = "sha256-CqTxMWD+Y4QmGMt8JHTw7bKNaN8lKiPWPuh0u0apP1Q=";
-    };
-    aarch64-linux = {
-      target = "aarch64-unknown-linux-musl";
-      hash = "sha256-e202MgQU0Atua8WVlJJ/rIYksCL6j9hNMw3zOoYqPxA=";
-      hostHash = "sha256-b77gtc0Hn8RGplFvIaCIs5+o7keUbfE+Hn+dH+AT+88=";
-    };
-  };
+  manifest = builtins.fromJSON (builtins.readFile ./hashes.json);
+  version = manifest.version;
+  targets = manifest.targets;
   artifact = targets.${stdenvNoCC.hostPlatform.system};
 in
+assert manifest.strategy == "prebuilt";
 stdenvNoCC.mkDerivation {
   pname = "codex";
   inherit version;
   src = fetchurl {
-    url = "https://github.com/openai/codex/releases/download/rust-v${version}/codex-${artifact.target}.tar.gz";
-    inherit (artifact) hash;
+    inherit (artifact.cli) url hash;
   };
   codeModeHost = fetchurl {
-    url = "https://github.com/openai/codex/releases/download/rust-v${version}/codex-code-mode-host-${artifact.target}.tar.gz";
-    hash = artifact.hostHash;
+    inherit (artifact.codeModeHost) url hash;
   };
+  passthru.releaseManifest = manifest;
   sourceRoot = ".";
   dontConfigure = true;
   dontBuild = true;

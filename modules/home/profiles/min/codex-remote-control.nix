@@ -23,11 +23,14 @@ let
   # The literal is the executable in the preserved live-unit receipt.
   occupiedCodex = "/nix/store/wdj0sc69r4n9is1idfb32vcx5739ijkh-codex-0.153.4/bin/codex";
   occupiedNextCodex = "/nix/store/zbznvqk2746igprz4753clizppww5551-codex-next-0.158.0-alpha.9/bin/codex";
+  # Bird's existing next endpoint is upgraded as one matched client/server
+  # pair. The legacy stable service and Li's occupied endpoints stay frozen.
+  remoteClient = if birdTarget then "${codexCliPackage}/bin/codex" else occupiedNextCodex;
   codexStable = pkgs.writeShellApplication {
     name = "codex";
     text = ''
       export CODEX_HOME=${lib.escapeShellArg "${config.home.homeDirectory}/.codex-next"}
-      exec ${occupiedNextCodex} --remote ${lib.escapeShellArg "unix://${config.home.homeDirectory}/.codex-next/app-server-control/app-server-control.sock"} "$@"
+      exec ${remoteClient} --remote ${lib.escapeShellArg "unix://${config.home.homeDirectory}/.codex-next/app-server-control/app-server-control.sock"} "$@"
     '';
   };
   codexRemote = pkgs.callPackage ../../../../owned-agents/codex/remote.nix {
