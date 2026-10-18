@@ -26,6 +26,10 @@
     primary = {
       url = "github:LiGoldragon/primary/a459999f599a9ecce341c3e710fd87f57cc1d119";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.field-context = {
+        url = "github:LiGoldragon/field-context/f2abe483af1e5f55a441a691a068925b47593fb1";
+        flake = false;
+      };
     };
 
     # The CLI reads role configuration at the process boundary; keep the
