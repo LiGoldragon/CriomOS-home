@@ -30,6 +30,10 @@
         url = "github:LiGoldragon/Curriculum/2ec28623bac79e1a0b7f692c845e0f3ab5d11714";
         flake = false;
       };
+      inputs.psyche-context = {
+        url = "github:LiGoldragon/psyche-context/b93865116773464590a8b76996cec2bf721d1900";
+        flake = false;
+      };
       inputs.field-context = {
         url = "github:LiGoldragon/field-context/8ef1ca40221d948e1364cbe5493d32148c5ad2cd";
         flake = false;
