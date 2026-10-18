@@ -60,7 +60,7 @@ lib.mkMerge [
     # Bypass still asks a human for the dangerous-removal check.  The
     # PermissionRequest hook denies it with a rewrite message and logs every
     # request to ~/.local/state/claude/permission-requests.jsonl.  Only this
-    # event key is asserted; Herdr's SessionStart hook and other events stay
+    # hook event is asserted; Herdr's SessionStart hook and other events stay
     # user state.
     home.activation.mergeClaudePermissionDefaults = inputs.hexis.lib.mkManagedConfig {
       inherit lib pkgs hexis;
@@ -78,10 +78,14 @@ lib.mkMerge [
             ];
           }
         ];
+      } // lib.optionalAttrs (builtins.elem config.home.username [ "li" "bird" ]) {
+        env.CLAUDE_CODE_ARTIFACT_AUTO_OPEN = "0";
       };
       modes = {
         "/permissions/defaultMode" = "always";
         "/hooks/PermissionRequest" = "always";
+      } // lib.optionalAttrs (builtins.elem config.home.username [ "li" "bird" ]) {
+        "/env/CLAUDE_CODE_ARTIFACT_AUTO_OPEN" = "always";
       };
     };
 
