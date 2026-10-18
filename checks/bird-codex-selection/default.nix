@@ -58,6 +58,7 @@ assert
   birdNext
   == "${selected}/bin/codex app-server --remote-control --listen unix:///home/bird/.codex-next/app-server-control/app-server-control.sock";
 assert (next bird).Environment == [ "CODEX_HOME=/home/bird/.codex-next" ];
+assert builtins.isString (next bird).ExecStartPre;
 assert lib.hasSuffix
   "-codex-next-0.158.0-alpha.9/bin/codex app-server --remote-control --listen unix:///home/li/.codex-next/app-server-control/app-server-control.sock"
   liNext;
@@ -81,7 +82,7 @@ pkgs.runCommand "bird-codex-matched-selection" { } ''
   EXPECTED
     cmp actual expected
     # No Bird auth bootstrap or copy is introduced by its new preparation script.
-    if grep -Eq 'auth.json|config.toml|install -m600' ${builtins.head (next bird).ExecStartPre}; then
+    if grep -Eq 'auth.json|config.toml|install -m600' ${(next bird).ExecStartPre}; then
       echo 'Bird upgrade must preserve auth in place, not bootstrap another copy' >&2
       exit 1
     fi
