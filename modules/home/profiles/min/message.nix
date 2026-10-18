@@ -16,7 +16,7 @@ in
   options.criomosHome.message = {
     enable = lib.mkOption {
       type = lib.types.bool;
-      default = true;
+      default = config.criomosHome.flow.enable;
     };
     daemonBinary = lib.mkOption {
       type = lib.types.enum [ "message-nexus" ];
@@ -24,6 +24,12 @@ in
     };
   };
   config = lib.mkIf (sizeAtLeast "Min" && cfg.enable) {
+    assertions = [
+      {
+        assertion = config.criomosHome.flow.enable;
+        message = "Message Nexus requires the declared Flow Nexus to be enabled";
+      }
+    ];
     home.packages = [ deployment ];
     systemd.user.services.message-nexus = {
       Unit = {
