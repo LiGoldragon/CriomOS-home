@@ -14,7 +14,7 @@ assert builtins.elem target.codeModeHost.url (
 pkgs.runCommand "codex-consumed-release-manifest" { nativeBuildInputs = [ pkgs.python3 ]; } ''
   export PYTHONPATH=${../../scripts}
   export PYTHONDONTWRITEBYTECODE=1
-  python3 ${../../owned-agents/codex/test_update.py}
+  python3 ${../../owned-agents/codex}/test_update.py
   test "$(${package}/bin/codex --version)" = "codex-cli ${manifest.version}"
   test -x ${package}/bin/codex-code-mode-host
   touch "$out"
