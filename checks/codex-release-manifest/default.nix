@@ -7,8 +7,10 @@ in
 assert manifest.strategy == "prebuilt";
 assert package.version == manifest.version;
 assert package.releaseManifest == manifest;
-assert package.src.url == target.cli.url;
-assert package.codeModeHost.url == target.codeModeHost.url;
+assert builtins.elem target.cli.url (package.src.urls or [ package.src.url ]);
+assert builtins.elem target.codeModeHost.url (
+  package.codeModeHost.urls or [ package.codeModeHost.url ]
+);
 pkgs.runCommand "codex-consumed-release-manifest" { nativeBuildInputs = [ pkgs.python3 ]; } ''
   export PYTHONPATH=${../../scripts}
   export PYTHONDONTWRITEBYTECODE=1
