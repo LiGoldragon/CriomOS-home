@@ -21,7 +21,8 @@
                              (= (count values) (count (distinct values))))
                 (throw (ex-info "MissingOrInvalidLeaveOutDefaults" {:harness harness})))
               {:address address
-               :datom (str "{ { " (str/join " " address) " } [ "
+               :datom (str "{ { " (str/join " " address) " } "
+                           (str/capitalize (name harness)) " [ "
                            (str/join " " (map name values)) " ] }")}))
           rows)
         addresses (mapv :address entries)]
