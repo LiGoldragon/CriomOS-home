@@ -31,11 +31,11 @@
         flake = false;
       };
       inputs.psyche-context = {
-        url = "github:LiGoldragon/psyche-context/d5c7d3d02a60e9c578ab39a06ad058845013fc87";
+        url = "github:LiGoldragon/psyche-context/6c8e2666d7fcbacde6a6ab73c2f25c9fae6b99b4";
         flake = false;
       };
       inputs.field-context = {
-        url = "github:LiGoldragon/field-context/bac123952fd7a94c41f4b837a89111116bed686a";
+        url = "github:LiGoldragon/field-context/bc5fa7c160171d93d0ae9edf6b6660721fc53713";
         flake = false;
       };
     };
@@ -125,7 +125,7 @@
     # Standalone compatibility messenger used by the live Flow routes. Home
     # installs its immutable package so messenger-clj and all ten hm-* command
     # names share the same closure.
-    messenger-clj.url = "github:LiGoldragon/messenger-clj/c2edb8e1aa1f1ea31c6166f4af5743e336274276";
+    messenger-clj.url = "github:LiGoldragon/messenger-clj/48e0450b94574d3bdf153b8a6cc4cf5c593f9014";
     messenger-clj.inputs.nixpkgs.follows = "nixpkgs";
 
     # The public immutable recipe owns the audited proprietary installer source;
