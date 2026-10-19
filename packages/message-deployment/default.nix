@@ -19,7 +19,7 @@ let
 in
 pkgs.runCommand "message-deployment" { passthru = { inherit runtime unit; }; } ''
   mkdir -p "$out/bin" "$out/share/systemd/user"
-  for name in message message-meta message-nexus; do
+  for name in message message-meta message-nexus message-mcp-send; do
     test -x "${runtime}/bin/$name"
     ln -s "${runtime}/bin/$name" "$out/bin/$name"
   done

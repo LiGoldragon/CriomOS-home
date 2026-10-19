@@ -21,7 +21,7 @@
                              (= (count values) (count (distinct values))))
                 (throw (ex-info "MissingOrInvalidLeaveOutDefaults" {:harness harness})))
               {:address address
-               :datom (str "{ { " (str/join " " address) " } [ "
+               :datom (str "{ { " (str/join " " address) " } " (case harness :claude "Claude" :codex "Codex" (throw (ex-info "UnsupportedHarness" {:harness harness}))) " [ "
                            (str/join " " (map name values)) " ] }")}))
           rows)
         addresses (mapv :address entries)]

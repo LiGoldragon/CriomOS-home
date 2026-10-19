@@ -14,19 +14,21 @@ let
       criomosHome.flow = {
         enable = true;
         package = runtime;
+        stateDirectory = "flow-03521";
+        solModel = "gpt-6.1-sol";
       };
     };
   };
   homeStart = module.config.content.systemd.user.services.flow-nexus.Service.ExecStart;
 in
-assert inputs.flow.sourceInfo.rev == "67b80b3d358e412f1a489fd99493ea5a3683f6ef";
+assert inputs.flow.sourceInfo.rev == "dcb63e665588db2df853bd86e7418d8170772635";
 assert !(inputs ? flow-next);
 assert
   module.config.content.systemd.user.services.flow-nexus.Service.ExecStartPost
   == "${deployment.ready}/bin/wait-declared-flow-ready";
 assert
   homeStart
-  == "${runtime}/bin/flow-nexus \"{ %t/flow/flow.sock %t/flow/flow-meta.sock %h/.local/state/flow-production/flow.sema }\"";
+  == "${runtime}/bin/flow-nexus \"{ %t/flow/flow.sock %t/flow/flow-meta.sock %h/.local/state/flow-03521/flow.sema }\"";
 pkgs.runCommand "flow-service-path"
   {
     nativeBuildInputs = [
@@ -84,9 +86,9 @@ pkgs.runCommand "flow-service-path"
     # never send the single Configure request to a dead socket.
     export HOME="$TMPDIR/refused-home"
     export XDG_RUNTIME_DIR="$TMPDIR/refused-runtime"
-    mkdir -p "$HOME/.local/state/flow-production" "$XDG_RUNTIME_DIR/flow"
-    printf 'foreign-store-preserve' > "$HOME/.local/state/flow-production/flow.sema"
-    cp "$HOME/.local/state/flow-production/flow.sema" foreign-before
+    mkdir -p "$HOME/.local/state/flow-03521" "$XDG_RUNTIME_DIR/flow"
+    printf 'foreign-store-preserve' > "$HOME/.local/state/flow-03521/flow.sema"
+    cp "$HOME/.local/state/flow-03521/flow.sema" foreign-before
     python -c 'import os,socket; s=socket.socket(socket.AF_UNIX); s.bind(os.environ["XDG_RUNTIME_DIR"]+"/flow/flow-meta.sock"); s.close()'
     if "$initializer" > refused.log 2>&1; then
       echo "initializer accepted a foreign store" >&2
@@ -94,22 +96,47 @@ pkgs.runCommand "flow-service-path"
     fi
     grep -F 'Flow configuration child exited before socket readiness' refused.log
     ! grep -F 'Connection refused' refused.log
-    cmp foreign-before "$HOME/.local/state/flow-production/flow.sema"
+    cmp foreign-before "$HOME/.local/state/flow-03521/flow.sema"
 
     # A real configure-only child must become ready and consume exactly its
     # Configure request; no readiness connection is sent by the initializer.
     export HOME="$TMPDIR/accepted-home"
     export XDG_RUNTIME_DIR="$TMPDIR/accepted-runtime"
-    mkdir -p "$HOME" "$XDG_RUNTIME_DIR"
+    mkdir -p "$HOME/.local/state/flow-production" "$XDG_RUNTIME_DIR"
+    printf 'retained-original-cohort' > "$HOME/.local/state/flow-production/flow.sema"
+    cp "$HOME/.local/state/flow-production/flow.sema" original-cohort-before
     "$initializer" > accepted.log 2>&1
-    grep -Fx 'Configured.Replaced' accepted.log
+    test "$(grep -Ec '^Configured\.(Replaced|Unchanged)$' accepted.log)" -eq 4
+    "$initializer" > unchanged.log 2>&1
+    test "$(grep -Fc Configured.Unchanged unchanged.log)" -eq 4
+    cmp original-cohort-before "$HOME/.local/state/flow-production/flow.sema"
     # Startup ordering must wait for this actual daemon, not a stale pathname.
-    ${runtime}/bin/flow-nexus "{ $XDG_RUNTIME_DIR/flow/flow.sock $XDG_RUNTIME_DIR/flow/flow-meta.sock $HOME/.local/state/flow-production/flow.sema }" >daemon.log 2>&1 &
+    ${runtime}/bin/flow-nexus "{ $XDG_RUNTIME_DIR/flow/flow.sock $XDG_RUNTIME_DIR/flow/flow-meta.sock $HOME/.local/state/flow-03521/flow.sema }" >daemon.log 2>&1 &
     daemon_pid=$!
     trap 'kill "$daemon_pid" 2>/dev/null || true; wait "$daemon_pid" || true' EXIT
     MAINPID="$daemon_pid" ${deployment.ready}/bin/wait-declared-flow-ready
     FLOW_SOCKET="$XDG_RUNTIME_DIR/flow/flow.sock" ${runtime}/bin/flow Metaflows >metaflows.datom
     grep -F 'Listed.' metaflows.datom
+    FLOW_META_SOCKET="$XDG_RUNTIME_DIR/flow/flow-meta.sock" ${runtime}/bin/flow-meta Configuration > configuration.datom
+    python - <<'PYMODELS'
+    import re
+    from pathlib import Path
+    text = Path("configuration.datom").read_text()
+    rows = re.findall(r"\{ (Primary|Secondary|Tertiary|Quaternary) (Psyche|Mind|Field) ([^ }]+) \}", text)
+    expected = {(layer, "Psyche"): model for layer, model in zip(
+        ["Primary", "Secondary", "Tertiary", "Quaternary"],
+        ["claude-fable-5-1", "claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5"])}
+    expected.update({(layer, aspect): model for aspect in ["Mind", "Field"] for layer, model in zip(
+        ["Primary", "Secondary", "Tertiary", "Quaternary"],
+        ["gpt-6-astra", "gpt-6.1-sol", "gpt-6-luna", "gpt-6-luna"])})
+    assert len(rows) == 12, rows
+    assert {(layer, aspect): model for layer, aspect, model in rows} == expected, rows
+    PYMODELS
+    grep -F '${
+      inputs.message.packages.${pkgs.stdenv.hostPlatform.system}.default
+    }/bin/message-mcp-send' configuration.datom
+    # Original production bytes must never be opened or changed by this cohort.
+    cmp original-cohort-before "$HOME/.local/state/flow-production/flow.sema"
     kill "$daemon_pid"
     wait "$daemon_pid"
     trap - EXIT
