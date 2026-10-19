@@ -27,15 +27,15 @@
       url = "github:LiGoldragon/primary/a459999f599a9ecce341c3e710fd87f57cc1d119";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.curriculum = {
-        url = "github:LiGoldragon/Curriculum/2ec28623bac79e1a0b7f692c845e0f3ab5d11714";
+        url = "github:LiGoldragon/Curriculum/65968148b9d82ea6d70f3da0b7bf3ee36f284a06";
         flake = false;
       };
       inputs.psyche-context = {
-        url = "github:LiGoldragon/psyche-context/b93865116773464590a8b76996cec2bf721d1900";
+        url = "github:LiGoldragon/psyche-context/d5c7d3d02a60e9c578ab39a06ad058845013fc87";
         flake = false;
       };
       inputs.field-context = {
-        url = "github:LiGoldragon/field-context/8ef1ca40221d948e1364cbe5493d32148c5ad2cd";
+        url = "github:LiGoldragon/field-context/bac123952fd7a94c41f4b837a89111116bed686a";
         flake = false;
       };
     };
@@ -43,7 +43,7 @@
     # The CLI reads role configuration at the process boundary; keep the
     # matching authored Curriculum source available to the Home service.
     curriculum-source = {
-      url = "github:LiGoldragon/Curriculum/2ec28623bac79e1a0b7f692c845e0f3ab5d11714";
+      url = "github:LiGoldragon/Curriculum/65968148b9d82ea6d70f3da0b7bf3ee36f284a06";
       flake = false;
     };
 
