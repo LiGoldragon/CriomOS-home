@@ -1636,7 +1636,6 @@
       "original": {
         "owner": "LiGoldragon",
         "repo": "mind-context",
-        "rev": "e3fcd4f36d4f75e8c546e5e9596f5a48a5d8592b",
         "type": "github"
       }
     },
@@ -2347,17 +2346,17 @@
         "tree-sitter-dotos": "tree-sitter-dotos"
       },
       "locked": {
-        "lastModified": 1792213750,
-        "narHash": "sha256-gGlL4fPAkPF/B7615P/ensO+mVNQN55jSjo4XItJoX8=",
+        "lastModified": 1792457617,
+        "narHash": "sha256-DrP/8uNwyXiIdA/DSR3DXWjAYe+Xt1WVikAI66igPV4=",
         "owner": "LiGoldragon",
         "repo": "primary",
-        "rev": "a459999f599a9ecce341c3e710fd87f57cc1d119",
+        "rev": "56058cd2243f7e9c23ae21b48ce04af0d37900d9",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "primary",
-        "rev": "a459999f599a9ecce341c3e710fd87f57cc1d119",
+        "rev": "56058cd2243f7e9c23ae21b48ce04af0d37900d9",
         "type": "github"
       }
     },
