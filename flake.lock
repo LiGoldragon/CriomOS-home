@@ -1477,23 +1477,6 @@
         "type": "github"
       }
     },
-    "mentci-src": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1790627604,
-        "narHash": "sha256-kHgU1mxni6/Hcw2Jc4vb4LqA47NOvhbQXtaipZ1Dd5c=",
-        "owner": "LiGoldragon",
-        "repo": "mentci",
-        "rev": "a1eb5e2bb1a3658df530d7eea4862f94f556fc61",
-        "type": "github"
-      },
-      "original": {
-        "owner": "LiGoldragon",
-        "repo": "mentci",
-        "rev": "a1eb5e2bb1a3658df530d7eea4862f94f556fc61",
-        "type": "github"
-      }
-    },
     "message": {
       "inputs": {
         "crane": [
@@ -2464,7 +2447,6 @@
         "home-manager": "home-manager",
         "horizon": "horizon",
         "listener": "listener",
-        "mentci-src": "mentci-src",
         "message": "message",
         "messenger-clj": "messenger-clj",
         "niri-flake": "niri-flake",

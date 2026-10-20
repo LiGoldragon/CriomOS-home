@@ -216,13 +216,6 @@
 
     # One declared Message main package peers with the single Flow service.
 
-    # Mentci approval daemon source, packaged locally because it does not
-    # expose a flake.
-    mentci-src = {
-      url = "github:LiGoldragon/mentci/a1eb5e2bb1a3658df530d7eea4862f94f556fc61";
-      flake = false;
-    };
-
     # `pi` (earendil-works/pi coding-agent CLI) — TypeScript npm
     # monorepo with no upstream flake. Consumed as a non-flake source
     # input and built locally via `packages/pi/default.nix`
