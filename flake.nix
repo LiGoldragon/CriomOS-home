@@ -119,7 +119,7 @@
 
     # Flow Nexus is a pinned Home-managed service. Keep the package, client,
     # and user unit in one immutable closure.
-    flow.url = "github:LiGoldragon/flow/7e0dbc954b2ee1dd91e46e23515612d762edc89d";
+    flow.url = "github:LiGoldragon/flow/2ca790cf1a75dd5d2b329e57762ee8e9a2a2b0fe";
     flow.inputs.nixpkgs.follows = "nixpkgs";
 
     # Standalone compatibility messenger used by the live Flow routes. Home
@@ -596,6 +596,7 @@
             inherit inputs;
           };
           flow-service-path = checkPkgs.callPackage ./checks/flow-service-path { inherit inputs; };
+          context-deploy = checkPkgs.callPackage ./checks/context-deploy { };
           flow-message-next = checkPkgs.callPackage ./checks/flow-message-next { inherit inputs; };
           herdr-toast-delivery = checkPkgs.callPackage ./checks/herdr-toast-delivery { inherit inputs; };
           herdr-agent-executable = checkPkgs.callPackage ./checks/herdr-agent-executable { inherit inputs; };

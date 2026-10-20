@@ -34,6 +34,35 @@ let
   nextClient = clientConfiguration.criomosHome.codexNextCandidate.clientPackage;
   nextHomeName = ".codex-next-${clientConfiguration.criomosHome.codexNextCandidate.hash}";
   models = "Configure.Models.[ { Primary Psyche claude-fable-5-1 } { Secondary Psyche claude-opus-5-5 } { Tertiary Psyche claude-sonnet-5-5 } { Quaternary Psyche claude-haiku-5-5 } { Primary Mind gpt-6-astra } { Secondary Mind ${solModel} } { Tertiary Mind gpt-6-luna } { Quaternary Mind gpt-6-luna } { Primary Field gpt-6-astra } { Secondary Field ${solModel} } { Tertiary Field gpt-6-luna } { Quaternary Field gpt-6-luna } ]";
+  # The refresh threshold of each model a seat runs: past it a flow is given
+  # no new message and is replaced as it goes idle. An OpenAI model's is
+  # lower than a Claude model's.
+  claudeRefreshTokens = 200000;
+  openAiRefreshTokens = 150000;
+  claudeModels = [
+    "claude-fable-5-1"
+    "claude-opus-5-5"
+    "claude-sonnet-5-5"
+    "claude-haiku-5-5"
+  ];
+  openAiModels = [
+    "gpt-6-astra"
+    "gpt-6.1-sol"
+    "gpt-6-sol"
+    "gpt-6-luna"
+    "gpt-5.6-sol"
+    "gpt-5.6-luna"
+  ];
+  thresholds = "Configure.Thresholds.[ ${
+    builtins.concatStringsSep " " (
+      map (model: "{ ${model} ${toString claudeRefreshTokens} }") claudeModels
+      ++ map (model: "{ ${model} ${toString openAiRefreshTokens} }") openAiModels
+    )
+  } ]";
+  # The seat Flow gives the investigation of a flow that compacted while it
+  # kept working; it is launched from its Metaflows declaration.
+  investigationSeat = "Psyche compaction Tertiary";
+  investigation = "Configure.Investigation.{ ${investigationSeat} }";
   initialize = pkgs.writeShellApplication {
     name = "initialize-declared-flow";
     runtimeInputs = [
@@ -46,7 +75,7 @@ let
       store="$state/flow.sema"
       mkdir -p "$state" "$runtime_dir"
       chmod 700 "$state" "$runtime_dir"
-      start="{ $runtime_dir/flow.sock $runtime_dir/flow-meta.sock $store }"
+      start="{ $runtime_dir/flow.sock $runtime_dir/flow-meta.sock $store None }"
       configure_one() {
         local query="$1" child reply status
         ${runtime}/bin/flow-nexus --configure-only "$start" &
@@ -88,6 +117,10 @@ let
       }
       configure_one "Configure.Nexus.{ $HOME/primary { ${stableClient}/bin/codex-stable-flow-client $HOME/.codex-next $HOME/.codex-next/app-server-control/app-server-control.sock [ gpt-5.6-sol gpt-5.6-luna ] } { ${nextClient}/bin/codex-next-flow-client $HOME/${nextHomeName} $HOME/${nextHomeName}/app-server-control/app-server-control.sock [ gpt-6.1-sol gpt-6-sol gpt-6-luna gpt-6-astra ] } [ { Claude [ / «!» # ] [ esc esc ] [ enter ] } { Codex [ / «!» ] [ esc ] [] } ] [ Psyche ] $XDG_RUNTIME_DIR/message/message.sock ${message}/bin/message-nexus 60 }"
       configure_one '${models}'
+      configure_one '${thresholds}'
+      configure_one '${investigation}'
+      metaflows=$(${pkgs.babashka}/bin/bb ${./metaflows.clj} ${inputs.primary}/config/main-flow '${investigationSeat}')
+      configure_one "$metaflows"
       configure_one "Configure.SendServers.[ { ${clientConfiguration.criomosHome.codexNextCandidate.package}/bin/codex ${message}/bin/message-mcp-send } ]"
       queries=$(mktemp)
       trap 'rm -f "$queries"' EXIT
@@ -152,6 +185,9 @@ pkgs.runCommand "flow-deployment"
         stateDirectory
         solModel
         models
+        thresholds
+        investigation
+        investigationSeat
         runtime
         initialize
         ready
