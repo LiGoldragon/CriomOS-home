@@ -21,6 +21,6 @@ pkgs.writeShellApplication {
   text = ''
     export FLOW_WORKSPACE="''${FLOW_WORKSPACE:-$HOME/primary}"
     export FLOW_START_LIBRARY=${inputs.primary}/tools
-    exec node ${inputs.flow-start-source}/launcher/flow-start.mjs "$@"
+    exec node ${inputs.flow}/launcher/flow-start.mjs "$@"
   '';
 }
