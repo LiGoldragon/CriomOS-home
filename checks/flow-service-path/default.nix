@@ -28,7 +28,7 @@ in
 # The service resolves its tools through the declared profiles only.
 assert !(builtins.any (entry: pkgs.lib.hasInfix ".local/bin" entry) service.Environment);
 assert service.ExecStartPre == "${deployment.initialize}/bin/initialize-declared-flow";
-assert inputs.flow.sourceInfo.rev == "ed5305eaa54a2d7b3fed0b846b7bfda2c955504d";
+assert inputs.flow.sourceInfo.rev == "2ca790cf1a75dd5d2b329e57762ee8e9a2a2b0fe";
 assert !(inputs ? flow-next);
 assert
   module.config.content.systemd.user.services.flow-nexus.Service.ExecStartPost
@@ -112,9 +112,9 @@ pkgs.runCommand "flow-service-path"
     printf 'retained-original-cohort' > "$HOME/.local/state/flow-production/flow.sema"
     cp "$HOME/.local/state/flow-production/flow.sema" original-cohort-before
     "$initializer" > accepted.log 2>&1
-    test "$(grep -Ec '^Configured\.(Replaced|Unchanged)$' accepted.log)" -eq 4
+    test "$(grep -Ec '^Configured\.(Replaced|Unchanged)$' accepted.log)" -eq 7
     "$initializer" > unchanged.log 2>&1
-    test "$(grep -Fc Configured.Unchanged unchanged.log)" -eq 4
+    test "$(grep -Fc Configured.Unchanged unchanged.log)" -eq 7
     cmp original-cohort-before "$HOME/.local/state/flow-production/flow.sema"
     # Startup ordering must wait for this actual daemon, not a stale pathname.
     ${runtime}/bin/flow-nexus "{ $XDG_RUNTIME_DIR/flow/flow.sock $XDG_RUNTIME_DIR/flow/flow-meta.sock $HOME/.local/state/flow-03521/flow.sema None }" >daemon.log 2>&1 &
