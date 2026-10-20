@@ -48,7 +48,7 @@ pin() {
   local attempt count
   for attempt in 1 2 3; do
     rm -rf "$directory"
-    jj git clone --colocate "$url" "$directory" >&2 || return 1
+    jj --quiet git clone --colocate "$url" "$directory" >&2 || return 1
     count=$(grep -cE "${prefix}[0-9a-f]{40}" "$directory/flake.nix" || true)
     if [ "$count" != 1 ]; then
       echo "$name flake.nix names ${prefix} $count times, not once" >&2
@@ -62,8 +62,8 @@ pin() {
     (cd "$directory" && nix flake lock) >&2 || return 1
     (cd "$directory" &&
       jj commit -m "Pin ${prefix#github:LiGoldragon/}${revision:0:7}: a landing the approval pipeline deploys" &&
-      jj bookmark set main -r @- &&
-      jj git push --bookmark main) >&2 &&
+      jj --quiet bookmark set main -r @- &&
+      jj --quiet git push --bookmark main) >&2 &&
       {
         git -C "$directory" rev-parse main
         return 0
@@ -86,18 +86,15 @@ deployment=$(printf '%s\n' "$accepted" | sed -nE 's/^DeployAccepted\.\{ ([0-9]+)
 [ -n "$deployment" ] ||
   refuse "the host deploy of CriomOS ${system:0:8} was not accepted: $accepted"
 terminal=""
-while IFS= read -r line; do
-  case "$line" in
-  *Some.Succeeded*)
-    terminal=Succeeded
-    break
-    ;;
-  *Some.Failed* | *Some.Rejected*)
-    terminal="$line"
-    break
-    ;;
+while [ -z "$terminal" ]; do
+  observed=$(lojix "Query.ByDeployment.{ $deployment }" 2>&1) ||
+    refuse "host deploy $deployment of CriomOS ${system:0:8} could not be read: $observed"
+  case "$observed" in
+  *Some.Succeeded*) terminal=Succeeded ;;
+  *Some.Failed* | *Some.Rejected*) terminal="$observed" ;;
+  *) sleep 2 ;;
   esac
-done < <(lojix "WatchDeployments.{ Some.$deployment None None }" 2>&1)
+done
 [ "$terminal" = Succeeded ] ||
-  refuse "host deploy $deployment of CriomOS ${system:0:8} ended: ${terminal:-the watch closed without a terminal record}"
+  refuse "host deploy $deployment of CriomOS ${system:0:8} ended: $terminal"
 printf 'Deployed.{ %s %s %s }\n' "$commit" "$home" "$system"

@@ -15,6 +15,9 @@ pkgs.runCommand "context-deploy" { } ''
   ${contextDeploy}/bin/context-deploy 'Deploy.{ /nowhere 2d9fbb6d7dc45dfe60e1109607baf95bec28cfa1 }' > unarmed || status=$?
   test "$status" -ne 0
   grep -Fx 'DeployRefused.«no host deploy request is declared for this node (criomosHome.flow.landingDeployRequest); nothing was pinned»' unarmed
+  grep -Fq 'jj --quiet git clone' ${../../packages/context-deploy/context-deploy.sh}
+  grep -Fq 'Query.ByDeployment.{ $deployment }' ${../../packages/context-deploy/context-deploy.sh}
+  ! grep -Fq 'WatchDeployments' ${../../packages/context-deploy/context-deploy.sh}
   mkdir -p "$out"
   cp malformed unarmed "$out/"
 ''
