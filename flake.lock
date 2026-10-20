@@ -1527,17 +1527,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1792437411,
-        "narHash": "sha256-EGmMT0p75/zuTG72lKVl2JAGcDUnpNinl9PYfN8Pxec=",
+        "lastModified": 1792454315,
+        "narHash": "sha256-hUcXO6RSyUZONj+8GgoSUjNf2h+j5DWv0qKZ8+tnGkU=",
         "owner": "LiGoldragon",
         "repo": "messenger-clj",
-        "rev": "48e0450b94574d3bdf153b8a6cc4cf5c593f9014",
+        "rev": "a7a40d17dd0a7a892a70accf4103e83e5ddb4957",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "messenger-clj",
-        "rev": "48e0450b94574d3bdf153b8a6cc4cf5c593f9014",
+        "rev": "a7a40d17dd0a7a892a70accf4103e83e5ddb4957",
         "type": "github"
       }
     },

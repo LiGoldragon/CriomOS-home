@@ -125,7 +125,7 @@
     # Standalone compatibility messenger used by the live Flow routes. Home
     # installs its immutable package so messenger-clj and all ten hm-* command
     # names share the same closure.
-    messenger-clj.url = "github:LiGoldragon/messenger-clj/48e0450b94574d3bdf153b8a6cc4cf5c593f9014";
+    messenger-clj.url = "github:LiGoldragon/messenger-clj/a7a40d17dd0a7a892a70accf4103e83e5ddb4957";
     messenger-clj.inputs.nixpkgs.follows = "nixpkgs";
 
     # The public immutable recipe owns the audited proprietary installer source;
