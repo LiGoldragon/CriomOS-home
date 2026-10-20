@@ -1626,11 +1626,11 @@
     "mind-context": {
       "flake": false,
       "locked": {
-        "lastModified": 1792177849,
-        "narHash": "sha256-ggmD9nF3B5s6qrxylqoazQjC1JbI5Gr47LMBUF1rIYY=",
+        "lastModified": 1792462710,
+        "narHash": "sha256-qSw2dutVgzFM3vSsvhe8YC5Z3ZCuDOMBSgjkI5JpQYg=",
         "owner": "LiGoldragon",
         "repo": "mind-context",
-        "rev": "e3fcd4f36d4f75e8c546e5e9596f5a48a5d8592b",
+        "rev": "e847ae7afb0b4a40d5dad2e00e5462e9846454ac",
         "type": "github"
       },
       "original": {
