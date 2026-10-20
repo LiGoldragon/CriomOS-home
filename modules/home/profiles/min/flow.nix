@@ -14,10 +14,6 @@ let
     inherit inputs;
     inherit (cfg) stateDirectory solModel;
   };
-  flowStart = pkgs.callPackage ../../../../packages/flow-start {
-    inherit inputs;
-    herdr = config.criomosHome.herdr.package;
-  };
   sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
   contextDeploy = pkgs.callPackage ../../../../packages/context-deploy {
     hostDeploy = cfg.landingDeployRequest;
@@ -70,10 +66,7 @@ in
         message = "Flow CLI and Nexus must use the single declared Flow package";
       }
     ];
-    home.packages = [
-      deployment
-      flowStart
-    ];
+    home.packages = [ deployment ];
     systemd.user.services.flow-nexus = {
       Unit = {
         Description = "Flow Nexus";

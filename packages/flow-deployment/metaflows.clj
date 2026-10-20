@@ -1,7 +1,7 @@
 ;; Configure.Metaflows from config/main-flow: every declared metaflow, and
 ;; each extra Address named on the command line, with the context modules a
 ;; launch of it composes: its aspect's defaults, then the row's own additions
-;; (system :modules, user :user-modules), as flow-start composes them.
+;; (system :modules, user :user-modules).
 (require '[clojure.edn :as edn]
          '[clojure.java.io :as io]
          '[clojure.string :as str])
