@@ -491,34 +491,34 @@
     "curriculum": {
       "flake": false,
       "locked": {
-        "lastModified": 1792429312,
-        "narHash": "sha256-1VWhr4JYAQ4oiDA6NWJHQfzBnhgbH8pnwF7pJdB0XJU=",
+        "lastModified": 1792456924,
+        "narHash": "sha256-E0alB3GEzu2oMtlHt76e783lLLLPytAaph3sCVaDSnQ=",
         "owner": "LiGoldragon",
         "repo": "Curriculum",
-        "rev": "65968148b9d82ea6d70f3da0b7bf3ee36f284a06",
+        "rev": "8533a4697c945f32a451a836feb41971ceb9dfb4",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "Curriculum",
-        "rev": "65968148b9d82ea6d70f3da0b7bf3ee36f284a06",
+        "rev": "8533a4697c945f32a451a836feb41971ceb9dfb4",
         "type": "github"
       }
     },
     "curriculum-source": {
       "flake": false,
       "locked": {
-        "lastModified": 1792429312,
-        "narHash": "sha256-1VWhr4JYAQ4oiDA6NWJHQfzBnhgbH8pnwF7pJdB0XJU=",
+        "lastModified": 1792456924,
+        "narHash": "sha256-E0alB3GEzu2oMtlHt76e783lLLLPytAaph3sCVaDSnQ=",
         "owner": "LiGoldragon",
         "repo": "Curriculum",
-        "rev": "65968148b9d82ea6d70f3da0b7bf3ee36f284a06",
+        "rev": "8533a4697c945f32a451a836feb41971ceb9dfb4",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "Curriculum",
-        "rev": "65968148b9d82ea6d70f3da0b7bf3ee36f284a06",
+        "rev": "8533a4697c945f32a451a836feb41971ceb9dfb4",
         "type": "github"
       }
     },
@@ -866,17 +866,17 @@
     "field-context": {
       "flake": false,
       "locked": {
-        "lastModified": 1792431730,
-        "narHash": "sha256-Qq4UJMTVXLuG3HVgrPVtfdk9TDrUPwJLdMi7lgJusX0=",
+        "lastModified": 1792456909,
+        "narHash": "sha256-dHzzxPU6LGbDfLIWCepH652sdlN0OnC60xvRS/7xjHo=",
         "owner": "LiGoldragon",
         "repo": "field-context",
-        "rev": "bc5fa7c160171d93d0ae9edf6b6660721fc53713",
+        "rev": "9469accf90cdd76d88240aa72cf1bc856fe3e08c",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "field-context",
-        "rev": "bc5fa7c160171d93d0ae9edf6b6660721fc53713",
+        "rev": "9469accf90cdd76d88240aa72cf1bc856fe3e08c",
         "type": "github"
       }
     },
