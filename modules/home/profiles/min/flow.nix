@@ -14,6 +14,10 @@ let
     inherit inputs;
     inherit (cfg) stateDirectory solModel;
   };
+  flowStart = pkgs.callPackage ../../../../packages/flow-start {
+    inherit inputs;
+    herdr = config.criomosHome.herdr.package;
+  };
   sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
 in
 {
@@ -46,7 +50,10 @@ in
         message = "Flow CLI and Nexus must use the single declared Flow package";
       }
     ];
-    home.packages = [ deployment ];
+    home.packages = [
+      deployment
+      flowStart
+    ];
     systemd.user.services.flow-nexus = {
       Unit = {
         Description = "Flow Nexus";
@@ -60,7 +67,7 @@ in
       Service = {
         Type = "simple";
         Environment = [
-          "PATH=%h/.local/bin:%h/.nix-profile/bin:/etc/profiles/per-user/%u/bin:/run/current-system/sw/bin"
+          "PATH=%h/.nix-profile/bin:/etc/profiles/per-user/%u/bin:/run/current-system/sw/bin"
         ];
         ExecStartPre = "${deployment.initialize}/bin/initialize-declared-flow";
         ExecStart = "${runtime}/bin/flow-nexus \"{ %t/flow/flow.sock %t/flow/flow-meta.sock %h/.local/state/${cfg.stateDirectory}/flow.sema }\"";

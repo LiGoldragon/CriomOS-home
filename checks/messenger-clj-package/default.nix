@@ -1,7 +1,8 @@
 { inputs, pkgs, ... }:
 let
   messengerClj = inputs.messenger-clj.packages.${pkgs.stdenv.hostPlatform.system}.default;
-  compatibilityCommands = [
+  commands = [
+    "messenger-clj"
     "hm-send"
     "hm-send-abrupt"
     "hm-list"
@@ -13,7 +14,6 @@ let
     "hm-retire"
     "hm-heartbeat-state"
   ];
-  managedCommands = [ "messenger-clj" ] ++ compatibilityCommands;
   configuration = inputs.home-manager.lib.homeManagerConfiguration {
     inherit pkgs;
     extraSpecialArgs = {
@@ -34,77 +34,17 @@ let
       }
     ];
   };
-  managedFiles = configuration.config.home.file;
-  homeFiles = configuration.config.home-files;
-  checkLinkTargets = configuration.config.home.activation.checkLinkTargets.data;
+  homePath = configuration.config.home.path;
+  declaredFiles = builtins.attrNames configuration.config.home.file;
 in
-# The bindings carry no force: Home Manager's own collision check guards them,
-# and no activation step of this module bypasses it.
-assert builtins.all (
-  command:
-  let
-    file = managedFiles.".local/bin/${command}";
-  in
-  file.source == "${messengerClj}/bin/${command}" && !file.force
-) managedCommands;
-assert !(configuration.config.home.activation ? retireProvenLegacyMessengerBindings);
+# The commands come from the Home profile alone; no file under ~/.local/bin is declared.
+assert builtins.elem messengerClj configuration.config.home.packages;
+assert !(builtins.any (name: pkgs.lib.hasPrefix ".local/bin/" name) declaredFiles);
 pkgs.runCommand "messenger-clj-home-package" { } ''
   set -eu
-  test -x ${messengerClj}/bin/messenger-clj
-  ${pkgs.lib.concatMapStringsSep "\n  " (
-    command: "test -x ${messengerClj}/bin/${command}"
-  ) compatibilityCommands}
-  # Keep all current command entrypoints covered by both the package and the
-  # evaluated Home-managed PATH bindings.
-  test ${toString (builtins.length compatibilityCommands)} -eq 10
-
-  # Run Home Manager's generated checkLinkTargets step against a home, as
-  # activation runs it before linkGeneration.
-  generation="$TMPDIR/generation"
-  mkdir -p "$generation"
-  ln -s ${homeFiles} "$generation/home-files"
-  run_link_check() {
-    HOME="$1" newGenPath="$generation" \
-      PATH=${pkgs.lib.makeBinPath [ pkgs.bash pkgs.coreutils pkgs.findutils pkgs.diffutils pkgs.gettext pkgs.ncurses ]} \
-      ${pkgs.bash}/bin/bash -eu -c ${pkgs.lib.escapeShellArg checkLinkTargets}
-  }
-
-  absent_home="$TMPDIR/absent"
-  mkdir -p "$absent_home/.local/bin"
-  run_link_check "$absent_home"
-
-  # Two consecutive Home generations may have distinct generated-files roots
-  # while exposing the same immutable command files. Both are accepted by
-  # Home Manager's own link check before linkGeneration replaces them.
-  for generation_name in predecessor-one predecessor-two; do
-    generated_files="$TMPDIR/$generation_name-files"
-    predecessor_home="$TMPDIR/$generation_name-home"
-    mkdir -p "$generated_files/.local/bin" "$predecessor_home/.local/bin"
-    ${pkgs.lib.concatMapStringsSep "\n    " (
-      command: "ln -s ${messengerClj}/bin/${command} \"$generated_files/.local/bin/${command}\""
-    ) managedCommands}
-    ${pkgs.lib.concatMapStringsSep "\n    " (
-      command:
-      "ln -s \"$generated_files/.local/bin/${command}\" \"$predecessor_home/.local/bin/${command}\""
-    ) managedCommands}
-    run_link_check "$predecessor_home"
-  done
-
-  foreign_home="$TMPDIR/foreign"
-  mkdir -p "$foreign_home/.local/bin"
-  printf foreign > "$foreign_home/.local/bin/hm-send"
-  if run_link_check "$foreign_home"; then
-    echo "the link check accepted a foreign messenger binding" >&2
-    exit 1
-  fi
-
-  foreign_link_home="$TMPDIR/foreign-link"
-  mkdir -p "$foreign_link_home/.local/bin"
-  printf '#!/bin/sh\n' > "$TMPDIR/not-a-messenger-binding"
-  ln -s "$TMPDIR/not-a-messenger-binding" "$foreign_link_home/.local/bin/hm-send"
-  if run_link_check "$foreign_link_home"; then
-    echo "the link check accepted a foreign messenger symlink" >&2
-    exit 1
-  fi
+  ${pkgs.lib.concatMapStringsSep "\n  " (command: ''
+    test -x ${messengerClj}/bin/${command}
+    test "$(readlink -f ${homePath}/bin/${command})" = "$(readlink -f ${messengerClj}/bin/${command})"
+  '') commands}
   touch "$out"
 ''
