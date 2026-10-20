@@ -121,17 +121,11 @@
     # and user unit in one immutable closure.
     flow.url = "github:LiGoldragon/flow/2ca790cf1a75dd5d2b329e57762ee8e9a2a2b0fe";
     flow.inputs.nixpkgs.follows = "nixpkgs";
-    # The flow-start launcher source; it joins the flow pin when the Flow
-    # package is next repinned to a revision that carries it.
-    flow-start-source = {
-      url = "github:LiGoldragon/flow/2d4cf44f09a5d9b6ea2857d0f4b8470d997f7693";
-      flake = false;
-    };
 
     # Standalone compatibility messenger used by the live Flow routes. Home
     # installs its immutable package so messenger-clj and all ten hm-* command
     # names share the same closure.
-    messenger-clj.url = "github:LiGoldragon/messenger-clj/a7a40d17dd0a7a892a70accf4103e83e5ddb4957";
+    messenger-clj.url = "github:LiGoldragon/messenger-clj/cb0e384e5e091cf9cf1725311ad4490644c29e26";
     messenger-clj.inputs.nixpkgs.follows = "nixpkgs";
 
     # The public immutable recipe owns the audited proprietary installer source;
