@@ -1230,17 +1230,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1792466772,
-        "narHash": "sha256-618GWT//TNBN51ZdNxMwmvkhzjv7sibgpOUdmX6vqLM=",
+        "lastModified": 1792470325,
+        "narHash": "sha256-cFFzasN9j//dh6KhZssTH7WHZxUdGyzU9WmB1Bifq5g=",
         "owner": "LiGoldragon",
         "repo": "flow",
-        "rev": "805b6edf4c89365de5d58f03e3fafeae3c23842f",
+        "rev": "f93c803fb748123e1f8ad6486c09d1fbc5ac0f8b",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "flow",
-        "rev": "805b6edf4c89365de5d58f03e3fafeae3c23842f",
+        "rev": "f93c803fb748123e1f8ad6486c09d1fbc5ac0f8b",
         "type": "github"
       }
     },

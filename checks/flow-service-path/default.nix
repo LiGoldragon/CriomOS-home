@@ -28,7 +28,7 @@ in
 # The service resolves its tools through the declared profiles only.
 assert !(builtins.any (entry: pkgs.lib.hasInfix ".local/bin" entry) service.Environment);
 assert service.ExecStartPre == "${deployment.initialize}/bin/initialize-declared-flow";
-assert inputs.flow.sourceInfo.rev == "805b6edf4c89365de5d58f03e3fafeae3c23842f";
+assert inputs.flow.sourceInfo.rev == "f93c803fb748123e1f8ad6486c09d1fbc5ac0f8b";
 assert !(inputs ? flow-next);
 assert
   module.config.content.systemd.user.services.flow-nexus.Service.ExecStartPost
