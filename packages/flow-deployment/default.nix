@@ -46,7 +46,7 @@ let
       store="$state/flow.sema"
       mkdir -p "$state" "$runtime_dir"
       chmod 700 "$state" "$runtime_dir"
-      start="{ $runtime_dir/flow.sock $runtime_dir/flow-meta.sock $store }"
+      start="{ $runtime_dir/flow.sock $runtime_dir/flow-meta.sock $store None }"
       configure_one() {
         local query="$1" child reply status
         ${runtime}/bin/flow-nexus --configure-only "$start" &

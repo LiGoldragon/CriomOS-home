@@ -16,23 +16,26 @@ let
         package = runtime;
         stateDirectory = "flow-03521";
         solModel = "gpt-6.1-sol";
+        landingRepository = "/git/github.com/LiGoldragon/psyche-context";
+        landingDeployRequest = null;
       };
     };
   };
   service = module.config.content.systemd.user.services.flow-nexus.Service;
   homeStart = service.ExecStart;
+  contextDeploy = pkgs.callPackage ../../packages/context-deploy { };
 in
 # The service resolves its tools through the declared profiles only.
 assert !(builtins.any (entry: pkgs.lib.hasInfix ".local/bin" entry) service.Environment);
 assert service.ExecStartPre == "${deployment.initialize}/bin/initialize-declared-flow";
-assert inputs.flow.sourceInfo.rev == "fb5251b0bee73b3e43eef63470b857fe5f4b6d29";
+assert inputs.flow.sourceInfo.rev == "595479ef79dee55381daa5ecf2668b911f695ac5";
 assert !(inputs ? flow-next);
 assert
   module.config.content.systemd.user.services.flow-nexus.Service.ExecStartPost
   == "${deployment.ready}/bin/wait-declared-flow-ready";
 assert
   homeStart
-  == "${runtime}/bin/flow-nexus \"{ %t/flow/flow.sock %t/flow/flow-meta.sock %h/.local/state/flow-03521/flow.sema }\"";
+  == "${runtime}/bin/flow-nexus \"{ %t/flow/flow.sock %t/flow/flow-meta.sock %h/.local/state/flow-03521/flow.sema Some.{ /git/github.com/LiGoldragon/psyche-context ${contextDeploy}/bin/context-deploy } }\"";
 pkgs.runCommand "flow-service-path"
   {
     nativeBuildInputs = [
@@ -114,7 +117,7 @@ pkgs.runCommand "flow-service-path"
     test "$(grep -Fc Configured.Unchanged unchanged.log)" -eq 4
     cmp original-cohort-before "$HOME/.local/state/flow-production/flow.sema"
     # Startup ordering must wait for this actual daemon, not a stale pathname.
-    ${runtime}/bin/flow-nexus "{ $XDG_RUNTIME_DIR/flow/flow.sock $XDG_RUNTIME_DIR/flow/flow-meta.sock $HOME/.local/state/flow-03521/flow.sema }" >daemon.log 2>&1 &
+    ${runtime}/bin/flow-nexus "{ $XDG_RUNTIME_DIR/flow/flow.sock $XDG_RUNTIME_DIR/flow/flow-meta.sock $HOME/.local/state/flow-03521/flow.sema None }" >daemon.log 2>&1 &
     daemon_pid=$!
     trap 'kill "$daemon_pid" 2>/dev/null || true; wait "$daemon_pid" || true' EXIT
     MAINPID="$daemon_pid" ${deployment.ready}/bin/wait-declared-flow-ready
