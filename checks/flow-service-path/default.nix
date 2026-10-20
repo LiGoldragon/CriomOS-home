@@ -16,7 +16,7 @@ let
         package = runtime;
         stateDirectory = "flow-03521";
         solModel = "gpt-6.1-sol";
-        landingRepository = "/git/github.com/LiGoldragon/psyche-context";
+        landingRepository = null;
         landingDeployRequest = null;
       };
     };
@@ -35,7 +35,7 @@ assert
   == "${deployment.ready}/bin/wait-declared-flow-ready";
 assert
   homeStart
-  == "${runtime}/bin/flow-nexus \"{ %t/flow/flow.sock %t/flow/flow-meta.sock %h/.local/state/flow-03521/flow.sema Some.{ /git/github.com/LiGoldragon/psyche-context ${contextDeploy}/bin/context-deploy } }\"";
+  == "${runtime}/bin/flow-nexus \"{ %t/flow/flow.sock %t/flow/flow-meta.sock %h/.local/state/flow-03521/flow.sema None }\"";
 pkgs.runCommand "flow-service-path"
   {
     nativeBuildInputs = [

@@ -50,8 +50,8 @@ in
     };
     landingRepository = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
-      default = "/git/github.com/LiGoldragon/psyche-context";
-      description = "Checkout whose main commits are landings the Flow Nexus deploys; null runs no approval pipeline.";
+      default = null;
+      description = "Checkout whose main commits are landings the Flow Nexus deploys; null runs no approval pipeline (the default).";
     };
     landingDeployRequest = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
