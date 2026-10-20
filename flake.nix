@@ -31,7 +31,7 @@
         flake = false;
       };
       inputs.psyche-context = {
-        url = "github:LiGoldragon/psyche-context/6c8e2666d7fcbacde6a6ab73c2f25c9fae6b99b4";
+        url = "github:LiGoldragon/psyche-context/2d9fbb6d7dc45dfe60e1109607baf95bec28cfa1";
         flake = false;
       };
       inputs.field-context = {
