@@ -1,7 +1,7 @@
 {
   pkgs,
   inputs,
-  herdr,
+  herdr ? pkgs.callPackage ../herdr { inherit inputs; },
   ...
 }:
 let
