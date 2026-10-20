@@ -35,7 +35,7 @@
         flake = false;
       };
       inputs.field-context = {
-        url = "github:LiGoldragon/field-context/ed08a8d2914456bf963ecda595ca140b83a7ad80";
+        url = "github:LiGoldragon/field-context/bec85a0a3f046171b423155fa31a288b9fd9a66b";
         flake = false;
       };
     };
