@@ -28,7 +28,7 @@ in
 # The service resolves its tools through the declared profiles only.
 assert !(builtins.any (entry: pkgs.lib.hasInfix ".local/bin" entry) service.Environment);
 assert service.ExecStartPre == "${deployment.initialize}/bin/initialize-declared-flow";
-assert inputs.flow.sourceInfo.rev == "fc53f4f45594e4a235488ad396fc8716b0e6d0f9";
+assert inputs.flow.sourceInfo.rev == "805b6edf4c89365de5d58f03e3fafeae3c23842f";
 assert !(inputs ? flow-next);
 assert
   module.config.content.systemd.user.services.flow-nexus.Service.ExecStartPost
@@ -146,6 +146,17 @@ pkgs.runCommand "flow-service-path"
     kill "$daemon_pid"
     wait "$daemon_pid"
     trap - EXIT
+    # The activation's store check opens the store this Flow wrote, and
+    # refuses one it cannot open, without changing either.
+    cp "$HOME/.local/state/flow-03521/flow.sema" checked-before
+    ${runtime}/bin/flow-store-check "{ $HOME/.local/state/flow-03521/flow.sema }" > store-check.datom
+    grep -Fx "Opens.$HOME/.local/state/flow-03521/flow.sema" store-check.datom
+    cmp checked-before "$HOME/.local/state/flow-03521/flow.sema"
+    status=0
+    ${runtime}/bin/flow-store-check "{ $TMPDIR/refused-home/.local/state/flow-03521/flow.sema }" > foreign-check.datom || status=$?
+    test "$status" -ne 0
+    grep -F 'Refused.' foreign-check.datom
+    cmp foreign-before "$TMPDIR/refused-home/.local/state/flow-03521/flow.sema"
     python -c 'import os,signal,socket; root=os.environ["XDG_RUNTIME_DIR"]+"/flow/"; sockets=[socket.socket(socket.AF_UNIX) for _ in range(2)]; [(s.bind(root+n),s.listen()) for s,n in zip(sockets,["flow.sock","flow-meta.sock"])]; signal.pause()' >foreign-listener.log 2>&1 &
     foreign_pid=$!
     trap 'kill "$foreign_pid" 2>/dev/null || true; wait "$foreign_pid" || true' EXIT

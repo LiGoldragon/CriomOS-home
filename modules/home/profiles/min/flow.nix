@@ -56,7 +56,7 @@ in
     landingDeployRequest = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
       default = null;
-      description = "The lojix-meta host deploy of this node, @CRIOMOS_REVISION@ standing for the CriomOS revision; null refuses every landing before anything is pinned.";
+      description = "The lojix-meta deploy that carries a landing to this node: the Deploy of the Home (or host) that serves the context, @CRIOMOS_REVISION@ standing for the CriomOS revision; null refuses every landing before anything is pinned.";
     };
   };
   config = lib.mkIf (sizeAtLeast "Min" && cfg.enable) {
@@ -67,6 +67,13 @@ in
       }
     ];
     home.packages = [ deployment ];
+    # The Flow this generation runs must open the store the running Nexus
+    # holds: Flow's store refuses a Flow older than what it holds, and a
+    # Nexus that cannot open it fails at every start. The check opens a
+    # private copy, before anything of this generation is linked.
+    home.activation.flowOpensItsStore = lib.hm.dag.entryBefore [ "writeBoundary" ] ''
+      ${runtime}/bin/flow-store-check '{ ${config.home.homeDirectory}/.local/state/${cfg.stateDirectory}/flow.sema }'
+    '';
     systemd.user.services.flow-nexus = {
       Unit = {
         Description = "Flow Nexus";

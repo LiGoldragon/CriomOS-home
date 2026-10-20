@@ -32,10 +32,14 @@ in
     ];
     home.packages = [ deployment ];
     systemd.user.services.message-nexus = {
+      # Message speaks only through the Flow Nexus: it starts whenever
+      # flow-nexus starts (WantedBy), stops and restarts with it (PartOf),
+      # and only after it is ready (After).
       Unit = {
         Description = "Message Nexus";
         Requires = [ "flow-nexus.service" ];
         After = [ "flow-nexus.service" ];
+        PartOf = [ "flow-nexus.service" ];
       };
       Service = {
         Type = "simple";
@@ -47,7 +51,10 @@ in
         Restart = "on-failure";
         RestartSec = 2;
       };
-      Install.WantedBy = [ "default.target" ];
+      Install.WantedBy = [
+        "default.target"
+        "flow-nexus.service"
+      ];
     };
   };
 }

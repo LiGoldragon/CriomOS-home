@@ -54,6 +54,8 @@ let
       assertionsPassed = builtins.all (item: item.assertion) cfg.assertions;
       requires = cfg.systemd.user.services.message-nexus.Unit.Requires or [ ];
       after = cfg.systemd.user.services.message-nexus.Unit.After or [ ];
+      partOf = cfg.systemd.user.services.message-nexus.Unit.PartOf or [ ];
+      wantedBy = cfg.systemd.user.services.message-nexus.Install.WantedBy or [ ];
     };
   paired = selection { flowEnabled = true; };
   unpaired = selection { flowEnabled = false; };
@@ -82,6 +84,9 @@ assert paired.enabled && paired.assertionsPassed;
 assert paired.services == [ "message-nexus" ];
 assert paired.requires == [ "flow-nexus.service" ];
 assert paired.after == [ "flow-nexus.service" ];
+# A flow-nexus start or restart starts or restarts Message with it.
+assert paired.partOf == [ "flow-nexus.service" ];
+assert builtins.elem "flow-nexus.service" paired.wantedBy;
 assert !unpaired.enabled && unpaired.services == [ ] && unpaired.assertionsPassed;
 assert explicitUnsupported.enabled && !explicitUnsupported.assertionsPassed;
 assert !explicitOff.enabled && explicitOff.services == [ ] && explicitOff.assertionsPassed;
