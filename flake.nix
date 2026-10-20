@@ -31,7 +31,7 @@
         flake = false;
       };
       inputs.psyche-context = {
-        url = "github:LiGoldragon/psyche-context/51731e8f2fdbb956d597febffedee0ef1e4b1946";
+        url = "github:LiGoldragon/psyche-context/de399f779e90a813e7d1576b31949711d773790a";
         flake = false;
       };
       inputs.field-context = {
@@ -119,7 +119,7 @@
 
     # Flow Nexus is a pinned Home-managed service. Keep the package, client,
     # and user unit in one immutable closure.
-    flow.url = "github:LiGoldragon/flow/90151acdcafff7f88a408fc14178f8322937031b";
+    flow.url = "github:LiGoldragon/flow/bcef263e2cd6ac7e921035bf140b51322e54b651";
     flow.inputs.nixpkgs.follows = "nixpkgs";
 
     # The retired messenger prototype, kept only for the Field monitors that
