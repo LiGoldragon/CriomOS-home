@@ -1244,6 +1244,23 @@
         "type": "github"
       }
     },
+    "flow-start-source": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1792456627,
+        "narHash": "sha256-NEtj+2F/uXsYN+14YG6+eUIwWyAA/Teb+JkPvucXKM0=",
+        "owner": "LiGoldragon",
+        "repo": "flow",
+        "rev": "2d4cf44f09a5d9b6ea2857d0f4b8470d997f7693",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LiGoldragon",
+        "repo": "flow",
+        "rev": "2d4cf44f09a5d9b6ea2857d0f4b8470d997f7693",
+        "type": "github"
+      }
+    },
     "flow_2": {
       "flake": false,
       "locked": {
@@ -2458,6 +2475,7 @@
         "field-luna-research-source": "field-luna-research-source",
         "field-monitoring-source": "field-monitoring-source",
         "flow": "flow",
+        "flow-start-source": "flow-start-source",
         "google-workspace-cli": "google-workspace-cli",
         "harness": "harness",
         "herdr": "herdr",
