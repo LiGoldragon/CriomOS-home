@@ -122,9 +122,9 @@
     flow.url = "github:LiGoldragon/flow/e8f84adfb9e2c2615fe6fef9860587dcd99728cc";
     flow.inputs.nixpkgs.follows = "nixpkgs";
 
-    # Standalone compatibility messenger used by the live Flow routes. Home
-    # installs its immutable package so messenger-clj and all ten hm-* command
-    # names share the same closure.
+    # The retired messenger prototype, kept only for the Field monitors that
+    # still name its hm-* commands (off unless enabled). Flows send through
+    # the Flow CLI; Home installs no hm-* command.
     messenger-clj.url = "github:LiGoldragon/messenger-clj/a7a40d17dd0a7a892a70accf4103e83e5ddb4957";
     messenger-clj.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -592,9 +592,6 @@
             inherit inputs;
           };
           message-service-path = checkPkgs.callPackage ./checks/message-service-path { inherit inputs; };
-          messenger-clj-package = checkPkgs.callPackage ./checks/messenger-clj-package {
-            inherit inputs;
-          };
           flow-service-path = checkPkgs.callPackage ./checks/flow-service-path { inherit inputs; };
           flow-message-next = checkPkgs.callPackage ./checks/flow-message-next { inherit inputs; };
           herdr-toast-delivery = checkPkgs.callPackage ./checks/herdr-toast-delivery { inherit inputs; };
