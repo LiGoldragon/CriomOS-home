@@ -144,23 +144,6 @@ let
       exit 1
     '';
   };
-  unit = pkgs.writeText "flow-nexus.service" ''
-    [Unit]
-    Description=Flow Nexus
-    Wants=codex-remote-control.service
-    Requires=curriculum-nexus.service
-    After=codex-remote-control.service curriculum-nexus.service
-    [Service]
-    Type=simple
-    Environment=PATH=%h/.local/bin:%h/.nix-profile/bin:/etc/profiles/per-user/%u/bin:/run/current-system/sw/bin
-    ExecStartPre=${initialize}/bin/initialize-declared-flow
-    ExecStart=${runtime}/bin/flow-nexus "{ %t/flow/flow.sock %t/flow/flow-meta.sock %h/.local/state/${stateDirectory}/flow.sema }"
-    ExecStartPost=${ready}/bin/wait-declared-flow-ready
-    Restart=on-failure
-    RestartSec=2
-    [Install]
-    WantedBy=default.target
-  '';
 in
 pkgs.runCommand "flow-deployment"
   {
@@ -170,7 +153,6 @@ pkgs.runCommand "flow-deployment"
         solModel
         models
         runtime
-        unit
         initialize
         ready
         leaveOutDefaults
@@ -178,10 +160,9 @@ pkgs.runCommand "flow-deployment"
     };
   }
   ''
-    mkdir -p "$out/bin" "$out/share/systemd/user"
+    mkdir -p "$out/bin"
     for name in flow flow-meta flow-nexus flow-hook; do
       test -x "${runtime}/bin/$name"
       ln -s "${runtime}/bin/$name" "$out/bin/$name"
     done
-    cp ${unit} "$out/share/systemd/user/flow-nexus.service"
   ''

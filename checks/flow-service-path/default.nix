@@ -19,8 +19,12 @@ let
       };
     };
   };
-  homeStart = module.config.content.systemd.user.services.flow-nexus.Service.ExecStart;
+  service = module.config.content.systemd.user.services.flow-nexus.Service;
+  homeStart = service.ExecStart;
 in
+# The service resolves its tools through the declared profiles only.
+assert !(builtins.any (entry: pkgs.lib.hasInfix ".local/bin" entry) service.Environment);
+assert service.ExecStartPre == "${deployment.initialize}/bin/initialize-declared-flow";
 assert inputs.flow.sourceInfo.rev == "dcb63e665588db2df853bd86e7418d8170772635";
 assert !(inputs ? flow-next);
 assert
@@ -71,12 +75,11 @@ pkgs.runCommand "flow-service-path"
     for name in flow flow-meta flow-nexus flow-hook; do
       test "$(readlink -f ${deployment}/bin/$name)" = "${runtime}/bin/$name"
     done
-    grep -F 'ExecStart=${runtime}/bin/flow-nexus ' ${deployment}/share/systemd/user/flow-nexus.service
+    test ! -e ${deployment}/share
     ${deployment}/bin/flow --version > cli-version
     ${deployment}/bin/flow-nexus --version > nexus-version
     test "$(cut -d ' ' -f 2 cli-version)" = "$(cut -d ' ' -f 2 nexus-version)"
-    grep -Fx 'ExecStartPost=${deployment.ready}/bin/wait-declared-flow-ready' ${deployment}/share/systemd/user/flow-nexus.service
-    initializer=$(sed -n 's/^ExecStartPre=//p' ${deployment}/share/systemd/user/flow-nexus.service)
+    initializer=${deployment.initialize}/bin/initialize-declared-flow
     grep -F '[ gpt-5.6-sol gpt-5.6-luna ]' "$initializer"
     if grep -F 'gpt-5.6-terra' "$initializer"; then
       echo "retired Terra capability in Flow initializer" >&2

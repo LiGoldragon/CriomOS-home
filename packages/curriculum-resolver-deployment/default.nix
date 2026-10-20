@@ -35,7 +35,6 @@ pkgs.runCommand "curriculum-resolver-deployment" {
     inherit (cohort) psyche-context mind-context field-context;
   };
 } ''
-  mkdir -p "$out/bin" "$out/share/systemd/user/curriculum-nexus.service.d"
+  mkdir -p "$out/bin"
   ln -s ${cli}/bin/curriculum "$out/bin/curriculum"
-  cp ${unit} "$out/share/systemd/user/curriculum-nexus.service.d/50-declared-runtime.conf"
 ''
