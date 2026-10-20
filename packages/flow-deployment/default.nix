@@ -46,7 +46,7 @@ let
       store="$state/flow.sema"
       mkdir -p "$state" "$runtime_dir"
       chmod 700 "$state" "$runtime_dir"
-      start="{ $runtime_dir/flow.sock $runtime_dir/flow-meta.sock $store }"
+      start="{ $runtime_dir/flow.sock $runtime_dir/flow-meta.sock $store None }"
       configure_one() {
         local query="$1" child reply status
         ${runtime}/bin/flow-nexus --configure-only "$start" &
@@ -92,6 +92,7 @@ let
       queries=$(mktemp)
       trap 'rm -f "$queries"' EXIT
       ${pkgs.babashka}/bin/bb ${./leave-outs.clj} ${inputs.primary}/config/main-flow > "$queries"
+      ${pkgs.babashka}/bin/bb ${./metaflows.clj} ${inputs.primary}/config/main-flow >> "$queries"
       while IFS= read -r query; do configure_one "$query"; done < "$queries"
       rm -f "$queries"
       trap - EXIT

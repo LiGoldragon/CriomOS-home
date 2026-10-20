@@ -25,14 +25,14 @@ in
 # The service resolves its tools through the declared profiles only.
 assert !(builtins.any (entry: pkgs.lib.hasInfix ".local/bin" entry) service.Environment);
 assert service.ExecStartPre == "${deployment.initialize}/bin/initialize-declared-flow";
-assert inputs.flow.sourceInfo.rev == "7e0dbc954b2ee1dd91e46e23515612d762edc89d";
+assert inputs.flow.sourceInfo.rev == "e8f84adfb9e2c2615fe6fef9860587dcd99728cc";
 assert !(inputs ? flow-next);
 assert
   module.config.content.systemd.user.services.flow-nexus.Service.ExecStartPost
   == "${deployment.ready}/bin/wait-declared-flow-ready";
 assert
   homeStart
-  == "${runtime}/bin/flow-nexus \"{ %t/flow/flow.sock %t/flow/flow-meta.sock %h/.local/state/flow-03521/flow.sema }\"";
+  == "${runtime}/bin/flow-nexus \"{ %t/flow/flow.sock %t/flow/flow-meta.sock %h/.local/state/flow-03521/flow.sema None }\"";
 pkgs.runCommand "flow-service-path"
   {
     nativeBuildInputs = [
@@ -109,17 +109,20 @@ pkgs.runCommand "flow-service-path"
     printf 'retained-original-cohort' > "$HOME/.local/state/flow-production/flow.sema"
     cp "$HOME/.local/state/flow-production/flow.sema" original-cohort-before
     "$initializer" > accepted.log 2>&1
-    test "$(grep -Ec '^Configured\.(Replaced|Unchanged)$' accepted.log)" -eq 4
+    test "$(grep -Ec '^Configured\.(Replaced|Unchanged)$' accepted.log)" -eq 5
     "$initializer" > unchanged.log 2>&1
-    test "$(grep -Fc Configured.Unchanged unchanged.log)" -eq 4
+    test "$(grep -Fc Configured.Unchanged unchanged.log)" -eq 5
     cmp original-cohort-before "$HOME/.local/state/flow-production/flow.sema"
     # Startup ordering must wait for this actual daemon, not a stale pathname.
-    ${runtime}/bin/flow-nexus "{ $XDG_RUNTIME_DIR/flow/flow.sock $XDG_RUNTIME_DIR/flow/flow-meta.sock $HOME/.local/state/flow-03521/flow.sema }" >daemon.log 2>&1 &
+    ${runtime}/bin/flow-nexus "{ $XDG_RUNTIME_DIR/flow/flow.sock $XDG_RUNTIME_DIR/flow/flow-meta.sock $HOME/.local/state/flow-03521/flow.sema None }" >daemon.log 2>&1 &
     daemon_pid=$!
     trap 'kill "$daemon_pid" 2>/dev/null || true; wait "$daemon_pid" || true' EXIT
     MAINPID="$daemon_pid" ${deployment.ready}/bin/wait-declared-flow-ready
     FLOW_SOCKET="$XDG_RUNTIME_DIR/flow/flow.sock" ${runtime}/bin/flow Metaflows >metaflows.datom
     grep -F 'Listed.' metaflows.datom
+    # A Launch starts only a declared metaflow, from its declaration.
+    FLOW_SOCKET="$XDG_RUNTIME_DIR/flow/flow.sock" ${runtime}/bin/flow 'Launch.{ { Mind nowhere Secondary } «undeclared» }' >undeclared.datom
+    grep -Fx 'StartRejected.Undeclared' undeclared.datom
     FLOW_META_SOCKET="$XDG_RUNTIME_DIR/flow/flow-meta.sock" ${runtime}/bin/flow-meta Configuration > configuration.datom
     python - <<'PYMODELS'
     import re
@@ -135,6 +138,8 @@ pkgs.runCommand "flow-service-path"
     assert len(rows) == 12, rows
     assert {(layer, aspect): model for layer, aspect, model in rows} == expected, rows
     PYMODELS
+    grep -F '{ { Psyche core Secondary } [ ' configuration.datom
+    grep -F '{ { Mind core Secondary } [ ' configuration.datom
     grep -F '${
       inputs.message.packages.${pkgs.stdenv.hostPlatform.system}.default
     }/bin/message-mcp-send' configuration.datom
