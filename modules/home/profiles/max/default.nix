@@ -9,6 +9,29 @@
 let
   inherit (lib) optionals mkIf mkMerge;
   inherit (user) isMultimediaDev;
+  chromeVersion = "156.0.8078.47";
+  chromeDebArch =
+    {
+      "x86_64-linux" = "amd64";
+      "aarch64-linux" = "arm64";
+    }
+    .${pkgs.stdenv.hostPlatform.system};
+  googleChrome =
+    if pkgs.stdenv.hostPlatform.isLinux then
+      pkgs.google-chrome.overrideAttrs (_: {
+        version = chromeVersion;
+        src = pkgs.fetchurl {
+          url = "https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_${chromeVersion}-1_${chromeDebArch}.deb";
+          hash =
+            {
+              amd64 = "sha256-bJLNIukMbj4lXXgpkVQ/ogkduGFOhTapcadDOlxNesg=";
+              arm64 = "sha256-VFeZnt355l/AUqbTRNyvJHct4AYam9IrqvmeQEPkWY8=";
+            }
+            .${chromeDebArch};
+        };
+      })
+    else
+      pkgs.google-chrome;
   sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
 
   codingPackages = [
@@ -74,7 +97,7 @@ mkMerge [
         inherit pkgs hexis;
         name = "google-chrome";
         processName = "chrome";
-        package = pkgs.google-chrome;
+        package = googleChrome;
         file = "$HOME/.config/google-chrome/Local State";
         declared = {
           devtools.remote_debugging.user-enabled = true;
