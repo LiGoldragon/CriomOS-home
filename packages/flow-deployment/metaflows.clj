@@ -17,21 +17,41 @@
                    (when-not (seq modules)
                      (throw (ex-info "MissingAspectModules" {:aspect aspect :placement placement})))
                    (map module-name modules)))
-      declared (fn [aspect topic layer system user]
+      declared (fn [aspect topic layer system user kind tools]
                  {:address [(name aspect) (str/lower-case (name topic)) (name layer)]
-                  :system (distinct (concat (defaults aspect :system) (map module-name system)))
-                  :user (distinct (concat (defaults aspect :user) (map module-name user)))})
+                  :kind kind
+                  :tools tools
+                  :system (distinct (concat (when (= kind :Regular) (defaults aspect :system))
+                                            (map module-name system)))
+                  :user (distinct (concat (when (= kind :Regular) (defaults aspect :user))
+                                          (map module-name user)))})
       entries (concat
-                (for [row rows]
-                  (declared (:aspect row) (:topic row) (:layer row) (:modules row) (:user-modules row)))
+                (for [row rows
+                      :let [kind (get row :flow-kind :Regular)
+                            tools (when (contains? row :tools) (:tools row))]]
+                  (when-not (#{:Regular :Simplified} kind)
+                    (throw (ex-info "UnknownFlowKind" {:kind kind})))
+                  (when (and (= kind :Simplified)
+                             (or (not (contains? row :tools)) (not= [] tools)
+                                 (not (seq (:modules row)))))
+                    (throw (ex-info "SimplifiedNeedsOwnPromptAndEmptyTools" {:row row})))
+                  (when (and (contains? row :tools) (not (vector? tools)))
+                    (throw (ex-info "ToolsMustBeVector" {:tools tools})))
+                  (declared (:aspect row) (:topic row) (:layer row)
+                            (:modules row) (:user-modules row) kind tools))
                 (for [address extra
                       :let [[aspect topic layer] (str/split address #"\s+")]]
-                  (declared (keyword aspect) topic (keyword layer) [] [])))
+                  (declared (keyword aspect) topic (keyword layer) [] [] :Regular nil)))
+      datom-string #(str "«" (-> (name %) (str/replace "\\" "\\\\")
+                                 (str/replace "»" "\\»")) "»")
       addresses (map :address entries)]
   (when-not (= (count addresses) (count (distinct addresses)))
     (throw (ex-info "DuplicateMetaflowDeclaration" {:addresses addresses})))
   (println (str "Configure.Metaflows.[ "
-                (str/join " " (for [{:keys [address system user]} entries]
+                (str/join " " (for [{:keys [address system user kind tools]} entries]
                                 (str "{ { " (str/join " " address) " } [ " (str/join " " system)
-                                     " ] [ " (str/join " " user) " ] }")))
+                                     " ] [ " (str/join " " user) " ] " (name kind) " "
+                                     (if (nil? tools) "Default"
+                                       (str "Explicit.[ " (str/join " " (map datom-string tools)) " ]"))
+                                     " }")))
                 " ]")))
