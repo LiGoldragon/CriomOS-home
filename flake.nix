@@ -31,11 +31,11 @@
         flake = false;
       };
       inputs.psyche-context = {
-        url = "github:LiGoldragon/psyche-context/de399f779e90a813e7d1576b31949711d773790a";
+        url = "github:LiGoldragon/psyche-context/bdf9229a6c3955609b11cc6bef64b3981e1da80c";
         flake = false;
       };
       inputs.field-context = {
-        url = "github:LiGoldragon/field-context/bec85a0a3f046171b423155fa31a288b9fd9a66b";
+        url = "github:LiGoldragon/field-context/46e9dc0fba663ad231c840dfeffcc4b4c4564514";
         flake = false;
       };
     };
