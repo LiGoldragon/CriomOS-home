@@ -31,11 +31,15 @@
         flake = false;
       };
       inputs.psyche-context = {
-        url = "github:LiGoldragon/psyche-context/de399f779e90a813e7d1576b31949711d773790a";
+        url = "github:LiGoldragon/psyche-context/3a55ca231f4b10bd18ed015a43a99919a1e4fc6c";
+        flake = false;
+      };
+      inputs.mind-context = {
+        url = "github:LiGoldragon/mind-context/b8c7e5753dd2603fc592c89b5e55d8fb8cfadd4f";
         flake = false;
       };
       inputs.field-context = {
-        url = "github:LiGoldragon/field-context/bec85a0a3f046171b423155fa31a288b9fd9a66b";
+        url = "github:LiGoldragon/field-context/873a55a2f6a6e94d2ae867821f6c9d404eb839a7";
         flake = false;
       };
     };
