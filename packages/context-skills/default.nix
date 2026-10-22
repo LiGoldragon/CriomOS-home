@@ -1,35 +1,28 @@
-# Every context module of the one pinned cohort, installed as a skill in the
-# directory each harness reads. The cohort is primary.inputs.{psyche,mind,
-# field}-context in this flake: the same revisions Curriculum composes flow
-# starts from. A landing regenerates it by moving that pin:
-#   nix build .#context-skills --override-input primary/psyche-context \
-#     github:LiGoldragon/psyche-context/<revision>
-{ pkgs, inputs, ... }:
-let
-  cohort = inputs.primary.inputs;
-  sources = [
-    cohort.psyche-context
-    cohort.mind-context
-    cohort.field-context
+# The command that regenerates the Primary workspace skill directories from
+# the main of psyche-context, mind-context and field-context as it stands.
+# It reads no flake input: a landing on main is the only thing that moves it.
+{ pkgs, ... }:
+pkgs.writeShellApplication {
+  name = "context-skills-regenerate";
+  runtimeInputs = [
+    pkgs.babashka
+    pkgs.coreutils
+    pkgs.git
+    pkgs.gnutar
+    pkgs.openssh
+    pkgs.rsync
+    pkgs.util-linux
   ];
-in
-pkgs.runCommand "context-skills"
-  {
-    nativeBuildInputs = [ pkgs.babashka ];
-    passthru = {
-      surfaces = [
-        ".claude/skills"
-        ".agents/skills"
-        ".codex/skills"
-        ".pi/skills"
-        ".opencode/skills"
-      ];
-      revisions = map (source: source.rev) sources;
-    };
-  }
-  ''
-    mkdir -p "$out"
-    bb ${./generate.clj} "$out" ${
-      pkgs.lib.concatMapStringsSep " " (source: "${source}=${source.rev}") sources
-    }
-  ''
+  excludeShellChecks = [ "SC2086" ];
+  text = ''
+    export GENERATOR=${./generate.clj}
+    ${builtins.readFile ./regenerate.sh}
+  '';
+  passthru.surfaces = [
+    ".claude/skills"
+    ".agents/skills"
+    ".codex/skills"
+    ".pi/skills"
+    ".opencode/skills"
+  ];
+}
