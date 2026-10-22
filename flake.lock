@@ -491,34 +491,34 @@
     "curriculum": {
       "flake": false,
       "locked": {
-        "lastModified": 1792695058,
-        "narHash": "sha256-jdaOq/RwFVU1vDvqxTq6VHhDe/IVYbrxdxP7CM5oMQM=",
+        "lastModified": 1792696278,
+        "narHash": "sha256-9258G0+EgbCe1quCTH24nlUEN4qzy7CAMPBaH89tbdM=",
         "owner": "LiGoldragon",
         "repo": "Curriculum",
-        "rev": "f5473d59373019e4cc9a5a0994ff90eeeffa6a9f",
+        "rev": "4d00d363c777cfc1fea7ba2e2ac342447654730a",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "Curriculum",
-        "rev": "f5473d59373019e4cc9a5a0994ff90eeeffa6a9f",
+        "rev": "4d00d363c777cfc1fea7ba2e2ac342447654730a",
         "type": "github"
       }
     },
     "curriculum-source": {
       "flake": false,
       "locked": {
-        "lastModified": 1792695058,
-        "narHash": "sha256-jdaOq/RwFVU1vDvqxTq6VHhDe/IVYbrxdxP7CM5oMQM=",
+        "lastModified": 1792696278,
+        "narHash": "sha256-9258G0+EgbCe1quCTH24nlUEN4qzy7CAMPBaH89tbdM=",
         "owner": "LiGoldragon",
         "repo": "Curriculum",
-        "rev": "f5473d59373019e4cc9a5a0994ff90eeeffa6a9f",
+        "rev": "4d00d363c777cfc1fea7ba2e2ac342447654730a",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "Curriculum",
-        "rev": "f5473d59373019e4cc9a5a0994ff90eeeffa6a9f",
+        "rev": "4d00d363c777cfc1fea7ba2e2ac342447654730a",
         "type": "github"
       }
     },
