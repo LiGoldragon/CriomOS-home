@@ -28,7 +28,7 @@ let
       directory="$1"
       url="$2"
       if [ -d "$directory/.git" ]; then
-        actual_url=$("$git" -C "$directory" remote get-url origin)
+        actual_url=$("$git" -C "$directory" config --get remote.origin.url)
         if [ "$actual_url" != "$url" ]; then
           echo "unexpected context origin for $directory" >&2
           exit 1
@@ -68,6 +68,24 @@ let
   cli = pkgs.writeShellScriptBin "curriculum" ''
     exec ${runtime}/bin/curriculum "$@"
   '';
+  agents = pkgs.writeShellScriptBin "install-curriculum-claude-agents" ''
+    set -eu
+    directory="$HOME/.claude/agents"
+    mkdir -p "$directory"
+    for attempt in $(${pkgs.coreutils}/bin/seq 1 200); do
+      [ -S "$XDG_RUNTIME_DIR/curriculum/curriculum.sock" ] && break
+      ${pkgs.coreutils}/bin/sleep 0.05
+    done
+    for role in general-purpose book-author; do
+      temporary=$(${pkgs.coreutils}/bin/mktemp "$directory/.$role.XXXXXX")
+      if ! ${runtime}/bin/curriculum --claude-agent-markdown \
+        "ComposeRole.{ $role ClaudeAgent }" > "$temporary"; then
+        ${pkgs.coreutils}/bin/rm -f "$temporary"
+        exit 1
+      fi
+      ${pkgs.coreutils}/bin/mv "$temporary" "$directory/$role.md"
+    done
+  '';
   unit = pkgs.writeText "curriculum-declared-runtime.conf" (''
     [Service]
     Environment=
@@ -80,11 +98,12 @@ let
     ExecStart=
     ExecStart=${runtime}/bin/curriculum-nexus
     ExecStartPost=
+    ExecStartPost=${agents}/bin/install-curriculum-claude-agents
   '');
 in
 pkgs.runCommand "curriculum-resolver-deployment" {
   passthru = {
-    inherit runtime environment unit refresh;
+    inherit runtime environment unit refresh agents;
     inherit (inputs.primary.inputs) psyche-context mind-context field-context;
   };
 } ''

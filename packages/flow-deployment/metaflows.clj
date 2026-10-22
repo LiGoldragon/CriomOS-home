@@ -53,8 +53,5 @@
   (println (str "Configure.Metaflows.[ "
                 (str/join " " (for [{:keys [address system user kind tools]} entries]
                                 (str "{ { " (str/join " " address) " } [ " (str/join " " system)
-                                     " ] [ " (str/join " " user) " ] " (name kind) " "
-                                     (if (nil? tools) "Default"
-                                       (str "Explicit.[ " (str/join " " (map datom-string tools)) " ]"))
-                                     " }")))
+                                     " ] [ " (str/join " " user) " ] }")))
                 " ]")))

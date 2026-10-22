@@ -5,6 +5,8 @@ in pkgs.runCommand "curriculum-resolver-contract" {
   nativeBuildInputs = [ pkgs.git ];
 } ''
   set -eu
+  export HOME="$TMPDIR/home"
+  mkdir -p "$HOME"
   export XDG_RUNTIME_DIR="$TMPDIR/runtime"
   ${pkgs.lib.concatMapStringsSep "\n" (value: "export " + pkgs.lib.escapeShellArg value) (deployment.environment "$TMPDIR/workspace")}
   make_source() {
@@ -41,6 +43,12 @@ in pkgs.runCommand "curriculum-resolver-contract" {
     sleep 0.05
   done
   query=$(${pkgs.babashka}/bin/bb -e '(require (quote [clojure.edn :as edn]) (quote [clojure.string :as str])) (let [m (:modules (edn/read-string (slurp (first *command-line-args*))))] (println (str "ComposeStartup.{ { Psyche core Secondary } Claude [ " (str/join " " (map name (:system m))) " ] [ " (str/join " " (map name (:user m))) " ] }")))' ${inputs.primary}/config/main-flow/psyche.edn)
+  ${deployment.agents}/bin/install-curriculum-claude-agents
+  for role in general-purpose book-author; do
+    for module in vision-book compensation-book-crystallization; do
+      test "$(grep -Fc "<!-- module: $module -->" "$HOME/.claude/agents/$role.md")" -eq 1
+    done
+  done
   ${deployment.runtime}/bin/curriculum "$query" > "$TMPDIR/composed.datom"
   grep -q '^StartupComposed\.' "$TMPDIR/composed.datom"
   grep -q 'These are your skills, given here; do not reload them.' "$TMPDIR/composed.datom"

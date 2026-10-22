@@ -73,6 +73,8 @@ let
       state="$HOME/.local/state/${stateDirectory}"
       runtime_dir="''${XDG_RUNTIME_DIR:?}/flow"
       store="$state/flow.sema"
+      initialize_metaflows=false
+      if [ ! -s "$store" ]; then initialize_metaflows=true; fi
       mkdir -p "$state" "$runtime_dir"
       chmod 700 "$state" "$runtime_dir"
       start="{ $runtime_dir/flow.sock $runtime_dir/flow-meta.sock $store None }"
@@ -119,8 +121,11 @@ let
       configure_one '${models}'
       configure_one '${thresholds}'
       configure_one '${investigation}'
-      metaflows=$(${pkgs.babashka}/bin/bb ${./metaflows.clj} ${inputs.primary}/config/main-flow '${investigationSeat}')
+      # Live declarations are durable configuration, not reset at restart.
+      if "$initialize_metaflows"; then
+        metaflows=$(${pkgs.babashka}/bin/bb ${./metaflows.clj} ${inputs.primary}/config/main-flow '${investigationSeat}')
       configure_one "$metaflows"
+      fi
       configure_one "Configure.SendServers.[ { ${clientConfiguration.criomosHome.codexNextCandidate.package}/bin/codex ${message}/bin/message-mcp-send } ]"
       queries=$(mktemp)
       trap 'rm -f "$queries"' EXIT
