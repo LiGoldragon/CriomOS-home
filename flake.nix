@@ -43,7 +43,7 @@
     # The CLI reads role configuration at the process boundary; keep the
     # matching authored Curriculum source available to the Home service.
     curriculum-source = {
-      url = "github:LiGoldragon/Curriculum/8533a4697c945f32a451a836feb41971ceb9dfb4";
+      url = "github:LiGoldragon/Curriculum/04757684acef769b863d8a73ad9cbff08abbbc68";
       flake = false;
     };
 
