@@ -29,6 +29,7 @@
                 (for [row rows
                       :let [kind (get row :flow-kind :Regular)
                             tools (when (contains? row :tools) (:tools row))]]
+                  (do
                   (when-not (#{:Regular :Simplified} kind)
                     (throw (ex-info "UnknownFlowKind" {:kind kind})))
                   (when (and (= kind :Simplified)
@@ -38,7 +39,7 @@
                   (when (and (contains? row :tools) (not (vector? tools)))
                     (throw (ex-info "ToolsMustBeVector" {:tools tools})))
                   (declared (:aspect row) (:topic row) (:layer row)
-                            (:modules row) (:user-modules row) kind tools))
+                            (:modules row) (:user-modules row) kind tools)))
                 (for [address extra
                       :let [[aspect topic layer] (str/split address #"\s+")]]
                   (declared (keyword aspect) topic (keyword layer) [] [] :Regular nil)))
