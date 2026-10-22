@@ -72,7 +72,7 @@ let
     set -eu
     directory="$HOME/.claude/agents"
     mkdir -p "$directory"
-    for attempt in $(${pkgs.coreutils}/bin/seq 1 200); do
+    for attempt in $(${pkgs.coreutils}/bin/seq 1 1200); do
       [ -S "$XDG_RUNTIME_DIR/curriculum/curriculum.sock" ] && break
       ${pkgs.coreutils}/bin/sleep 0.05
     done
@@ -90,7 +90,7 @@ let
     [Service]
     Environment=
     Environment=XDG_RUNTIME_DIR=%t
-    Environment=PATH=${pkgs.lib.makeBinPath [ pkgs.git ]}
+    Environment=PATH=${pkgs.lib.makeBinPath [ pkgs.git pkgs.openssh ]}
   '' + pkgs.lib.concatMapStringsSep "\n" (value: "Environment=" + value) (environment "%h") + ''
 
     WorkingDirectory=%h/primary

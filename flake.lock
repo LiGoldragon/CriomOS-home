@@ -866,17 +866,17 @@
     "field-context": {
       "flake": false,
       "locked": {
-        "lastModified": 1792695592,
-        "narHash": "sha256-v+uMxZs2xBeA0qn/6jlcuVxxos6OCxveRSwVYFohF7Q=",
+        "lastModified": 1792696724,
+        "narHash": "sha256-Y8fiMqTGkhfJz5FmWh4oOdya4e0oimQYtyft6mLYcWw=",
         "owner": "LiGoldragon",
         "repo": "field-context",
-        "rev": "f83dd21e6b8472bbc38341257459e42ad940bcde",
+        "rev": "54b81cb2c0ff60cf2fb8ea80f69f17a0ad422a68",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "field-context",
-        "rev": "f83dd21e6b8472bbc38341257459e42ad940bcde",
+        "rev": "54b81cb2c0ff60cf2fb8ea80f69f17a0ad422a68",
         "type": "github"
       }
     },
