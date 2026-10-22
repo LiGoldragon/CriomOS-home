@@ -85,7 +85,7 @@ let
     [Service]
     Environment=
     Environment=XDG_RUNTIME_DIR=%t
-    Environment=PATH=${pkgs.lib.makeBinPath [ pkgs.git pkgs.openssh ]}
+    Environment=PATH=${pkgs.lib.makeBinPath [ pkgs.git pkgs.openssh pkgs.coreutils ]}
   '' + pkgs.lib.concatMapStringsSep "\n" (value: "Environment=" + value) (environment "%h") + ''
 
     WorkingDirectory=%h/primary
