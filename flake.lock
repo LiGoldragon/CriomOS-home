@@ -1240,7 +1240,7 @@
       "original": {
         "owner": "LiGoldragon",
         "repo": "flow",
-        "rev": "2d2e2013f6fab3437e3088c4e52cc61fd2ed721a",
+        "rev": "938ec35559da7288c40937599d2291b678f4fba8",
         "type": "github"
       }
     },
@@ -1498,7 +1498,7 @@
       "original": {
         "owner": "LiGoldragon",
         "repo": "message",
-        "rev": "4efcb0c56f6db46931cf95b597d987b057ea3929",
+        "rev": "d5ab3000ebe86719fbcc808d7383c525b8ee03d6",
         "type": "github"
       }
     },
