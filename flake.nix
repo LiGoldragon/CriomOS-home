@@ -27,7 +27,7 @@
       url = "github:LiGoldragon/primary/56058cd2243f7e9c23ae21b48ce04af0d37900d9";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.curriculum = {
-        url = "github:LiGoldragon/Curriculum/8533a4697c945f32a451a836feb41971ceb9dfb4";
+        url = "github:LiGoldragon/Curriculum/04757684acef769b863d8a73ad9cbff08abbbc68";
         flake = false;
       };
       inputs.psyche-context = {
