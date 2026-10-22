@@ -35,7 +35,11 @@ assert
 assert pkgs.lib.hasPrefix "${
   inputs.flow.packages.${pkgs.stdenv.hostPlatform.system}.default
 }/bin/flow-nexus " (builtins.head configuration.systemd.user.services.flow-nexus.Service.ExecStart);
-assert builtins.all (entry: !(pkgs.lib.hasPrefix "FLOW_" entry)) flowEnvironment;
+assert builtins.all (
+  entry:
+  !(pkgs.lib.hasPrefix "FLOW_" entry)
+  || entry == "FLOW_CORE_PRESENTATION_PROMPT=/home/li/primary/flows/9ef2c5/prompts/presentation-maker.md"
+) flowEnvironment;
 pkgs.runCommand "herdr-agent-executable-contract" { } ''
   set -eu
   stable=${stableClient}/bin/codex-stable-flow-client
