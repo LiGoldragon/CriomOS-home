@@ -1,7 +1,7 @@
 # A service that runs as a stable and a next side by side.
 #
 # Every Nexus derives its whole default layout from two anchors: HOME (its
-# `.sema` store under `.local/state/<name>/`) and XDG_RUNTIME_DIR (its sockets
+# `.memory` store under `.local/state/<name>/`) and XDG_RUNTIME_DIR (its sockets
 # under `<name>/`). The stable instance keeps the real anchors. The next
 # instance gets anchors of its own, so the same executable, started with no
 # arguments, lands on a fresh store and on sockets that cannot collide with

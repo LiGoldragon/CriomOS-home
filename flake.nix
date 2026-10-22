@@ -200,20 +200,20 @@
     aggregator.inputs.crane.follows = "crane";
 
     # Orchestrate Nexus — per-user path-reservation Nexus. Its executable owns
-    # the default fresh Sema store and its ordinary/meta XDG sockets; Home
+    # the default fresh Memory store and its ordinary/meta XDG sockets; Home
     # supplies lifecycle and client socket bindings without a bootstrap frame.
     orchestrate.url = "github:LiGoldragon/orchestrate/c7c44cb39934b0727d724a6aa03a36a2a94cacf9";
     orchestrate.inputs.nixpkgs.follows = "nixpkgs";
 
     # Message — the messenger: stateful local messaging daemon owning the
     # durable agent-identity map, delivery registry, message ledger,
-    # per-recipient inboxes, and thread index (messenger.sema). Consumed in
+    # per-recipient inboxes, and thread index (messenger.memory). Consumed in
     # modules/home/profiles/min/message.nix, which gives it a systemd --user
     # supervisor. Pinned coherently with the cluster relay client: the messenger
     # (converged contracts, delivery legs, PTY control-socket delivery) plus
     # the additive v2 -> v3 store migration — the deployed store, born at v2,
     # is preserved aside and re-stamped on first open — on the
-    # incident-hardened sema-engine 0.11.2 orchestrate 0.14.1 runs.
+    # incident-hardened memory-engine 0.11.2 orchestrate 0.14.1 runs.
     message.url = "github:LiGoldragon/message/4efcb0c56f6db46931cf95b597d987b057ea3929";
     message.inputs.nixpkgs.follows = "nixpkgs";
     message.inputs.crane.follows = "crane";

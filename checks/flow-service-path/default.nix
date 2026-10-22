@@ -35,7 +35,7 @@ assert
   == "${deployment.ready}/bin/wait-declared-flow-ready";
 assert
   homeStart
-  == "${runtime}/bin/flow-nexus \"{ %t/flow/flow.sock %t/flow/flow-meta.sock %h/.local/state/flow-03521/flow.sema None }\"";
+  == "${runtime}/bin/flow-nexus \"{ %t/flow/flow.sock %t/flow/flow-meta.sock %h/.local/state/flow-03521/flow.memory None }\"";
 pkgs.runCommand "flow-service-path"
   {
     nativeBuildInputs = [
@@ -93,8 +93,8 @@ pkgs.runCommand "flow-service-path"
     export HOME="$TMPDIR/refused-home"
     export XDG_RUNTIME_DIR="$TMPDIR/refused-runtime"
     mkdir -p "$HOME/.local/state/flow-03521" "$XDG_RUNTIME_DIR/flow"
-    printf 'foreign-store-preserve' > "$HOME/.local/state/flow-03521/flow.sema"
-    cp "$HOME/.local/state/flow-03521/flow.sema" foreign-before
+    printf 'foreign-store-preserve' > "$HOME/.local/state/flow-03521/flow.memory"
+    cp "$HOME/.local/state/flow-03521/flow.memory" foreign-before
     python -c 'import os,socket; s=socket.socket(socket.AF_UNIX); s.bind(os.environ["XDG_RUNTIME_DIR"]+"/flow/flow-meta.sock"); s.close()'
     if "$initializer" > refused.log 2>&1; then
       echo "initializer accepted a foreign store" >&2
@@ -102,22 +102,22 @@ pkgs.runCommand "flow-service-path"
     fi
     grep -F 'Flow configuration child exited before socket readiness' refused.log
     ! grep -F 'Connection refused' refused.log
-    cmp foreign-before "$HOME/.local/state/flow-03521/flow.sema"
+    cmp foreign-before "$HOME/.local/state/flow-03521/flow.memory"
 
     # A real configure-only child must become ready and consume exactly its
     # Configure request; no readiness connection is sent by the initializer.
     export HOME="$TMPDIR/accepted-home"
     export XDG_RUNTIME_DIR="$TMPDIR/accepted-runtime"
     mkdir -p "$HOME/.local/state/flow-production" "$XDG_RUNTIME_DIR"
-    printf 'retained-original-cohort' > "$HOME/.local/state/flow-production/flow.sema"
-    cp "$HOME/.local/state/flow-production/flow.sema" original-cohort-before
+    printf 'retained-original-cohort' > "$HOME/.local/state/flow-production/flow.memory"
+    cp "$HOME/.local/state/flow-production/flow.memory" original-cohort-before
     "$initializer" > accepted.log 2>&1
     test "$(grep -Ec '^Configured\.(Replaced|Unchanged)$' accepted.log)" -eq 7
     "$initializer" > unchanged.log 2>&1
     test "$(grep -Fc Configured.Unchanged unchanged.log)" -eq 7
-    cmp original-cohort-before "$HOME/.local/state/flow-production/flow.sema"
+    cmp original-cohort-before "$HOME/.local/state/flow-production/flow.memory"
     # Startup ordering must wait for this actual daemon, not a stale pathname.
-    ${runtime}/bin/flow-nexus "{ $XDG_RUNTIME_DIR/flow/flow.sock $XDG_RUNTIME_DIR/flow/flow-meta.sock $HOME/.local/state/flow-03521/flow.sema None }" >daemon.log 2>&1 &
+    ${runtime}/bin/flow-nexus "{ $XDG_RUNTIME_DIR/flow/flow.sock $XDG_RUNTIME_DIR/flow/flow-meta.sock $HOME/.local/state/flow-03521/flow.memory None }" >daemon.log 2>&1 &
     daemon_pid=$!
     trap 'kill "$daemon_pid" 2>/dev/null || true; wait "$daemon_pid" || true' EXIT
     MAINPID="$daemon_pid" ${deployment.ready}/bin/wait-declared-flow-ready
@@ -142,21 +142,21 @@ pkgs.runCommand "flow-service-path"
       inputs.message.packages.${pkgs.stdenv.hostPlatform.system}.default
     }/bin/message-mcp-send' configuration.datom
     # Original production bytes must never be opened or changed by this cohort.
-    cmp original-cohort-before "$HOME/.local/state/flow-production/flow.sema"
+    cmp original-cohort-before "$HOME/.local/state/flow-production/flow.memory"
     kill "$daemon_pid"
     wait "$daemon_pid"
     trap - EXIT
     # The activation's store check opens the store this Flow wrote, and
     # refuses one it cannot open, without changing either.
-    cp "$HOME/.local/state/flow-03521/flow.sema" checked-before
-    ${runtime}/bin/flow-store-check "{ $HOME/.local/state/flow-03521/flow.sema }" > store-check.datom
-    grep -Fx "Opens.$HOME/.local/state/flow-03521/flow.sema" store-check.datom
-    cmp checked-before "$HOME/.local/state/flow-03521/flow.sema"
+    cp "$HOME/.local/state/flow-03521/flow.memory" checked-before
+    ${runtime}/bin/flow-store-check "{ $HOME/.local/state/flow-03521/flow.memory }" > store-check.datom
+    grep -Fx "Opens.$HOME/.local/state/flow-03521/flow.memory" store-check.datom
+    cmp checked-before "$HOME/.local/state/flow-03521/flow.memory"
     status=0
-    ${runtime}/bin/flow-store-check "{ $TMPDIR/refused-home/.local/state/flow-03521/flow.sema }" > foreign-check.datom || status=$?
+    ${runtime}/bin/flow-store-check "{ $TMPDIR/refused-home/.local/state/flow-03521/flow.memory }" > foreign-check.datom || status=$?
     test "$status" -ne 0
     grep -F 'Refused.' foreign-check.datom
-    cmp foreign-before "$TMPDIR/refused-home/.local/state/flow-03521/flow.sema"
+    cmp foreign-before "$TMPDIR/refused-home/.local/state/flow-03521/flow.memory"
     python -c 'import os,signal,socket; root=os.environ["XDG_RUNTIME_DIR"]+"/flow/"; sockets=[socket.socket(socket.AF_UNIX) for _ in range(2)]; [(s.bind(root+n),s.listen()) for s,n in zip(sockets,["flow.sock","flow-meta.sock"])]; signal.pause()' >foreign-listener.log 2>&1 &
     foreign_pid=$!
     trap 'kill "$foreign_pid" 2>/dev/null || true; wait "$foreign_pid" || true' EXIT

@@ -57,7 +57,7 @@ let
           socketPath = "${stateDirectory}/spirit.sock";
           metaSocketPath = "${stateDirectory}/meta-spirit.sock";
           judgeSocketPath = "${stateDirectory}/spirit-judge.sock";
-          databasePath = "${stateDirectory}/spirit.sema";
+          databasePath = "${stateDirectory}/spirit.memory";
           configurationPath = "spirit.config.rkyv";
         };
         packages = {

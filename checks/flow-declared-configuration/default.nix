@@ -27,7 +27,7 @@ pkgs.runCommand "flow-declared-configuration"
     holds() {
       local query="$1" reply child
       rm -f "$runtime_dir/flow-meta.sock"
-      ${runtime}/bin/flow-nexus --configure-only "{ $runtime_dir/flow.sock $runtime_dir/flow-meta.sock $HOME/.local/state/${deployment.stateDirectory}/flow.sema None }" &
+      ${runtime}/bin/flow-nexus --configure-only "{ $runtime_dir/flow.sock $runtime_dir/flow-meta.sock $HOME/.local/state/${deployment.stateDirectory}/flow.memory None }" &
       child=$!
       for _attempt in $(seq 1 200); do
         test -S "$runtime_dir/flow-meta.sock" && break

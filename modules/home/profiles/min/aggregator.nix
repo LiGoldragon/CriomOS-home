@@ -16,7 +16,7 @@ let
 
   stateDirectory = "${config.xdg.stateHome}/aggregator";
   configurationPath = "${stateDirectory}/configuration.dotos";
-  storePath = "${stateDirectory}/aggregator.sema";
+  storePath = "${stateDirectory}/aggregator.memory";
   runtimeDirectoryName = "aggregator";
   aggregatorConfiguration = config.criomosHome.aggregator;
   workspaceArguments = lib.concatMapStringsSep " \\\n      " (

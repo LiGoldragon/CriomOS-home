@@ -19,7 +19,7 @@ let
   listenerTranscriptionVocabularyTerms = [
     "Mentci"
     "Criome"
-    "SEMA"
+    "MEMORY"
     "pi"
     "P-I"
     "CriomOS"

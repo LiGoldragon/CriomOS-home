@@ -76,7 +76,7 @@
     # clients, from the same package revision as flow-id.
     ./profiles/min/harness.nix
     # Message — supervises the messenger daemon (durable agent-identity
-    # map + delivery registry in messenger.sema; systemd --user unit +
+    # map + delivery registry in messenger.memory; systemd --user unit +
     # pinned flake input).
     ./profiles/min/message.nix
     # Flow Nexus remains disabled until its package, native launch receipt,

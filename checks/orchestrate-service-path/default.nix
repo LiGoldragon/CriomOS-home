@@ -82,13 +82,13 @@ else
     export XDG_STATE_HOME=${lib.escapeShellArg stateHome}
     export XDG_RUNTIME_DIR=${lib.escapeShellArg runtimeDirectory}
     mkdir -p "$XDG_STATE_HOME" "$XDG_RUNTIME_DIR"
-    legacy_store="$XDG_STATE_HOME/orchestrate/orchestrate.sema"
+    legacy_store="$XDG_STATE_HOME/orchestrate/orchestrate.memory"
     mkdir -p "$(dirname "$legacy_store")"
     touch "$legacy_store"
-    test ! -e ${lib.escapeShellArg "${stateDirectory}/orchestrate-nexus.sema"}
+    test ! -e ${lib.escapeShellArg "${stateDirectory}/orchestrate-nexus.memory"}
     preflight="$(${orchestratePackage}/bin/orchestrate-upgrade-preflight)"
     test "$preflight" = 'active legacy PathLock rows: 0'
-    test ! -e ${lib.escapeShellArg "${stateDirectory}/orchestrate-nexus.sema"}
+    test ! -e ${lib.escapeShellArg "${stateDirectory}/orchestrate-nexus.memory"}
 
     "${service.ExecStart}" > "$TMPDIR/orchestrate-nexus.log" 2>&1 &
     nexus_pid=$!
@@ -98,7 +98,7 @@ else
       sleep 0.05
     done
     kill -0 "$nexus_pid"
-    test -f ${lib.escapeShellArg "${stateDirectory}/orchestrate-nexus.sema"}
+    test -f ${lib.escapeShellArg "${stateDirectory}/orchestrate-nexus.memory"}
     test -f "$legacy_store"
     test -S ${lib.escapeShellArg ordinarySocketPath}
     test -S ${lib.escapeShellArg metaSocketPath}

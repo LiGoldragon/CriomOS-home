@@ -25,8 +25,8 @@ Three units are added — `flow-nexus-next`, `flow-configuration-next`,
 - sockets `%t/flow-next/flow/{flow,flow-meta}.sock` and
   `%t/message-next/message/{message,message-owner}.sock`;
   `%t/message-next/flow` links to next Flow's socket directory;
-- fresh stores `~/.local/state/flow-next/.local/state/flow/flow.sema` and
-  `~/.local/state/message-next/.local/state/message/message.sema`;
+- fresh stores `~/.local/state/flow-next/.local/state/flow/flow.memory` and
+  `~/.local/state/message-next/.local/state/message/message.memory`;
 - clients `flow-next`, `flow-next-meta`, `message-next`, `message-next-meta`.
 
 Both Flows observe the same Herdr and launch through the same Codex servers.
@@ -132,15 +132,15 @@ parser, or text compatibility path remains.
 
 Before activation, verify the target user, source revision, and Lojix
 transport identify the same deployment target. The 0.25 Nexus must be stopped
-before the read-only candidate can open its existing Sema store. Run
+before the read-only candidate can open its existing Memory store. Run
 `orchestrate-upgrade-preflight` with the same XDG state and runtime roots as
 the service, and proceed only on `active legacy PathLock rows: 0`. A running
 0.25 process correctly makes this preflight fail with its database lock held;
 that is not permission to bypass the preflight.
 
-The schema version, Sema families, hashes, configuration, complete Lock facts,
+The schema version, Memory families, hashes, configuration, complete Lock facts,
 and ID allocator are unchanged. Keep
-`$XDG_STATE_HOME/orchestrate-nexus/orchestrate-nexus.sema` in place. Do not
+`$XDG_STATE_HOME/orchestrate-nexus/orchestrate-nexus.memory` in place. Do not
 move or import the retired `$XDG_STATE_HOME/orchestrate/` store. After the
 declarative Home activation, verify both sockets, `Observe.Locks`, a complete
 Lock, the typed duplicate-name refusal, and Release by returned ID. Verify the
@@ -151,7 +151,7 @@ For rollback, activate the previously pinned 0.25 Home generation as one
 generation, including its matching ordinary and meta wrappers. The durable
 schema is shared, so no data conversion or store restore is needed. Do not
 mix a 0.25 client with a 0.26 Nexus (or conversely), and do not roll back if a
-subsequent release has changed the declared Sema schema without a separately
+subsequent release has changed the declared Memory schema without a separately
 approved migration review.
 
 ## Agent messaging consolidation
@@ -252,8 +252,8 @@ bootstrap writer, frame, or configuration file. Its client wrappers set
 `ORCHESTRATE_SOCKET` and `ORCHESTRATE_META_SOCKET` to the standard user runtime
 paths.
 
-The Nexus uses `$XDG_STATE_HOME/orchestrate-nexus/orchestrate-nexus.sema`. The
-legacy `$XDG_STATE_HOME/orchestrate/orchestrate.sema` store is deliberately
+The Nexus uses `$XDG_STATE_HOME/orchestrate-nexus/orchestrate-nexus.memory`. The
+legacy `$XDG_STATE_HOME/orchestrate/orchestrate.memory` store is deliberately
 left in place and is neither opened nor migrated.
 
 ## Herdr configuration adoption

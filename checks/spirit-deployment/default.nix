@@ -133,7 +133,7 @@ let
         socketPath = "${stateDirectory}/spirit.sock";
         metaSocketPath = "${stateDirectory}/meta-spirit.sock";
         judgeSocketPath = "${stateDirectory}/spirit-judge.sock";
-        databasePath = "${stateDirectory}/spirit.sema";
+        databasePath = "${stateDirectory}/spirit.memory";
         configurationPath = "spirit.config.rkyv";
         daemonConfiguration = pkgs.runCommand "fake-spirit-daemon-configuration" { } ''
           mkdir -p "$out"
@@ -422,7 +422,7 @@ else
     ! grep -q 'spirit-migrate-production' "$exec_start_pre"
     ! grep -q 'spirit-upgrade-store' "$exec_start_pre"
     grep -q '(\$database_path)' "$exec_start_pre"
-    grep -q '/spirit/spirit.sema' "$exec_start_pre"
+    grep -q '/spirit/spirit.memory' "$exec_start_pre"
 
     grep -q 'spirit-activation-state' activation
     ! grep -q 'spirit-startup-state' activation

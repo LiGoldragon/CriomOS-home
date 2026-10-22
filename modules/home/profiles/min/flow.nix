@@ -84,7 +84,7 @@ in
     # Nexus that cannot open it fails at every start. The check opens a
     # private copy, before anything of this generation is linked.
     home.activation.flowOpensItsStore = lib.hm.dag.entryBefore [ "writeBoundary" ] ''
-      ${runtime}/bin/flow-store-check '{ ${config.home.homeDirectory}/.local/state/${cfg.stateDirectory}/flow.sema }'
+      ${runtime}/bin/flow-store-check '{ ${config.home.homeDirectory}/.local/state/${cfg.stateDirectory}/flow.memory }'
     '';
     systemd.user.services.flow-nexus = {
       Unit = {
@@ -103,7 +103,7 @@ in
           "FLOW_CORE_PRESENTATION_PROMPT=/home/li/primary/flows/9ef2c5/prompts/presentation-maker.md"
         ];
         ExecStartPre = "${deployment.initialize}/bin/initialize-declared-flow";
-        ExecStart = "${runtime}/bin/flow-nexus \"{ %t/flow/flow.sock %t/flow/flow-meta.sock %h/.local/state/${cfg.stateDirectory}/flow.sema ${landingWatch} }\"";
+        ExecStart = "${runtime}/bin/flow-nexus \"{ %t/flow/flow.sock %t/flow/flow-meta.sock %h/.local/state/${cfg.stateDirectory}/flow.memory ${landingWatch} }\"";
         ExecStartPost = "${deployment.ready}/bin/wait-declared-flow-ready";
         Restart = "on-failure";
         RestartSec = 2;

@@ -64,7 +64,7 @@ let
   agentStateDirectory = "${config.home.homeDirectory}/.local/state/agent";
   agentSocketPath = "${agentStateDirectory}/agent.sock";
   agentMetaSocketPath = "${agentStateDirectory}/agent-meta.sock";
-  agentDatabasePath = "${agentStateDirectory}/agent.sema";
+  agentDatabasePath = "${agentStateDirectory}/agent.memory";
   agentConfigurationPath = "agent.config.rkyv";
 
   agentDaemonConfiguration = pkgs.runCommand "agent-daemon-configuration" { } ''
