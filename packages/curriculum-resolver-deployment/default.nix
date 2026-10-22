@@ -1,12 +1,7 @@
 { pkgs, inputs, ... }:
 let
   system = pkgs.stdenv.hostPlatform.system;
-  runtime = inputs.primary.packages.${system}.curriculum.overrideAttrs (old: {
-    src = inputs.curriculum-source;
-    cargoLock = old.cargoLock // {
-      lockFile = "${inputs.curriculum-source}/Cargo.lock";
-    };
-  });
+  runtime = inputs.primary.packages.${system}.curriculum;
   sourceRoot = homeDirectory: "${homeDirectory}/.local/state/curriculum-context";
   environment = homeDirectory: let
     root = sourceRoot homeDirectory;
@@ -101,6 +96,7 @@ let
     ExecStartPost=${agents}/bin/install-curriculum-claude-agents
   '');
 in
+assert inputs.curriculum-source.rev == inputs.primary.inputs.curriculum.rev;
 pkgs.runCommand "curriculum-resolver-deployment" {
   passthru = {
     inherit runtime environment unit refresh agents;
