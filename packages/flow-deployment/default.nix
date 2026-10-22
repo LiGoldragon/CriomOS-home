@@ -76,7 +76,7 @@ let
       mkdir -p "$state" "$runtime_dir"
       chmod 700 "$state" "$runtime_dir"
       start="{ $runtime_dir/flow.sock $runtime_dir/flow-meta.sock $store None }"
-      configure_one() {
+      configure_one() (
         local query="$1" child reply status
         ${runtime}/bin/flow-nexus --configure-only "$start" &
         child=$!
@@ -114,7 +114,7 @@ let
         esac
         wait "$child"
         trap - EXIT
-      }
+      )
       configure_one "Configure.Nexus.{ $HOME/primary { ${stableClient}/bin/codex-stable-flow-client $HOME/.codex-next $HOME/.codex-next/app-server-control/app-server-control.sock [ gpt-5.6-sol gpt-5.6-luna ] } { ${nextClient}/bin/codex-next-flow-client $HOME/${nextHomeName} $HOME/${nextHomeName}/app-server-control/app-server-control.sock [ gpt-6.1-sol gpt-6-sol gpt-6-luna gpt-6-astra ] } [ { Claude [ / «!» # ] [ esc esc ] [ enter ] } { Codex [ / «!» ] [ esc ] [] } ] [ Psyche ] $XDG_RUNTIME_DIR/message/message.sock ${message}/bin/message-nexus 60 }"
       configure_one '${models}'
       configure_one '${thresholds}'

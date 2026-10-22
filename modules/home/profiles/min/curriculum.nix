@@ -42,7 +42,7 @@ in
         RuntimeDirectory = "curriculum";
         RuntimeDirectoryMode = "0700";
         WorkingDirectory = "${homeDirectory}/primary";
-        Environment = [ "XDG_RUNTIME_DIR=%t" ] ++ curriculumEnvironment;
+        Environment = [ "XDG_RUNTIME_DIR=%t" "PATH=${pkgs.lib.makeBinPath [ pkgs.git ]}" ] ++ curriculumEnvironment;
         ExecStart = "${curriculumPackage}/bin/curriculum-nexus";
         # Resolver startup reads its immutable registry; projection is explicit.
         Restart = "on-failure";
