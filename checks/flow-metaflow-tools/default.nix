@@ -11,18 +11,18 @@ pkgs.runCommand "flow-metaflow-tools"
       echo '{:modules {:system [:default-system] :user [:default-user]}}' > config/$aspect.edn
     done
     cat > config/metaflow/judgment.edn <<'EOF'
-    {:aspect :Psyche :topic :judgment :layer :Primary
+    {:aspect :Psyche :topic :greatAdvancements :layer :Primary
      :flow-kind :Simplified :tools []
      :modules [:spirit-core] :user-modules []}
     EOF
     bb ${../../packages/flow-deployment/metaflows.clj} config > simplified
-    grep -Fx 'Configure.Metaflows.[ { { Psyche judgment Primary } [ spirit-core ] [  ] Simplified Explicit.[  ] } ]' simplified
+    grep -Fx 'Configure.Metaflows.[ { { Psyche greatAdvancements Primary } [ spirit-core ] [  ] Simplified Explicit.[  ] } ]' simplified
     cat > config/metaflow/regular.edn <<'EOF'
-    {:aspect :Mind :topic :test :layer :Secondary
+    {:aspect :Mind :topic :testCase :layer :Secondary
      :tools [:Bash "ToolSearch"] :modules [:own-system]}
     EOF
     bb ${../../packages/flow-deployment/metaflows.clj} config 'Field investigation Secondary' > mixed
-    grep -F '{ { Mind test Secondary } [ default-system own-system ] [ default-user ] Regular Explicit.[ «Bash» «ToolSearch» ] }' mixed
+    grep -F '{ { Mind testCase Secondary } [ default-system own-system ] [ default-user ] Regular Explicit.[ «Bash» «ToolSearch» ] }' mixed
     grep -F '{ { Field investigation Secondary } [ default-system ] [ default-user ] Regular Default }' mixed
     sed -i 's/:tools \[\]/:tools [:Bash]/' config/metaflow/judgment.edn
     if bb ${../../packages/flow-deployment/metaflows.clj} config; then

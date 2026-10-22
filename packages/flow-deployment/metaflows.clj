@@ -12,13 +12,15 @@
       rows (map read-data (filter #(.endsWith (.getName %) ".edn")
                                   (sort-by #(.getName %) (.listFiles (io/file root "metaflow")))))
       module-name #(if (map? %) (name (:name %)) (name %))
+      topic-name #(let [topic (name %)]
+                    (str (str/lower-case (subs topic 0 1)) (subs topic 1)))
       defaults (fn [aspect placement]
                  (let [modules (get-in aspects [aspect :modules placement])]
                    (when-not (seq modules)
                      (throw (ex-info "MissingAspectModules" {:aspect aspect :placement placement})))
                    (map module-name modules)))
       declared (fn [aspect topic layer system user kind tools]
-                 {:address [(name aspect) (str/lower-case (name topic)) (name layer)]
+                 {:address [(name aspect) (topic-name topic) (name layer)]
                   :kind kind
                   :tools tools
                   :system (distinct (concat (when (= kind :Regular) (defaults aspect :system))
