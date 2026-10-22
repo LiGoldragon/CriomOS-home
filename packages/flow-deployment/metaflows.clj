@@ -11,6 +11,25 @@
                         [aspect (read-data (io/file root (str (str/lower-case (name aspect)) ".edn")))]))
       rows (map read-data (filter #(.endsWith (.getName %) ".edn")
                                   (sort-by #(.getName %) (.listFiles (io/file root "metaflow")))))
+      ; These runtime roles are source declarations, not ad-hoc Nexus rows.
+      ; The lean primary's answer is a book source for the book publisher.
+      runtime-rows [{:aspect :Psyche :topic :Core :layer :Primary
+                     :flow-kind :Simplified :tools []
+                     :modules [:spirit-core :intent-context-modules
+                               :intent-design :intent-main-flow
+                               :intent-models :intent-psyche
+                               :intent-psyche-interaction :vision-book
+                               :compensation-book-crystallization]
+                     :user-modules []}
+                    {:aspect :Psyche :topic :test :layer :Quaternary
+                     :flow-kind :Simplified :tools []
+                     :modules [:spirit-core :intent-models]
+                     :user-modules []}]
+      runtime-addresses (set (map (juxt :aspect :topic :layer) runtime-rows))
+      rows (concat (remove #(contains? runtime-addresses
+                                       [(:aspect %) (:topic %) (:layer %)])
+                           rows)
+                   runtime-rows)
       module-name #(if (map? %) (name (:name %)) (name %))
       topic-name #(let [topic (name %)]
                     (str (str/lower-case (subs topic 0 1)) (subs topic 1)))
