@@ -100,6 +100,7 @@ let
       diagnostic=$(mktemp)
       trap 'rm -f "$diagnostic"' EXIT
       status=0
+      # shellcheck disable=SC2016
       timeout --foreground --kill-after=1s ${deadline} \
         ${pkgs.runtimeShell} -c '
           diagnostic="$1"
