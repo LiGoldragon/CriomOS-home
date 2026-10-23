@@ -93,6 +93,44 @@ let
       test -r ${workspaceRoot}/.claude/agents/book-author.md
     '';
   };
+  makeAwaitReady = name: deadline: pkgs.writeShellApplication {
+    inherit name;
+    runtimeInputs = [ pkgs.coreutils ];
+    text = ''
+      diagnostic=$(mktemp)
+      trap 'rm -f "$diagnostic"' EXIT
+      status=0
+      timeout --foreground --kill-after=1s ${deadline} \
+        ${pkgs.runtimeShell} -c '
+          diagnostic="$1"
+          main_pid="$2"
+          while :; do
+            if [ -n "$main_pid" ] && ! kill -0 "$main_pid" 2>/dev/null; then
+              echo "curriculum-nexus exited before readiness" >> "$diagnostic"
+              exit 1
+            fi
+            if reply=$(${runtime}/bin/curriculum "ResolveSources.[]" 2>"$diagnostic"); then
+              case "$reply" in
+                SourcesResolved.*) exit 0 ;;
+                *) printf "%s\n" "$reply" > "$diagnostic" ;;
+              esac
+            fi
+            ${pkgs.coreutils}/bin/sleep 0.05
+          done
+        ' await-declared-curriculum-ready "$diagnostic" "''${1:-}" || status=$?
+      if [ "$status" -ne 0 ]; then
+        cat "$diagnostic" >&2
+        if [ "$status" -eq 124 ] || [ "$status" -eq 137 ]; then
+          echo "curriculum-nexus did not answer ResolveSources before the readiness deadline" >&2
+        else
+          echo "curriculum-nexus readiness probe failed" >&2
+        fi
+        exit "$status"
+      fi
+    '';
+  };
+  awaitReady = makeAwaitReady "await-declared-curriculum-ready" "30s";
+  awaitReadyCheck = makeAwaitReady "await-declared-curriculum-ready-check" "0.25s";
   unit = pkgs.writeText "curriculum-declared-runtime.conf" (''
     [Service]
     Environment=
@@ -105,7 +143,7 @@ let
     ExecStart=
     ExecStart=${runtime}/bin/curriculum-nexus
     ExecStartPost=
-    ExecStartPost=${projectRoles}/bin/project-declared-curriculum-roles
+    ExecStartPost=${awaitReady}/bin/await-declared-curriculum-ready $MAINPID
   '');
   activate = pkgs.writeShellApplication {
     name = "activate-declared-curriculum";
@@ -128,12 +166,13 @@ in
 assert inputs.curriculum-source.rev == inputs.primary.inputs.curriculum.rev;
 pkgs.runCommand "curriculum-resolver-deployment" {
   passthru = {
-    inherit runtime projector environment unit refresh agents projectRoles activate;
+    inherit runtime projector environment unit refresh agents projectRoles awaitReady awaitReadyCheck activate;
     inherit (inputs.primary.inputs) psyche-context mind-context field-context;
   };
 } ''
   mkdir -p "$out/bin"
   ln -s ${cli}/bin/curriculum "$out/bin/curriculum"
   ln -s ${projectRoles}/bin/project-declared-curriculum-roles "$out/bin/project-declared-curriculum-roles"
+  ln -s ${awaitReady}/bin/await-declared-curriculum-ready "$out/bin/await-declared-curriculum-ready"
   ln -s ${activate}/bin/activate-declared-curriculum "$out/bin/activate-declared-curriculum"
 ''

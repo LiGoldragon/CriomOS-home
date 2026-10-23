@@ -1,6 +1,9 @@
 { pkgs, inputs, ... }:
 let
-  deployment = pkgs.callPackage ../../packages/curriculum-resolver-deployment { inherit inputs; };
+  deployment = pkgs.callPackage ../../packages/curriculum-resolver-deployment {
+    inherit inputs;
+    workspaceRoot = "/build/workspace";
+  };
 in pkgs.runCommand "curriculum-resolver-contract" {
   nativeBuildInputs = [ pkgs.git ];
 } ''
@@ -8,7 +11,9 @@ in pkgs.runCommand "curriculum-resolver-contract" {
   activation=${deployment.activate}/bin/activate-declared-curriculum
   grep -F 'curriculum-nexus.service' "$activation"
   ! grep -Eiq 'flow-nexus|flow\.sock|flow-meta\.sock|flow\.sema' "$activation"
-  grep -F '${deployment.projectRoles}/bin/project-declared-curriculum-roles' ${deployment.unit}
+  grep -F '${deployment.awaitReady}/bin/await-declared-curriculum-ready' ${deployment.unit}
+  ! grep -F '${deployment.projectRoles}/bin/project-declared-curriculum-roles' ${deployment.unit}
+  ! grep -Eiq 'flow-nexus|flow\.sock|flow-meta\.sock|flow\.sema' ${deployment.unit}
   export HOME="$TMPDIR/home"
   mkdir -p "$HOME"
   export XDG_RUNTIME_DIR="$TMPDIR/runtime"
@@ -32,20 +37,35 @@ in pkgs.runCommand "curriculum-resolver-contract" {
   export CURRICULUM_MIND_CONTEXT_URL="$TMPDIR/origins/mind"
   export CURRICULUM_FIELD_CONTEXT_URL="$TMPDIR/origins/field"
   ${deployment.refresh}/bin/curriculum-refresh-contexts
+  if ${deployment.awaitReadyCheck}/bin/await-declared-curriculum-ready-check \
+    > "$TMPDIR/never-ready.out" 2>&1; then
+    echo "readiness succeeded without a Nexus" >&2
+    exit 1
+  fi
+  grep -F 'cannot connect to Curriculum Nexus' "$TMPDIR/never-ready.out"
+  grep -F 'did not answer ResolveSources before the readiness deadline' \
+    "$TMPDIR/never-ready.out"
+  if ${deployment.awaitReadyCheck}/bin/await-declared-curriculum-ready-check 999999 \
+    > "$TMPDIR/exited.out" 2>&1; then
+    echo "readiness succeeded for an exited Nexus" >&2
+    exit 1
+  fi
+  grep -F 'curriculum-nexus exited before readiness' "$TMPDIR/exited.out"
   mkdir -m 0700 -p "$XDG_RUNTIME_DIR/curriculum"
-  ${deployment.runtime}/bin/curriculum-nexus > "$TMPDIR/nexus.log" 2>&1 &
+  mkdir -p "$TMPDIR/workspace"
+  printf 'primary stays untouched\n' > "$TMPDIR/workspace/sentinel"
+  (${pkgs.coreutils}/bin/sleep 0.25; exec ${deployment.runtime}/bin/curriculum-nexus) \
+    > "$TMPDIR/nexus.log" 2>&1 &
   resolver_pid=$!
   stop_resolver() {
     kill "$resolver_pid" 2>/dev/null || true
     wait "$resolver_pid" || true
   }
   trap stop_resolver EXIT
-  attempts=200
-  while [ ! -S "$XDG_RUNTIME_DIR/curriculum/curriculum.sock" ]; do
-    if ! kill -0 "$resolver_pid" 2>/dev/null; then cat "$TMPDIR/nexus.log"; exit 1; fi
-    attempts=$((attempts - 1)); test "$attempts" -gt 0
-    sleep 0.05
-  done
+  ${deployment.awaitReady}/bin/await-declared-curriculum-ready "$resolver_pid"
+  test "$(cat "$TMPDIR/workspace/sentinel")" = 'primary stays untouched'
+  test ! -e "$TMPDIR/workspace/.claude"
+  test ! -e "$TMPDIR/workspace/skills"
   query='ComposeStartup.{ { Psyche core Secondary } Claude [ spirit-core intent-main-flow ] [ compensation-behavior ] }'
   ${deployment.agents}/bin/install-curriculum-claude-agents
   for role in general-purpose book-author; do
@@ -68,10 +88,7 @@ in pkgs.runCommand "curriculum-resolver-contract" {
     'ComposeRole.{ illustrator ClaudeAgent }' > "$TMPDIR/latest-role.datom"
   grep -q 'LIVE_ROLE_SOURCE_WITNESS' "$TMPDIR/latest-role.datom"
   grep -q "$latest_role" "$TMPDIR/latest-role.datom"
-  ${deployment.projector}/bin/curriculum-deploy \
-    "ProjectRoles.{ «$XDG_RUNTIME_DIR/curriculum/curriculum.sock» «$TMPDIR/workspace» [ { { general-purpose ClaudeAgent } «.claude/agents/general-purpose.md» } { { book-author ClaudeAgent } «.claude/agents/book-author.md» } ] }" \
-    > "$TMPDIR/projected.datom"
-  grep -Fx 'RolesProjected.{ 2 }' "$TMPDIR/projected.datom"
+  ${deployment.projectRoles}/bin/project-declared-curriculum-roles
   test -s "$TMPDIR/workspace/.claude/agents/general-purpose.md"
   test -s "$TMPDIR/workspace/.claude/agents/book-author.md"
   test -s "$TMPDIR/workspace/skills/generated-role-outputs.datom"
