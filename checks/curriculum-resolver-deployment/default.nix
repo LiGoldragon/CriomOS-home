@@ -114,7 +114,7 @@ in pkgs.runCommand "curriculum-resolver-contract" {
     sleep 0.05
   done
   ${deployment.runtime}/bin/curriculum \
-    'ComposeStartup.{ { Psyche core Secondary } Claude [ intent-psyche intent-main-flow ] [] }' > "$TMPDIR/latest.datom"
+    'ComposeStartup.{ { Psyche core Secondary } Claude [ spirit-core intent-psyche intent-main-flow ] [] }' > "$TMPDIR/latest.datom"
   grep -q 'Every line of context is marked short-term or long-term.' "$TMPDIR/latest.datom"
   grep -q 'START_LATEST_FLOW_CONTEXT_WITNESS' "$TMPDIR/latest.datom"
   ${deployment.runtime}/bin/curriculum 'ResolveSources.[ intent-psyche intent-main-flow ]' > "$TMPDIR/latest-sources.datom"
