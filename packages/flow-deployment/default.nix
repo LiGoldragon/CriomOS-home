@@ -1,12 +1,12 @@
 {
   pkgs,
   inputs,
+  runtime ? inputs.flow.packages.${pkgs.stdenv.hostPlatform.system}.default,
   stateDirectory ? "flow-03521",
   solModel ? "gpt-6.1-sol",
   ...
 }:
 let
-  runtime = inputs.flow.packages.${pkgs.stdenv.hostPlatform.system}.default;
   message = inputs.message.packages.${pkgs.stdenv.hostPlatform.system}.default;
   # Reuse the immutable Home declarations for client executable and home.
   # This evaluation builds no service and activates no harness environment.

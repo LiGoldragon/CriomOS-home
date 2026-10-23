@@ -11,7 +11,7 @@ let
   system = pkgs.stdenv.hostPlatform.system;
   runtime = inputs.flow.packages.${system}.default.overrideAttrs (_: { doCheck = false; });
   deployment = pkgs.callPackage ../../../../packages/flow-deployment {
-    inherit inputs;
+    inherit inputs runtime;
     inherit (cfg) stateDirectory solModel;
   };
   sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
