@@ -10,6 +10,7 @@ let
   system = pkgs.stdenv.hostPlatform.system;
   deployment = pkgs.callPackage ../../../../packages/curriculum-resolver-deployment {
     inherit inputs;
+    workspaceRoot = cfg.workspaceRoot;
   };
   curriculumPackage = deployment.runtime;
   homeDirectory = config.home.homeDirectory;
@@ -17,10 +18,17 @@ let
 
 in
 {
-  options.criomosHome.curriculum.enable = lib.mkOption {
-    type = lib.types.bool;
-    default = true;
-    description = "Run Curriculum only for a target with declared roots and workspace.";
+  options.criomosHome.curriculum = {
+    enable = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Run Curriculum only for a target with declared roots and workspace.";
+    };
+    workspaceRoot = lib.mkOption {
+      type = lib.types.strMatching "/.*";
+      default = "${config.home.homeDirectory}/primary";
+      description = "Declared workspace receiving the two Curriculum-owned Claude role projections.";
+    };
   };
 
   config = {

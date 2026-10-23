@@ -1,7 +1,8 @@
-{ pkgs, inputs, ... }:
+{ pkgs, inputs, workspaceRoot ? "/home/li/primary", ... }:
 let
   system = pkgs.stdenv.hostPlatform.system;
   runtime = inputs.primary.packages.${system}.curriculum;
+  projector = inputs.curriculum-deploy.packages.${system}.default;
   sourceRoot = homeDirectory: "${homeDirectory}/.local/state/curriculum-context";
   environment = homeDirectory: let
     root = sourceRoot homeDirectory;
@@ -81,6 +82,17 @@ let
       ${pkgs.coreutils}/bin/mv "$temporary" "$directory/$role.md"
     done
   '';
+  projectRoles = pkgs.writeShellApplication {
+    name = "project-declared-curriculum-roles";
+    text = ''
+      socket="''${XDG_RUNTIME_DIR:?}/curriculum/curriculum.sock"
+      reply=$(${projector}/bin/curriculum-deploy \
+        "ProjectRoles.{ «$socket» «${workspaceRoot}» [ { { general-purpose ClaudeAgent } «.claude/agents/general-purpose.md» } { { book-author ClaudeAgent } «.claude/agents/book-author.md» } ] }")
+      test "$reply" = 'RolesProjected.{ 2 }'
+      test -r ${workspaceRoot}/.claude/agents/general-purpose.md
+      test -r ${workspaceRoot}/.claude/agents/book-author.md
+    '';
+  };
   unit = pkgs.writeText "curriculum-declared-runtime.conf" (''
     [Service]
     Environment=
@@ -93,16 +105,35 @@ let
     ExecStart=
     ExecStart=${runtime}/bin/curriculum-nexus
     ExecStartPost=
-    ExecStartPost=${agents}/bin/install-curriculum-claude-agents
+    ExecStartPost=${projectRoles}/bin/project-declared-curriculum-roles
   '');
+  activate = pkgs.writeShellApplication {
+    name = "activate-declared-curriculum";
+    runtimeInputs = [ pkgs.coreutils pkgs.systemd ];
+    text = ''
+      target="$HOME/.config/systemd/user/curriculum-nexus.service.d"
+      mkdir -p "$target"
+      temporary=$(mktemp "$target/.50-declared-runtime.conf.XXXXXX")
+      trap 'rm -f "$temporary"' EXIT
+      ln -s ${unit} "$temporary.link"
+      mv -T "$temporary.link" "$target/50-declared-runtime.conf"
+      rm -f "$temporary"
+      trap - EXIT
+      systemctl --user daemon-reload
+      systemctl --user restart curriculum-nexus.service
+      systemctl --user is-active --quiet curriculum-nexus.service
+    '';
+  };
 in
 assert inputs.curriculum-source.rev == inputs.primary.inputs.curriculum.rev;
 pkgs.runCommand "curriculum-resolver-deployment" {
   passthru = {
-    inherit runtime environment unit refresh agents;
+    inherit runtime projector environment unit refresh agents projectRoles activate;
     inherit (inputs.primary.inputs) psyche-context mind-context field-context;
   };
 } ''
   mkdir -p "$out/bin"
   ln -s ${cli}/bin/curriculum "$out/bin/curriculum"
+  ln -s ${projectRoles}/bin/project-declared-curriculum-roles "$out/bin/project-declared-curriculum-roles"
+  ln -s ${activate}/bin/activate-declared-curriculum "$out/bin/activate-declared-curriculum"
 ''

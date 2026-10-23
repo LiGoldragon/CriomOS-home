@@ -5,6 +5,10 @@ in pkgs.runCommand "curriculum-resolver-contract" {
   nativeBuildInputs = [ pkgs.git ];
 } ''
   set -eu
+  activation=${deployment.activate}/bin/activate-declared-curriculum
+  grep -F 'curriculum-nexus.service' "$activation"
+  ! grep -Eiq 'flow-nexus|flow\.sock|flow-meta\.sock|flow\.sema' "$activation"
+  grep -F '${deployment.projectRoles}/bin/project-declared-curriculum-roles' ${deployment.unit}
   export HOME="$TMPDIR/home"
   mkdir -p "$HOME"
   export XDG_RUNTIME_DIR="$TMPDIR/runtime"
@@ -42,7 +46,7 @@ in pkgs.runCommand "curriculum-resolver-contract" {
     attempts=$((attempts - 1)); test "$attempts" -gt 0
     sleep 0.05
   done
-  query=$(${pkgs.babashka}/bin/bb -e '(require (quote [clojure.edn :as edn]) (quote [clojure.string :as str])) (let [m (:modules (edn/read-string (slurp (first *command-line-args*))))] (println (str "ComposeStartup.{ { Psyche core Secondary } Claude [ " (str/join " " (map name (:system m))) " ] [ " (str/join " " (map name (:user m))) " ] }")))' ${inputs.primary}/config/main-flow/psyche.edn)
+  query='ComposeStartup.{ { Psyche core Secondary } Claude [ spirit-core intent-main-flow ] [ compensation-behavior ] }'
   ${deployment.agents}/bin/install-curriculum-claude-agents
   for role in general-purpose book-author; do
     for module in vision-book compensation-book-crystallization; do
@@ -63,6 +67,15 @@ in pkgs.runCommand "curriculum-resolver-contract" {
     'ComposeRole.{ illustrator ClaudeAgent }' > "$TMPDIR/latest-role.datom"
   grep -q 'LIVE_ROLE_SOURCE_WITNESS' "$TMPDIR/latest-role.datom"
   grep -q "$latest_role" "$TMPDIR/latest-role.datom"
+  ${deployment.projector}/bin/curriculum-deploy \
+    "ProjectRoles.{ «$XDG_RUNTIME_DIR/curriculum/curriculum.sock» «$TMPDIR/workspace» [ { { general-purpose ClaudeAgent } «.claude/agents/general-purpose.md» } { { book-author ClaudeAgent } «.claude/agents/book-author.md» } ] }" \
+    > "$TMPDIR/projected.datom"
+  grep -Fx 'RolesProjected.{ 2 }' "$TMPDIR/projected.datom"
+  test -s "$TMPDIR/workspace/.claude/agents/general-purpose.md"
+  test -s "$TMPDIR/workspace/.claude/agents/book-author.md"
+  test -s "$TMPDIR/workspace/skills/generated-role-outputs.datom"
+  test -s "$TMPDIR/workspace/skills/generated-role-provenance.datom"
+  test "$(find "$TMPDIR/workspace/.claude/agents" -type f | wc -l)" -eq 2
   if ${deployment.runtime}/bin/curriculum 'ComposeStartup.{ { Psyche core Secondary } Claude [ spirit-core intent-main-flow ] [ /tmp/inline-context ] }' > "$TMPDIR/path.out" 2>&1; then
     echo "Curriculum admitted a path-shaped module ID" >&2
     exit 1

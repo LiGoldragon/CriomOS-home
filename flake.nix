@@ -51,6 +51,9 @@
       flake = false;
     };
 
+    curriculum-deploy.url = "github:LiGoldragon/curriculum-deploy/4c5de012145a7b8ec2810d1378d60be1eed78a65";
+    curriculum-deploy.inputs.nixpkgs.follows = "nixpkgs";
+
     # Field monitoring script sources (modules/home/profiles/min/field-monitoring.nix).
     # core-checkup is pinned to the revision the hand-made unit ran; the Field
     # census, checkup, and 98eb43 monitor to primary main; Luna research to field main.
