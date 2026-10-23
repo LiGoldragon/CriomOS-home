@@ -29,6 +29,7 @@ in
       lib.mkIf cfg.enable
         {
           source = deployment.unit;
+          force = true;
         };
 
     systemd.user.services.curriculum-nexus = lib.mkIf cfg.enable {
