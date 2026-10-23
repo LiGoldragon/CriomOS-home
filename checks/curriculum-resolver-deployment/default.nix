@@ -92,6 +92,8 @@ in pkgs.runCommand "curriculum-resolver-contract" {
   stop_resolver
   trap - EXIT
   test -f "$TMPDIR/origins/psyche/intent/psyche.md"
+  chmod u+w "$TMPDIR/origins/psyche/intent/psyche.md"
+  chmod u+w "$TMPDIR/origins/psyche/intent/main-flow.md"
   printf '\nEvery line of context is marked short-term or long-term.\n' >> "$TMPDIR/origins/psyche/intent/psyche.md"
   printf '\nSTART_LATEST_FLOW_CONTEXT_WITNESS\n' >> "$TMPDIR/origins/psyche/intent/main-flow.md"
   git -C "$TMPDIR/origins/psyche" add intent/main-flow.md
