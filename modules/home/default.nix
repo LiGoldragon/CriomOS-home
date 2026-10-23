@@ -82,6 +82,9 @@
     # Flow Nexus remains disabled until its package, native launch receipt,
     # and durable store migration are validated for this host.
     ./profiles/min/flow.nix
+    # Stable and candidate Flow generations can be declared beside the live
+    # legacy service; disabled until Field activates the release set.
+    ./profiles/min/flow-release-set.nix
     # Next Flow and next Message beside the stable pair, on their own
     # sockets and stores (the stable/next pattern, lib/stable-next-service.nix).
     ./profiles/min/flow-message-next.nix

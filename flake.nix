@@ -590,6 +590,7 @@
           };
           message-service-path = checkPkgs.callPackage ./checks/message-service-path { inherit inputs; };
           flow-service-path = checkPkgs.callPackage ./checks/flow-service-path { inherit inputs; };
+          flow-release-set = checkPkgs.callPackage ./checks/flow-release-set { inherit inputs; };
           context-deploy = checkPkgs.callPackage ./checks/context-deploy { };
           curriculum-resolver-deployment =
             checkPkgs.callPackage ./checks/curriculum-resolver-deployment { inherit inputs; };

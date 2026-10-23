@@ -2,11 +2,12 @@
   pkgs,
   inputs,
   stateDirectory ? "flow-03521",
+  runtimeDirectory ? "flow",
+  runtime ? inputs.flow.packages.${pkgs.stdenv.hostPlatform.system}.default,
   solModel ? "gpt-6.1-sol",
   ...
 }:
 let
-  runtime = inputs.flow.packages.${pkgs.stdenv.hostPlatform.system}.default;
   message = inputs.message.packages.${pkgs.stdenv.hostPlatform.system}.default;
   # Reuse the immutable Home declarations for client executable and home.
   # This evaluation builds no service and activates no harness environment.
@@ -71,7 +72,7 @@ let
     ];
     text = ''
       state="$HOME/.local/state/${stateDirectory}"
-      runtime_dir="''${XDG_RUNTIME_DIR:?}/flow"
+      runtime_dir="''${XDG_RUNTIME_DIR:?}/${runtimeDirectory}"
       store="$state/flow.sema"
       initialize_metaflows=false
       if [ ! -s "$store" ]; then initialize_metaflows=true; fi
@@ -142,7 +143,7 @@ let
       queries=$(mktemp)
       trap 'rm -f "$queries"' EXIT
       ${pkgs.babashka}/bin/bb ${./leave-outs.clj} ${inputs.primary}/config/main-flow > "$queries"
-      FLOW_META_SOCKET="''${XDG_RUNTIME_DIR:?}/flow/flow-meta.sock" \
+      FLOW_META_SOCKET="''${XDG_RUNTIME_DIR:?}/${runtimeDirectory}/flow-meta.sock" \
         ${pkgs.bash}/bin/bash ${./apply-leave-outs.sh} ${runtime}/bin/flow-meta "$queries"
     '';
   };
@@ -154,7 +155,7 @@ let
     ];
     text = ''
       nexus_pid="''${MAINPID:?systemd main PID required}"
-      runtime_dir="''${XDG_RUNTIME_DIR:?}/flow"
+      runtime_dir="''${XDG_RUNTIME_DIR:?}/${runtimeDirectory}"
       owns_listener() {
         local socket="$1" inode fd target
         [ -S "$socket" ] || return 1
@@ -188,6 +189,7 @@ pkgs.runCommand "flow-deployment"
     passthru = {
       inherit
         stateDirectory
+        runtimeDirectory
         solModel
         models
         thresholds
