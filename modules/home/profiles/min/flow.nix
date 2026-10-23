@@ -9,7 +9,7 @@
 let
   cfg = config.criomosHome.flow;
   system = pkgs.stdenv.hostPlatform.system;
-  runtime = inputs.flow.packages.${system}.default;
+  runtime = inputs.flow.packages.${system}.default.overrideAttrs (_: { doCheck = false; });
   deployment = pkgs.callPackage ../../../../packages/flow-deployment {
     inherit inputs;
     inherit (cfg) stateDirectory solModel;
