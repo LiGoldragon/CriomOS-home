@@ -123,7 +123,7 @@
 
     # Flow Nexus is a pinned Home-managed service. Keep the package, client,
     # and user unit in one immutable closure.
-    flow.url = "github:LiGoldragon/flow/2d2e2013f6fab3437e3088c4e52cc61fd2ed721a";
+    flow.url = "github:LiGoldragon/flow/b878b1b1aa622bb884ba3498a099f1c772716ea7";
     flow.inputs.nixpkgs.follows = "nixpkgs";
 
     # The retired messenger prototype, kept only for the Field monitors that
