@@ -54,6 +54,15 @@ in pkgs.runCommand "curriculum-resolver-contract" {
   grep -q 'These are your skills, given here; do not reload them.' "$TMPDIR/composed.datom"
   ${deployment.runtime}/bin/curriculum 'ComposeRole.{ illustrator ClaudeAgent }' > "$TMPDIR/role.datom"
   grep -q '^RoleComposed\.' "$TMPDIR/role.datom"
+  printf '\nLIVE_ROLE_SOURCE_WITNESS\n' >> "$TMPDIR/origins/psyche/vision/book.md"
+  git -C "$TMPDIR/origins/psyche" add vision/book.md
+  git -C "$TMPDIR/origins/psyche" commit --quiet -m "refresh role context"
+  latest_role=$(git -C "$TMPDIR/origins/psyche" rev-parse HEAD)
+  ${deployment.refresh}/bin/curriculum-refresh-contexts
+  ${deployment.runtime}/bin/curriculum \
+    'ComposeRole.{ illustrator ClaudeAgent }' > "$TMPDIR/latest-role.datom"
+  grep -q 'LIVE_ROLE_SOURCE_WITNESS' "$TMPDIR/latest-role.datom"
+  grep -q "$latest_role" "$TMPDIR/latest-role.datom"
   if ${deployment.runtime}/bin/curriculum 'ComposeStartup.{ { Psyche core Secondary } Claude [ spirit-core intent-main-flow ] [ /tmp/inline-context ] }' > "$TMPDIR/path.out" 2>&1; then
     echo "Curriculum admitted a path-shaped module ID" >&2
     exit 1

@@ -27,7 +27,7 @@
       url = "github:LiGoldragon/primary/56058cd2243f7e9c23ae21b48ce04af0d37900d9";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.curriculum = {
-        url = "github:LiGoldragon/Curriculum/6ce4f87a6f1b754ad17eafb6bb73e7917c7ca3b2";
+        url = "github:LiGoldragon/Curriculum/010b9f98902f4f6f520f01f7df933c6ae948d0ed";
         flake = false;
       };
       inputs.mind-context = {
@@ -47,7 +47,7 @@
     # The CLI reads role configuration at the process boundary; keep the
     # matching authored Curriculum source available to the Home service.
     curriculum-source = {
-      url = "github:LiGoldragon/Curriculum/6ce4f87a6f1b754ad17eafb6bb73e7917c7ca3b2";
+      url = "github:LiGoldragon/Curriculum/010b9f98902f4f6f520f01f7df933c6ae948d0ed";
       flake = false;
     };
 
@@ -591,6 +591,8 @@
           message-service-path = checkPkgs.callPackage ./checks/message-service-path { inherit inputs; };
           flow-service-path = checkPkgs.callPackage ./checks/flow-service-path { inherit inputs; };
           context-deploy = checkPkgs.callPackage ./checks/context-deploy { };
+          curriculum-resolver-deployment =
+            checkPkgs.callPackage ./checks/curriculum-resolver-deployment { inherit inputs; };
           flow-message-next = checkPkgs.callPackage ./checks/flow-message-next { inherit inputs; };
           herdr-toast-delivery = checkPkgs.callPackage ./checks/herdr-toast-delivery { inherit inputs; };
           herdr-agent-executable = checkPkgs.callPackage ./checks/herdr-agent-executable { inherit inputs; };
