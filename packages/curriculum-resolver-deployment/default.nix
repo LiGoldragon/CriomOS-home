@@ -112,7 +112,7 @@ let
             fi
             if reply=$(${runtime}/bin/curriculum "ResolveSources.[]" 2>"$diagnostic"); then
               case "$reply" in
-                SourcesResolved.*) exit 0 ;;
+                ResolvedSources.*) exit 0 ;;
                 *) printf "%s\n" "$reply" > "$diagnostic" ;;
               esac
             fi
