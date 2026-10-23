@@ -58,6 +58,7 @@ in pkgs.runCommand "curriculum-resolver-contract" {
   grep -q 'These are your skills, given here; do not reload them.' "$TMPDIR/composed.datom"
   ${deployment.runtime}/bin/curriculum 'ComposeRole.{ illustrator ClaudeAgent }' > "$TMPDIR/role.datom"
   grep -q '^RoleComposed\.' "$TMPDIR/role.datom"
+  chmod u+w "$TMPDIR/origins/psyche/vision/book.md"
   printf '\nLIVE_ROLE_SOURCE_WITNESS\n' >> "$TMPDIR/origins/psyche/vision/book.md"
   git -C "$TMPDIR/origins/psyche" add vision/book.md
   git -C "$TMPDIR/origins/psyche" commit --quiet -m "refresh role context"
