@@ -1,15 +1,11 @@
 { pkgs, inputs, ... }:
 let
-  fakeRuntime = pkgs.runCommand "flow-release-fixture" { } ''
-    mkdir -p "$out/bin"
-    for name in flow flow-meta flow-nexus flow-hook flow-store-check; do
-      cat > "$out/bin/$name" <<'SH'
-      #!${pkgs.runtimeShell}
+  fakeRuntime = pkgs.symlinkJoin {
+    name = "flow-release-fixture";
+    paths = map (name: pkgs.writeShellScriptBin name ''
       printf '%s|%s|%s\n' "$0" "''${FLOW_SOCKET-}" "''${FLOW_META_SOCKET-}"
-      SH
-      chmod +x "$out/bin/$name"
-    done
-  '';
+    '') [ "flow" "flow-meta" "flow-nexus" "flow-hook" "flow-store-check" ];
+  };
   releaseSet = pkgs.callPackage ../../packages/flow-release-set {
     inherit inputs;
     selected = "stable";
@@ -54,12 +50,13 @@ let
   services = home.config.systemd.user.services;
   stableService = services.flow-nexus-release-stable.Service;
   nextService = services.flow-nexus-release-next.Service;
+  text = value: if builtins.isList value then pkgs.lib.concatStringsSep " " value else value;
 in
 assert !(services ? flow-nexus-release-last);
-assert pkgs.lib.hasInfix "%t/flow-release-stable-fixture/flow.sock" stableService.ExecStart;
-assert pkgs.lib.hasInfix "%h/.local/state/flow-release-stable-fixture/flow.sema" stableService.ExecStart;
+assert pkgs.lib.hasInfix "%t/flow-release-stable-fixture/flow.sock" (text stableService.ExecStart);
+assert pkgs.lib.hasInfix "%h/.local/state/flow-release-stable-fixture/flow.sema" (text stableService.ExecStart);
 assert builtins.elem "HERDR_SESSION=flow-stable-fixture" stableService.Environment;
-assert pkgs.lib.hasInfix "%t/flow-release-next-fixture/flow-meta.sock" nextService.ExecStart;
+assert pkgs.lib.hasInfix "%t/flow-release-next-fixture/flow-meta.sock" (text nextService.ExecStart);
 assert builtins.elem "HERDR_SESSION=flow-next-fixture" nextService.Environment;
 pkgs.runCommand "flow-release-set-contract" { } ''
   export XDG_RUNTIME_DIR="$TMPDIR/runtime"
