@@ -1,5 +1,5 @@
 ;; Configure.Metaflows from config/main-flow: every declared metaflow, and
-;; each extra Address named on the command line, with the context modules a
+;; each extra Address named on the command line, with the belief modules a
 ;; launch of it composes: its aspect's defaults, then the row's own additions
 ;; (system :modules, user :user-modules).
 (require '[clojure.edn :as edn]
@@ -15,7 +15,7 @@
       ; The lean primary's answer is a book source for the book publisher.
       runtime-rows [{:aspect :Psyche :topic :Core :layer :Primary
                      :flow-kind :Simplified :tools []
-                     :modules [:spirit-core :intent-context-modules
+                     :modules [:spirit-core :intent-belief-modules
                                :intent-design :intent-main-flow
                                :intent-models :intent-psyche
                                :intent-psyche-interaction :vision-book

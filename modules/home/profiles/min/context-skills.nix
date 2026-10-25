@@ -17,7 +17,7 @@ in
   options.criomosHome.contextSkills.enable = lib.mkOption {
     type = lib.types.bool;
     default = config.criomosHome.curriculum.enable;
-    description = "Keep every context module installed as a skill in the Primary workspace's harness skill directories, regenerated from main on every change to main.";
+    description = "Keep every belief module installed as a skill in the Primary workspace's harness skill directories, regenerated from main on every change to main.";
   };
 
   config = lib.mkIf cfg.enable {
