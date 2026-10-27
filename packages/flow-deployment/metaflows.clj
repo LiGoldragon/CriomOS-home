@@ -19,7 +19,8 @@
                                :intent-design :intent-main-flow
                                :intent-models :intent-psyche
                                :intent-psyche-interaction :vision-book
-                               :compensation-book-crystallization]
+                               :compensation-book-crystallization
+                               :role-psyche-core-primary-presentation]
                      :user-modules []}
                     {:aspect :Psyche :topic :test :layer :Quaternary
                      :flow-kind :Simplified :tools []
