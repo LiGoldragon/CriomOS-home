@@ -5,7 +5,7 @@
          '[clojure.string :as str])
 
 (def module-types
-  ["vision" "intent" "spirit" "knowledge" "inquiry" "compensation" "role" "raw"])
+  ["vision" "intent" "spirit" "knowledge" "compensation" "role" "raw"])
 
 ;; Every surface a harness reads, the harness its text is rendered for,
 ;; and whether it carries Codex's invocation policy file.
