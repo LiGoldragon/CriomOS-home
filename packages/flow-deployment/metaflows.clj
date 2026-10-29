@@ -20,7 +20,7 @@
                                :intent-models :intent-psyche
                                :intent-psyche-interaction :vision-book
                                :compensation-book-crystallization]
-                     :user-modules []}
+                     :user-modules ["role:psyche-core-primary-presentation"]}
                     {:aspect :Psyche :topic :test :layer :Quaternary
                      :flow-kind :Simplified :tools []
                      :modules [:spirit-core :intent-models]

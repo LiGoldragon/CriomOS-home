@@ -22,9 +22,12 @@ pkgs.runCommand "flow-metaflow-tools"
      :tools [:Bash "ToolSearch"] :modules [:own-system]}
     EOF
     bb ${../../packages/flow-deployment/metaflows.clj} config 'Field investigation Secondary' > mixed
-    grep -F '{ { Psyche core Primary } [ spirit-core intent-context-modules intent-design intent-main-flow intent-models intent-psyche intent-psyche-interaction vision-book compensation-book-crystallization ] [  ] Simplified Explicit.[  ] }' mixed
+    grep -F '{ { Psyche core Primary } [ spirit-core intent-context-modules intent-design intent-main-flow intent-models intent-psyche intent-psyche-interaction vision-book compensation-book-crystallization ] [ role:psyche-core-primary-presentation ] Simplified Explicit.[  ] }' mixed
     grep -F '{ { Psyche test Quaternary } [ spirit-core intent-models ] [  ] Simplified Explicit.[  ] }' mixed
-    grep -F 'FLOW_CORE_PRESENTATION_PROMPT=/home/li/primary/flows/9ef2c5/prompts/presentation-maker.md' ${../../modules/home/profiles/min/flow.nix}
+    if grep -F 'FLOW_CORE_PRESENTATION_PROMPT' ${../../modules/home/profiles/min/flow.nix}; then
+      echo 'presentation role still has a static environment bypass' >&2
+      exit 1
+    fi
     grep -F '{ { Mind testCase Secondary } [ default-system own-system ] [ default-user ] Regular Explicit.[ «Bash» «ToolSearch» ] }' mixed
     grep -F '{ { Field investigation Secondary } [ default-system ] [ default-user ] Regular Default }' mixed
     sed -i 's/:tools \[\]/:tools [:Bash]/' config/metaflow/judgment.edn

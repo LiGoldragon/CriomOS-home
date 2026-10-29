@@ -89,8 +89,10 @@ in
     systemd.user.services.flow-nexus = {
       Unit = {
         Description = "Flow Nexus";
-        Wants = [ "codex-remote-control.service" ];
-        Requires = [ "curriculum-nexus.service" ];
+        Wants = [
+          "codex-remote-control.service"
+          "curriculum-nexus.service"
+        ];
         After = [
           "codex-remote-control.service"
           "curriculum-nexus.service"
@@ -100,7 +102,6 @@ in
         Type = "simple";
         Environment = [
           "PATH=%h/.nix-profile/bin:/etc/profiles/per-user/%u/bin:/run/current-system/sw/bin"
-          "FLOW_CORE_PRESENTATION_PROMPT=/home/li/primary/flows/9ef2c5/prompts/presentation-maker.md"
         ];
         ExecStartPre = "${deployment.initialize}/bin/initialize-declared-flow";
         ExecStart = "${runtime}/bin/flow-nexus \"{ %t/flow/flow.sock %t/flow/flow-meta.sock %h/.local/state/${cfg.stateDirectory}/flow.sema ${landingWatch} }\"";

@@ -22,11 +22,16 @@ let
     };
   };
   service = module.config.content.systemd.user.services.flow-nexus.Service;
+  unit = module.config.content.systemd.user.services.flow-nexus.Unit;
   homeStart = service.ExecStart;
   contextDeploy = pkgs.callPackage ../../packages/context-deploy { };
 in
 # The service resolves its tools through the declared profiles only.
 assert !(builtins.any (entry: pkgs.lib.hasInfix ".local/bin" entry) service.Environment);
+assert !(builtins.any (entry: pkgs.lib.hasPrefix "FLOW_CORE_PRESENTATION_PROMPT=") service.Environment);
+assert !(unit ? Requires);
+assert builtins.elem "curriculum-nexus.service" unit.Wants;
+assert builtins.elem "curriculum-nexus.service" unit.After;
 assert service.ExecStartPre == "${deployment.initialize}/bin/initialize-declared-flow";
 assert inputs.flow.sourceInfo.rev == "2d2e2013f6fab3437e3088c4e52cc61fd2ed721a";
 assert !(inputs ? flow-next);
