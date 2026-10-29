@@ -14,14 +14,16 @@
       ; These runtime roles are source declarations, not ad-hoc Nexus rows.
       ; The lean primary's answer is a book source for the book publisher.
       runtime-rows [{:aspect :Psyche :topic :Core :layer :Primary
-                     :flow-kind :Simplified :tools []
-                     :modules [:spirit-core :intent-belief-modules
-                               :intent-design :intent-main-flow
-                               :intent-models :intent-psyche
-                               :intent-psyche-interaction :vision-book
-                               :compensation-book-crystallization
-                               :role-psyche-core-primary-presentation]
-                     :user-modules []}
+                     :flow-kind :Regular
+                     :modules [:spirit:core :spirit:ghost :intent:context
+                               :intent:design :intent:main-flow :intent:models
+                               :intent:psyche :intent:living-interaction
+                               :intent:energy :intent:belief-modules]
+                     :user-modules [:vision:remembering :vision:model-roles
+                                    :vision:crystallization :vision:proposal
+                                    :vision:psyche :vision:belief-modules
+                                    :vision:collaboration :knowledge:flow
+                                    :knowledge:beads :knowledge:psyche]}
                     {:aspect :Psyche :topic :test :layer :Quaternary
                      :flow-kind :Simplified :tools []
                      :modules [:spirit-core :intent-models]
