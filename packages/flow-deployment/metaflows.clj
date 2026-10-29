@@ -1,82 +1,30 @@
-;; Configure.Metaflows from config/main-flow: every declared metaflow, and
-;; each extra Address named on the command line, with the belief modules a
-;; launch of it composes: its aspect's defaults, then the row's own additions
-;; (system :modules, user :user-modules).
-(require '[clojure.edn :as edn]
-         '[clojure.java.io :as io]
-         '[clojure.string :as str])
-(let [[root & extra] *command-line-args*
-      read-data #(edn/read-string (slurp %))
-      aspects (into {} (for [aspect [:Psyche :Mind :Field]]
-                        [aspect (read-data (io/file root (str (str/lower-case (name aspect)) ".edn")))]))
-      rows (map read-data (filter #(.endsWith (.getName %) ".edn")
-                                  (sort-by #(.getName %) (.listFiles (io/file root "metaflow")))))
-      ; These runtime roles are source declarations, not ad-hoc Nexus rows.
-      ; The lean primary's answer is a book source for the book publisher.
-      runtime-rows [{:aspect :Psyche :topic :Core :layer :Primary
-                     :flow-kind :Regular
-                     :modules [:spirit:core :spirit:ghost :intent:context
-                               :intent:design :intent:main-flow :intent:models
-                               :intent:psyche :intent:living-interaction
-                               :intent:energy :intent:belief-modules]
-                     :user-modules [:vision:remembering :vision:model-roles
-                                    :vision:crystallization :vision:proposal
-                                    :vision:psyche :vision:belief-modules
-                                    :vision:collaboration :knowledge:flow
-                                    :knowledge:beads :knowledge:psyche]}
-                    {:aspect :Psyche :topic :test :layer :Quaternary
-                     :flow-kind :Simplified :tools []
-                     :modules [:spirit-core :intent-models]
-                     :user-modules []}]
-      runtime-addresses (set (map (juxt :aspect :topic :layer) runtime-rows))
-      rows (concat (remove #(contains? runtime-addresses
-                                       [(:aspect %) (:topic %) (:layer %)])
-                           rows)
-                   runtime-rows)
-      module-name #(if (map? %) (name (:name %)) (name %))
-      topic-name #(let [topic (name %)]
-                    (str (str/lower-case (subs topic 0 1)) (subs topic 1)))
-      defaults (fn [aspect placement]
-                 (let [modules (get-in aspects [aspect :modules placement])]
-                   (when-not (seq modules)
-                     (throw (ex-info "MissingAspectModules" {:aspect aspect :placement placement})))
-                   (map module-name modules)))
-      declared (fn [aspect topic layer system user kind tools]
-                 {:address [(name aspect) (topic-name topic) (name layer)]
-                  :kind kind
-                  :tools tools
-                  :system (distinct (concat (when (= kind :Regular) (defaults aspect :system))
-                                            (map module-name system)))
-                  :user (distinct (concat (when (= kind :Regular) (defaults aspect :user))
-                                          (map module-name user)))})
-      entries (concat
-                (for [row rows
-                      :let [kind (get row :flow-kind :Regular)
-                            tools (when (contains? row :tools) (:tools row))]]
-                  (do
-                  (when-not (#{:Regular :Simplified} kind)
-                    (throw (ex-info "UnknownFlowKind" {:kind kind})))
-                  (when (and (= kind :Simplified)
-                             (or (not (contains? row :tools)) (not= [] tools)
-                                 (not (seq (:modules row)))))
-                    (throw (ex-info "SimplifiedNeedsOwnPromptAndEmptyTools" {:row row})))
-                  (when (and (contains? row :tools) (not (vector? tools)))
-                    (throw (ex-info "ToolsMustBeVector" {:tools tools})))
-                  (declared (:aspect row) (:topic row) (:layer row)
-                            (:modules row) (:user-modules row) kind tools)))
-                (for [address extra
-                      :let [[aspect topic layer] (str/split address #"\s+")]]
-                  (declared (keyword aspect) topic (keyword layer) [] [] :Regular nil)))
-      datom-string #(str "«" (-> (name %) (str/replace "\\" "\\\\")
-                                 (str/replace "»" "\\»")) "»")
-      addresses (map :address entries)]
-  (when-not (= (count addresses) (count (distinct addresses)))
-    (throw (ex-info "DuplicateMetaflowDeclaration" {:addresses addresses})))
-  (println (str "Configure.Metaflows.[ "
-                (str/join " " (for [{:keys [address system user kind tools]} entries]
-                                (str "{ { " (str/join " " address) " } [ " (str/join " " system)
-                                     " ] [ " (str/join " " user) " ] " (name kind) " "
-                                     (if (nil? tools) "Default"
-                                       (str "Explicit.[ " (str/join " " (map datom-string tools)) " ]"))
-                                     " }")))
-                " ]")))
+;; The complete authored Flow metaflow configuration. Every row preserves its
+;; nonmodule positions as returned by flow-meta Configuration.
+(require '[clojure.string :as str])
+
+(def runtime-rows
+  [
+   "{ { Field core Primary } [ intent:context spirit:core spirit:ghost intent:main-flow intent:living-interaction intent:psyche intent:design intent:models vision:criomos vision:ethos vision:datom ] [ knowledge:vocabulary knowledge:psyche vision:crystallization knowledge:orchestrate vision:aspects vision:model-roles knowledge:protos knowledge:datom vision:messaging knowledge:flow knowledge:beads ] Regular Default Maintained «» [] }"
+   "{ { Field core Secondary } [ intent:context spirit:core spirit:ghost intent:main-flow intent:living-interaction intent:psyche intent:design intent:models vision:criomos vision:ethos vision:datom ] [ knowledge:vocabulary knowledge:psyche vision:crystallization knowledge:orchestrate vision:aspects vision:model-roles knowledge:protos knowledge:datom vision:messaging knowledge:flow knowledge:beads ] Regular Default Maintained «» [] }"
+   "{ { Field core Tertiary } [ intent:context vision:book spirit:core spirit:ghost intent:main-flow intent:living-interaction intent:psyche intent:design intent:models vision:criomos vision:ethos vision:datom ] [ knowledge:vocabulary knowledge:psyche vision:crystallization knowledge:orchestrate vision:aspects vision:model-roles knowledge:protos knowledge:datom vision:messaging ] Regular Default Maintained «» [] }"
+   "{ { Field flow Secondary } [ intent:context spirit:core spirit:ghost intent:main-flow intent:living-interaction intent:psyche intent:design intent:models vision:criomos vision:ethos vision:datom ] [ knowledge:vocabulary knowledge:psyche vision:crystallization knowledge:orchestrate vision:aspects vision:model-roles knowledge:protos knowledge:datom vision:messaging vision:flow vision:subflows knowledge:flow knowledge:beads ] Regular Default OnDemand «» [] }"
+   "{ { Field publisher Quaternary } [ intent:context vision:book spirit:core spirit:ghost intent:main-flow intent:living-interaction intent:psyche intent:design intent:models vision:criomos vision:ethos vision:datom ] [ knowledge:vocabulary knowledge:psyche vision:crystallization knowledge:orchestrate vision:aspects vision:model-roles knowledge:protos knowledge:datom vision:messaging ] Regular Default OnDemand «» [] }"
+   "{ { Mind core Primary } [ intent:context spirit:core spirit:ghost intent:main-flow intent:living-interaction intent:psyche intent:design intent:models vision:ethos vision:datom ] [ compensation:behavior compensation:correction knowledge:vocabulary knowledge:psyche vision:crystallization knowledge:orchestrate vision:aspects vision:model-roles knowledge:protos knowledge:datom vision:messaging knowledge:flow knowledge:beads ] Regular Default Maintained «» [] }"
+   "{ { Mind core Secondary } [ intent:context spirit:core spirit:ghost intent:main-flow intent:living-interaction intent:psyche intent:design intent:models vision:ethos vision:datom ] [ compensation:behavior compensation:correction knowledge:vocabulary knowledge:psyche vision:crystallization knowledge:orchestrate vision:aspects vision:model-roles knowledge:protos knowledge:datom vision:messaging knowledge:flow knowledge:beads ] Regular Default Maintained «» [] }"
+   "{ { Mind core Tertiary } [ intent:context vision:book compensation:book-crystallization spirit:core spirit:ghost intent:main-flow intent:living-interaction intent:psyche intent:design intent:models vision:ethos vision:datom ] [ compensation:behavior compensation:correction knowledge:vocabulary knowledge:psyche vision:crystallization knowledge:orchestrate vision:aspects vision:model-roles knowledge:protos knowledge:datom vision:messaging ] Regular Default Maintained «» [] }"
+   "{ { Mind flow Primary } [ intent:context spirit:core spirit:ghost intent:main-flow intent:living-interaction intent:psyche intent:design intent:models vision:ethos vision:datom ] [ compensation:behavior compensation:correction knowledge:vocabulary knowledge:psyche vision:crystallization knowledge:orchestrate vision:aspects vision:model-roles knowledge:protos knowledge:datom vision:messaging vision:flow vision:subflows knowledge:flow knowledge:beads ] Regular Default OnDemand «» [] }"
+   "{ { Mind flow Secondary } [ intent:context spirit:core spirit:ghost intent:main-flow intent:living-interaction intent:psyche intent:design intent:models vision:ethos vision:datom ] [ compensation:behavior compensation:correction knowledge:vocabulary knowledge:psyche vision:crystallization knowledge:orchestrate vision:aspects vision:model-roles knowledge:protos knowledge:datom vision:messaging vision:flow vision:subflows knowledge:flow knowledge:beads ] Regular Default OnDemand «» [] }"
+   "{ { Psyche book Tertiary } [ intent:context vision:book compensation:book-crystallization spirit:core spirit:ghost intent:main-flow intent:living-interaction intent:psyche intent:design intent:models role:book-publishing-procedure vision:ethos vision:datom ] [ compensation:behavior compensation:correction knowledge:vocabulary knowledge:psyche vision:crystallization knowledge:orchestrate vision:aspects vision:model-roles knowledge:protos knowledge:datom vision:messaging knowledge:flow knowledge:beads ] Regular Default OnDemand «» [] }"
+   "{ { Psyche core Primary } [ spirit:core spirit:ghost intent:context intent:design intent:main-flow intent:models intent:psyche intent:living-interaction intent:energy intent:belief-modules ] [ vision:remembering vision:model-roles vision:crystallization vision:proposal vision:psyche vision:belief-modules vision:collaboration knowledge:flow knowledge:beads knowledge:psyche ] Regular Default Maintained «» [] }"
+   "{ { Psyche core Quaternary } [ intent:context spirit:core spirit:ghost intent:main-flow intent:living-interaction intent:psyche intent:design intent:models role:psyche-core-tertiary vision:ethos vision:datom ] [ compensation:behavior compensation:correction knowledge:vocabulary knowledge:psyche vision:crystallization knowledge:orchestrate vision:aspects vision:model-roles knowledge:protos knowledge:datom vision:messaging knowledge:flow knowledge:beads ] Regular Default Maintained «» [] }"
+   "{ { Psyche core Secondary } [ intent:context spirit:core spirit:ghost intent:main-flow intent:living-interaction intent:psyche intent:design intent:models vision:criomos vision:ethos vision:datom vision:proposal intent:energy ] [ compensation:behavior compensation:correction knowledge:vocabulary knowledge:psyche vision:crystallization knowledge:orchestrate vision:aspects vision:model-roles knowledge:protos knowledge:datom vision:messaging knowledge:flow knowledge:beads ] Regular Default Maintained «» [] }"
+   "{ { Psyche core Tertiary } [ intent:context spirit:core spirit:ghost intent:main-flow intent:living-interaction intent:psyche intent:design intent:models role:psyche-core-tertiary vision:ethos vision:datom ] [ compensation:behavior compensation:correction knowledge:vocabulary knowledge:psyche vision:crystallization knowledge:orchestrate vision:aspects vision:model-roles knowledge:protos knowledge:datom vision:messaging knowledge:flow knowledge:beads ] Regular Default Maintained «» [] }"
+   "{ { Psyche flow Primary } [ intent:context spirit:core spirit:ghost intent:main-flow intent:living-interaction intent:psyche intent:design intent:models vision:flow vision:nexus vision:signal vision:ethos vision:datom ] [ compensation:behavior compensation:correction knowledge:vocabulary knowledge:psyche vision:crystallization knowledge:orchestrate vision:aspects vision:model-roles knowledge:protos knowledge:datom vision:messaging vision:remembering knowledge:flow knowledge:beads ] Regular Default OnDemand «» [] }"
+   "{ { Psyche flow Secondary } [ intent:context spirit:core spirit:ghost intent:main-flow intent:living-interaction intent:psyche intent:design intent:models vision:flow vision:nexus vision:signal vision:ethos vision:datom ] [ compensation:behavior compensation:correction knowledge:vocabulary knowledge:psyche vision:crystallization knowledge:orchestrate vision:aspects vision:model-roles knowledge:protos knowledge:datom vision:messaging vision:remembering knowledge:flow knowledge:beads ] Regular Default OnDemand «» [] }"
+   "{ { Psyche test Quaternary } [ spirit:core spirit:ghost intent:models vision:ethos vision:datom ] [] Regular Default OnDemand «» [] }"
+   "{ { Psyche records Secondary } [ intent:context spirit:core spirit:ghost intent:main-flow intent:living-interaction intent:psyche intent:design intent:models vision:criomos vision:ethos vision:datom ] [ compensation:behavior compensation:correction knowledge:vocabulary knowledge:psyche vision:crystallization knowledge:orchestrate vision:aspects vision:model-roles knowledge:protos knowledge:datom vision:messaging knowledge:flow knowledge:beads ] Regular Default OnDemand «» [] }"
+   "{ { Psyche research Primary } [ spirit:core spirit:ghost intent:main-flow intent:living-interaction intent:psyche intent:fable intent:belief-modules vision:psyche-aspect compensation:messaging ] [ compensation:correction knowledge:flow knowledge:beads ] Regular Default Maintained «» [] }"
+   "{ { Psyche research Secondary } [ spirit:core spirit:ghost intent:main-flow intent:living-interaction intent:psyche intent:belief-modules vision:psyche-aspect compensation:messaging ] [ compensation:correction knowledge:flow knowledge:beads ] Regular Default Maintained «» [] }"
+   ])
+
+(println (str "Configure.Metaflows.[ " (str/join " " runtime-rows) " ]"))
