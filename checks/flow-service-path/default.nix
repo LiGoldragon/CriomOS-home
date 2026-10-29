@@ -36,7 +36,7 @@ assert !(unit ? Requires);
 assert builtins.elem "curriculum-nexus.service" unit.Wants;
 assert builtins.elem "curriculum-nexus.service" unit.After;
 assert service.ExecStartPre == "${deployment.storeCheck}/bin/check-declared-flow-store";
-assert inputs.flow.sourceInfo.rev == "96ea3e7ebacd8f8210fb1cca2d5ad5af2f47acd4";
+assert inputs.flow.sourceInfo.rev == "735a88a6881add37f819c9e2afa77317661157ba";
 assert !(inputs ? flow-next);
 assert service.ExecStartPost == "${deployment.ready}/bin/wait-declared-flow-ready";
 assert
