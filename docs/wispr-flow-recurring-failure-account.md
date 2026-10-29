@@ -2,7 +2,7 @@
 
 ## Status
 
-Wispr Flow is running on `ouranos` in `app-wispr-flow-restart-3fa658.scope`. A passive status-socket read at the end of this investigation reported `recording`, `hands_free=true`; that is evidence the process and bridge were live, not a lasting functional witness. The living reported one successful transcription after the earlier recovery and then another failure. The recurring bug remains open.
+Wispr Flow is running on `ouranos`. The recovery launch has two systemd scopes belonging to one process tree: `app-wispr-flow-restart-3fa658.scope` holds the FHS `bwrap` parent and `app-wispr-flow-1765973.scope` holds its Electron child, renderers and helper. A passive status-socket read at the end of this investigation reported `recording`, `hands_free=true`; that is evidence the process and bridge were live, not a lasting functional witness. The living reported one successful transcription after the earlier recovery and then another failure. The recurring bug remains open.
 
 ## Recovery performed
 
@@ -20,12 +20,35 @@ The new scope entered active/running at `2026-10-29 17:38:07 CST`; its root PID 
 The filtered technical state transitions in `~/.cache/wispr-flow/launcher.log` showed:
 
 1. 17:29:16 listening -> processing -> idle at 17:29:17.
-2. 17:35:59 a later cycle returned to idle at 17:36:20.
-3. 17:36:24 another cycle entered processing.
-4. 17:36:50 processing timed out and entered Error.
-5. The launcher then reported that `activeDictationSession` was still set on the terminal Error transition.
+2. A later pipeline returned the visible state to Idle at 17:36:20.218 but was still doing tail work.
+3. A new dictation started at 17:36:24.068 and entered Processing at 17:36:26.826.
+4. Its recording-done callback was rejected at 17:36:26.827 as "already processing".
+5. The preceding pipeline did slow History work and reached its final reset guard at 17:36:37.701, where it detected the new dictation and preserved its state.
+6. No recording-done retry occurred. Processing timed out at 17:36:50.825 and entered Error; at 17:36:50.827 the launcher reported that `activeDictationSession` was still set.
 
-This directly supports a terminal-error cleanup defect: a timed-out transcription can leave the session sentinel set. It does not identify why processing timed out.
+This directly establishes a dropped-completion race followed by the terminal-error cleanup defect. It does not identify why the preceding pipeline took long enough to overlap the next dictation.
+
+## Causal recording-done race
+
+The deployed archive is `/nix/store/drrrcy4vbli1yyw2ikfcf5xhm6cbrsq5-wispr-flow-1.6.774+criomos.11/lib/wispr-flow/electron/resources/app.asar`. Its minified main bundle's module `63205`, around byte 3,965,874, declares one process-wide Boolean latch, `Lt`, around `onRecordingDone`. The handler first accepts a callback when it is testing, has no transcription UUID, or its UUID equals the current global UUID. It then rejects every accepted callback while `Lt` is true. It sets `Lt` before processing and clears it only in the outermost `finally`, around byte 3,983,690, after the rest of the pipeline and its inner cleanup.
+
+The inner cleanup explicitly notices when a new global UUID has begun and skips resetting that new dictation. Thus the application permits a new dictation while the preceding pipeline finishes, but the process-wide latch still rejects the new dictation's completion. That callback returns without processing its recording, and the observed run produced no later retry.
+
+The same signature appears five times in the technical launcher metadata:
+
+| Duplicate callback line and time | Following timeout line and time | Gap |
+| --- | --- | --- |
+| 761066, 18:32:37.115 | 761192, 18:33:01.112 | 24 s |
+| 847987, 06:12:59.223 | 848121, 06:13:23.220 | 24 s |
+| 897309, 16:57:21.527 | 897364, 16:57:45.526 | 24 s |
+| 900531, 17:15:28.165 | 900610, 17:16:18.689 | 50 s |
+| 902814, 17:36:26.827 | 902939, 17:36:50.825 | 24 s |
+
+The repeated duplicate-to-timeout chain and the handler's return path establish the shared race. The source of the preceding pipeline's latency remains unknown: slow SQL and I/O are present in some affected windows, but the evidence does not identify one shared latency cause.
+
+A per-transcription UUID latch is directionally relevant because it can distinguish a genuine same-session duplicate from a new session. A direct Boolean-to-UUID-set replacement is unsafe, however. The handler reads and mutates the shared global `c.ZZ` audio packets, status, timing, application context, current task and UUID throughout; allowing two UUID pipelines to run concurrently can mix their state. The handler also deliberately admits callbacks with a missing UUID and callbacks in Testing, whose identity semantics a keyed latch would have to define. Every return and exception path would have to release the correct key.
+
+Whether the pipeline should serialize completions or isolate every per-transcription value is a design decision pending Claude review and a proposal to the living. This account selects neither and implements neither.
 
 ## Historical evidence
 
@@ -91,7 +114,13 @@ Gaps:
 - the patch supplies explicit recovery from terminal Error but does not prevent the processing timeout;
 - it does not autonomously recover Error or solve process ownership/duplicate launch.
 
-The Claude Error recovery and Codex lifecycle proposal address different failure classes and can compose. Neither is a complete recurring-root-cause fix.
+The Claude Error recovery and Codex lifecycle proposal address different failure classes and can compose. `e56a9d0` can recover through the control surface after the race has reached Error, but it does not prevent the global latch from dropping the new recording-done callback. Neither is a complete recurring-root-cause fix.
+
+## Current process ownership witness
+
+The two active scopes are not two Wispr applications. `app-wispr-flow-restart-3fa658.scope` owns `bwrap` PID 1765963 and supporting zygote/crashpad processes. Its child Electron main PID 1765973 was placed in `app-wispr-flow-1765973.scope`, which owns the renderers and the only observed Linux helper, PID 1766176. Both have the same launch time and session, and PID 1765973 has PID 1765963 as its parent.
+
+At the time of this read-only snapshot, the sole Electron main owned both expected listeners: `wispr-flow-status-v2.sock` on file descriptor 74 and `wispr-flow-control-v2.sock` on file descriptor 77. This current snapshot rules out a current duplicate main, helper or socket owner. It does not establish the device, helper or socket state at an earlier failure.
 
 ## Ctrl+Enter correction related to this recovery session
 
@@ -103,15 +132,16 @@ Live file `/home/li/.config/ghostty/config.ghostty` received `keybind = ctrl+ent
 
 Observed causes are separated:
 
+- A process-wide recording-done latch dropped the completion callback for a new dictation while the preceding pipeline was still finishing. Five observed instances were followed by processing timeout.
 - The latest functional failure ended in a live Error with a stale active-session sentinel after a processing timeout.
 - Historical crashes leave no process and need lifecycle supervision.
 - The absence of one declarative owner permits manual/transient launch ambiguity.
 
 Unknowns remain:
 
-- why the latest processing operation timed out;
+- why the preceding pipeline was slow enough to overlap the next dictation;
 - the causes of the historical SIGTRAP/SIGABRT events;
-- whether the timeout is upstream network/server work, local IPC/helper work, or another internal stage;
+- whether the latency is upstream network/server work, local IPC/helper work, SQL/I/O or another internal stage;
 - whether either source proposal remains fixed across repeated real dictations.
 
-The next safe trial is a reviewed deployment of the Error cleanup patch, with technical state-transition observation across repeated dictations, followed separately by deployment/testing of single-owner lifecycle supervision. The living's repeated-use witness is required before closing `primary-swaf.1`.
+The next design decision is how to preserve per-transcription identity without allowing shared global state to race: serialization or full isolation. It follows Claude review and a proposal to the living. Separately, the reviewed Error cleanup patch and single-owner lifecycle supervision can be tested for their narrower recovery roles. The living's repeated-use witness is required before closing `primary-swaf.1`.
