@@ -25,12 +25,6 @@ in
 
   config = {
     home.packages = [ deployment ];
-    xdg.configFile."systemd/user/curriculum-nexus.service.d/50-declared-runtime.conf" =
-      lib.mkIf cfg.enable
-        {
-          source = deployment.unit;
-        };
-
     systemd.user.services.curriculum-nexus = lib.mkIf cfg.enable {
       Unit = {
         Description = "Curriculum skill registry and projection Nexus";

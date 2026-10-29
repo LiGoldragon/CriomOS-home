@@ -27,7 +27,7 @@
       url = "github:LiGoldragon/primary/56058cd2243f7e9c23ae21b48ce04af0d37900d9";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.curriculum = {
-        url = "github:LiGoldragon/Curriculum/8533a4697c945f32a451a836feb41971ceb9dfb4";
+        url = "github:LiGoldragon/Curriculum/73330192326f443605589614707d8ce91d15e449";
         flake = false;
       };
       inputs.psyche-context = {
@@ -42,13 +42,6 @@
         url = "github:LiGoldragon/field-context/873a55a2f6a6e94d2ae867821f6c9d404eb839a7";
         flake = false;
       };
-    };
-
-    # The CLI reads role configuration at the process boundary; keep the
-    # matching authored Curriculum source available to the Home service.
-    curriculum-source = {
-      url = "github:LiGoldragon/Curriculum/04757684acef769b863d8a73ad9cbff08abbbc68";
-      flake = false;
     };
 
     # Field monitoring script sources (modules/home/profiles/min/field-monitoring.nix).
@@ -123,7 +116,7 @@
 
     # Flow Nexus is a pinned Home-managed service. Keep the package, client,
     # and user unit in one immutable closure.
-    flow.url = "github:LiGoldragon/flow/2d2e2013f6fab3437e3088c4e52cc61fd2ed721a";
+    flow.url = "github:LiGoldragon/flow/96ea3e7ebacd8f8210fb1cca2d5ad5af2f47acd4";
     flow.inputs.nixpkgs.follows = "nixpkgs";
 
     # The retired messenger prototype, kept only for the Field monitors that

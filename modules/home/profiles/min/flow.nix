@@ -12,7 +12,7 @@ let
   runtime = inputs.flow.packages.${system}.default;
   deployment = pkgs.callPackage ../../../../packages/flow-deployment {
     inherit inputs;
-    inherit (cfg) stateDirectory solModel;
+    inherit (cfg) stateDirectory;
   };
   sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
   contextDeploy = pkgs.callPackage ../../../../packages/context-deploy {
@@ -34,15 +34,8 @@ in
     };
     stateDirectory = lib.mkOption {
       type = lib.types.strMatching "flow-[a-zA-Z0-9-]+";
-      default = "flow-03521";
+      default = "flow-040";
       description = "Declared Flow store directory; previous cohorts remain untouched.";
-    };
-    solModel = lib.mkOption {
-      type = lib.types.enum [
-        "gpt-6-sol"
-        "gpt-6.1-sol"
-      ];
-      default = "gpt-6.1-sol";
     };
     package = lib.mkOption {
       type = lib.types.nullOr lib.types.package;
@@ -84,7 +77,13 @@ in
     # Nexus that cannot open it fails at every start. The check opens a
     # private copy, before anything of this generation is linked.
     home.activation.flowOpensItsStore = lib.hm.dag.entryBefore [ "writeBoundary" ] ''
-      ${runtime}/bin/flow-store-check '{ ${config.home.homeDirectory}/.local/state/${cfg.stateDirectory}/flow.sema }'
+      source_store=${lib.escapeShellArg "${config.home.homeDirectory}/.local/state/${cfg.stateDirectory}/flow.sema"}
+      check_directory="$(${pkgs.coreutils}/bin/mktemp -d)"
+      trap '${pkgs.coreutils}/bin/rm -rf "$check_directory"' EXIT
+      ${pkgs.coreutils}/bin/cp --reflink=auto "$source_store" "$check_directory/flow.sema"
+      ${runtime}/bin/flow-store-check "{ $check_directory/flow.sema }"
+      ${pkgs.coreutils}/bin/rm -rf "$check_directory"
+      trap - EXIT
     '';
     systemd.user.services.flow-nexus = {
       Unit = {
@@ -103,7 +102,7 @@ in
         Environment = [
           "PATH=%h/.nix-profile/bin:/etc/profiles/per-user/%u/bin:/run/current-system/sw/bin"
         ];
-        ExecStartPre = "${deployment.initialize}/bin/initialize-declared-flow";
+        ExecStartPre = "${deployment.storeCheck}/bin/check-declared-flow-store";
         ExecStart = "${runtime}/bin/flow-nexus \"{ %t/flow/flow.sock %t/flow/flow-meta.sock %h/.local/state/${cfg.stateDirectory}/flow.sema ${landingWatch} }\"";
         ExecStartPost = "${deployment.ready}/bin/wait-declared-flow-ready";
         Restart = "on-failure";

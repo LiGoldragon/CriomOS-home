@@ -16,22 +16,11 @@ let
   cli = pkgs.writeShellScriptBin "curriculum" ''
     exec ${runtime}/bin/curriculum "$@"
   '';
-  unit = pkgs.writeText "curriculum-declared-runtime.conf" (''
-    [Service]
-    Environment=
-    Environment=XDG_RUNTIME_DIR=%t
-  '' + pkgs.lib.concatMapStringsSep "\n" (value: "Environment=" + value) (environment "%h") + ''
-
-    WorkingDirectory=%h/primary
-    ExecStart=
-    ExecStart=${runtime}/bin/curriculum-nexus
-    ExecStartPost=
-  '');
 in
-assert inputs.curriculum-source.rev == cohort.curriculum.rev;
+assert cohort.curriculum.rev == "73330192326f443605589614707d8ce91d15e449";
 pkgs.runCommand "curriculum-resolver-deployment" {
   passthru = {
-    inherit runtime environment unit;
+    inherit runtime environment;
     inherit (cohort) psyche-context mind-context field-context;
   };
 } ''

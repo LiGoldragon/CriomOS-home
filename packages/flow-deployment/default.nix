@@ -1,8 +1,7 @@
 {
   pkgs,
   inputs,
-  stateDirectory ? "flow-03521",
-  solModel ? "gpt-6.1-sol",
+  stateDirectory ? "flow-040",
   ...
 }:
 let
@@ -33,112 +32,41 @@ let
   stableClient = clientConfiguration.criomosHome.herdr.stableCodexClientPackage;
   nextClient = clientConfiguration.criomosHome.codexNextCandidate.clientPackage;
   nextHomeName = ".codex-next-${clientConfiguration.criomosHome.codexNextCandidate.hash}";
-  models = "Configure.Models.[ { Primary Psyche claude-fable-5-1 } { Secondary Psyche claude-opus-5-5 } { Tertiary Psyche claude-sonnet-5-5 } { Quaternary Psyche claude-haiku-5-5 } { Primary Mind gpt-6-astra } { Secondary Mind ${solModel} } { Tertiary Mind gpt-6-luna } { Quaternary Mind gpt-6-luna } { Primary Field gpt-6-astra } { Secondary Field ${solModel} } { Tertiary Field gpt-6-luna } { Quaternary Field gpt-6-luna } ]";
-  # The refresh threshold of each model a seat runs: past it a flow is given
-  # no new message and is replaced as it goes idle. An OpenAI model's is
-  # lower than a Claude model's.
-  claudeRefreshTokens = 200000;
-  openAiRefreshTokens = 150000;
-  claudeModels = [
-    "claude-fable-5-1"
-    "claude-opus-5-5"
-    "claude-sonnet-5-5"
-    "claude-haiku-5-5"
-  ];
-  openAiModels = [
-    "gpt-6-astra"
-    "gpt-6.1-sol"
-    "gpt-6-sol"
-    "gpt-6-luna"
-    "gpt-5.6-sol"
-    "gpt-5.6-luna"
-  ];
-  thresholds = "Configure.Thresholds.[ ${
-    builtins.concatStringsSep " " (
-      map (model: "{ ${model} ${toString claudeRefreshTokens} }") claudeModels
-      ++ map (model: "{ ${model} ${toString openAiRefreshTokens} }") openAiModels
-    )
-  } ]";
-  # The seat Flow gives the investigation of a flow that compacted while it
-  # kept working; it is launched from its Metaflows declaration.
-  investigationSeat = "Psyche compaction Tertiary";
-  investigation = "Configure.Investigation.{ ${investigationSeat} }";
-  initialize = pkgs.writeShellApplication {
-    name = "initialize-declared-flow";
-    runtimeInputs = [
-      pkgs.coreutils
-      pkgs.gawk
-    ];
+  claude = clientConfiguration.criomos.corePackages.claude;
+  herdr = clientConfiguration.criomosHome.herdr.package;
+  flowId = clientConfiguration.criomos.corePackages.flowId;
+  harnessOverrides = ''
+    [ { claude ${claude}/bin/claude /home/li/.claude None
+        [ { claude-fable-5-1 claude-fable-5-1 }
+          { claude-opus-5-5 claude-opus-5-5 }
+          { claude-sonnet-5-5 claude-sonnet-5-5 }
+          { claude-haiku-5-5 claude-haiku-5-5 } ] }
+      { codexStable ${stableClient}/bin/codex-stable-flow-client /home/li/.codex-next
+        Some./home/li/.codex-next/app-server-control/app-server-control.sock
+        [ { gpt-5.6-sol gpt-5.6-sol }
+          { gpt-5.6-luna gpt-5.6-luna } ] }
+      { codexNext ${nextClient}/bin/codex-next-flow-client /home/li/${nextHomeName}
+        Some./home/li/${nextHomeName}/app-server-control/app-server-control.sock
+        [ { gpt-6.1-sol gpt-6.1-sol }
+          { gpt-6-sol gpt-6-sol }
+          { gpt-6-luna gpt-6-luna }
+          { gpt-6-astra gpt-6-astra } ] } ]
+  '';
+  # These are the Home-owned fields of the complete configuration candidate.
+  # The rollout applies them only through Flow's revisioned FullConfigure
+  # transaction, beside every preserved configuration family.
+  nexus = ''{ /home/li/primary /home/li/primary/flows [ Psyche ] /run/user/1001/message/message.sock ${message}/bin/message-nexus /run/user/1001/curriculum/curriculum.sock 60 { ${herdr}/bin/herdr ${flowId}/bin/flow-id ${runtime}/bin/flow-hook } default }'';
+  sendServers = ''[ { ${clientConfiguration.criomosHome.codexNextCandidate.package}/bin/codex ${message}/bin/message-mcp-send } ]'';
+  renderHarnesses = pkgs.writeShellApplication {
+    name = "render-declared-flow-harnesses";
     text = ''
-      state="$HOME/.local/state/${stateDirectory}"
-      runtime_dir="''${XDG_RUNTIME_DIR:?}/flow"
-      store="$state/flow.sema"
-      mkdir -p "$state" "$runtime_dir"
-      chmod 700 "$state" "$runtime_dir"
-      start="{ $runtime_dir/flow.sock $runtime_dir/flow-meta.sock $store None }"
-      configure_one() {
-        local query="$1" child reply status
-        ${runtime}/bin/flow-nexus --configure-only "$start" &
-        child=$!
-        trap 'kill "$child" 2>/dev/null || true' EXIT
-        # A stale pathname is not readiness. Observe the listening socket
-        # held by this exact child without consuming its one request.
-        child_listens() {
-          local inode fd target
-          [ -S "$runtime_dir/flow-meta.sock" ] || return 1
-          while IFS= read -r inode; do
-            for fd in /proc/"$child"/fd/*; do
-              target=$(readlink "$fd" 2>/dev/null) || continue
-              if [ "$target" = "socket:[$inode]" ]; then return 0; fi
-            done
-          done < <(awk -v socket="$runtime_dir/flow-meta.sock" \
-            '$4 == "00010000" && $5 == "0001" && $6 == "01" && $8 == socket { print $7 }' \
-            "/proc/$child/net/unix")
-          return 1
-        }
-        for _attempt in $(seq 1 100); do
-          if child_listens; then break; fi
-          if ! kill -0 "$child" 2>/dev/null; then
-            status=0
-            wait "$child" || status=$?
-            echo "Flow configuration child exited before socket readiness (status $status)" >&2
-            if [ "$status" -eq 0 ]; then exit 1; else exit "$status"; fi
-          fi
-          sleep 0.05
-        done
-        child_listens
-        reply=$(FLOW_META_SOCKET="$runtime_dir/flow-meta.sock" ${runtime}/bin/flow-meta "$query")
-        case "$reply" in
-          Configured.Replaced|Configured.Unchanged) printf '%s\n' "$reply" ;;
-          *) printf 'Flow Nexus configuration refused: %s\n' "$reply" >&2; exit 1 ;;
-        esac
-        wait "$child"
-        trap - EXIT
-      }
-      configure_one "Configure.Nexus.{ $HOME/primary { ${stableClient}/bin/codex-stable-flow-client $HOME/.codex-next $HOME/.codex-next/app-server-control/app-server-control.sock [ gpt-5.6-sol gpt-5.6-luna ] } { ${nextClient}/bin/codex-next-flow-client $HOME/${nextHomeName} $HOME/${nextHomeName}/app-server-control/app-server-control.sock [ gpt-6.1-sol gpt-6-sol gpt-6-luna gpt-6-astra ] } [ { Claude [ / «!» # ] [ esc esc ] [ enter ] } { Codex [ / «!» ] [ esc ] [] } ] [ Psyche ] $XDG_RUNTIME_DIR/message/message.sock ${message}/bin/message-nexus 60 }"
-      configure_one '${models}'
-      configure_one '${thresholds}'
-      configure_one '${investigation}'
-      metaflows=$(${pkgs.babashka}/bin/bb ${./metaflows.clj} ${inputs.primary}/config/main-flow '${investigationSeat}')
-      configure_one "$metaflows"
-      configure_one "Configure.SendServers.[ { ${clientConfiguration.criomosHome.codexNextCandidate.package}/bin/codex ${message}/bin/message-mcp-send } ]"
-      queries=$(mktemp)
-      trap 'rm -f "$queries"' EXIT
-      ${pkgs.babashka}/bin/bb ${./leave-outs.clj} ${inputs.primary}/config/main-flow > "$queries"
-      while IFS= read -r query; do configure_one "$query"; done < "$queries"
-      rm -f "$queries"
-      trap - EXIT
+      exec ${runtime}/bin/flow-harness-defaults ${pkgs.lib.escapeShellArg harnessOverrides}
     '';
   };
-  leaveOutDefaults = pkgs.writeShellApplication {
-    name = "configure-declared-flow-leave-outs";
-    runtimeInputs = [ pkgs.coreutils ];
+  storeCheck = pkgs.writeShellApplication {
+    name = "check-declared-flow-store";
     text = ''
-      queries=$(mktemp)
-      trap 'rm -f "$queries"' EXIT
-      ${pkgs.babashka}/bin/bb ${./leave-outs.clj} ${inputs.primary}/config/main-flow > "$queries"
-      FLOW_META_SOCKET="''${XDG_RUNTIME_DIR:?}/flow/flow-meta.sock" \
-        ${pkgs.bash}/bin/bash ${./apply-leave-outs.sh} ${runtime}/bin/flow-meta "$queries"
+      exec ${runtime}/bin/flow-store-check "{ $HOME/.local/state/${stateDirectory}/flow.sema }"
     '';
   };
   ready = pkgs.writeShellApplication {
@@ -183,21 +111,19 @@ pkgs.runCommand "flow-deployment"
     passthru = {
       inherit
         stateDirectory
-        solModel
-        models
-        thresholds
-        investigation
-        investigationSeat
+        harnessOverrides
+        nexus
+        sendServers
         runtime
-        initialize
+        renderHarnesses
+        storeCheck
         ready
-        leaveOutDefaults
         ;
     };
   }
   ''
     mkdir -p "$out/bin"
-    for name in flow flow-meta flow-nexus flow-hook; do
+    for name in flow flow-meta flow-nexus flow-hook flow-harness-defaults; do
       test -x "${runtime}/bin/$name"
       ln -s "${runtime}/bin/$name" "$out/bin/$name"
     done
