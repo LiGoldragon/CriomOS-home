@@ -60,8 +60,9 @@ pkgs.runCommand "flow-service-path"
     done
     grep -F '${runtime}/bin/flow-store-check' ${deployment.storeCheck}/bin/check-declared-flow-store
     grep -F '/.local/state/flow-040/flow.sema' ${deployment.storeCheck}/bin/check-declared-flow-store
-    if grep -R -E 'metaflows[.]clj|leave-outs[.]clj|Configure[.](Models|Thresholds|Investigation|Metaflows|LeaveOuts)' ${../../packages/flow-deployment}; then
-      echo 'retired static Flow configuration remains in the declared deployment' >&2
+    if grep -R -E 'metaflows[.]clj|leave-outs[.]clj|Configure[.](Models|Thresholds|Investigation|Metaflows|LeaveOuts)|role:psyche-core-primary-presentation|FLOW_CORE_PRESENTATION_PROMPT' \
+      ${../../packages/flow-deployment} ${../../modules/home/profiles/min/flow.nix}; then
+      echo 'retired static Flow configuration or presentation role remains in the declared deployment' >&2
       exit 1
     fi
     ${deployment}/bin/flow --version > cli-version
