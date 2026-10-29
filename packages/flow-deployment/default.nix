@@ -37,6 +37,7 @@ let
   # The refresh threshold of each model a seat runs: past it a flow is given
   # no new message and is replaced as it goes idle. An OpenAI model's is
   # lower than a Claude model's.
+  fableRefreshTokens = 280000;
   claudeRefreshTokens = 200000;
   openAiRefreshTokens = 150000;
   claudeModels = [
@@ -55,7 +56,9 @@ let
   ];
   thresholds = "Configure.Thresholds.[ ${
     builtins.concatStringsSep " " (
-      map (model: "{ ${model} ${toString claudeRefreshTokens} }") claudeModels
+      map (model: "{ ${model} ${
+        toString (if model == "claude-fable-5-1" then fableRefreshTokens else claudeRefreshTokens)
+      } }") claudeModels
       ++ map (model: "{ ${model} ${toString openAiRefreshTokens} }") openAiModels
     )
   } ]";
