@@ -108,6 +108,7 @@ let
       window-decoration = false
       gtk-titlebar = false
       window-theme = ghostty
+      keybind = ctrl+enter=unbind
       background = ${colors.base00}
       foreground = ${colors.base05}
       cursor-color = ${colors.base05}

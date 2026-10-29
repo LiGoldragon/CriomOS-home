@@ -137,6 +137,7 @@ else
         pkgs.bash
         pkgs.coreutils
         pkgs.dbus
+        pkgs.gnugrep
         daemonSession
       ];
     }
@@ -152,6 +153,11 @@ else
       bash ${activationScript}
       test -f "$XDG_CONFIG_HOME/chroma/config.datom"
       test ! -e "$XDG_CONFIG_HOME/chroma/config.dotos"
+      mapfile -t ghostty_configs < <(grep -oE '/nix/store/[^ }]+-ghostty-(dark|light)\.conf' "$XDG_CONFIG_HOME/chroma/config.datom")
+      test "''${#ghostty_configs[@]}" -eq 2
+      for ghostty_config in "''${ghostty_configs[@]}"; do
+        grep -Fx 'keybind = ctrl+enter=unbind' "$ghostty_config"
+      done
       dbus-run-session --config-file=${pkgs.dbus}/share/dbus-1/session.conf -- chroma-datom-typed-runtime-session
 
       printf 'Chroma Datomic configuration was decoded by the current typed runtime\n' > "$out"
