@@ -72,18 +72,15 @@ in
       declared.idleCompaction = false;
       modes."/idleCompaction" = "always";
     };
-    # The Flow this generation runs must open the store the running Nexus
-    # holds: Flow's store refuses a Flow older than what it holds, and a
-    # Nexus that cannot open it fails at every start. The check opens a
-    # private copy, before anything of this generation is linked.
-    home.activation.flowOpensItsStore = lib.hm.dag.entryBefore [ "writeBoundary" ] ''
-      source_store=${lib.escapeShellArg "${config.home.homeDirectory}/.local/state/${cfg.stateDirectory}/flow.sema"}
-      check_directory="$(${pkgs.coreutils}/bin/mktemp -d)"
-      trap '${pkgs.coreutils}/bin/rm -rf "$check_directory"' EXIT
-      ${pkgs.coreutils}/bin/cp --reflink=auto "$source_store" "$check_directory/flow.sema"
-      ${runtime}/bin/flow-store-check "{ $check_directory/flow.sema }"
-      ${pkgs.coreutils}/bin/rm -rf "$check_directory"
-      trap - EXIT
+    # Activation may run while the old Nexus still holds this store. It checks
+    # only that the rollout input is present; ExecStartPre performs the
+    # compatibility check after the controlled handover has stopped that Nexus.
+    home.activation.flowStoreIsPresent = lib.hm.dag.entryBefore [ "writeBoundary" ] ''
+      store=${lib.escapeShellArg "${config.home.homeDirectory}/.local/state/${cfg.stateDirectory}/flow.sema"}
+      if ! ${pkgs.coreutils}/bin/test -f "$store"; then
+        echo "Declared Flow store is absent: $store" >&2
+        exit 1
+      fi
     '';
     systemd.user.services.flow-nexus = {
       Unit = {

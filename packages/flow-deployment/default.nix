@@ -65,8 +65,14 @@ let
   };
   storeCheck = pkgs.writeShellApplication {
     name = "check-declared-flow-store";
+    runtimeInputs = [ pkgs.psmisc ];
     text = ''
-      exec ${runtime}/bin/flow-store-check "{ $HOME/.local/state/${stateDirectory}/flow.sema }"
+      store="$HOME/.local/state/${stateDirectory}/flow.sema"
+      if fuser "$store" >/dev/null 2>&1; then
+        echo "Flow store is in use; stop its Nexus before validating or migrating it" >&2
+        exit 1
+      fi
+      exec ${runtime}/bin/flow-store-check "{ $store }"
     '';
   };
   ready = pkgs.writeShellApplication {
