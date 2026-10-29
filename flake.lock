@@ -1231,17 +1231,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1793297887,
-        "narHash": "sha256-l6Ttc9awNZOWUg5vIhiKzbq1EPDg7VC3TptsyKWebjU=",
+        "lastModified": 1793301151,
+        "narHash": "sha256-+CAbMlexuxgxcMWjK+uf25YfaR5EujTn95Q7PGneITU=",
         "owner": "LiGoldragon",
         "repo": "flow",
-        "rev": "735a88a6881add37f819c9e2afa77317661157ba",
+        "rev": "f7ffdda0a98c9f4f6f5a8da965e84f32aa4c0d3c",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "flow",
-        "rev": "735a88a6881add37f819c9e2afa77317661157ba",
+        "rev": "f7ffdda0a98c9f4f6f5a8da965e84f32aa4c0d3c",
         "type": "github"
       }
     },
