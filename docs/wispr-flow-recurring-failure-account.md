@@ -48,7 +48,7 @@ The repeated duplicate-to-timeout chain and the handler's return path establish 
 
 A per-transcription UUID latch is directionally relevant because it can distinguish a genuine same-session duplicate from a new session. A direct Boolean-to-UUID-set replacement is unsafe, however. The handler reads and mutates the shared global `c.ZZ` audio packets, status, timing, application context, current task and UUID throughout; allowing two UUID pipelines to run concurrently can mix their state. The handler also deliberately admits callbacks with a missing UUID and callbacks in Testing, whose identity semantics a keyed latch would have to define. Every return and exception path would have to release the correct key.
 
-Whether the pipeline should serialize completions or isolate every per-transcription value is a design decision pending Claude review and a proposal to the living. This account selects neither and implements neither.
+The source comparison now has two unmerged implementations. The Codex branch refuses a new capture until the preceding pipeline releases all shared state. The Claude branch permits the capture and waits only when its completion arrives. Their audit is recorded below; neither is deployed.
 
 ## Historical evidence
 
@@ -116,6 +116,43 @@ Gaps:
 
 The Claude Error recovery and Codex lifecycle proposal address different failure classes and can compose. `e56a9d0` can recover through the control surface after the race has reached Error, but it does not prevent the global latch from dropping the new recording-done callback. Neither is a complete recurring-root-cause fix.
 
+## Mutual provider-fix audit
+
+### Codex admission-refusal branch
+
+`wispr-flow-linux` branch `stt-codex`, pushed commit `06619a89659896c53fec9adaa530cd08717a9710`, adds `linux-dictation-admission.sh` and packages version `1.6.774+criomos.12`. It gives the real recording UUID one admission owner before the capture provider mutates shared state. The four user-facing wrappers, the provider, both extension routes and BLE refuse a second admission without starting capture. Production completion requires the current owner UUID; Testing retains its no-production-owner path, and a missing production UUID is refused. Idle publication is deferred until the owner's outer completion cleanup releases it.
+
+Dismissal distinguishes two phases. Capture-phase abort, microphone-acquisition failure, audio-context recovery and explicit dismissal release only after the application's synchronous dismissal path has issued AudioStop, closed gRPC and aborted its current task. Once completion begins, dismissal cannot release the tail owner; only its outer `finally` can. Error recovery may therefore dismiss and replace a capture owner, but cannot start over a tail owner. The two asynchronous dictionary-context writes are UUID-guarded.
+
+The actual signed 1.6.774 bundle was patched and repacked. The packaged check executes the admission helpers extracted from those bytes and statically checks every known start entry point and completion splice. The independent results were:
+
+```text
+nix build path:$PWD#checks.x86_64-linux.linux-patches --no-link
+/nix/store/3yl6w9q55yivjc2axv7lh9gvb2y57byv-wispr-flow-linux-patches
+
+nix build path:$PWD#checks.x86_64-linux.status-bootstrap --no-link
+/nix/store/zcabadn3ia33fz32hsc15gdvclblyjwm-wispr-flow-status-bootstrap
+```
+
+Thirty focused Bats tests also passed. These are source and packaged-byte witnesses, not a real Electron/audio race or repeated-dictation witness. The capture dismissal path synchronously issues cleanup, but the tests do not establish that every external callback has settled. UUID checks prevent the identified stale renderer events from owning or completing a later session. Also, the Nix package path applies the patch, while the alternate `scripts/build-linux.sh` path was not updated in this commit; that integration gap must be closed before treating every build path as equivalent.
+
+### Audit of Claude completion-wait branch
+
+I audited Claude commit `4d0f6a2d7a3f1b4ec5c25639b78b053fc42b98f3` read-only and applied its patch to the actual signed bundle. Its same-UUID duplicate ordering is sound: once the old owner releases, one waiting continuation acquires the latch before the other continuation runs, and the latter is dropped as a duplicate. Its stale-session check also prevents a replaced waiter from running.
+
+The branch is unsafe as a recurring-race fix because it allows the next capture while the old completion owns shared state. In the actual patched bundle, Idle is published around byte 3,980,183, while the new superseded-tail guard does not begin until byte 3,983,061. Between them the old pipeline still reads and writes the live session:
+
+- poor-audio handling uses `c.ZZ.uuid` around byte 3,980,534;
+- the post-onboarding history query can still run;
+- `T.nl(c.ZZ.uuid, S, W, re, ve)` can save the old result under the new UUID around byte 3,982,347;
+- latency, application-context and possible paste work continue around byte 3,982,551.
+
+The patch's fixture puts its only delayed history operation directly before the final-finally block, so its guard covers every modeled post-Idle mutation. That shape omits the actual operations above. The test therefore demonstrates its model and latch ordering, not safety of the deployed pipeline. This audit is static inspection of actual patched bytes; no live Electron/audio execution was performed.
+
+The completion owner is created only when `RecordingDone` begins. A later capture can reset the shared `c.ZZ`, audio and gRPC state before its own completion reaches the waiter. A hung old tail blocks the waiter without a deadline; the later dictation can time out into Error and can still resume processing if the old owner eventually releases. The preserved upstream predicate also admits Testing and missing-UUID completion when no owner exists. The branch's test exercises those only while another owner exists, when the latch drops them; it does not establish its broader claim that missing UUID is always dropped. That upstream behavior may serve an internal path, but it cannot supply the owner identity this design depends on.
+
+The Claude branch must not be deployed in this form. Its useful findings are the confirmed post-Idle writes and the need to test the actual tail rather than a reduced final-finally model. Claude's independent audit of the Codex branch remains pending in this account.
+
 ## Current process ownership witness
 
 The two active scopes are not two Wispr applications. `app-wispr-flow-restart-3fa658.scope` owns `bwrap` PID 1765963 and supporting zygote/crashpad processes. Its child Electron main PID 1765973 was placed in `app-wispr-flow-1765973.scope`, which owns the renderers and the only observed Linux helper, PID 1766176. Both have the same launch time and session, and PID 1765973 has PID 1765963 as its parent.
@@ -144,4 +181,4 @@ Unknowns remain:
 - whether the latency is upstream network/server work, local IPC/helper work, SQL/I/O or another internal stage;
 - whether either source proposal remains fixed across repeated real dictations.
 
-The next design decision is how to preserve per-transcription identity without allowing shared global state to race: serialization or full isolation. It follows Claude review and a proposal to the living. Separately, the reviewed Error cleanup patch and single-owner lifecycle supervision can be tested for their narrower recovery roles. The living's repeated-use witness is required before closing `primary-swaf.1`.
+The current safe direction is admission serialization: one UUID owns capture, processing, paste, history and outer cleanup before another capture begins. The Codex source implements that direction but still needs the independent Claude audit, the alternate build-path integration, and a non-deployed review decision. Separately, the reviewed Error cleanup patch and single-owner lifecycle supervision can be tested for their narrower recovery roles. The living's repeated-use witness is required before closing `primary-swaf.1`.
