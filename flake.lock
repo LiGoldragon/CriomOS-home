@@ -3774,17 +3774,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1788617409,
-        "narHash": "sha256-F8zpMiySj5FZ09NiZ2qDEfVDYHElecXg/W0a/C44Wl4=",
+        "lastModified": 1793320386,
+        "narHash": "sha256-UxSEl0OkxQfYwNTsb8uxkludaWP9noQc0TLNVxDfwuA=",
         "owner": "LiGoldragon",
         "repo": "wispr-flow-linux",
-        "rev": "e97b9587a7186ad74c5d84b2da6abfb86645b68d",
+        "rev": "5062179d6049d16257c5d15bca9a6b9a9626bd2a",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "wispr-flow-linux",
-        "rev": "e97b9587a7186ad74c5d84b2da6abfb86645b68d",
+        "rev": "5062179d6049d16257c5d15bca9a6b9a9626bd2a",
         "type": "github"
       }
     },
