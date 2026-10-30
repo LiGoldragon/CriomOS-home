@@ -26,6 +26,12 @@ let
   desktopOpen = pkgs.writeShellScriptBin "xdg-open" ''
     exec ${pkgs.handlr-regex}/bin/handlr open "$@"
   '';
+  remoteBuildGuard =
+    command:
+    pkgs.writeShellScript command ''
+      printf '%s\n' 'builds run on Prometheus through Nix'
+      exit 1
+    '';
 in
 {
   config = lib.mkIf (sizeAtLeast "Min") {
@@ -37,6 +43,14 @@ in
       ];
       file.".local/bin/xdg-open" = {
         source = "${desktopOpen}/bin/xdg-open";
+        executable = true;
+      };
+      file.".local/bin/cargo" = {
+        source = remoteBuildGuard "cargo";
+        executable = true;
+      };
+      file.".local/bin/rustc" = {
+        source = remoteBuildGuard "rustc";
         executable = true;
       };
     };
