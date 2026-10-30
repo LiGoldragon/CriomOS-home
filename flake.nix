@@ -113,7 +113,7 @@
 
     # The public immutable recipe owns the audited proprietary installer source;
     # this lock identifies the exact v2 status-bridge producer.
-    wispr-flow-linux.url = "github:LiGoldragon/wispr-flow-linux?rev=e97b9587a7186ad74c5d84b2da6abfb86645b68d";
+    wispr-flow-linux.url = "github:LiGoldragon/wispr-flow-linux?rev=5062179d6049d16257c5d15bca9a6b9a9626bd2a";
     wispr-flow-linux.inputs.nixpkgs.follows = "nixpkgs";
 
     # `annas` — Anna's Archive book/article search + download CLI. Upstream
