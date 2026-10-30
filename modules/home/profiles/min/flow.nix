@@ -8,8 +8,11 @@
 }:
 let
   cfg = config.criomosHome.flow;
+  buildGuard = config.criomosHome.remoteBuildCommandGuard;
   system = pkgs.stdenv.hostPlatform.system;
-  runtime = inputs.flow.packages.${system}.default.overrideAttrs (_: { doCheck = false; });
+  runtime = inputs.flow.packages.${system}.default.overrideAttrs (_: {
+    doCheck = false;
+  });
   deployment = pkgs.callPackage ../../../../packages/flow-deployment {
     inherit inputs runtime;
     inherit (cfg) stateDirectory solModel;
@@ -99,7 +102,7 @@ in
       Service = {
         Type = "simple";
         Environment = [
-          "PATH=%h/.nix-profile/bin:/etc/profiles/per-user/%u/bin:/run/current-system/sw/bin"
+          "PATH=${lib.optionalString buildGuard.enable "${buildGuard.directory}:"}%h/.nix-profile/bin:/etc/profiles/per-user/%u/bin:/run/current-system/sw/bin"
         ];
         ExecStartPre = "${deployment.initialize}/bin/initialize-declared-flow";
         ExecStart = "${runtime}/bin/flow-nexus \"{ %t/flow/flow.sock %t/flow/flow-meta.sock %h/.local/state/${cfg.stateDirectory}/flow.sema ${landingWatch} }\"";

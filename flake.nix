@@ -590,6 +590,9 @@
           };
           message-service-path = checkPkgs.callPackage ./checks/message-service-path { inherit inputs; };
           flow-service-path = checkPkgs.callPackage ./checks/flow-service-path { inherit inputs; };
+          remote-build-command-guard = checkPkgs.callPackage ./checks/remote-build-command-guard {
+            inherit inputs;
+          };
           context-deploy = checkPkgs.callPackage ./checks/context-deploy { };
           flow-message-next = checkPkgs.callPackage ./checks/flow-message-next { inherit inputs; };
           herdr-toast-delivery = checkPkgs.callPackage ./checks/herdr-toast-delivery { inherit inputs; };

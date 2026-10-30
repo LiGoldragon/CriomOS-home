@@ -19,6 +19,10 @@ let
         landingRepository = null;
         landingDeployRequest = null;
       };
+      criomosHome.remoteBuildCommandGuard = {
+        enable = false;
+        directory = "/home/li/.local/libexec/remote-build-command-guard";
+      };
     };
   };
   service = module.config.content.systemd.user.services.flow-nexus.Service;
