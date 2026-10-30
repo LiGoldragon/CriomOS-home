@@ -1,5 +1,5 @@
 # Regenerates the Primary workspace skill directories from the main of
-# psyche-context, mind-context and field-context as it stands now.
+# psyche-belief, mind-belief and field-belief as it stands now.
 # Each repository is fetched from origin main; the newer of local main and
 # the fetched main is read straight from git objects, never from a working
 # tree. Environment: PRIMARY (workspace), GENERATOR (generate.clj).
@@ -14,7 +14,7 @@ work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 
 sources=()
-for name in psyche-context mind-context field-context; do
+for name in psyche-belief mind-belief field-belief; do
   repo="$primary/repos/$name"
   git -C "$repo" fetch --quiet origin main || echo "fetch failed for $name; using local main" >&2
   revision="$(git -C "$repo" rev-parse --verify refs/heads/main)"

@@ -21,9 +21,9 @@ in pkgs.runCommand "curriculum-resolver-contract" {
     git -C "$target" add --all
     git -C "$target" commit --quiet -m "initial context"
   }
-  make_source psyche ${deployment.psyche-context}
-  make_source mind ${deployment.mind-context}
-  make_source field ${deployment.field-context}
+  make_source psyche ${deployment.psyche-belief}
+  make_source mind ${deployment.mind-belief}
+  make_source field ${deployment.field-belief}
   export CURRICULUM_PSYCHES_REPOSITORY_URL="$TMPDIR/origins/psyche"
   export CURRICULUM_MIND_CONTEXT_URL="$TMPDIR/origins/mind"
   export CURRICULUM_FIELD_CONTEXT_URL="$TMPDIR/origins/field"

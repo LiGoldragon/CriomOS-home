@@ -2,7 +2,7 @@
 #
 # Deploys one landing of a context repository: the Flow Nexus runs it for
 # every landing it records. The landing's commit reaches the repository's
-# origin main (fast-forward only), is pinned as psyche-context in
+# origin main (fast-forward only), is pinned as psyche-belief in
 # CriomOS-home main, that Home is pinned in CriomOS main, and the host
 # deploy declared for this node is submitted through Lojix and followed to
 # its terminal record, the two flake files of each held through orchestrate
@@ -73,8 +73,8 @@ pin() {
   return 1
 }
 
-home=$(pin "@HOME_URL@" "github:LiGoldragon/psyche-context/" "$commit" CriomOS-home) ||
-  refuse "psyche-context $short could not be pinned in CriomOS-home main"
+home=$(pin "@HOME_URL@" "github:LiGoldragon/psyche-belief/" "$commit" CriomOS-home) ||
+  refuse "psyche-belief $short could not be pinned in CriomOS-home main"
 system=$(pin "@SYSTEM_URL@" "github:LiGoldragon/CriomOS-home/" "$home" CriomOS) ||
   refuse "CriomOS-home ${home:0:8} could not be pinned in CriomOS main"
 

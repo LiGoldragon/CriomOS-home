@@ -841,6 +841,23 @@
         "type": "github"
       }
     },
+    "field-belief": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1792706646,
+        "narHash": "sha256-4kFqX3yeUA7Y+t0DTRXFJSHDGQMp6Wv4WVvAGjPr27Y=",
+        "owner": "LiGoldragon",
+        "repo": "field-belief",
+        "rev": "873a55a2f6a6e94d2ae867821f6c9d404eb839a7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LiGoldragon",
+        "repo": "field-belief",
+        "rev": "873a55a2f6a6e94d2ae867821f6c9d404eb839a7",
+        "type": "github"
+      }
+    },
     "field-clj": {
       "inputs": {
         "clj-build": "clj-build",
@@ -861,23 +878,6 @@
         "rev": "3e5f4501e2017b97b51c7cfaff2b2e8d2a504e05",
         "type": "git",
         "url": "ssh://git@github.com/LiGoldragon/field-clj.git"
-      }
-    },
-    "field-context": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1792706646,
-        "narHash": "sha256-4kFqX3yeUA7Y+t0DTRXFJSHDGQMp6Wv4WVvAGjPr27Y=",
-        "owner": "LiGoldragon",
-        "repo": "field-context",
-        "rev": "873a55a2f6a6e94d2ae867821f6c9d404eb839a7",
-        "type": "github"
-      },
-      "original": {
-        "owner": "LiGoldragon",
-        "repo": "field-context",
-        "rev": "873a55a2f6a6e94d2ae867821f6c9d404eb839a7",
-        "type": "github"
       }
     },
     "field-luna-research-source": {
@@ -1606,19 +1606,19 @@
         "type": "github"
       }
     },
-    "mind-context": {
+    "mind-belief": {
       "flake": false,
       "locked": {
         "lastModified": 1792704324,
         "narHash": "sha256-pisFRyYNeQEZLkgSAX8LSCj+brHBBJtBSCFPjVGzUFI=",
         "owner": "LiGoldragon",
-        "repo": "mind-context",
+        "repo": "mind-belief",
         "rev": "b8c7e5753dd2603fc592c89b5e55d8fb8cfadd4f",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
-        "repo": "mind-context",
+        "repo": "mind-belief",
         "rev": "b8c7e5753dd2603fc592c89b5e55d8fb8cfadd4f",
         "type": "github"
       }
@@ -2320,27 +2320,27 @@
         "dotos": "dotos",
         "dotos-config": "dotos-config",
         "dotos-text-query": "dotos-text-query",
-        "field-context": "field-context",
+        "field-belief": "field-belief",
         "flow": "flow_2",
-        "mind-context": "mind-context",
+        "mind-belief": "mind-belief",
         "nixpkgs": [
           "nixpkgs"
         ],
-        "psyche-context": "psyche-context",
+        "psyche-belief": "psyche-belief",
         "tree-sitter-dotos": "tree-sitter-dotos"
       },
       "locked": {
-        "lastModified": 1792457617,
-        "narHash": "sha256-DrP/8uNwyXiIdA/DSR3DXWjAYe+Xt1WVikAI66igPV4=",
+        "lastModified": 1793320335,
+        "narHash": "sha256-J0TP/eaTyL9wpckxqo1e8r9xgn2pLpWSi0CTZx4Yraw=",
         "owner": "LiGoldragon",
         "repo": "primary",
-        "rev": "56058cd2243f7e9c23ae21b48ce04af0d37900d9",
+        "rev": "4fdd3888ebc4acf5705aa6d40bf9aad9cbcbd729",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "primary",
-        "rev": "56058cd2243f7e9c23ae21b48ce04af0d37900d9",
+        "rev": "4fdd3888ebc4acf5705aa6d40bf9aad9cbcbd729",
         "type": "github"
       }
     },
@@ -2361,19 +2361,19 @@
         "type": "github"
       }
     },
-    "psyche-context": {
+    "psyche-belief": {
       "flake": false,
       "locked": {
         "lastModified": 1792706642,
         "narHash": "sha256-O8wgdpcszyeuNLWtzo9J2qrQuvR37OMw0LZyzNIwqI0=",
         "owner": "LiGoldragon",
-        "repo": "psyche-context",
+        "repo": "psyche-belief",
         "rev": "3a55ca231f4b10bd18ed015a43a99919a1e4fc6c",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
-        "repo": "psyche-context",
+        "repo": "psyche-belief",
         "rev": "3a55ca231f4b10bd18ed015a43a99919a1e4fc6c",
         "type": "github"
       }

@@ -24,22 +24,22 @@
 
     # Primary's immutable Curriculum package provides the user CLI and Nexus.
     primary = {
-      url = "github:LiGoldragon/primary/56058cd2243f7e9c23ae21b48ce04af0d37900d9";
+      url = "github:LiGoldragon/primary/4fdd3888ebc4acf5705aa6d40bf9aad9cbcbd729";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.curriculum = {
         url = "github:LiGoldragon/Curriculum/6ce4f87a6f1b754ad17eafb6bb73e7917c7ca3b2";
         flake = false;
       };
-      inputs.mind-context = {
-        url = "github:LiGoldragon/mind-context/b8c7e5753dd2603fc592c89b5e55d8fb8cfadd4f";
+      inputs.mind-belief = {
+        url = "github:LiGoldragon/mind-belief/b8c7e5753dd2603fc592c89b5e55d8fb8cfadd4f";
         flake = false;
       };
-      inputs.psyche-context = {
-        url = "github:LiGoldragon/psyche-context/3a55ca231f4b10bd18ed015a43a99919a1e4fc6c";
+      inputs.psyche-belief = {
+        url = "github:LiGoldragon/psyche-belief/3a55ca231f4b10bd18ed015a43a99919a1e4fc6c";
         flake = false;
       };
-      inputs.field-context = {
-        url = "github:LiGoldragon/field-context/873a55a2f6a6e94d2ae867821f6c9d404eb839a7";
+      inputs.field-belief = {
+        url = "github:LiGoldragon/field-belief/873a55a2f6a6e94d2ae867821f6c9d404eb839a7";
         flake = false;
       };
     };

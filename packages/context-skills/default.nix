@@ -1,5 +1,5 @@
 # The command that regenerates the Primary workspace skill directories from
-# the main of psyche-context, mind-context and field-context as it stands.
+# the main of psyche-belief, mind-belief and field-belief as it stands.
 # It reads no flake input: a landing on main is the only thing that moves it.
 { pkgs, ... }:
 pkgs.writeShellApplication {

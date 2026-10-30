@@ -7,12 +7,12 @@ let
     root = sourceRoot homeDirectory;
   in [
     "CURRICULUM_CONTEXT_LAYOUT=2"
-    "CURRICULUM_PSYCHES_REPOSITORY_DIR=${root}/psyche-context"
-    "CURRICULUM_PSYCHES_REPOSITORY_URL=https://github.com/LiGoldragon/psyche-context.git"
-    "CURRICULUM_MIND_CONTEXT_DIR=${root}/mind-context"
-    "CURRICULUM_MIND_CONTEXT_URL=https://github.com/LiGoldragon/mind-context.git"
-    "CURRICULUM_FIELD_CONTEXT_DIR=${root}/field-context"
-    "CURRICULUM_FIELD_CONTEXT_URL=https://github.com/LiGoldragon/field-context.git"
+    "CURRICULUM_PSYCHES_REPOSITORY_DIR=${root}/psyche-belief"
+    "CURRICULUM_PSYCHES_REPOSITORY_URL=https://github.com/LiGoldragon/psyche-belief.git"
+    "CURRICULUM_MIND_CONTEXT_DIR=${root}/mind-belief"
+    "CURRICULUM_MIND_CONTEXT_URL=https://github.com/LiGoldragon/mind-belief.git"
+    "CURRICULUM_FIELD_CONTEXT_DIR=${root}/field-belief"
+    "CURRICULUM_FIELD_CONTEXT_URL=https://github.com/LiGoldragon/field-belief.git"
     "CURRICULUM_CONTEXT_REFRESH_PROGRAM=${refresh}/bin/curriculum-refresh-contexts"
     "CURRICULUM_ROLES_FILE=${inputs.curriculum-source}/roles.datom"
   ];
@@ -100,7 +100,7 @@ assert inputs.curriculum-source.rev == inputs.primary.inputs.curriculum.rev;
 pkgs.runCommand "curriculum-resolver-deployment" {
   passthru = {
     inherit runtime environment unit refresh agents;
-    inherit (inputs.primary.inputs) psyche-context mind-context field-context;
+    inherit (inputs.primary.inputs) psyche-belief mind-belief field-belief;
   };
 } ''
   mkdir -p "$out/bin"

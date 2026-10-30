@@ -8,9 +8,9 @@ let
   cfg = config.criomosHome.contextSkills;
   regenerate = pkgs.callPackage ../../../../packages/context-skills { };
   mains = map (name: "${config.home.homeDirectory}/primary/repos/${name}/.git/refs") [
-    "psyche-context"
-    "mind-context"
-    "field-context"
+    "psyche-belief"
+    "mind-belief"
+    "field-belief"
   ];
 in
 {
