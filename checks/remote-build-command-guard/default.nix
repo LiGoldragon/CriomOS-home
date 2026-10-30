@@ -99,7 +99,7 @@ pkgs.runCommand "remote-build-command-guard" { nativeBuildInputs = [ pkgs.coreut
     chmod +x "$real/$command"
   done
 
-  env -i HOME="$home" PATH="$real" ${pkgs.runtimeShell} -c '
+  env -i HOME="$home" PATH="$real" home="$home" guard="$guard" real="$real" ${pkgs.runtimeShell} -c '
     set -eu
     . ${enabledSession}
     test "''${PATH%%:*}" = "$guard"
@@ -112,7 +112,7 @@ pkgs.runCommand "remote-build-command-guard" { nativeBuildInputs = [ pkgs.coreut
     done
   '
 
-  env -i HOME="$home" PATH="$real" ${pkgs.runtimeShell} -c '
+  env -i HOME="$home" PATH="$real" home="$home" guard="$guard" real="$real" ${pkgs.runtimeShell} -c '
     set -eu
     . ${disabledSession}
     test "''${PATH%%:*}" = "$home/.local/bin"
