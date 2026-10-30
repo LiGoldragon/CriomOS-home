@@ -17,7 +17,22 @@ let
 in
 lib.mkIf (sizeAtLeast "Medium") {
   # A paid proprietary desktop client belongs to the medium Home tier, not to
-  # one account. Higher profile tiers inherit medium capability. It has no Home
-  # service, autostart, or keybinding declaration.
+  # one account. Higher profile tiers inherit medium capability.
   home.packages = [ wisprFlowFhs ];
+
+  systemd.user.services.wispr-flow = {
+    Unit = {
+      Description = "Wispr Flow speech-to-text client";
+      After = [ "graphical-session.target" ];
+      PartOf = [ "graphical-session.target" ];
+    };
+
+    Service = {
+      ExecStart = "${wisprFlowFhs}/bin/wispr-flow";
+      Restart = "on-failure";
+      RestartSec = "2s";
+    };
+
+    Install.WantedBy = [ "graphical-session.target" ];
+  };
 }
