@@ -142,7 +142,30 @@ The first-statement busy guards also precede the four wrappers' existing `Pe()` 
 
 The statically resolved entry-point map for this signed bundle comprises the four wrappers, the guarded provider itself, two guarded extension-route direct calls and one guarded BLE direct call. The provider fallback protects capture for an unrecognized caller, but cannot protect that caller's own pre-provider mutations. This map does not prove future or dynamically introduced callers.
 
-Commit `06619a8` is therefore not green and must not be deployed. A minimal repair could cancel both processing timers before deferring successful Idle and let the existing `Pe()` paths retain their busy notification; a cleaner alternative is an explicit non-admissible Finalizing lifecycle. Both also need a bounded, supported recovery policy for a missing completion, with release only after the old work has settled. No such follow-up patch is authorized or present.
+Commit `06619a8` is therefore not green and must not be deployed. A minimal repair could cancel both processing timers before deferring successful Idle and let the existing `Pe()` paths retain their busy notification; a cleaner alternative is an explicit non-admissible Finalizing lifecycle. Both also need a bounded, supported recovery policy for a missing completion, with release only after the old work has settled. No such follow-up patch was present at the time of that audit.
+
+#### Repaired Codex candidate, fresh audit pending
+
+A later authorized source-only revision, pushed as `wispr-flow-linux` commit `0ebdd6cf31f8a4d9edad272a024e12ea5ce6d9e6`, repairs the independently witnessed defects in `06619a8` without deploying the provider:
+
+- a successfully deferred Idle now executes the actual upstream `Le()` 24-second processing-timer cleanup and `R.W3(Me); Me=null` processing-notification cleanup before withholding public Idle;
+- the UUID owner remains held until its outer completion `finally`, while genuine Error and Dismissed clear a pending successful Idle without releasing that owner;
+- mark, abort and release helpers check for a non-null owner before reading its phase, so the actual Testing/missing-UUID no-owner path no longer throws;
+- the four UI wrappers retain their existing Processing notification and issue that same notification on an owner-only refusal outside Processing;
+- the two one-way extension routes refuse before their mutations and emit a structured busy log, while the provider, BLE and status control retain their typed busy result; the extension protocol exposes no matching request/reply result type, so this is a structured refusal event rather than a reply;
+- the alternate `scripts/build-linux.sh` path now invokes the admission patch and fails packaging when it fails.
+
+The check reads the generated package's actual main bundle, extracts and executes the patched admission initializer, Idle guard and all four busy guards, and uses a fake clock. It witnessed a synthetic 73.7-second successful tail with both upstream timers cancelled, no processing Error, the owner held until release and exactly one final Idle. It also covers genuine Error, Testing/missing UUID without an owner, capture abort, cleanup throw, stale completion/cancel/finally against a newer owner, and one busy notification from each UI wrapper. The actual signed/deployed-derived bundle patched cleanly, passed `node --check`, and was idempotent on a second patch application. Thirty focused Bats tests passed. The final package checks were:
+
+```text
+nix build path:$PWD#checks.x86_64-linux.linux-patches --no-link
+/nix/store/ki4gn85yx0sj0wd7b6pxibszrsah9b9k-wispr-flow-linux-patches
+
+nix build path:$PWD#checks.x86_64-linux.status-bootstrap --no-link
+/nix/store/jp5pnf34z13f38xpfg3wdsklr168gjjx-wispr-flow-status-bootstrap
+```
+
+The complete legacy `scripts/build-linux.sh` pipeline was not run; it is network-heavy and writes staging output. Its new invocation was syntax-checked, and the invoked patch itself was exercised against the actual bundle and through the Nix packaging path. A missing completion or hung tail still holds admission indefinitely. That fail-closed liveness gap is explicit: no arbitrary timer may release shared state while old work can still mutate. Late gRPC, audio and IPC callbacks beyond the mapped provider boundaries also remain unproved. Fresh independent Claude audit and the living's selection remain pending. This candidate is not deployed.
 
 ### Audit of Claude completion-wait branch
 
@@ -152,12 +175,12 @@ The branch is unsafe as a recurring-race fix because it allows the next capture 
 
 - poor-audio handling uses `c.ZZ.uuid` around byte 3,980,534;
 - the post-onboarding history query can still run;
-- `T.nl(c.ZZ.uuid, S, W, re, ve)` can save the old result under the new UUID around byte 3,982,347;
+- `T.nl(c.ZZ.uuid, S, W, re, ve)` can save the old result under the new UUID around byte 3,982,347 when the old pipeline was suspended before that call; `c.ZZ.uuid` is evaluated at call time, while work inside `T.nl`, its logging and `pe` still follows the suspension;
 - latency, application-context and possible paste work continue around byte 3,982,551.
 
 The patch's fixture puts its only delayed history operation directly before the final-finally block, so its guard covers every modeled post-Idle mutation. That shape omits the actual operations above. The test therefore demonstrates its model and latch ordering, not safety of the deployed pipeline. This audit is static inspection of actual patched bytes; no live Electron/audio execution was performed.
 
-The completion owner is created only when `RecordingDone` begins. A later capture can reset the shared `c.ZZ`, audio and gRPC state before its own completion reaches the waiter. A hung old tail blocks the waiter without a deadline; the later dictation can time out into Error and can still resume processing if the old owner eventually releases. The preserved upstream predicate also admits Testing and missing-UUID completion when no owner exists. The branch's test exercises those only while another owner exists, when the latch drops them; it does not establish its broader claim that missing UUID is always dropped. That upstream behavior may serve an internal path, but it cannot supply the owner identity this design depends on.
+The completion owner is created only when `RecordingDone` begins. A later capture can reset the shared `c.ZZ`, audio and gRPC state before its own completion reaches the waiter. A hung old tail blocks the waiter without a deadline; the later dictation can time out into Error and can still resume processing if the old owner eventually releases. The preserved upstream predicate also admits Testing and missing-UUID completion when no owner exists. The branch's test exercises those only while another owner exists, when the latch drops them; it does not establish its broader claim that missing UUID is always dropped. This undefined-UUID behavior is observed in code, not witnessed in a runtime failure. It may serve an internal path, but it cannot supply the owner identity this design depends on.
 
 The Claude branch must not be deployed in this form. Its useful findings are the confirmed post-Idle writes and the need to test the actual tail rather than a reduced final-finally model. Claude's independent audit of the Codex branch remains pending in this account.
 
@@ -189,4 +212,4 @@ Unknowns remain:
 - whether the latency is upstream network/server work, local IPC/helper work, SQL/I/O or another internal stage;
 - whether either source proposal remains fixed across repeated real dictations.
 
-The current safe direction is admission serialization: one UUID owns capture, processing, paste, history and outer cleanup before another capture begins. Neither source proposal implements that direction safely yet: the Codex version preserves ownership but mishandles timers and liveness, while the Claude version admits the next capture before the old tail has left shared state. Both are not green and remain undeployed. Separately, the reviewed Error cleanup patch and single-owner lifecycle supervision can be tested for their narrower recovery roles. The living's repeated-use witness is required before closing `primary-swaf.1`.
+The current safe direction is admission serialization: one UUID owns capture, processing, paste, history and outer cleanup before another capture begins. The original Codex candidate mishandled timers; commit `0ebdd6c` repairs that witnessed defect and its no-owner crash, but retains an explicit fail-closed liveness gap and awaits fresh independent audit and selection. The Claude version still admits the next capture before the old tail has left shared state. Neither provider candidate is deployed. Separately, the reviewed Error cleanup patch and single-owner lifecycle supervision can be tested for their narrower recovery roles. The living's repeated-use witness is required before closing `primary-swaf.1`.
