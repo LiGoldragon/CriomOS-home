@@ -7,6 +7,8 @@
 }:
 let
   cfg = config.criomosHome.herdr;
+  buildGuard = config.criomosHome.remoteBuildCommandGuard;
+  inheritedServicePath = "%h/.local/bin:/run/wrappers/bin:/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin:/etc/profiles/per-user/%u/bin:%h/.nix-profile/bin";
   herdrPackage = pkgs.callPackage ../../../../packages/herdr { inherit inputs; };
   # Matches the flake input `herdr.url = "github:herdrdev/herdr/v0.8.2"`.
   herdrVersionPin = "0.8.2";
@@ -164,6 +166,9 @@ in
         Unit.Description = "Herdr server (terminal workspace for agent panes)";
         Service = {
           Type = "exec";
+          Environment = lib.optionals buildGuard.enable [
+            "PATH=${buildGuard.directory}:${inheritedServicePath}"
+          ];
           ExecStart = "${config.criomosHome.herdr.package}/bin/herdr server";
           WorkingDirectory = "%h";
           Restart = "no";

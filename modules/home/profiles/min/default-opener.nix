@@ -3,13 +3,11 @@
   lib,
   pkgs,
   user,
-  horizon ? null,
   ...
 }:
 let
   sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
   guard = config.criomosHome.remoteBuildCommandGuard;
-  configuredForLowPowerNode = horizon != null && ((horizon.node.behavesAs or { }).lowPower or false);
   userPath =
     lib.optionalString guard.enable "${guard.directory}:"
     + "${config.home.homeDirectory}/.local/bin:$PATH";
@@ -43,7 +41,7 @@ in
   options.criomosHome.remoteBuildCommandGuard = {
     enable = lib.mkOption {
       type = lib.types.bool;
-      default = configuredForLowPowerNode;
+      default = false;
       description = "Put laptop Rust build guards first in interactive and Flow child PATHs.";
     };
     directory = lib.mkOption {

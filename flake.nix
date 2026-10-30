@@ -686,6 +686,14 @@
             )
           ];
         };
+      guardedHomeConfigurations = lib.mapAttrs' (
+        userName: user:
+        lib.nameValuePair "${userName}-remote-build-guard" (
+          (mkHomeConfiguration userName user).extendModules {
+            modules = [ { criomosHome.remoteBuildCommandGuard.enable = true; } ];
+          }
+        )
+      ) homeUsers;
     in
     bp
     // {
@@ -700,7 +708,7 @@
       # cannot know.
       legacyPackages.${pkgs.stdenv.hostPlatform.system} = pkgs;
 
-      homeConfigurations = builtins.mapAttrs mkHomeConfiguration homeUsers;
+      homeConfigurations = (builtins.mapAttrs mkHomeConfiguration homeUsers) // guardedHomeConfigurations;
 
       # Wrap blueprint's auto-discovered homeModules.default so that:
       # (1) upstream homeModules from CriomOS-home's own flake inputs

@@ -9,7 +9,9 @@ let
   hasInfix = infix: text: lib.hasInfix (plain infix) (plain text);
   hasSuffix = suffix: text: lib.hasSuffix (plain suffix) (plain text);
   # Home Manager stores unit values as lists; read single values as text.
-  text = value: if builtins.isList value then lib.concatStringsSep " " (map toString value) else toString value;
+  text =
+    value:
+    if builtins.isList value then lib.concatStringsSep " " (map toString value) else toString value;
   has = entry: value: lib.elem entry (lib.toList value);
   mkHome =
     extraModule:
@@ -52,16 +54,31 @@ let
     };
   off = (mkHome { }).config;
   on = (mkHome { criomosHome.herdr.server.enable = true; }).config;
+  guarded =
+    (mkHome {
+      criomosHome.herdr.server.enable = true;
+      criomosHome.remoteBuildCommandGuard.enable = true;
+    }).config;
   service = on.systemd.user.services.herdr-server;
   herdrPackage = on.criomosHome.herdr.package;
   checks = [
     {
-      ok = !(off.systemd.user.services ? herdr-server) && !(off.home.activation ? herdrServerHandoverGuard);
+      ok =
+        !(off.systemd.user.services ? herdr-server) && !(off.home.activation ? herdrServerHandoverGuard);
       msg = "herdr-server is declared while criomosHome.herdr.server.enable is off";
     }
     {
-      ok = on.criomosHome.herdr.versionPin == "0.8.2" && herdrPackage.version == on.criomosHome.herdr.versionPin;
+      ok =
+        on.criomosHome.herdr.versionPin == "0.8.2"
+        && herdrPackage.version == on.criomosHome.herdr.versionPin;
       msg = "the Herdr package does not match the 0.8.2 version pin";
+    }
+    {
+      ok =
+        guarded.systemd.user.services.herdr-server.Service.Environment == [
+          "PATH=${guarded.criomosHome.remoteBuildCommandGuard.directory}:%h/.local/bin:/run/wrappers/bin:/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin:/etc/profiles/per-user/%u/bin:%h/.nix-profile/bin"
+        ];
+      msg = "the enabled laptop guard is not first in herdr-server's complete inherited PATH";
     }
     {
       ok =
