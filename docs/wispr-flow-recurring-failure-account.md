@@ -196,6 +196,60 @@ The effective Ghostty 1.3.1 default bound `ctrl+enter=toggle_fullscreen`. Niri's
 
 Live file `/home/li/.config/ghostty/config.ghostty` received `keybind = ctrl+enter=unbind`, validated successfully, and Ghostty reloaded it with its documented SIGUSR2 mechanism while retaining the same PID. `ghostty +show-config` then showed no Ctrl+Enter binding. Declarative branch `keyboard-ctrl-enter-3fa658`, pushed commit `b19f03a4cf1d640bdaee70d81918d218596af9a1`, adds the unbind to both generated Chroma configs. The source branch still needs normal merge/deployment; until then a Chroma rewrite can replace the live correction. Closure awaits the living's Claude TUI push-send witness.
 
+## Corrected admission candidate and remote build witnesses
+
+The active-control audit found that `0ebdd6c` placed its owner-busy refusal before the existing stop, dismissal and mode-transition branches. A capture owner could therefore refuse its own PTT, Lens, Instruct, POPO and status-socket controls. The corrected source-only candidate is `wispr-flow-linux` commit `5062179d6049d16257c5d15bca9a6b9a9626bd2a`, pushed on `stt-codex`. It refuses only a new capture while preserving the current Listening or Initializing session's controls. No part of this candidate was deployed.
+
+All new builds and tests ran on the Prometheus Nix builder with local jobs disabled and fallback disabled. The exact command was:
+
+```text
+nix build --max-jobs 0 --option fallback false \
+  path:$PWD#checks.x86_64-linux.status-bootstrap \
+  path:$PWD#checks.x86_64-linux.linux-patches --no-link -L
+```
+
+The final candidate package and status witnesses are:
+
+```text
+source closure copied to Prometheus:
+/nix/store/xwfaj0d800953vss6lrxl2rvmhbbmbxm-source
+
+package derivation:
+/nix/store/gc5d1rlyblpgr50wnkfz6xv42ad9bbhh-wispr-flow-1.6.774+criomos.12.drv
+package output:
+/nix/store/ppdc2z4868sbrxjb4743scwasxiljlgi-wispr-flow-1.6.774+criomos.12
+candidate wrapper:
+/nix/store/ppdc2z4868sbrxjb4743scwasxiljlgi-wispr-flow-1.6.774+criomos.12/bin/wispr-flow
+candidate status client:
+/nix/store/ppdc2z4868sbrxjb4743scwasxiljlgi-wispr-flow-1.6.774+criomos.12/bin/wispr-flow-status
+
+status-bootstrap derivation:
+/nix/store/g2b09lfm7mlp79in2pkd69y3yjsk6mfi-wispr-flow-status-bootstrap.drv
+status-bootstrap output:
+/nix/store/kabs6jii3zfifhjjjjyv8dw46cnv7jbh-wispr-flow-status-bootstrap
+
+linux-patches derivation from the same provider bytes, before test-only oracle edits:
+/nix/store/7qkpnxzdj2qjdi5dhys5z7pj2ddm8axq-wispr-flow-linux-patches.drv
+linux-patches output:
+/nix/store/qzxqdx38ma8z4mpp5sfhgnzf3z6ri2mr-wispr-flow-linux-patches
+```
+
+The Linux patch suite passed all 48 tests against the corrected provider bytes. The final status check extracts the actual packaged Qe, He, Ve and Ze wrappers. For Instruct it runs the same actual wrapper with admission idle and busy in both locked and unlocked Listening states, compares result, calls and state, and separately requires the baseline locked stop and unlocked transition. The PTT, Lens, POPO and status-socket locked-stop paths are also executed. The final remote status derivation passed.
+
+The failed oracle history is evidence rather than discarded noise. One run selected an unrelated earlier `Qe` assignment; exact wrapper heads fixed it. Two later runs extracted `Ve` through `Ze`, accidentally producing a comma expression that invoked the intervening `Ye` function instead of `Ve`; the exact `Ve`-to-`Ge` boundary fixed it. A weaker intermediate check passed but was rejected as evidence because it did not prove preserved Instruct behavior. The final baseline-versus-guard oracle supersedes it. The tests remain synthetic packaged-byte execution, not live Electron, microphone or repeated-dictation proof. A fresh independent Claude audit is still required before this candidate can be called green.
+
+The laptop CPU scan also corrected an earlier incomplete no-job checkpoint. PID 1801850 was an owned prior-audit residue, `python3 /tmp/isolate.py`, running from the STT worktree at about one CPU for roughly thirty minutes. Its PID, start, working directory and arguments were revalidated; it received TERM only and exited within one second. Its evidence file was preserved. Foreign Nix and search work was left untouched.
+
+## Tracker launch witnessed during the recovery session
+
+Flow started exactly one `{ Field tracker Quaternary }` flow, `bc6c73`, and `Current` then reported it awake. Its transcript contains the declared tracker Purpose, including direct Secondary messaging, followed by beat `2026-10-29T18:26:34-06:00`. The first turn was degraded: it computed its SHA-256 odd partition, but the first answer send returned `HerdrRefused` and the retry was accepted only as queued. Delivery was unconfirmed; open-bead Current checks and the report line were incomplete, and no wakes were sent. This is a launch and role-consumption witness, not a successful beat witness.
+
+## Candidate deployment handoff, not executed
+
+The current live wrapper resolves through the user profile to `/nix/store/cdwgj78hds6lim3vj9da0sxsxh61dq5s-wispr-flow-bwrap`; the observed Electron main resolves to `/nix/store/drrrcy4vbli1yyw2ikfcf5xhm6cbrsq5-wispr-flow-1.6.774+criomos.11/lib/wispr-flow/electron/wispr-flow`. The current status client is `/nix/store/13hj083pk0icwprchxzsh1x23xs1rr4z-wispr-flow/bin/wispr-flow-status`. Those immutable paths form the known rollback candidate.
+
+Before any trial, the runtime owner must re-read the current Electron main, parent/cgroup and the two status-socket owners without capturing dictation content; obtain the fresh Claude audit; preserve the current scope identity; and agree on one owner for stop, candidate launch, observation and rollback. The candidate would be launched only through the already supported user transient-scope mechanism, using the exact immutable candidate wrapper above. Success requires one main, one helper, sole ownership of both sockets, passive Idle/status health, and repeated living dictation. On a failed start or regression, the same owner stops only the candidate scope and relaunches the immutable current wrapper through that mechanism. No kill, launch, microphone action or runtime change was made while preparing this handoff.
+
 ## Conclusions and unknowns
 
 Observed causes are separated:
