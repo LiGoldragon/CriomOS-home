@@ -28,6 +28,32 @@
    "{ { Psyche flow Primary } [ intent:context spirit:core spirit:ghost spirit:psyche intent:main-flow intent:living-interaction intent:psyche intent:design intent:models vision:flow vision:nexus vision:signal vision:ethos vision:datom intent:energy intent:fable ] [ compensation:behavior compensation:correction knowledge:vocabulary knowledge:psyche vision:crystallization knowledge:orchestrate vision:aspects vision:model-roles knowledge:protos knowledge:datom vision:messaging vision:remembering knowledge:flow knowledge:beads vision:account ] Regular Default OnDemand «» [] }"
    "{ { Psyche flow Secondary } [ intent:context spirit:core spirit:ghost spirit:psyche intent:main-flow intent:living-interaction intent:psyche intent:design intent:models vision:flow vision:nexus vision:signal vision:ethos vision:datom intent:energy ] [ compensation:behavior compensation:correction knowledge:vocabulary knowledge:psyche vision:crystallization knowledge:orchestrate vision:aspects vision:model-roles knowledge:protos knowledge:datom vision:messaging vision:remembering knowledge:flow knowledge:beads vision:account ] Regular Default OnDemand «» [] }"
    "{ { Psyche test Quaternary } [ spirit:core spirit:ghost spirit:psyche intent:models vision:ethos vision:datom intent:energy ] [ knowledge:flow knowledge:beads ] Regular Default OnDemand «» [] }"
+   "{ { Psyche tracker Quaternary } [ spirit:core spirit:psyche intent:energy ] [ knowledge:beads knowledge:flow-seats vision:messaging vision:aspects compensation:messaging ] Regular Default Maintained «# Tracker
+
+The tracker keeps the system's open tasks alive, and bothers flows as little as it can. Its record is /home/li/primary/flows/d9065e/vision/tracker.md. Its file is /home/li/tracker/tracker.md, in its own git repository.
+
+## Heartbeat
+
+At start, and whenever CronList shows no Heartbeat job, create one recurring session cron with CronCreate: schedule */20 * * * *, prompt Heartbeat. Each firing is a beat. Its number is the count of 20-minute slots since 2026-10-29T00:00Z:
+
+    echo $(( ($(date -u +%s) - 1793232000) / 1200 ))
+
+A beat already handled, by number, is dropped.
+
+## Each beat
+
+1. In /home/li/primary run `bd list --status open --limit 0 --json`, one bd command at a time, reading only. A bead's assignee names its assigned metaflows; its `notify:` labels name the metaflows told of progress, block or done. An assignee written as a Flow ID or loose name is matched to its address through `flow 'Metaflows'`; one that matches nothing is recorded as unmatched.
+2. Run `flow 'Metaflows'` once and read each assigned metaflow's state.
+3. Send the twin, { Field tracker Quaternary } (Codex), one Wake Soft Notice carrying the beat number and your observation in two lines. The twin answers with its own beat and observation.
+4. When the twin answered the previous beat, you send the nudges for Psyche metaflows and the twin those for Mind and Field metaflows. When no answer came by this beat, record the twin as missed and send every nudge of this beat yourself, saying so in each.
+5. A nudge goes to an assigned metaflow that is Asleep while its bead is open: one Wake Soft Notice opening with your From line, naming the beat, the bead id and title, and asking it to resume the bead or say what blocks it. You Wake Notice any Secondary directly, in any aspect; a Primary only through the Secondary of its aspect and topic. An Awake metaflow is working and gets nothing; an Unknown one is recorded.
+6. One nudge per bead per beat at most. Before nudging a bead again, read the recipient's pane (`herdr agent list`, then `herdr agent read <pane>`) or its transcript; when it shows your last nudge taken up, record that and send nothing more for the bead.
+7. A bead closed since the last beat gets one Notice to its notify metaflows, routed the same way.
+8. Write the beat into tracker.md: each open bead's row (bead, title, assigned, notify, last checked, last nudge), the twin line, and one log line (beat, beads checked, nudges sent, twin answered or missed). Then run `git -C /home/li/tracker commit -am 'Beat N'`.
+
+## Messages
+
+A metaflow's message naming a new task and its owners is recorded in tracker.md, and its sender told it is tracked. What the tracker cannot do it reports to { Psyche flow Secondary }.» [] }"
    "{ { Psyche unity Primary } [ intent:context spirit:core spirit:ghost spirit:psyche intent:main-flow intent:living-interaction intent:psyche intent:design intent:models vision:flow vision:nexus vision:signal vision:ethos vision:datom vision:unity intent:energy intent:fable ] [ compensation:behavior compensation:correction knowledge:vocabulary knowledge:psyche vision:crystallization knowledge:orchestrate vision:aspects vision:model-roles knowledge:protos knowledge:datom vision:messaging vision:remembering knowledge:flow knowledge:beads vision:account ] Regular Default OnDemand «» [] }"
    "{ { Psyche unity Secondary } [ intent:context spirit:core spirit:ghost spirit:psyche intent:main-flow intent:living-interaction intent:psyche intent:design intent:models vision:flow vision:nexus vision:signal vision:ethos vision:datom vision:unity intent:energy ] [ compensation:behavior compensation:correction knowledge:vocabulary knowledge:psyche vision:crystallization knowledge:orchestrate vision:aspects vision:model-roles knowledge:protos knowledge:datom vision:messaging vision:remembering knowledge:flow knowledge:beads vision:account ] Regular Default OnDemand «» [] }"
    "{ { Psyche persona Primary } [ intent:context spirit:core spirit:ghost spirit:psyche intent:main-flow intent:living-interaction intent:psyche intent:design intent:models vision:flow vision:nexus vision:signal vision:ethos vision:datom vision:persona intent:energy intent:fable ] [ compensation:behavior compensation:correction knowledge:vocabulary knowledge:psyche vision:crystallization knowledge:orchestrate vision:aspects vision:model-roles knowledge:protos knowledge:datom vision:messaging vision:remembering knowledge:flow knowledge:beads vision:account ] Regular Default OnDemand «» [] }"
