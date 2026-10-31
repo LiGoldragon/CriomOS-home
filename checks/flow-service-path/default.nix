@@ -14,28 +14,27 @@ let
       criomosHome.flow = {
         enable = true;
         package = runtime;
-        stateDirectory = "flow-03521";
+        stateDirectory = "flow-042-next";
         solModel = "gpt-6.1-sol";
         landingRepository = null;
         landingDeployRequest = null;
       };
     };
   };
-  service = module.config.content.systemd.user.services.flow-nexus.Service;
+  service = module.config.content.systemd.user.services.flow-nexus-next-0420.Service;
   homeStart = service.ExecStart;
   contextDeploy = pkgs.callPackage ../../packages/context-deploy { };
 in
 # The service resolves its tools through the declared profiles only.
 assert !(builtins.any (entry: pkgs.lib.hasInfix ".local/bin" entry) service.Environment);
-assert service.ExecStartPre == "${deployment.initialize}/bin/initialize-declared-flow";
-assert inputs.flow.sourceInfo.rev == "938ec35559da7288c40937599d2291b678f4fba8";
+assert inputs.flow.sourceInfo.rev == "d3ab87ee18b1dd30947d5f0089f5abb4bafa80d5";
 assert !(inputs ? flow-next);
 assert
-  module.config.content.systemd.user.services.flow-nexus.Service.ExecStartPost
-  == "${deployment.ready}/bin/wait-declared-flow-ready";
+  module.config.content.systemd.user.sockets.flow-default-next-proxy.Socket.ListenStream
+  == "%t/flow/flow.sock";
 assert
   homeStart
-  == "${runtime}/bin/flow-nexus \"{ %t/flow/flow.sock %t/flow/flow-meta.sock %h/.local/state/flow-03521/flow.sema None }\"";
+  == "${runtime}/bin/flow-nexus \"{ «%t/flow-042-next/flow.sock» «%t/flow-042-next/flow-meta.sock» «%h/.local/state/flow-042-next/flow.sema» None }\"";
 pkgs.runCommand "flow-service-path"
   {
     nativeBuildInputs = [

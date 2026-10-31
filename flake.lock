@@ -491,6 +491,23 @@
     "curriculum": {
       "flake": false,
       "locked": {
+        "lastModified": 1792991139,
+        "narHash": "sha256-6AFaGZaXy/3vZRhJernVmFhBGI/o3RVb9IwW/AEIQAk=",
+        "owner": "LiGoldragon",
+        "repo": "Curriculum",
+        "rev": "91acf293a0d0cce1793b458d5377fe78f841e0c1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LiGoldragon",
+        "repo": "Curriculum",
+        "rev": "91acf293a0d0cce1793b458d5377fe78f841e0c1",
+        "type": "github"
+      }
+    },
+    "curriculum-source": {
+      "flake": false,
+      "locked": {
         "lastModified": 1792696698,
         "narHash": "sha256-wX+dbgox5kSuMLKGyKHY+q9qaebAiJ316CIm3zaYGzA=",
         "owner": "LiGoldragon",
@@ -505,7 +522,7 @@
         "type": "github"
       }
     },
-    "curriculum-source": {
+    "curriculum_2": {
       "flake": false,
       "locked": {
         "lastModified": 1792696698,
@@ -1224,23 +1241,24 @@
     "flow": {
       "inputs": {
         "crane": "crane_4",
+        "curriculum": "curriculum",
         "fenix": "fenix_5",
         "nixpkgs": [
           "nixpkgs"
         ]
       },
       "locked": {
-        "lastModified": 1792783576,
-        "narHash": "sha256-drfjNGtYLWf9R9E5OzCnPBccQDBXwcdTZPxgNBlAHvM=",
+        "lastModified": 1793398358,
+        "narHash": "sha256-7nb1xsS2E95ZlwqVUObefTzuBYXfwRaflVvzysvLthQ=",
         "owner": "LiGoldragon",
         "repo": "flow",
-        "rev": "b878b1b1aa622bb884ba3498a099f1c772716ea7",
+        "rev": "d3ab87ee18b1dd30947d5f0089f5abb4bafa80d5",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "flow",
-        "rev": "b878b1b1aa622bb884ba3498a099f1c772716ea7",
+        "rev": "d3ab87ee18b1dd30947d5f0089f5abb4bafa80d5",
         "type": "github"
       }
     },
@@ -2316,7 +2334,7 @@
     },
     "primary": {
       "inputs": {
-        "curriculum": "curriculum",
+        "curriculum": "curriculum_2",
         "dotos": "dotos",
         "dotos-config": "dotos-config",
         "dotos-text-query": "dotos-text-query",
@@ -3774,17 +3792,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1788617409,
-        "narHash": "sha256-F8zpMiySj5FZ09NiZ2qDEfVDYHElecXg/W0a/C44Wl4=",
+        "lastModified": 1793320386,
+        "narHash": "sha256-UxSEl0OkxQfYwNTsb8uxkludaWP9noQc0TLNVxDfwuA=",
         "owner": "LiGoldragon",
         "repo": "wispr-flow-linux",
-        "rev": "e97b9587a7186ad74c5d84b2da6abfb86645b68d",
+        "rev": "5062179d6049d16257c5d15bca9a6b9a9626bd2a",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "wispr-flow-linux",
-        "rev": "e97b9587a7186ad74c5d84b2da6abfb86645b68d",
+        "rev": "5062179d6049d16257c5d15bca9a6b9a9626bd2a",
         "type": "github"
       }
     },

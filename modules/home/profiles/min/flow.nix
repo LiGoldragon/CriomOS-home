@@ -34,7 +34,7 @@ in
     };
     stateDirectory = lib.mkOption {
       type = lib.types.strMatching "flow-[a-zA-Z0-9-]+";
-      default = "flow-03521";
+      default = "flow-042-next";
       description = "Declared Flow store directory; previous cohorts remain untouched.";
     };
     solModel = lib.mkOption {
@@ -60,6 +60,10 @@ in
     };
   };
   config = lib.mkIf (sizeAtLeast "Min" && cfg.enable) {
+    # This activation installs the promoted unit definitions while the occupied
+    # transient cohort keeps running. A later quiet-hours activation adopts the
+    # definitions through sd-switch.
+    systemd.user.startServices = false;
     assertions = [
       {
         assertion = cfg.package == runtime;
@@ -86,28 +90,33 @@ in
     home.activation.flowOpensItsStore = lib.hm.dag.entryBefore [ "writeBoundary" ] ''
       ${runtime}/bin/flow-store-check '{ ${config.home.homeDirectory}/.local/state/${cfg.stateDirectory}/flow.sema }'
     '';
-    systemd.user.services.flow-nexus = {
+    systemd.user.services.flow-nexus-next-0420 = {
       Unit = {
-        Description = "Flow Nexus";
-        Wants = [ "codex-remote-control.service" ];
-        Requires = [ "curriculum-nexus.service" ];
-        After = [
-          "codex-remote-control.service"
-          "curriculum-nexus.service"
-        ];
+        Description = "Flow Nexus 0.42 stable";
       };
       Service = {
         Type = "simple";
         Environment = [
-          "PATH=%h/.nix-profile/bin:/etc/profiles/per-user/%u/bin:/run/current-system/sw/bin"
+          "FLOW_CORE_PRESENTATION_PROMPT=%h/primary/flows/e3c8c1/presentation-role.md"
         ];
-        ExecStartPre = "${deployment.initialize}/bin/initialize-declared-flow";
-        ExecStart = "${runtime}/bin/flow-nexus \"{ %t/flow/flow.sock %t/flow/flow-meta.sock %h/.local/state/${cfg.stateDirectory}/flow.sema ${landingWatch} }\"";
-        ExecStartPost = "${deployment.ready}/bin/wait-declared-flow-ready";
+        WorkingDirectory = "%h";
+        ExecStart = "${runtime}/bin/flow-nexus \"{ «%t/flow-042-next/flow.sock» «%t/flow-042-next/flow-meta.sock» «%h/.local/state/${cfg.stateDirectory}/flow.sema» ${landingWatch} }\"";
         Restart = "on-failure";
-        RestartSec = 2;
+        RestartSec = "100ms";
       };
       Install.WantedBy = [ "default.target" ];
+    };
+    systemd.user.sockets.flow-default-next-proxy = {
+      Unit.Description = "Default Flow socket proxy";
+      Socket = {
+        ListenStream = "%t/flow/flow.sock";
+        SocketMode = "0600";
+      };
+      Install.WantedBy = [ "sockets.target" ];
+    };
+    systemd.user.services.flow-default-next-proxy = {
+      Unit.Description = "Default Flow socket proxy";
+      Service.ExecStart = "${lib.getExe' pkgs.systemd "systemd-socket-proxyd"} %t/flow-042-next/flow.sock";
     };
   };
 }

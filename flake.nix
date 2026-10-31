@@ -123,7 +123,7 @@
 
     # Flow Nexus is a pinned Home-managed service. Keep the package, client,
     # and user unit in one immutable closure.
-    flow.url = "github:LiGoldragon/flow/b878b1b1aa622bb884ba3498a099f1c772716ea7";
+    flow.url = "github:LiGoldragon/flow/d3ab87ee18b1dd30947d5f0089f5abb4bafa80d5";
     flow.inputs.nixpkgs.follows = "nixpkgs";
 
     # The retired messenger prototype, kept only for the Field monitors that
@@ -134,7 +134,7 @@
 
     # The public immutable recipe owns the audited proprietary installer source;
     # this lock identifies the exact v2 status-bridge producer.
-    wispr-flow-linux.url = "github:LiGoldragon/wispr-flow-linux?rev=e97b9587a7186ad74c5d84b2da6abfb86645b68d";
+    wispr-flow-linux.url = "github:LiGoldragon/wispr-flow-linux?rev=5062179d6049d16257c5d15bca9a6b9a9626bd2a";
     wispr-flow-linux.inputs.nixpkgs.follows = "nixpkgs";
 
     # `annas` — Anna's Archive book/article search + download CLI. Upstream
