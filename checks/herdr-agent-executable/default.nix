@@ -26,7 +26,8 @@ let
   nextRaw = configuration.criomosHome.codexNextCandidate.package;
   nextClient = configuration.criomosHome.codexNextCandidate.clientPackage;
   nextRemoteClient = configuration.criomosHome.codexNextCandidate.remoteClientPackage;
-  flowEnvironment = configuration.systemd.user.services.flow-nexus.Service.Environment;
+  flowService = configuration.systemd.user.services.flow-nexus-04012.Service;
+  flowEnvironment = flowService.Environment;
   configToml = builtins.readFile configuration.xdg.configFile."herdr/config.toml".source;
 in
 assert
@@ -34,8 +35,10 @@ assert
   != null;
 assert pkgs.lib.hasPrefix "${
   inputs.flow.packages.${pkgs.stdenv.hostPlatform.system}.default
-}/bin/flow-nexus " (builtins.head configuration.systemd.user.services.flow-nexus.Service.ExecStart);
-assert builtins.all (entry: !(pkgs.lib.hasPrefix "FLOW_" entry)) flowEnvironment;
+}/bin/flow-nexus " (builtins.head flowService.ExecStart);
+assert builtins.any (
+  entry: pkgs.lib.hasPrefix "FLOW_CORE_PRESENTATION_PROMPT=" entry
+) flowEnvironment;
 pkgs.runCommand "herdr-agent-executable-contract" { } ''
   set -eu
   stable=${stableClient}/bin/codex-stable-flow-client

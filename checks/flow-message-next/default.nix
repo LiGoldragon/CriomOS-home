@@ -1,5 +1,5 @@
 { pkgs, inputs, ... }:
-assert !(inputs ? flow-next);
+assert inputs ? flow-next;
 let
   module = import ../../modules/home/profiles/min/flow-message-next.nix {
     lib = pkgs.lib;

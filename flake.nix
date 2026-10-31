@@ -27,7 +27,7 @@
       url = "github:LiGoldragon/primary/56058cd2243f7e9c23ae21b48ce04af0d37900d9";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.curriculum = {
-        url = "github:LiGoldragon/Curriculum/8533a4697c945f32a451a836feb41971ceb9dfb4";
+        url = "github:LiGoldragon/Curriculum/b112a87174d33efae2f3b29871478bd188e87f36";
         flake = false;
       };
       inputs.psyche-context = {
@@ -47,7 +47,7 @@
     # The CLI reads role configuration at the process boundary; keep the
     # matching authored Curriculum source available to the Home service.
     curriculum-source = {
-      url = "github:LiGoldragon/Curriculum/04757684acef769b863d8a73ad9cbff08abbbc68";
+      url = "github:LiGoldragon/Curriculum/b112a87174d33efae2f3b29871478bd188e87f36";
       flake = false;
     };
 
@@ -123,8 +123,12 @@
 
     # Flow Nexus is a pinned Home-managed service. Keep the package, client,
     # and user unit in one immutable closure.
-    flow.url = "github:LiGoldragon/flow/2d2e2013f6fab3437e3088c4e52cc61fd2ed721a";
+    flow.url = "github:LiGoldragon/flow/f3c59c4b15bb208ec4455f208d7ba0b103c65cd5";
     flow.inputs.nixpkgs.follows = "nixpkgs";
+
+    # The independent next slot keeps its own sockets and Memory while the
+    # stable slot continues to serve every existing seat.
+    flow-next.url = "github:LiGoldragon/flow/806511305246f968d9164b4fd77bed46a7eef1ab";
 
     # The retired messenger prototype, kept only for the Field monitors that
     # still name its hm-* commands (off unless enabled). Flows send through

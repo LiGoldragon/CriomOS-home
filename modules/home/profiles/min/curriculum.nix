@@ -7,48 +7,56 @@
 }:
 let
   cfg = config.criomosHome.curriculum;
-  system = pkgs.stdenv.hostPlatform.system;
   deployment = pkgs.callPackage ../../../../packages/curriculum-resolver-deployment {
     inherit inputs;
   };
-  curriculumPackage = deployment.runtime;
   homeDirectory = config.home.homeDirectory;
-  curriculumEnvironment = deployment.environment homeDirectory;
-
+  rolesFile = "${homeDirectory}/.local/state/curriculum-040/roles.datom";
+  recordsDirectory = "${homeDirectory}/primary/flows";
+  curriculumEnvironment = deployment.environment homeDirectory rolesFile recordsDirectory;
 in
 {
   options.criomosHome.curriculum.enable = lib.mkOption {
     type = lib.types.bool;
     default = true;
-    description = "Run Curriculum only for a target with declared roots and workspace.";
+    description = "Run the Curriculum Nexus paired with the stable Flow slot.";
   };
 
-  config = {
+  config = lib.mkIf cfg.enable {
     home.packages = [ deployment ];
-    xdg.configFile."systemd/user/curriculum-nexus.service.d/50-declared-runtime.conf" =
-      lib.mkIf cfg.enable
-        {
-          source = deployment.unit;
-        };
 
-    systemd.user.services.curriculum-nexus = lib.mkIf cfg.enable {
+    # Activation owns the authored registry at the exact state path consumed by
+    # the stable Curriculum slot.
+    home.file.".local/state/curriculum-040/roles.datom" = {
+      source = "${inputs.curriculum-source}/roles.datom";
+      force = true;
+    };
+
+    systemd.user.services.curriculum-nexus-040 = {
       Unit = {
-        Description = "Curriculum skill registry and projection Nexus";
+        Description = "Curriculum Nexus paired with Flow 0.40";
         StartLimitIntervalSec = 60;
         StartLimitBurst = 5;
       };
-
       Service = {
-        RuntimeDirectory = "curriculum";
+        RuntimeDirectory = "flow40-rt/curriculum";
         RuntimeDirectoryMode = "0700";
         WorkingDirectory = "${homeDirectory}/primary";
-        Environment = [ "XDG_RUNTIME_DIR=%t" ] ++ curriculumEnvironment;
-        ExecStart = "${curriculumPackage}/bin/curriculum-nexus";
-        # Resolver startup reads its immutable registry; projection is explicit.
+        Environment = [
+          "XDG_RUNTIME_DIR=%t/flow40-rt"
+          "PATH=${
+            lib.makeBinPath [
+              pkgs.git
+              pkgs.openssh
+              pkgs.coreutils
+            ]
+          }"
+        ]
+        ++ curriculumEnvironment;
+        ExecStart = "${deployment.runtime}/bin/curriculum-nexus";
         Restart = "on-failure";
         RestartSec = "2s";
       };
-
       Install.WantedBy = [ "default.target" ];
     };
   };
