@@ -33,7 +33,7 @@ let
       modules = [
         (_: { _module.args.ownedAgentPackages = ownedAgentPackages; })
         ../../modules/home/core-packages.nix
-        ../../modules/home/profiles/min/codex-remote-control.nix
+        ../../modules/home/profiles/min/agent-clients.nix
         {
           home.username = user.name;
           home.homeDirectory = "/home/${user.name}";

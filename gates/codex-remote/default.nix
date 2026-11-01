@@ -70,10 +70,10 @@ pkgs.runCommand "codex-remote-contract" { } ''
   test "$(${codexRemote}/bin/codex-desktop resume 01999999-aaaa-bbbb-cccc-123456789abc "$fixture_directory")" = "$({
     printf '%s\n' 'systemd-run --user --scope --collect --quiet --property=CPUWeight=1000 --property=IOWeight=1000 --property=MemoryAccounting=yes --property=MemoryLow=512M --property=OOMPolicy=continue '"${ghosttyFixture}"'/bin/ghostty --gtk-single-instance=false --class=criomos-codex-desktop --title=Codex resume 01999999-aaaa-bbbb-cccc-123456789abc --working-directory='"$fixture_directory"' --wait-after-command -e '"${codexRemote.codexRemote}"'/bin/codex-remote --cd '"$fixture_directory"' resume 01999999-aaaa-bbbb-cccc-123456789abc'
   })"
-  test "$(${codexRemote}/bin/codex-desktop status)" = 'systemctl --user status --no-pager codex-remote-control.service'
+  test "$(${codexRemote}/bin/codex-desktop status)" = 'systemctl --user status --no-pager codex-remote-control-next.service'
   test "$(${codexRemote}/bin/codex-desktop restart-service)" = "$({
-    printf '%s\n' 'systemctl --user restart codex-remote-control.service'
-    printf '%s\n' 'systemctl --user status --no-pager codex-remote-control.service'
+    printf '%s\n' 'systemctl --user restart codex-remote-control-next.service'
+    printf '%s\n' 'systemctl --user status --no-pager codex-remote-control-next.service'
   })"
 
   if ${codexRemote}/bin/codex-desktop resume latest "$fixture_directory" > "$TMPDIR/latest-out" 2> "$TMPDIR/latest-err"; then

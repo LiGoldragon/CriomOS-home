@@ -4,7 +4,7 @@ let
   ownedAgentPackages = import ../../lib/owned-agent-packages.nix { inherit inputs pkgs; };
   ownedAgentModule = { ... }: { _module.args.ownedAgentPackages = ownedAgentPackages; };
   piModelsModule = ../../modules/home/profiles/min/pi-models.nix;
-  codexRemoteControlModule = ../../modules/home/profiles/min/codex-remote-control.nix;
+  agentClientsModule = ../../modules/home/profiles/min/agent-clients.nix;
   orchestrateModule = ../../modules/home/profiles/min/orchestrate.nix;
   spiritModule = ../../modules/home/profiles/min/spirit.nix;
 
@@ -104,7 +104,7 @@ let
 
   remoteConfiguration = mkHome remoteHorizon { } [
     piModelsModule
-    codexRemoteControlModule
+    agentClientsModule
     orchestrateModule
     spiritModule
   ];
@@ -137,7 +137,7 @@ assert !(remoteActivation ? mergePiIntercomConfig);
 assert !(remoteActivation ? mergePiTestingIntercomConfig);
 assert remoteActivation ? retireLegacyPiIntercomBrokerOverrides;
 assert remoteConfiguration.config.systemd.user.services ? orchestrate-nexus;
-assert remoteConfiguration.config.systemd.user.services ? codex-remote-control;
+assert !(remoteConfiguration.config.systemd.user.services ? codex-remote-control);
 assert !(remoteConfiguration.config.systemd.user.services ? spirit-judge);
 assert !(remoteConfiguration.config.systemd.user.services ? spirit-daemon);
 assert orchestrateConfiguration.config.systemd.user.services ? orchestrate-nexus;

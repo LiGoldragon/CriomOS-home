@@ -72,7 +72,7 @@ already running from the previous generation survives activation, so stop and
 disable it once on each account that had it:
 `systemctl --user disable --now claude-remote-control.service`. Claude Code
 remains installed and unchanged as a terminal harness. The independent
-`codex-remote-control` owner is untouched.
+next Codex owner is untouched.
 
 ## Flow identity helper
 
@@ -158,7 +158,7 @@ approved migration review.
 
 This generation removes Agent Intercom packages, Pi adapters, and Claude and
 Codex MCP registration from Home. Messenger is the sole supported agent
-message route. Ordinary `codex`, `claude`, and Codex Remote Control remain
+message route. Ordinary `codex`, `claude`, and the next Codex endpoint remain
 separately owned by their canonical pinned packages.
 
 Desktop-app support is independently selected only when the projected node
@@ -167,7 +167,7 @@ is actually available for the target platform. There is no shared
 architecture gate. Keep the Horizon producer and the CriomOS consumer on
 their matching removal revisions before activating this Home generation. A
 non-Edge or minimum-only profile deliberately receives no Claude/ChatGPT
-Desktop handlers; `codex-remote-control` remains a minimum profile service.
+Desktop handlers; the next Codex endpoint remains a minimum profile service.
 
 ## ChatGPT Desktop stock boundary with Node-report workaround
 
@@ -189,12 +189,12 @@ difference except this one guard.
 Deploy the complete Home generation through the normal declarative path. Do
 not patch the installed application, replace `resources/codex`, or add any
 Desktop-to-persistent-Codex bridge. A new Desktop window uses the vendor
-private Core; it is not a client of `codex-remote-control` and does not share
+private Core; it is not a client of the next Codex endpoint and does not share
 that owner's process-local state.
 
 The independent persistent owner remains for terminal Codex routing and phone
 Remote Control. The VSCodium sidebar and full-access defaults are unchanged.
-Do not restart `codex-remote-control` merely for this Desktop rollback. The
+Do not restart the next Codex endpoint merely for this Desktop rollback. The
 package check compares the delivered ASAR and bundled Core with
 an independently extracted fixed-output OpenAI archive and exercises the
 generated wrapper with inherited vendor variables plus Wayland selection.

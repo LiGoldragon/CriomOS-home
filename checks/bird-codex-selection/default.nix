@@ -27,7 +27,7 @@ let
       };
       modules = [
         ../../modules/home/core-packages.nix
-        ../../modules/home/profiles/min/codex-remote-control.nix
+        ../../modules/home/profiles/min/agent-clients.nix
         ../../modules/home/profiles/min/codex-next.nix
         {
           home.username = name;
@@ -41,7 +41,6 @@ let
   bird = mkConfiguration "bird";
   li = mkConfiguration "li";
   next = configuration: configuration.systemd.user.services.codex-remote-control-next.Service;
-  stable = configuration: configuration.systemd.user.services.codex-remote-control.Service;
   birdClient = builtins.head (
     builtins.filter (package: lib.getName package == "codex") bird.home.packages
   );
@@ -50,8 +49,6 @@ let
   );
   birdNext = builtins.head (next bird).ExecStart;
   liNext = builtins.head (next li).ExecStart;
-  liStable = builtins.head (stable li).ExecStart;
-  birdStable = builtins.head (stable bird).ExecStart;
 in
 assert bird.criomosHome.codexNext.rawClientPackage == selected;
 assert
@@ -62,14 +59,8 @@ assert builtins.isString (next bird).ExecStartPre;
 assert lib.hasSuffix
   "-codex-next-0.158.0-alpha.9/bin/codex app-server --remote-control --listen unix:///home/li/.codex-next/app-server-control/app-server-control.sock"
   liNext;
-assert lib.hasSuffix "-codex-0.153.4/bin/codex app-server --remote-control --listen unix://"
-  liStable;
-# This correction does not retire or upgrade Bird's other occupied endpoint.
-assert lib.hasSuffix "-codex-0.153.4/bin/codex app-server --remote-control --listen unix://"
-  birdStable;
 assert
   builtins.attrNames bird.systemd.user.services == [
-    "codex-remote-control"
     "codex-remote-control-next"
   ];
 pkgs.runCommand "bird-codex-matched-selection" { } ''
