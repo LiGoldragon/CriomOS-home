@@ -114,6 +114,9 @@ let
       selection-background = ${colors.base02}
       selection-foreground = ${colors.base05}
       ${ghosttyPaletteLines}
+      # Ctrl+Enter belongs to the program in the terminal (it sends in the
+      # agent harnesses); Ghostty's default makes it toggle fullscreen.
+      keybind = ctrl+enter=unbind
     '';
 
   ghosttyDarkConfig = mkGhosttyConfig {
