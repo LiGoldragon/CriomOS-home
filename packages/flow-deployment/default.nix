@@ -185,6 +185,91 @@ let
       exit 1
     '';
   };
+  canonicalBridge = pkgs.writeShellApplication {
+    name = "flow-canonical-bridge";
+    runtimeInputs = [ pkgs.coreutils pkgs.iproute2 ];
+    text = ''
+      old_dir="''${1:?old Flow socket directory}"
+      new_dir="''${2:?canonical Flow socket directory}"
+      old_sock="$old_dir/flow.sock"
+      old_meta="$old_dir/flow-meta.sock"
+      new_sock="$new_dir/flow.sock"
+      new_meta="$new_dir/flow-meta.sock"
+      script_dir=$(dirname -- "$0")
+      link_one() {
+        local old="$1" new="$2" target
+        for _attempt in $(seq 1 300); do
+          if [ -S "$new" ] && ss -xlH | grep -F -- "$new" >/dev/null; then break; fi
+          sleep 0.1
+        done
+        [ -S "$new" ] || { echo "canonical socket is not a Unix socket: $new" >&2; return 1; }
+        ss -xlH | grep -F -- "$new" >/dev/null || { echo "canonical socket is not listening: $new" >&2; return 1; }
+        [ "$(stat -c %u "$new")" = "$(id -u)" ] || { echo "canonical socket owner mismatch: $new" >&2; return 1; }
+        if [ -L "$old" ]; then
+          target=$(readlink "$old")
+          [ "$target" = "$new" ] || { echo "unexpected compatibility link: $old -> $target" >&2; return 1; }
+          return 0
+        fi
+        if [ -e "$old" ] || [ -S "$old" ]; then
+          if ss -xlH | grep -F -- "$old" >/dev/null; then
+            echo "old socket still has an active listener: $old" >&2
+            return 1
+          fi
+          [ -S "$old" ] || { echo "unexpected non-socket at old endpoint: $old" >&2; return 1; }
+          unlink "$old"
+        fi
+        ln -s "$new" "$old"
+      }
+      verify_answers() {
+        local ordinary configuration
+        for _attempt in $(seq 1 300); do
+          ordinary=$(FLOW_SOCKET="$new_sock" "$script_dir/flow" 'Metaflows' 2>/dev/null) || ordinary=
+          configuration=$(FLOW_META_SOCKET="$new_meta" "$script_dir/flow-meta" 'Configuration' 2>/dev/null) || configuration=
+          case "$ordinary" in Listed.\[*) ;; *) sleep 0.1; continue ;; esac
+          case "$configuration" in Configuration.\{*) return 0 ;; *) sleep 0.1; continue ;; esac
+        done
+        echo "canonical typed queries did not become ready" >&2
+        return 1
+      }
+      remove_one() {
+        local old="$1" target
+        if [ -L "$old" ]; then
+          target=$(readlink "$old")
+          case "$target" in
+            "$new_dir"/*) unlink "$old" ;;
+            *) echo "unexpected compatibility link: $old -> $target" >&2; return 1 ;;
+          esac
+        fi
+      }
+      prepare_one() {
+        local path="$1"
+        if [ -L "$path" ]; then
+          echo "canonical endpoint is unexpectedly a symlink: $path" >&2
+          return 1
+        fi
+        if [ -e "$path" ] || [ -S "$path" ]; then
+          if ss -xlH | grep -F -- "$path" >/dev/null; then
+            echo "canonical endpoint already has an active listener: $path" >&2
+            return 1
+          fi
+          [ -S "$path" ] || { echo "unexpected non-socket at canonical endpoint: $path" >&2; return 1; }
+          [ "$(stat -c %u "$path")" = "$(id -u)" ] || { echo "canonical stale socket owner mismatch: $path" >&2; return 1; }
+          unlink "$path"
+        fi
+      }
+      if [ "''${3:-create}" = prepare ]; then
+        prepare_one "$new_sock"
+        prepare_one "$new_meta"
+      elif [ "''${3:-create}" = remove ]; then
+        remove_one "$old_sock"
+        remove_one "$old_meta"
+      else
+        verify_answers
+        link_one "$old_sock" "$new_sock"
+        link_one "$old_meta" "$new_meta"
+      fi
+    '';
+  };
 in
 pkgs.runCommand "flow-deployment"
   {
@@ -199,6 +284,7 @@ pkgs.runCommand "flow-deployment"
         runtime
         initialize
         ready
+        canonicalBridge
         leaveOutDefaults
         ;
     };
@@ -209,4 +295,5 @@ pkgs.runCommand "flow-deployment"
       test -x "${runtime}/bin/$name"
       ln -s "${runtime}/bin/$name" "$out/bin/$name"
     done
+    ln -s "${canonicalBridge}/bin/flow-canonical-bridge" "$out/bin/flow-canonical-bridge"
   ''

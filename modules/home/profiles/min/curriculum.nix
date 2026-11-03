@@ -14,15 +14,33 @@ let
   curriculumPackage = deployment.runtime;
   homeDirectory = config.home.homeDirectory;
   curriculumEnvironment = deployment.environment homeDirectory;
+  declaredPrimaryPin = pkgs.writeText "curriculum-primary-pin.conf" ''
+    [Service]
+    Environment=CURRICULUM_RECORDS_DIR=${homeDirectory}/primary/flows
+    Environment=CURRICULUM_ROLES_FILE=${inputs.curriculum-source}/roles.datom
+    ExecStart=
+    ExecStart=${deployment.runtime}/bin/curriculum-nexus
+    ExecStartPost=
+    ExecStartPost=${deployment.agents}/bin/install-curriculum-claude-agents
+  '';
   knownPrimaryPin = pkgs.writeShellScript "retire-known-curriculum-primary-pin" ''
     set -eu
     pin="$HOME/.config/systemd/user/curriculum-nexus.service.d/60-primary-pin.conf"
     if [ -e "$pin" ]; then
-      if [ -L "$pin" ] || [ "$(sha256sum "$pin" | cut -d' ' -f1)" != \
-        6fc4892c80db9172ba2892f6a8601853c09a85bed5d62ae128f2c63809c357ba ]; then
+      pin_hash=$(sha256sum "$pin" | cut -d' ' -f1)
+      if [ -L "$pin" ]; then
+        target=$(readlink -f "$pin")
+        case "$target" in /nix/store/*) ;; *) echo "refusing unknown curriculum 60-primary-pin symlink" >&2; exit 1 ;; esac
+        cmp -s "$target" "${declaredPrimaryPin}" || { echo "refusing unknown curriculum 60-primary-pin symlink" >&2; exit 1; }
+        exit 0
+      fi
+      case "$pin_hash" in
+        6fc4892c80db9172ba2892f6a8601853c09a85bed5d62ae128f2c63809c357ba) ;;
+        *)
         echo "refusing to replace unknown curriculum 60-primary-pin.conf" >&2
         exit 1
-      fi
+        ;;
+      esac
       rm -f "$pin"
     fi
   '';
@@ -47,15 +65,7 @@ in
       ${knownPrimaryPin}
     '';
     xdg.configFile."systemd/user/curriculum-nexus.service.d/60-primary-pin.conf" = lib.mkIf cfg.enable {
-      text = ''
-        [Service]
-        Environment=CURRICULUM_RECORDS_DIR=${homeDirectory}/primary/flows
-        Environment=CURRICULUM_ROLES_FILE=${inputs.curriculum-source}/roles.datom
-        ExecStart=
-        ExecStart=${deployment.runtime}/bin/curriculum-nexus
-        ExecStartPost=
-        ExecStartPost=${deployment.agents}/bin/install-curriculum-claude-agents
-      '';
+      source = declaredPrimaryPin;
       force = true;
     };
 

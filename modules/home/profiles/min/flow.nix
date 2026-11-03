@@ -93,6 +93,9 @@ in
     systemd.user.services.flow-nexus-next-0420 = {
       Unit = {
         Description = "Flow Nexus 0.42 stable";
+        # The transition cohort remains restartable, but may never share the
+        # redb writer with the canonical cohort.
+        Conflicts = [ "flow-nexus.service" ];
       };
       Service = {
         Type = "simple";
@@ -104,19 +107,31 @@ in
         Restart = "on-failure";
         RestartSec = "100ms";
       };
-      Install.WantedBy = [ "default.target" ];
     };
-    systemd.user.sockets.flow-default-next-proxy = {
-      Unit.Description = "Default Flow socket proxy";
-      Socket = {
-        ListenStream = "%t/flow/flow.sock";
-        SocketMode = "0600";
+
+    # The canonical cohort owns the public sockets and the same Memory file.
+    # It is wanted at boot; Home's startServices=false keeps activation from
+    # starting it during a generation switch. Conflicts is the declarative
+    # single-writer guard for later starts.
+    systemd.user.services.flow-nexus = {
+      Unit = {
+        Description = "Flow Nexus 0.44 canonical";
+        Conflicts = [ "flow-nexus-next-0420.service" ];
       };
-      Install.WantedBy = [ "sockets.target" ];
-    };
-    systemd.user.services.flow-default-next-proxy = {
-      Unit.Description = "Default Flow socket proxy";
-      Service.ExecStart = "${lib.getExe' pkgs.systemd "systemd-socket-proxyd"} %t/flow-042-next/flow.sock";
+      Service = {
+        Type = "simple";
+        Environment = [
+          "FLOW_CORE_PRESENTATION_PROMPT=%h/primary/flows/e3c8c1/presentation-role.md"
+        ];
+        WorkingDirectory = "%h";
+        ExecStartPre = "${deployment}/bin/flow-canonical-bridge %t/flow-042-next %t/flow prepare";
+        ExecStart = "${runtime}/bin/flow-nexus \"{ «%t/flow/flow.sock» «%t/flow/flow-meta.sock» «%h/.local/state/${cfg.stateDirectory}/flow.sema» None }\"";
+        ExecStartPost = "${deployment}/bin/flow-canonical-bridge %t/flow-042-next %t/flow";
+        ExecStopPost = "${deployment}/bin/flow-canonical-bridge %t/flow-042-next %t/flow remove";
+        Restart = "on-failure";
+        RestartSec = "100ms";
+      };
+      Install.WantedBy = [ "default.target" ];
     };
   };
 }
