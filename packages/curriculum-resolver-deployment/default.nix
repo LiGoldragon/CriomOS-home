@@ -1,7 +1,19 @@
 { pkgs, inputs, ... }:
 let
   system = pkgs.stdenv.hostPlatform.system;
-  runtime = inputs.primary.packages.${system}.curriculum;
+  patchedSource = pkgs.applyPatches {
+    name = "curriculum-b112a87-book-native";
+    src = inputs.curriculum-source;
+    patches = [ ../../patches/curriculum-book-native-b112a87.patch ];
+  };
+  runtime = inputs.primary.packages.${system}.curriculum.overrideAttrs (_: {
+    src = patchedSource;
+    cargoLock = null;
+    cargoDeps = pkgs.rustPlatform.fetchCargoVendor {
+      src = patchedSource;
+      hash = "sha256-yfmNDz2I4aAHKztHncb07d/VUj0KHRplqp/Mhu7wZs0=";
+    };
+  });
   sourceRoot = homeDirectory: "${homeDirectory}/.local/state/curriculum-context";
   environment = homeDirectory: let
     root = sourceRoot homeDirectory;
@@ -65,13 +77,13 @@ let
   '';
   agents = pkgs.writeShellScriptBin "install-curriculum-claude-agents" ''
     set -eu
-    directory="$HOME/.claude/agents"
+    directory="$HOME/primary/.claude/agents"
     mkdir -p "$directory"
     for attempt in $(${pkgs.coreutils}/bin/seq 1 1200); do
       [ -S "$XDG_RUNTIME_DIR/curriculum/curriculum.sock" ] && break
       ${pkgs.coreutils}/bin/sleep 0.05
     done
-    for role in general-purpose book-author; do
+    for role in general-purpose book-author book book-page; do
       temporary=$(${pkgs.coreutils}/bin/mktemp "$directory/.$role.XXXXXX")
       if ! ${runtime}/bin/curriculum --claude-agent-markdown \
         "ComposeRole.{ $role ClaudeAgent }" > "$temporary"; then
@@ -96,13 +108,15 @@ let
     ExecStartPost=${agents}/bin/install-curriculum-claude-agents
   '');
 in
-assert inputs.curriculum-source.rev == inputs.primary.inputs.curriculum.rev;
+assert inputs.curriculum-source.rev == "b112a87174d33efae2f3b29871478bd188e87f36";
 pkgs.runCommand "curriculum-resolver-deployment" {
   passthru = {
     inherit runtime environment unit refresh agents;
     inherit (inputs.primary.inputs) psyche-belief mind-belief field-belief;
   };
 } ''
+  test "$(sha256sum ${inputs.curriculum-source}/roles.datom | cut -d' ' -f1)" = \
+    9d74926b4b8bf8567b0466b3add35961009259ee94118b2bbaa46f39ebdd5e93
   mkdir -p "$out/bin"
   ln -s ${cli}/bin/curriculum "$out/bin/curriculum"
 ''

@@ -27,7 +27,7 @@
       url = "github:LiGoldragon/primary/4fdd3888ebc4acf5705aa6d40bf9aad9cbcbd729";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.curriculum = {
-        url = "github:LiGoldragon/Curriculum/6ce4f87a6f1b754ad17eafb6bb73e7917c7ca3b2";
+        url = "github:LiGoldragon/Curriculum/b112a87174d33efae2f3b29871478bd188e87f36";
         flake = false;
       };
       inputs.mind-belief = {
@@ -47,7 +47,7 @@
     # The CLI reads role configuration at the process boundary; keep the
     # matching authored Curriculum source available to the Home service.
     curriculum-source = {
-      url = "github:LiGoldragon/Curriculum/6ce4f87a6f1b754ad17eafb6bb73e7917c7ca3b2";
+      url = "github:LiGoldragon/Curriculum/b112a87174d33efae2f3b29871478bd188e87f36";
       flake = false;
     };
 

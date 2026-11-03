@@ -14,6 +14,18 @@ let
   curriculumPackage = deployment.runtime;
   homeDirectory = config.home.homeDirectory;
   curriculumEnvironment = deployment.environment homeDirectory;
+  knownPrimaryPin = pkgs.writeShellScript "retire-known-curriculum-primary-pin" ''
+    set -eu
+    pin="$HOME/.config/systemd/user/curriculum-nexus.service.d/60-primary-pin.conf"
+    if [ -e "$pin" ]; then
+      if [ -L "$pin" ] || [ "$(sha256sum "$pin" | cut -d' ' -f1)" != \
+        6fc4892c80db9172ba2892f6a8601853c09a85bed5d62ae128f2c63809c357ba ]; then
+        echo "refusing to replace unknown curriculum 60-primary-pin.conf" >&2
+        exit 1
+      fi
+      rm -f "$pin"
+    fi
+  '';
 
 in
 {
@@ -31,6 +43,21 @@ in
           source = deployment.unit;
           force = true;
         };
+    home.activation.retireKnownCurriculumPrimaryPin = lib.hm.dag.entryBefore [ "writeBoundary" ] ''
+      ${knownPrimaryPin}
+    '';
+    xdg.configFile."systemd/user/curriculum-nexus.service.d/60-primary-pin.conf" = lib.mkIf cfg.enable {
+      text = ''
+        [Service]
+        Environment=CURRICULUM_RECORDS_DIR=${homeDirectory}/primary/flows
+        Environment=CURRICULUM_ROLES_FILE=${inputs.curriculum-source}/roles.datom
+        ExecStart=
+        ExecStart=${deployment.runtime}/bin/curriculum-nexus
+        ExecStartPost=
+        ExecStartPost=${deployment.agents}/bin/install-curriculum-claude-agents
+      '';
+      force = true;
+    };
 
     systemd.user.services.curriculum-nexus = lib.mkIf cfg.enable {
       Unit = {

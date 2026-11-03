@@ -46,9 +46,14 @@ in pkgs.runCommand "curriculum-resolver-contract" {
   ${deployment.agents}/bin/install-curriculum-claude-agents
   for role in general-purpose book-author; do
     for module in vision-book compensation-book-crystallization; do
-      test "$(grep -Fc "<!-- module: $module -->" "$HOME/.claude/agents/$role.md")" -eq 1
+      test "$(grep -Fc "<!-- module: $module -->" "$HOME/primary/.claude/agents/$role.md")" -eq 1
     done
   done
+  for role in book book-page; do
+    test -s "$HOME/primary/.claude/agents/$role.md"
+  done
+  grep -Fq 'Publish a living-messenger presentation from the source file the calling flow wrote and named by path.' "$HOME/primary/.claude/agents/book.md"
+  grep -Fq 'Update the living’s page from the file the calling flow wrote and named by path.' "$HOME/primary/.claude/agents/book-page.md"
   ${deployment.runtime}/bin/curriculum "$query" > "$TMPDIR/composed.datom"
   grep -q '^StartupComposed\.' "$TMPDIR/composed.datom"
   grep -q 'These are your skills, given here; do not reload them.' "$TMPDIR/composed.datom"

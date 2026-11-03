@@ -1,0 +1,219 @@
+diff --git a/src/claude_agent.rs b/src/claude_agent.rs
+index a056cb1..9b711b7 100644
+--- a/src/claude_agent.rs
++++ b/src/claude_agent.rs
+@@ -13,21 +13,35 @@ impl RendersClaudeAgent for RoleComposition {
+         if self.surface != Surface::ClaudeAgent || self.role_callers != RoleCallers::Any {
+             return Err("native rendering requires an Any-caller Claude role".into());
+         }
+-        let (expected_tools, tools_header) = match self.role_name.as_str() {
++        let (expected_model, expected_tools, tools_header) = match self.role_name.as_str() {
+             "book" => (
++                "sonnet",
+                 RoleTools::Explicit(vec![
+                     "Read".into(),
+                     "Bash".into(),
+                     "Agent".into(),
+                     "Artifact".into(),
++                    "ArtifactComments".into(),
+                 ]),
+-                "tools: [Read, Bash, Agent, Artifact]\n",
++                "tools: [Read, Bash, Agent, Artifact, ArtifactComments]\n",
+             ),
+-            "illustrator" => (RoleTools::Explicit(vec![]), "tools: []\n"),
+-            "general-purpose" | "book-author" => (RoleTools::Inherit, ""),
++            "book-page" => (
++                "opus",
++                RoleTools::Explicit(vec![
++                    "Read".into(),
++                    "Bash".into(),
++                    "Agent".into(),
++                    "ToolSearch".into(),
++                    "ArtifactData".into(),
++                    "ArtifactComments".into(),
++                ]),
++                "tools: [Read, Bash, Agent, ToolSearch, ArtifactData, ArtifactComments]\n",
++            ),
++            "illustrator" => ("sonnet", RoleTools::Explicit(vec![]), "tools: []\n"),
++            "general-purpose" | "book-author" => ("sonnet", RoleTools::Inherit, ""),
+             _ => return Err("unsupported native role".into()),
+         };
+-        if self.model_id != "sonnet"
++        if self.model_id != expected_model
+             || self.effort != Effort::Medium
+             || self.permission != Permission::Unrestricted
+             || self.role_tools != expected_tools
+@@ -44,8 +58,8 @@ impl RendersClaudeAgent for RoleComposition {
+         }
+         let description = self.description_text.yaml_string();
+         Ok(format!(
+-            "---\nname: {}\ndescription: {description}\nmodel: sonnet\neffort: medium\n{tools_header}---\n\n{}",
+-            self.role_name, self.context_text
++            "---\nname: {}\ndescription: {description}\nmodel: {expected_model}\neffort: medium\n{tools_header}---\n\n{}",
++            self.role_name, self.context_text,
+         ))
+     }
+ }
+diff --git a/src/main.rs b/src/main.rs
+index 77bfc3d..3424ff9 100644
+--- a/src/main.rs
++++ b/src/main.rs
+@@ -16,6 +16,7 @@ fn main() -> ExitCode {
+         arguments.remove(0);
+         requested_role = match arguments.as_slice() {
+             [request] if request == "ComposeRole.{ book ClaudeAgent }" => Some("book"),
++            [request] if request == "ComposeRole.{ book-page ClaudeAgent }" => Some("book-page"),
+             [request] if request == "ComposeRole.{ general-purpose ClaudeAgent }" => {
+                 Some("general-purpose")
+             }
+diff --git a/tests/claude_agent.rs b/tests/claude_agent.rs
+index fb5be2f..482f936 100644
+--- a/tests/claude_agent.rs
++++ b/tests/claude_agent.rs
+@@ -1,6 +1,24 @@
+ use curriculum::{claude_agent::RendersClaudeAgent, generated::*, registry::SkillRegistry, roles};
+ use std::fs;
+ 
++#[cfg(feature = "datom")]
++fn declared_roles() -> Roles {
++    use datom_codec::{Actualizing, Budget, Potential};
++    use protos::ReaderBudget;
++    let RolesDocument::Roles(roles) =
++        Potential::<RolesDocument>::from(include_str!("../roles.datom"))
++            .actualize(&mut Budget {
++                remaining: 1_048_576,
++                reader: ReaderBudget {
++                    remaining: 1_048_576,
++                },
++                depth: 0,
++                maximum_depth: 1024,
++            })
++            .unwrap();
++    roles
++}
++
+ fn composition(role_name: &str) -> RoleComposition {
+     let tmp = tempfile::tempdir().unwrap();
+     let roots = [
+@@ -42,7 +60,11 @@ fn composition(role_name: &str) -> RoleComposition {
+         role_definition_vector: vec![RoleDefinition {
+             role_name: role_name.into(),
+             surface: Surface::ClaudeAgent,
+-            model_id: "sonnet".into(),
++            model_id: if role_name == "book-page" {
++                "opus".into()
++            } else {
++                "sonnet".into()
++            },
+             effort: Effort::Medium,
+             permission: Permission::Unrestricted,
+             description_module: "role:book-description".into(),
+@@ -59,12 +81,22 @@ fn composition(role_name: &str) -> RoleComposition {
+                 RoleTools::Inherit
+             } else if role_name == "illustrator" {
+                 RoleTools::Explicit(vec![])
++            } else if role_name == "book-page" {
++                RoleTools::Explicit(vec![
++                    "Read".into(),
++                    "Bash".into(),
++                    "Agent".into(),
++                    "ToolSearch".into(),
++                    "ArtifactData".into(),
++                    "ArtifactComments".into(),
++                ])
+             } else {
+                 RoleTools::Explicit(vec![
+                     "Read".into(),
+                     "Bash".into(),
+                     "Agent".into(),
+                     "Artifact".into(),
++                    "ArtifactComments".into(),
+                 ])
+             },
+             role_callers: RoleCallers::Any,
+@@ -87,7 +119,9 @@ fn renders_current_composition_without_description_frontmatter_injection() {
+     let output = role.claude_agent_markdown().unwrap();
+     let (header, body) = output.split_once("\n---\n\n").unwrap();
+     assert_eq!(body, role.context_text);
+-    assert!(header.contains("model: sonnet\neffort: medium\ntools: [Read, Bash, Agent, Artifact]"));
++    assert!(header.contains(
++        "model: sonnet\neffort: medium\ntools: [Read, Bash, Agent, Artifact, ArtifactComments]"
++    ));
+     assert!(header.contains("\\\"whole\\\""));
+     assert!(header.contains("\\n---\\ntools: Evil"));
+     assert_eq!(
+@@ -97,6 +131,61 @@ fn renders_current_composition_without_description_frontmatter_injection() {
+     assert!(!header.contains("permissionMode"));
+ }
+ 
++#[test]
++fn book_page_renders_the_exact_declared_native_contract() {
++    let role = composition("book-page");
++    let output = role.claude_agent_markdown().unwrap();
++    let (header, body) = output.split_once("\n---\n\n").unwrap();
++    assert_eq!(body, role.context_text);
++    assert!(header.contains("name: book-page\n"));
++    assert!(header.contains(
++        "model: opus\neffort: medium\ntools: [Read, Bash, Agent, ToolSearch, ArtifactData, ArtifactComments]"
++    ));
++}
++
++#[cfg(feature = "datom")]
++#[test]
++fn book_native_renderers_match_the_declared_role_contracts() {
++    let roles = declared_roles();
++    let book = roles
++        .role_definition_vector
++        .iter()
++        .find(|role| role.role_name == "book" && role.surface == Surface::ClaudeAgent)
++        .unwrap();
++    assert_eq!(book.description_module, "role:book-description");
++    assert_eq!(book.model_id, "sonnet");
++    assert_eq!(
++        book.role_tools,
++        RoleTools::Explicit(
++            ["Read", "Bash", "Agent", "Artifact", "ArtifactComments"]
++                .map(str::to_owned)
++                .into()
++        )
++    );
++    let page = roles
++        .role_definition_vector
++        .iter()
++        .find(|role| role.role_name == "book-page" && role.surface == Surface::ClaudeAgent)
++        .unwrap();
++    assert_eq!(page.description_module, "role:book-page-description");
++    assert_eq!(page.model_id, "opus");
++    assert_eq!(
++        page.role_tools,
++        RoleTools::Explicit(
++            [
++                "Read",
++                "Bash",
++                "Agent",
++                "ToolSearch",
++                "ArtifactData",
++                "ArtifactComments",
++            ]
++            .map(str::to_owned)
++            .into()
++        )
++    );
++}
++
+ #[test]
+ fn refuses_restricted_callers_other_roles_and_changed_or_corrupt_contracts() {
+     let original = composition("book");
+@@ -201,10 +290,12 @@ fn cli_fetches_only_the_id_query_and_emits_verified_matching_definition() {
+     };
+     for (requested, returned) in [
+         ("book", "book"),
++        ("book-page", "book-page"),
+         ("illustrator", "illustrator"),
+         ("general-purpose", "general-purpose"),
+         ("book-author", "book-author"),
+         ("book", "illustrator"),
++        ("book-page", "book"),
+         ("illustrator", "book"),
+     ] {
+         let tmp = tempfile::tempdir().unwrap();
