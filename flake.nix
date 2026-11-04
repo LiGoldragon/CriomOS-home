@@ -127,8 +127,9 @@
     flow.inputs.nixpkgs.follows = "nixpkgs";
 
     # Flow Nexus 0.48, a versioned unit beside 0.44 (profiles/min/flow-048.nix).
-    # The one pin; it moves to the delivery commit.
-    flow-048.url = "github:LiGoldragon/flow/f9afa2292f3287209c1d2c47b77d5c17c6abfb16";
+    # Its exact revision lives only in flake.lock, locked once flow main
+    # carries f9afa22 (the contracts this module declares against).
+    flow-048.url = "github:LiGoldragon/flow";
     flow-048.inputs.nixpkgs.follows = "nixpkgs";
 
     # The retired messenger prototype, kept only for the Field monitors that

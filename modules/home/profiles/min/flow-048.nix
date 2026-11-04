@@ -16,6 +16,11 @@
 # flows report back to it with nothing read from the environment.
 let
   cfg = config.criomosHome.flow048;
+  # The user's runtime directory is known only to the running unit (systemd
+  # sets XDG_RUNTIME_DIR, %t in the unit); no uid is declared here. A path in
+  # a query names it by this token, which configure-flow-048 replaces with
+  # $XDG_RUNTIME_DIR before sending.
+  runtimeToken = "@XDG_RUNTIME_DIR@";
   system = pkgs.stdenv.hostPlatform.system;
   home = config.home.homeDirectory;
   sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
@@ -72,7 +77,7 @@ let
       }
     ];
     metaAspects = [ "Psyche" ];
-    curriculumNexusPath = "${cfg.curriculumRuntimeDirectory}/curriculum/curriculum.sock";
+    curriculumNexusPath = "${runtimeToken}/curriculum/curriculum.sock";
     lease = 60;
   };
   # Flow 0.48 is built only through mkFlowPackage: its executable carries the
@@ -86,7 +91,11 @@ let
         harnessProfiles
         metaAspects
         ;
-      runtimeDirectory = cfg.curriculumRuntimeDirectory;
+      # mkFlowPackage asks for an absolute path to derive a new store's
+      # Curriculum socket from. The real one is the running unit's runtime
+      # directory, which no declaration holds; configure-flow-048 declares the
+      # Nexus with it at every start, so this value is never launched from.
+      runtimeDirectory = "/run/flow-048-undeclared-runtime";
     };
   };
   # Datom rendering of the attribute-held families.
@@ -131,6 +140,7 @@ let
     name = "configure-flow-048";
     runtimeInputs = [ pkgs.coreutils ];
     text = ''
+      : "''${XDG_RUNTIME_DIR:?the unit runs with XDG_RUNTIME_DIR}"
       socket="$1"
       shift
       meta() { ${runtime}/bin/flow-meta "{ «$socket» $1 }"; }
@@ -146,7 +156,8 @@ let
         exit 1
       fi
       for query in "$@"; do
-        reply=$(meta "$(cat "$query")")
+        body=$(<"$query")
+        reply=$(meta "''${body//${runtimeToken}/$XDG_RUNTIME_DIR}")
         case "$reply" in
           Configured.Replaced|Configured.Unchanged) printf '%s %s\n' "$(basename "$query")" "$reply" ;;
           *) printf 'Flow Nexus 0.48 refused %s: %s\n' "$query" "$reply" >&2; exit 1 ;;
@@ -185,11 +196,6 @@ in
       default = "flow-048";
       description = "Directory under $XDG_RUNTIME_DIR holding this Nexus's flow.sock and flow-meta.sock.";
     };
-    curriculumRuntimeDirectory = lib.mkOption {
-      type = lib.types.str;
-      default = "/run/user/1001";
-      description = "Runtime directory whose curriculum/curriculum.sock a new store reaches Curriculum at.";
-    };
     messageNexus = lib.mkOption {
       type = lib.types.nullOr (
         lib.types.submodule {
@@ -200,7 +206,7 @@ in
         }
       );
       default = {
-        socket = "${cfg.curriculumRuntimeDirectory}/message/message.sock";
+        socket = "${runtimeToken}/message/message.sock";
         binary = "${message}/bin/message-nexus";
       };
       description = "The Message Nexus this Nexus admits as a meta peer; null admits none.";
@@ -234,7 +240,9 @@ in
     systemd.user.services.${cfg.unit} = {
       Unit = {
         Description = "Flow Nexus 0.48";
-        Wants = [ "curriculum-nexus.service" ];
+        # The Nexus composes every launch's context through Curriculum
+        # (ComposeStartup at Start, wake and resume); without it no flow starts.
+        Requires = [ "curriculum-nexus.service" ];
         After = [ "curriculum-nexus.service" ];
       };
       Service = {
