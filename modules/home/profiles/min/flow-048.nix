@@ -29,7 +29,7 @@ let
   message = inputs.message.packages.${system}.default;
   # The Nexus a store is configured with, as data. The build bakes the part
   # mkFlowPackage takes into the executable, for a new store to open with;
-  # the configure step below declares it whole over the meta socket.
+  # the ExecStartPre configure step declares it whole before the Nexus starts.
   nexus = {
     sourceRoot = "${home}/primary";
     stableCodex = {
@@ -94,7 +94,7 @@ let
       # mkFlowPackage asks for an absolute path to derive a new store's
       # Curriculum socket from. The real one is the running unit's runtime
       # directory, which no declaration holds; configure-flow-048 declares the
-      # Nexus with it at every start, so this value is never launched from.
+      # Nexus with it before every start, so this value is never launched from.
       runtimeDirectory = "/run/flow-048-undeclared-runtime";
     };
   };
@@ -141,31 +141,60 @@ let
     "${./flow-048/investigation.datom}"
     "${./flow-048/default-minutes.datom}"
   ];
-  # Runs after the Nexus is up, at every start. Configure replaces one family
-  # whole and answers Unchanged when the store already holds the declaration,
-  # so a repeat writes nothing.
+  # Runs before the Nexus starts, at every start, so the declared
+  # configuration is in the store before any worker runs. `--configure-only`
+  # opens the store, serves one Configure on the meta socket and exits, so
+  # each query gets its own run. Configure replaces one family whole and
+  # answers Unchanged when the store already holds the declaration, so a
+  # repeat writes nothing. Arguments: the Start datom, the meta socket path,
+  # then the query files.
   configure = pkgs.writeShellApplication {
     name = "configure-flow-048";
-    runtimeInputs = [ pkgs.coreutils ];
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.gawk
+    ];
     text = ''
       : "''${XDG_RUNTIME_DIR:?the unit runs with XDG_RUNTIME_DIR}"
-      socket="$1"
-      shift
-      meta() { ${runtime}/bin/flow-meta "{ «$socket» $1 }"; }
-      ready=false
-      for _attempt in $(seq 1 300); do
-        case "$(meta Configuration 2>/dev/null)" in
-          Configuration.*|Unconfigured) ready=true; break ;;
-        esac
-        sleep 0.1
-      done
-      if ! "$ready"; then
-        echo "Flow Nexus 0.48 meta socket did not answer Configuration" >&2
-        exit 1
-      fi
+      start="$1"
+      socket="$2"
+      shift 2
       for query in "$@"; do
+        ${runtime}/bin/flow-nexus --configure-only "$start" &
+        child=$!
+        # A stale pathname is not readiness: observe the listening socket
+        # held by this child, without consuming its one request.
+        child_listens() {
+          local inode fd target
+          [ -S "$socket" ] || return 1
+          while IFS= read -r inode; do
+            for fd in /proc/"$child"/fd/*; do
+              target=$(readlink "$fd" 2>/dev/null) || continue
+              if [ "$target" = "socket:[$inode]" ]; then return 0; fi
+            done
+          done < <(awk -v socket="$socket" \
+            '$4 == "00010000" && $5 == "0001" && $6 == "01" && $8 == socket { print $7 }' \
+            "/proc/$child/net/unix")
+          return 1
+        }
+        for _attempt in $(seq 1 100); do
+          if child_listens; then break; fi
+          if ! kill -0 "$child" 2>/dev/null; then
+            echo "Flow configuration-only Nexus exited before its socket listened" >&2
+            wait "$child" || true
+            exit 1
+          fi
+          sleep 0.05
+        done
+        if ! child_listens; then
+          kill "$child" 2>/dev/null || true
+          wait "$child" || true
+          echo "Flow configuration-only Nexus did not listen on $socket" >&2
+          exit 1
+        fi
         body=$(<"$query")
-        reply=$(meta "''${body//${runtimeToken}/$XDG_RUNTIME_DIR}")
+        reply=$(${runtime}/bin/flow-meta "{ «$socket» ''${body//${runtimeToken}/$XDG_RUNTIME_DIR} }") || true
+        wait "$child"
         case "$reply" in
           Configured.Replaced|Configured.Unchanged) printf '%s %s\n' "$(basename "$query")" "$reply" ;;
           *) printf 'Flow Nexus 0.48 refused %s: %s\n' "$query" "$reply" >&2; exit 1 ;;
@@ -261,7 +290,7 @@ in
         RuntimeDirectory = cfg.runtimeDirectory;
         RuntimeDirectoryMode = "0700";
         ExecStart = "${runtime}/bin/flow-nexus \"${start}\"";
-        ExecStartPost = "${configure}/bin/configure-flow-048 ${socketDirectory}/flow-meta.sock ${lib.escapeShellArgs queries}";
+        ExecStartPre = "${configure}/bin/configure-flow-048 ${lib.escapeShellArgs ([ start "${socketDirectory}/flow-meta.sock" ] ++ queries)}";
         Restart = "on-failure";
         RestartSec = "100ms";
       };
