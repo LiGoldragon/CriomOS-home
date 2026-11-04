@@ -56,7 +56,7 @@ lib.mkMerge [
 
     home.packages = [
       claudeCodePackage
-      (if occupied then codexStable else codexCliPackage)
+      codexCliPackage
     ];
 
     # Bypass still asks a human for the dangerous-removal check.  The
