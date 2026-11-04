@@ -122,6 +122,14 @@ let
   '';
   # One Configure each, in this order: the Nexus first, the investigation seat
   # after the metaflows it is launched from.
+  #
+  # FIXME(Mind core): Maintained is state, set by signal, never declared. Flow
+  # 0.48 stores it inside the definition family: Continuity is a field of
+  # ConfigureMetaflow (meta-signal-flow ethos/signal.ethos), and
+  # Configure.Metaflows replaces that family whole, so this start-time
+  # declaration resets every seat a signal moved. No signal sets Continuity
+  # on one metaflow. Until Continuity is its own state family with its own
+  # signal, every row of metaflows.datom is OnDemand.
   queries = [
     "${nexusQuery}"
     "${./flow-048/models.datom}"
