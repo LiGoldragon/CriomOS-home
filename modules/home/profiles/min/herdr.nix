@@ -10,11 +10,14 @@ let
   herdrPackage = pkgs.callPackage ../../../../packages/herdr { inherit inputs; };
   # Matches the flake input `herdr.url = "github:herdrdev/herdr/v0.8.2"`.
   herdrVersionPin = "0.8.2";
+  stableCodexPackage = pkgs.callPackage ../../../../owned-agents/codex {
+    manifestFile = ../../../../owned-agents/codex/stable-hashes.json;
+  };
   stableCodexClientPackage = pkgs.writeShellApplication {
     name = "codex-stable-flow-client";
     text = ''
       export CODEX_HOME=${lib.escapeShellArg "${config.home.homeDirectory}/.codex-next"}
-      exec ${config.criomos.corePackages.codex}/bin/codex "$@"
+      exec ${stableCodexPackage}/bin/codex "$@"
     '';
   };
   # Keep independent Herdr/module evaluations total; the complete Home
@@ -255,6 +258,7 @@ in
     configured_predecessor_home_files="${configuredPredecessorHomeFiles}"
     configured_predecessor_herdr_config="${configuredPredecessorHerdrConfig}"
     configured_predecessor_herdr_config_sha256="${configuredPredecessorHerdrConfigSha256}"
+    active_home_files="''${oldGenPath:-}/home-files"
     if [ -n "$configured_predecessor_home_files" ]; then
       predecessor_home_files="$configured_predecessor_home_files"
     elif [ -n "''${oldGenPath:-}" ]; then
@@ -267,6 +271,12 @@ in
       [ -n "$predecessor_home_files" ] \
         && [ -f "$predecessor_home_files/.config/herdr/config.toml" ] \
         && [ "$(readlink -f "$herdr_config")" = "$(readlink -f "$predecessor_home_files/.config/herdr/config.toml")" ]
+    }
+
+    is_exact_active_herdr_member() {
+      [ -n "''${oldGenPath:-}" ] \
+        && [ -f "$active_home_files/.config/herdr/config.toml" ] \
+        && [ "$(readlink -f "$herdr_config")" = "$(readlink -f "$active_home_files/.config/herdr/config.toml")" ]
     }
 
     is_admitted_predecessor_herdr_config() {
@@ -309,6 +319,10 @@ in
     if [ -L "$herdr_config" ]; then
       if [ "$(readlink -f "$herdr_config")" = "${herdrConfig}" ]; then
         :
+      elif is_exact_active_herdr_member; then
+        # The active Home Manager generation already owns this link. Remove
+        # only the link so checkLinkTargets can replace it with the new one.
+        rm -- "$herdr_config"
       elif is_exact_predecessor_herdr_member; then
         # A prior managed generation is adopted only when its resolved target
         # is the exact member of the one trusted predecessor home-files tree.

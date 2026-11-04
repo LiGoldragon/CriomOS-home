@@ -51,6 +51,8 @@ let
   liNext = builtins.head (next li).ExecStart;
 in
 assert bird.criomosHome.codexNext.rawClientPackage == selected;
+assert birdClient == selected;
+assert liClient == selected;
 assert
   birdNext
   == "${selected}/bin/codex app-server --remote-control --listen unix:///home/bird/.codex-next/app-server-control/app-server-control.sock";
@@ -64,19 +66,10 @@ assert
     "codex-remote-control-next"
   ];
 pkgs.runCommand "bird-codex-matched-selection" { } ''
-    ${birdClient}/bin/codex 'argument with spaces' > actual
-    cat > expected <<'EXPECTED'
-  /home/bird/.codex-next
-  --remote
-  unix:///home/bird/.codex-next/app-server-control/app-server-control.sock
-  argument with spaces
-  EXPECTED
-    cmp actual expected
     # No Bird auth bootstrap or copy is introduced by its new preparation script.
     if grep -Eq 'auth.json|config.toml|install -m600' ${(next bird).ExecStartPre}; then
       echo 'Bird upgrade must preserve auth in place, not bootstrap another copy' >&2
       exit 1
     fi
-    grep -F -- '-codex-next-0.158.0-alpha.9/bin/codex --remote' ${liClient}/bin/codex
     touch "$out"
 ''
