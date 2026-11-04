@@ -91,6 +91,7 @@ let
         harnessProfiles
         metaAspects
         ;
+      presentationPrompt = cfg.presentationPrompt;
       # mkFlowPackage asks for an absolute path to derive a new store's
       # Curriculum socket from. The real one is the running unit's runtime
       # directory, which no declaration holds; configure-flow-048 declares the
@@ -108,14 +109,16 @@ let
   profile =
     value:
     "{ ${value.harnessKind} ${vector (map text value.commandSigils)} ${vector value.interruptKeys} ${vector value.submitKeys} }";
-  # ConfigureNexus at meta-signal-flow 6519765, the shape flow-048's pin
-  # reads. The presentation prompt joins it with the delivery commit.
+  # ConfigureNexus at meta-signal-flow 7a19023, the shape flow cfcbf5c reads;
+  # its last field is the Option<PresentationPrompt.String>.
   nexusQuery = pkgs.writeText "flow-048-nexus.datom" ''
     Configure.Nexus.{ ${text nexus.sourceRoot} ${endpoint nexus.stableCodex} ${endpoint nexus.nextCodex} ${vector (map profile nexus.harnessProfiles)} ${vector nexus.metaAspects} ${
       option (if cfg.messageNexus == null then null else text cfg.messageNexus.socket)
     } ${
       option (if cfg.messageNexus == null then null else text cfg.messageNexus.binary)
-    } ${text nexus.curriculumNexusPath} ${toString nexus.lease} }
+    } ${text nexus.curriculumNexusPath} ${toString nexus.lease} ${
+      option (if cfg.presentationPrompt == null then null else text cfg.presentationPrompt)
+    } }
   '';
   sendServersQuery = pkgs.writeText "flow-048-send-servers.datom" ''
     Configure.SendServers.[ { ${text "${config.criomosHome.codexNextCandidate.package}/bin/codex"} ${text "${message}/bin/message-mcp-send"} } ]
@@ -251,7 +254,7 @@ in
     presentationPrompt = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
       default = null;
-      description = "Text the Psyche core Primary system prompt carries; null carries none. Waits on the flow delivery commit, whose ConfigureNexus gains Option<PresentationPrompt.String>.";
+      description = "Text the Psyche core Primary system prompt carries; null carries none.";
     };
     package = lib.mkOption {
       type = lib.types.package;
@@ -265,12 +268,6 @@ in
         assertion =
           cfg.stateDirectory != "flow-harnessflags" && cfg.runtimeDirectory != "flow-harnessflags";
         message = "Flow Nexus 0.48 must not open the 0.44 store or sockets";
-      }
-      {
-        # Waiting on the delivery commit: flow-048's pin has no
-        # PresentationPrompt in ConfigureNexus to carry a value.
-        assertion = cfg.presentationPrompt == null;
-        message = "criomosHome.flow048.presentationPrompt waits on the flow delivery commit";
       }
     ];
     home.packages = [ clients ];
