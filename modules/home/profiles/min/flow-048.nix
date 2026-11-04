@@ -197,7 +197,14 @@ let
           exit 1
         fi
         body=$(<"$query")
-        reply=$(${runtime}/bin/flow-meta "{ «$socket» ''${body//${runtimeToken}/$XDG_RUNTIME_DIR} }") || true
+        # A query the client refuses never reaches the waiting Nexus, which
+        # would otherwise wait for it forever.
+        if ! reply=$(${runtime}/bin/flow-meta "{ «$socket» ''${body//${runtimeToken}/$XDG_RUNTIME_DIR} }"); then
+          kill "$child" 2>/dev/null || true
+          wait "$child" || true
+          printf 'Flow Nexus 0.48 did not accept %s\n' "$query" >&2
+          exit 1
+        fi
         wait "$child"
         case "$reply" in
           Configured.Replaced|Configured.Unchanged) printf '%s %s\n' "$(basename "$query")" "$reply" ;;

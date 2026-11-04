@@ -79,11 +79,16 @@ pkgs.runCommand "flow-service-path"
         test "$(wc -l < "$CALL_LOG")" -eq 1
       fi
     done
-    for name in flow flow-meta flow-nexus flow-hook; do
+    for name in flow-nexus flow-hook; do
       test "$(readlink -f ${deployment}/bin/$name)" = "${runtime}/bin/$name"
     done
+    # The raw CLIs install under their version; `flow` is the home wrapper.
+    test ! -e ${deployment}/bin/flow
+    test ! -e ${deployment}/bin/flow-meta
+    test -x ${deployment}/bin/flow-0.44
+    test -x ${deployment}/bin/flow-meta-0.44
     test ! -e ${deployment}/share
-    ${deployment}/bin/flow --version > cli-version
+    ${deployment}/bin/flow-0.44 --version > cli-version
     ${deployment}/bin/flow-nexus --version > nexus-version
     test "$(cut -d ' ' -f 2 cli-version)" = "$(cut -d ' ' -f 2 nexus-version)"
     initializer=${deployment.initialize}/bin/initialize-declared-flow
