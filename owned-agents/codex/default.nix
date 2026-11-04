@@ -2,10 +2,11 @@
   lib,
   stdenvNoCC,
   fetchurl,
+  manifestFile ? ./hashes.json,
   ...
 }:
 let
-  manifest = builtins.fromJSON (builtins.readFile ./hashes.json);
+  manifest = builtins.fromJSON (builtins.readFile manifestFile);
   version = manifest.version;
   targets = manifest.targets;
   artifact = targets.${stdenvNoCC.hostPlatform.system};
