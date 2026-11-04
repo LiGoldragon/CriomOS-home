@@ -185,6 +185,14 @@ let
       exit 1
     '';
   };
+  # Flow Nexus 0.44's raw CLIs under their versioned names. Each reaches this
+  # version's own sockets whatever the caller's environment names.
+  versionedCli =
+    name: variable: socket: raw:
+    pkgs.writeShellScript name ''
+      export ${variable}="''${XDG_RUNTIME_DIR:?}/flow/${socket}"
+      exec ${runtime}/bin/${raw} "$@"
+    '';
 in
 pkgs.runCommand "flow-deployment"
   {
@@ -205,8 +213,12 @@ pkgs.runCommand "flow-deployment"
   }
   ''
     mkdir -p "$out/bin"
-    for name in flow flow-meta flow-nexus flow-hook; do
+    for name in flow-nexus flow-hook; do
       test -x "${runtime}/bin/$name"
       ln -s "${runtime}/bin/$name" "$out/bin/$name"
     done
+    test -x "${runtime}/bin/flow"
+    test -x "${runtime}/bin/flow-meta"
+    ln -s ${versionedCli "flow-0.44" "FLOW_SOCKET" "flow.sock" "flow"} "$out/bin/flow-0.44"
+    ln -s ${versionedCli "flow-meta-0.44" "FLOW_META_SOCKET" "flow-meta.sock" "flow-meta"} "$out/bin/flow-meta-0.44"
   ''

@@ -10,10 +10,11 @@
 # opens its own store and serves its own sockets; nothing of 0.44 is touched.
 #
 # A 0.48 client names the Nexus's socket inside its Invocation datom
-# (`flow '{ «socket» Query }'`, `flow-meta '{ «meta-socket» Query }'`);
-# no 0.48 client has a default socket. The Nexus writes its ordinary socket
-# into the hook configuration of every Claude pane it launches, so its own
-# flows report back to it with nothing read from the environment.
+# (`{ «socket» Query }`); no raw 0.48 client has a default socket. The
+# installed flow-0.48 and flow-meta-0.48 supply this Nexus's sockets. The
+# Nexus writes its ordinary socket into the hook configuration of every
+# Claude pane it launches, so its own flows report back to it with nothing
+# read from the environment.
 let
   cfg = config.criomosHome.flow048;
   # The user's runtime directory is known only to the running unit (systemd
@@ -205,12 +206,19 @@ let
       done
     '';
   };
-  # The 0.48 clients under versioned names, so the profile's flow and
-  # flow-meta stay 0.44's.
+  # The 0.48 clients under their versioned names. The raw 0.48 client names
+  # its Nexus's socket inside the Invocation datom; each versioned CLI
+  # supplies this Nexus's socket, so `flow-0.48 Metaflows` reaches it from
+  # any environment. The arguments are the Query.
+  versionedCli =
+    name: raw: socket:
+    pkgs.writeShellScript name ''
+      exec ${runtime}/bin/${raw} "{ «''${XDG_RUNTIME_DIR:?}/${cfg.runtimeDirectory}/${socket}» $* }"
+    '';
   clients = pkgs.runCommand "flow-048-clients" { } ''
     mkdir -p $out/bin
-    ln -s ${runtime}/bin/flow $out/bin/flow-048
-    ln -s ${runtime}/bin/flow-meta $out/bin/flow-meta-048
+    ln -s ${versionedCli "flow-0.48" "flow" "flow.sock"} $out/bin/flow-0.48
+    ln -s ${versionedCli "flow-meta-0.48" "flow-meta" "flow-meta.sock"} $out/bin/flow-meta-0.48
   '';
   socketDirectory = "%t/${cfg.runtimeDirectory}";
   start = "{ «${socketDirectory}/flow.sock» «${socketDirectory}/flow-meta.sock» «%h/.local/state/${cfg.stateDirectory}/flow.sema» None }";
