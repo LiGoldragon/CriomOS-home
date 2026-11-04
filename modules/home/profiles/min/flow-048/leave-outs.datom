@@ -1,0 +1,42 @@
+Configure.LeaveOuts.[
+  { { Field illustrator Tertiary } Claude [ ClaudeMd GitInstructions ] }
+  { { Field core Primary } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Field core Secondary } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Field core Tertiary } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Field publisher Quaternary } Claude [ ClaudeMd GitInstructions ] }
+  { { Mind versionOne Primary } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Mind versionOne Secondary } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Mind beliefNexus Primary } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Mind beliefNexus Secondary } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Mind prototyping Primary } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Mind prototyping Secondary } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Mind versionZero Primary } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Mind versionZero Secondary } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Mind codexManager Secondary } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Mind core Primary } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Mind core Secondary } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Mind flow Secondary } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Mind books Secondary } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Mind ethos Secondary } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Mind nexus Secondary } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Mind context Secondary } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Mind obsidian Primary } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Mind obsidian Secondary } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Psyche communication Primary } Claude [ ClaudeMd GitInstructions ] }
+  { { Psyche communication Secondary } Claude [ ClaudeMd GitInstructions ] }
+  { { Psyche book Secondary } Claude [ ClaudeMd GitInstructions ] }
+  { { Psyche core Primary } Claude [ ClaudeMd GitInstructions ] }
+  { { Psyche core Secondary } Claude [ ClaudeMd GitInstructions ] }
+  { { Psyche core Tertiary } Claude [ ClaudeMd GitInstructions ] }
+  { { Psyche flow Primary } Claude [ ClaudeMd GitInstructions ] }
+  { { Psyche flow Secondary } Claude [ ClaudeMd GitInstructions ] }
+  { { Psyche ethos Primary } Claude [ ClaudeMd GitInstructions ] }
+  { { Psyche ethos Secondary } Claude [ ClaudeMd GitInstructions ] }
+  { { Psyche nexus Secondary } Claude [ ClaudeMd GitInstructions ] }
+  { { Psyche spirit Primary } Claude [ ClaudeMd GitInstructions ] }
+  { { Psyche spirit Secondary } Claude [ ClaudeMd GitInstructions ] }
+  { { Psyche chronos Primary } Claude [ ClaudeMd GitInstructions ] }
+  { { Psyche chronos Secondary } Claude [ ClaudeMd GitInstructions ] }
+  { { Psyche research Primary } Claude [ ClaudeMd GitInstructions ] }
+  { { Psyche research Secondary } Claude [ ClaudeMd GitInstructions ] }
+]
