@@ -20,11 +20,11 @@ in
 stdenvNoCC.mkDerivation {
   inherit pname version passthru;
   src = fetchurl {
-    url = releaseUrl "codex";
+    url = artifact.url or (releaseUrl "codex");
     inherit (artifact) hash;
   };
   codeModeHost = fetchurl {
-    url = releaseUrl "codex-code-mode-host";
+    url = artifact.hostUrl or (releaseUrl "codex-code-mode-host");
     hash = artifact.hostHash;
   };
   sourceRoot = ".";

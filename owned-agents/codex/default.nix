@@ -11,7 +11,9 @@ let
   targets = builtins.mapAttrs (_: artifact: {
     inherit (artifact) target;
     inherit (artifact.cli) hash;
+    inherit (artifact.cli) url;
     hostHash = artifact.codeModeHost.hash;
+    hostUrl = artifact.codeModeHost.url;
   }) manifest.targets;
 in
 assert manifest.strategy == "prebuilt";
