@@ -13,9 +13,15 @@
 }:
 let
   artifact = targets.${stdenvNoCC.hostPlatform.system};
+  target =
+    artifact.target or {
+      x86_64-linux = "x86_64-unknown-linux-musl";
+      aarch64-linux = "aarch64-unknown-linux-musl";
+    }
+    .${stdenvNoCC.hostPlatform.system};
   releaseUrl =
     binary:
-    "https://github.com/openai/codex/releases/download/rust-v${version}/${binary}-${artifact.target}.tar.gz";
+    "https://github.com/openai/codex/releases/download/rust-v${version}/${binary}-${target}.tar.gz";
 in
 stdenvNoCC.mkDerivation {
   inherit pname version passthru;
@@ -32,8 +38,8 @@ stdenvNoCC.mkDerivation {
   dontBuild = true;
   installPhase = ''
     runHook preInstall
-    install -Dm755 codex-${artifact.target} "$out/bin/codex"
-    tar -xOzf "$codeModeHost" codex-code-mode-host-${artifact.target} > codex-code-mode-host
+    install -Dm755 codex-${target} "$out/bin/codex"
+    tar -xOzf "$codeModeHost" codex-code-mode-host-${target} > codex-code-mode-host
     install -Dm755 codex-code-mode-host "$out/bin/codex-code-mode-host"
     runHook postInstall
   '';
