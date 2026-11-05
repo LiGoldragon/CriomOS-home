@@ -429,6 +429,7 @@ in
   imports = [
     ./default-opener.nix
     ./herdr.nix
+    ./pi-models.nix
   ];
 
   config = mkIf (sizeAtLeast "Min") {
@@ -527,6 +528,7 @@ in
       ghostty = {
         enable = true;
         installVimSyntax = true;
+        settings.keybind = [ "ctrl+enter=unbind" ];
       };
 
       fzf = {

@@ -580,6 +580,7 @@
           home-profile-absence = checkPkgs.callPackage ./checks/home-profile-absence {
             inherit inputs;
           };
+          pi-models-import = checkPkgs.callPackage ./checks/pi-models-import { };
           bitwarden-availability = checkPkgs.callPackage ./checks/bitwarden-availability { };
           dolthub-create-database = checkPkgs.callPackage ./checks/dolthub-create-database { };
           orchestrate-service-path = checkPkgs.callPackage ./checks/orchestrate-service-path {
