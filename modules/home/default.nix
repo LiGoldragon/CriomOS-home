@@ -84,6 +84,7 @@
     ./profiles/min/flow.nix
     # Flow Nexus 0.48 beside the running 0.44, on its own store and sockets.
     ./profiles/min/flow-048.nix
+    ./profiles/min/flow-049.nix
     ./profiles/min/flow-cli.nix
     # Next Flow and next Message beside the stable pair, on their own
     # sockets and stores (the stable/next pattern, lib/stable-next-service.nix).

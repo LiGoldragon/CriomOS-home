@@ -132,6 +132,13 @@
     flow-048.url = "github:LiGoldragon/flow";
     flow-048.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Flow Nexus 0.49, 0.48 plus an Adopt input, a unit beside 0.48
+    # (profiles/min/flow-049.nix). Stand-in lock: the 0.48 commit cfcbf5c until
+    # the 0.49 commit is pushed; then
+    #   nix flake lock --override-input flow-049 github:LiGoldragon/flow/<rev>
+    flow-049.url = "github:LiGoldragon/flow";
+    flow-049.inputs.nixpkgs.follows = "nixpkgs";
+
     # The retired messenger prototype, kept only for the Field monitors that
     # still name its hm-* commands (off unless enabled). Flows send through
     # the Flow CLI; Home installs no hm-* command.
