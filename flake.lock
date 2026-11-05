@@ -1872,11 +1872,11 @@
         "unconfigured-flow": "unconfigured-flow_4"
       },
       "locked": {
-        "lastModified": 1793840441,
-        "narHash": "sha256-7TcQHS0zAyBi34VGQVEEiQTYOQM7X+MpKXqbhWpE9fU=",
+        "lastModified": 1793843737,
+        "narHash": "sha256-zCMZvCd53VPdttpEx0LQH7eKyTo7jak9NsEuUhXUOGI=",
         "owner": "LiGoldragon",
         "repo": "flow",
-        "rev": "3a202a439f55d13b34c12c0255d232aeb8cba87f",
+        "rev": "916b54574ae0024b893a9f4252f2e97704db48c1",
         "type": "github"
       },
       "original": {
