@@ -10,6 +10,7 @@ let
     text = ''
       index_directory="''${XDG_DATA_HOME:-$HOME/.local/share}/zoekt/index"
       mkdir -p "$index_directory"
+      # shellcheck disable=SC2016
       find ${indexRoot} -maxdepth 4 -name .git -prune -print0 \
         | xargs -0 -r -n1 -P4 sh -c \
             'zoekt-git-index -index "$0" -branches HEAD "$(dirname "$1")" >/dev/null 2>&1 || true' \
