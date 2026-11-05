@@ -17,38 +17,9 @@ let
       hostHash = "sha256-b77gtc0Hn8RGplFvIaCIs5+o7keUbfE+Hn+dH+AT+88=";
     };
   };
-  artifact = targets.${stdenvNoCC.hostPlatform.system};
 in
-stdenvNoCC.mkDerivation {
+(import ../../lib/mk-codex-prebuilt.nix { inherit lib stdenvNoCC fetchurl; }) {
   pname = "codex-next";
-  inherit version;
-  src = fetchurl {
-    url = "https://github.com/openai/codex/releases/download/rust-v${version}/codex-${artifact.target}.tar.gz";
-    inherit (artifact) hash;
-  };
-  codeModeHost = fetchurl {
-    url = "https://github.com/openai/codex/releases/download/rust-v${version}/codex-code-mode-host-${artifact.target}.tar.gz";
-    hash = artifact.hostHash;
-  };
-  sourceRoot = ".";
-  dontConfigure = true;
-  dontBuild = true;
-  installPhase = ''
-    runHook preInstall
-    install -Dm755 codex-${artifact.target} "$out/bin/codex"
-    tar -xOzf "$codeModeHost" codex-code-mode-host-${artifact.target} > codex-code-mode-host
-    install -Dm755 codex-code-mode-host "$out/bin/codex-code-mode-host"
-    runHook postInstall
-  '';
-  doInstallCheck = true;
-  installCheckPhase = ''
-    test "$("$out/bin/codex" --version)" = "codex-cli ${version}"
-    test -x "$out/bin/codex-code-mode-host"
-  '';
-  meta = {
-    description = "Pinned upstream Codex candidate for the isolated next server";
-    license = lib.licenses.asl20;
-    platforms = builtins.attrNames targets;
-    mainProgram = "codex";
-  };
+  inherit version targets;
+  description = "Pinned upstream Codex candidate for the isolated next server";
 }
