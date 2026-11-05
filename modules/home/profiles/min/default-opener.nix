@@ -7,6 +7,10 @@
 }:
 let
   sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
+  guard = config.criomosHome.remoteBuildCommandGuard;
+  userPath =
+    lib.optionalString guard.enable "${guard.directory}:"
+    + "${config.home.homeDirectory}/.local/bin:$PATH";
   defaultBrowser = "google-chrome.desktop";
   browserMimeTypes = [
     "text/html"
@@ -26,11 +30,31 @@ let
   desktopOpen = pkgs.writeShellScriptBin "xdg-open" ''
     exec ${pkgs.handlr-regex}/bin/handlr open "$@"
   '';
+  remoteBuildGuard =
+    command:
+    pkgs.writeShellScript command ''
+      printf '%s\n' 'builds run on Prometheus through Nix'
+      exit 1
+    '';
 in
 {
+  options.criomosHome.remoteBuildCommandGuard = {
+    enable = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Put laptop Rust build guards first in interactive and Flow child PATHs.";
+    };
+    directory = lib.mkOption {
+      type = lib.types.str;
+      readOnly = true;
+      default = "${config.home.homeDirectory}/.local/libexec/remote-build-command-guard";
+      description = "The single declarative directory containing laptop Rust build guards.";
+    };
+  };
+
   config = lib.mkIf (sizeAtLeast "Min") {
     home = {
-      sessionVariables.PATH = "${config.home.homeDirectory}/.local/bin:$PATH";
+      sessionVariables.PATH = userPath;
       packages = [
         (lib.hiPrio desktopOpen)
         pkgs.handlr-regex
@@ -39,11 +63,19 @@ in
         source = "${desktopOpen}/bin/xdg-open";
         executable = true;
       };
+      file.".local/libexec/remote-build-command-guard/cargo" = lib.mkIf guard.enable {
+        source = remoteBuildGuard "cargo";
+        executable = true;
+      };
+      file.".local/libexec/remote-build-command-guard/rustc" = lib.mkIf guard.enable {
+        source = remoteBuildGuard "rustc";
+        executable = true;
+      };
     };
 
     xdg = {
       configFile."uwsm/env".text = ''
-        export PATH="${config.home.homeDirectory}/.local/bin:''${PATH}"
+        export PATH="${lib.optionalString guard.enable "${guard.directory}:"}${config.home.homeDirectory}/.local/bin:''${PATH}"
         export SSH_AUTH_SOCK="''${XDG_RUNTIME_DIR}/gnupg/S.gpg-agent.ssh"
         export XDG_SESSION_DESKTOP=niri
         export NIXOS_OZONE_WL=1

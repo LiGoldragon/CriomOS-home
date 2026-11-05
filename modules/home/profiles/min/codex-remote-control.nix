@@ -10,6 +10,8 @@
 }:
 let
   sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
+  buildGuard = config.criomosHome.remoteBuildCommandGuard;
+  inheritedServicePath = "%h/.local/bin:/run/wrappers/bin:/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin:/etc/profiles/per-user/%u/bin:%h/.nix-profile/bin";
   primaryWorkspace = "${config.home.homeDirectory}/primary";
   primaryWorkspacePointer = lib.replaceStrings [ "~" "/" ] [ "~0" "~1" ] primaryWorkspace;
   mediumEnabled = sizeAtLeast "Medium";
@@ -124,6 +126,9 @@ lib.mkMerge [
       Unit.Description = "Codex Remote Control app-server";
       Service = {
         WorkingDirectory = primaryWorkspace;
+        Environment = lib.optionals buildGuard.enable [
+          "PATH=${buildGuard.directory}:${inheritedServicePath}"
+        ];
         # Keep this definition byte-for-byte compatible with the occupied
         # service.  A later role transition may replace it only after its
         # unregistered client is gone.

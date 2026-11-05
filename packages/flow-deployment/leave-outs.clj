@@ -6,8 +6,11 @@
       shared (read-data (io/file root "shared.edn"))
       aspects (into {} (for [aspect [:Psyche :Mind :Field]]
                         [aspect (read-data (io/file root (str (str/lower-case (name aspect)) ".edn")))]))
-      rows (map read-data (filter #(.endsWith (.getName %) ".edn")
-                                  (sort-by #(.getName %) (.listFiles (io/file root "metaflow")))))]
+      rows (concat
+             (map read-data (filter #(.endsWith (.getName %) ".edn")
+                                    (sort-by #(.getName %) (.listFiles (io/file root "metaflow")))))
+             [{:aspect :Mind :topic :obsidian :layer :Primary :voice {:harness :codex}}
+              {:aspect :Mind :topic :obsidian :layer :Secondary :voice {:harness :codex}}])]
   (let [entries
         (mapv
           (fn [row]

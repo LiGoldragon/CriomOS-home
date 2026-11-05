@@ -70,7 +70,7 @@
     # Curriculum — serves the live skill registry and rebuilds projections
     # after each Nexus start.
     ./profiles/min/curriculum.nix
-    # Every context module of the Curriculum cohort, as harness skills.
+    # Every belief module of the Curriculum cohort, as harness skills.
     ./profiles/min/context-skills.nix
     # Harness — the user's own harness-daemon (systemd --user unit) and its
     # clients, from the same package revision as flow-id.

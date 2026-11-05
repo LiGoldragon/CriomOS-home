@@ -19,6 +19,10 @@ let
         landingRepository = null;
         landingDeployRequest = null;
       };
+      criomosHome.remoteBuildCommandGuard = {
+        enable = false;
+        directory = "/home/li/.local/libexec/remote-build-command-guard";
+      };
     };
   };
   service = module.config.content.systemd.user.services.flow-nexus.Service;
@@ -28,7 +32,7 @@ in
 # The service resolves its tools through the declared profiles only.
 assert !(builtins.any (entry: pkgs.lib.hasInfix ".local/bin" entry) service.Environment);
 assert service.ExecStartPre == "${deployment.initialize}/bin/initialize-declared-flow";
-assert inputs.flow.sourceInfo.rev == "2d2e2013f6fab3437e3088c4e52cc61fd2ed721a";
+assert inputs.flow.sourceInfo.rev == "b878b1b1aa622bb884ba3498a099f1c772716ea7";
 assert !(inputs ? flow-next);
 assert
   module.config.content.systemd.user.services.flow-nexus.Service.ExecStartPost
@@ -113,8 +117,9 @@ pkgs.runCommand "flow-service-path"
     cp "$HOME/.local/state/flow-production/flow.sema" original-cohort-before
     "$initializer" > accepted.log 2>&1
     test "$(grep -Ec '^Configured\.(Replaced|Unchanged)$' accepted.log)" -eq 7
+    # Existing stores keep their live Metaflows family: only six other families run.
     "$initializer" > unchanged.log 2>&1
-    test "$(grep -Fc Configured.Unchanged unchanged.log)" -eq 7
+    test "$(grep -Fc Configured.Unchanged unchanged.log)" -eq 6
     cmp original-cohort-before "$HOME/.local/state/flow-production/flow.sema"
     # Startup ordering must wait for this actual daemon, not a stale pathname.
     ${runtime}/bin/flow-nexus "{ $XDG_RUNTIME_DIR/flow/flow.sock $XDG_RUNTIME_DIR/flow/flow-meta.sock $HOME/.local/state/flow-03521/flow.sema None }" >daemon.log 2>&1 &

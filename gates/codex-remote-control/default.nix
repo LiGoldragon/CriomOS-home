@@ -3,9 +3,10 @@ let
   system = pkgs.stdenv.hostPlatform.system;
   codexCliPackage = pkgs.callPackage ../../owned-agents/codex { inherit inputs; };
   corePackagesModule = ../../modules/home/core-packages.nix;
+  guardModule = ../../modules/home/profiles/min/default-opener.nix;
   codexRemoteControlModule = ../../modules/home/profiles/min/codex-remote-control.nix;
   mkConfiguration =
-    user:
+    user: guardEnabled:
     (inputs.home-manager.lib.homeManagerConfiguration {
       inherit pkgs;
       extraSpecialArgs = {
@@ -19,8 +20,10 @@ let
       };
       modules = [
         corePackagesModule
+        guardModule
         codexRemoteControlModule
         {
+          criomosHome.remoteBuildCommandGuard.enable = guardEnabled;
           home = {
             username = user.name;
             homeDirectory = "/home/${user.name}";
@@ -41,9 +44,10 @@ let
     name = "codex-remote-control-second";
     size = "Min";
   };
-  configuration = mkConfiguration codexUser;
-  nonCodexConfiguration = mkConfiguration nonCodexUser;
-  secondConfiguration = mkConfiguration secondCodexUser;
+  configuration = mkConfiguration codexUser true;
+  disabledConfiguration = mkConfiguration codexUser false;
+  nonCodexConfiguration = mkConfiguration nonCodexUser false;
+  secondConfiguration = mkConfiguration secondCodexUser true;
   embeddedUserName = "embedded-codex-test";
   embeddedHorizon = {
     node.services = [ ];
@@ -96,6 +100,13 @@ assert
   ? codex-remote-control;
 assert remoteControlService.Service.UMask == "0077";
 assert remoteControlService.Service.Restart == "always";
+assert
+  remoteControlService.Service.Environment == [
+    "PATH=${configuration.criomosHome.remoteBuildCommandGuard.directory}:%h/.local/bin:/run/wrappers/bin:/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin:/etc/profiles/per-user/%u/bin:%h/.nix-profile/bin"
+  ];
+assert
+  (disabledConfiguration.systemd.user.services.codex-remote-control.Service.Environment or [ ])
+  == [ ];
 assert remoteControlService.Service.WorkingDirectory == "/home/codex-remote-control-test/primary";
 assert
   secondConfiguration.systemd.user.services.codex-remote-control.Service.WorkingDirectory

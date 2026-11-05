@@ -1,11 +1,11 @@
-;; Projects every context module of the pinned cohort into the skill
+;; Projects every belief module of the pinned cohort into the skill
 ;; directory each harness reads: <out>/<surface>/skills/<module>/SKILL.md.
 ;; Arguments: out, then one "<root>=<revision>" per context repository.
 (require '[clojure.java.io :as io]
          '[clojure.string :as str])
 
 (def module-types
-  ["vision" "intent" "spirit" "knowledge" "inquiry" "compensation" "role" "raw"])
+  ["vision" "intent" "spirit" "knowledge" "compensation" "role" "raw"])
 
 ;; Every surface a harness reads, the harness its text is rendered for,
 ;; and whether it carries Codex's invocation policy file.

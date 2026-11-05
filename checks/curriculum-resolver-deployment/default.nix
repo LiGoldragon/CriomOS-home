@@ -1,14 +1,41 @@
 { pkgs, inputs, ... }:
 let
   deployment = pkgs.callPackage ../../packages/curriculum-resolver-deployment { inherit inputs; };
-in pkgs.runCommand "curriculum-resolver-contract" { } ''
+in pkgs.runCommand "curriculum-resolver-contract" {
+  nativeBuildInputs = [ pkgs.git ];
+} ''
   set -eu
+  export HOME="$TMPDIR/home"
+  mkdir -p "$HOME"
   export XDG_RUNTIME_DIR="$TMPDIR/runtime"
   ${pkgs.lib.concatMapStringsSep "\n" (value: "export " + pkgs.lib.escapeShellArg value) (deployment.environment "$TMPDIR/workspace")}
+  make_source() {
+    name="$1"
+    source="$2"
+    target="$TMPDIR/origins/$name"
+    mkdir -p "$target"
+    cp -R "$source"/. "$target"/
+    git -C "$target" init --quiet --initial-branch=main
+    git -C "$target" config user.email test@example.invalid
+    git -C "$target" config user.name CurriculumTest
+    git -C "$target" add --all
+    git -C "$target" commit --quiet -m "initial context"
+  }
+  make_source psyche ${deployment.psyche-belief}
+  make_source mind ${deployment.mind-belief}
+  make_source field ${deployment.field-belief}
+  export CURRICULUM_PSYCHES_REPOSITORY_URL="$TMPDIR/origins/psyche"
+  export CURRICULUM_MIND_CONTEXT_URL="$TMPDIR/origins/mind"
+  export CURRICULUM_FIELD_CONTEXT_URL="$TMPDIR/origins/field"
+  ${deployment.refresh}/bin/curriculum-refresh-contexts
   mkdir -m 0700 -p "$XDG_RUNTIME_DIR/curriculum"
   ${deployment.runtime}/bin/curriculum-nexus > "$TMPDIR/nexus.log" 2>&1 &
   resolver_pid=$!
-  trap 'kill "$resolver_pid" 2>/dev/null || true; wait "$resolver_pid" || true' EXIT
+  stop_resolver() {
+    kill "$resolver_pid" 2>/dev/null || true
+    wait "$resolver_pid" || true
+  }
+  trap stop_resolver EXIT
   attempts=200
   while [ ! -S "$XDG_RUNTIME_DIR/curriculum/curriculum.sock" ]; do
     if ! kill -0 "$resolver_pid" 2>/dev/null; then cat "$TMPDIR/nexus.log"; exit 1; fi
@@ -16,6 +43,12 @@ in pkgs.runCommand "curriculum-resolver-contract" { } ''
     sleep 0.05
   done
   query=$(${pkgs.babashka}/bin/bb -e '(require (quote [clojure.edn :as edn]) (quote [clojure.string :as str])) (let [m (:modules (edn/read-string (slurp (first *command-line-args*))))] (println (str "ComposeStartup.{ { Psyche core Secondary } Claude [ " (str/join " " (map name (:system m))) " ] [ " (str/join " " (map name (:user m))) " ] }")))' ${inputs.primary}/config/main-flow/psyche.edn)
+  ${deployment.agents}/bin/install-curriculum-claude-agents
+  for role in general-purpose book-author; do
+    for module in vision-book compensation-book-crystallization; do
+      test "$(grep -Fc "<!-- module: $module -->" "$HOME/.claude/agents/$role.md")" -eq 1
+    done
+  done
   ${deployment.runtime}/bin/curriculum "$query" > "$TMPDIR/composed.datom"
   grep -q '^StartupComposed\.' "$TMPDIR/composed.datom"
   grep -q 'These are your skills, given here; do not reload them.' "$TMPDIR/composed.datom"
@@ -33,5 +66,33 @@ in pkgs.runCommand "curriculum-resolver-contract" { } ''
     echo "Curriculum retained the retired file-projection API" >&2
     exit 1
   fi
+  stop_resolver
+  trap - EXIT
+  test -f "$TMPDIR/origins/psyche/intent/psyche.md"
+  printf '\nEvery line of context is marked short-term or long-term.\n' >> "$TMPDIR/origins/psyche/intent/psyche.md"
+  printf '\nSTART_LATEST_FLOW_CONTEXT_WITNESS\n' >> "$TMPDIR/origins/psyche/intent/main-flow.md"
+  git -C "$TMPDIR/origins/psyche" add intent/main-flow.md
+  git -C "$TMPDIR/origins/psyche" add intent/psyche.md
+  git -C "$TMPDIR/origins/psyche" commit --quiet -m "new main context"
+  latest=$(git -C "$TMPDIR/origins/psyche" rev-parse HEAD)
+  ${deployment.refresh}/bin/curriculum-refresh-contexts
+  XDG_RUNTIME_DIR="$TMPDIR/runtime-next"
+  export XDG_RUNTIME_DIR
+  mkdir -m 0700 -p "$XDG_RUNTIME_DIR/curriculum"
+  ${deployment.runtime}/bin/curriculum-nexus > "$TMPDIR/nexus-next.log" 2>&1 &
+  resolver_pid=$!
+  trap stop_resolver EXIT
+  attempts=200
+  while [ ! -S "$XDG_RUNTIME_DIR/curriculum/curriculum.sock" ]; do
+    if ! kill -0 "$resolver_pid" 2>/dev/null; then cat "$TMPDIR/nexus-next.log"; exit 1; fi
+    attempts=$((attempts - 1)); test "$attempts" -gt 0
+    sleep 0.05
+  done
+  ${deployment.runtime}/bin/curriculum \
+    'ComposeStartup.{ { Psyche core Secondary } Claude [ intent-psyche intent-main-flow ] [] }' > "$TMPDIR/latest.datom"
+  grep -q 'Every line of context is marked short-term or long-term.' "$TMPDIR/latest.datom"
+  grep -q 'START_LATEST_FLOW_CONTEXT_WITNESS' "$TMPDIR/latest.datom"
+  ${deployment.runtime}/bin/curriculum 'ResolveSources.[ intent-psyche intent-main-flow ]' > "$TMPDIR/latest-sources.datom"
+  grep -q "$latest" "$TMPDIR/latest-sources.datom"
   touch "$out"
 ''
