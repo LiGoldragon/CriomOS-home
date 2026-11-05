@@ -138,6 +138,9 @@
     #   nix flake lock --override-input flow-049 github:LiGoldragon/flow/<rev>
     flow-049.url = "github:LiGoldragon/flow";
     flow-049.inputs.nixpkgs.follows = "nixpkgs";
+    # Flow Nexus 0.50, raw beside 0.49 (profiles/min/flow-050.nix): 0.49 plus delivery to awake seats.
+    flow-050.url = "github:LiGoldragon/flow";
+    flow-050.inputs.nixpkgs.follows = "nixpkgs";
 
     # The retired messenger prototype, kept only for the Field monitors that
     # still name its hm-* commands (off unless enabled). Flows send through
