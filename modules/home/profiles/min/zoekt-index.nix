@@ -6,7 +6,7 @@ let
   indexRoot = "/git";
   runner = pkgs.writeShellApplication {
     name = "zoekt-index-git";
-    runtimeInputs = [ pkgs.zoekt pkgs.git pkgs.findutils pkgs.coreutils ];
+    runtimeInputs = [ pkgs.zoekt pkgs.git pkgs.findutils pkgs.coreutils pkgs.bash ];
     text = ''
       index_directory="''${XDG_DATA_HOME:-$HOME/.local/share}/zoekt/index"
       mkdir -p "$index_directory"
