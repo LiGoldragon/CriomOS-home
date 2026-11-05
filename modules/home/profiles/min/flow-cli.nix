@@ -16,6 +16,8 @@ let
     "0.48" = config.criomosHome.flow048.enable;
     "0.49" = config.criomosHome.flow049.enable;
     "0.50" = config.criomosHome.flow050.enable;
+    "0.51" = config.criomosHome.flow051.enable;
+    "0.52" = config.criomosHome.flow052.enable;
   };
   sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
   wrapper =
@@ -31,11 +33,13 @@ in
       "0.48"
       "0.49"
       "0.50"
+      "0.51"
+      "0.52"
     ];
     default = "0.44";
     description = "The Flow Nexus version `flow` and `flow-meta` reach.";
   };
-  config = lib.mkIf (sizeAtLeast "Min" && (deployed."0.44" || deployed."0.48" || deployed."0.49" || deployed."0.50")) {
+  config = lib.mkIf (sizeAtLeast "Min" && (deployed."0.44" || deployed."0.48" || deployed."0.49" || deployed."0.50" || deployed."0.51" || deployed."0.52")) {
     assertions = [
       {
         assertion = deployed.${cfg.version};

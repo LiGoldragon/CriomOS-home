@@ -141,6 +141,10 @@
     # Flow Nexus 0.50, raw beside 0.49 (profiles/min/flow-050.nix): 0.49 plus delivery to awake seats.
     flow-050.url = "github:LiGoldragon/flow";
     flow-050.inputs.nixpkgs.follows = "nixpkgs";
+    flow-051.url = "github:LiGoldragon/flow";
+    flow-051.inputs.nixpkgs.follows = "nixpkgs";
+    flow-052.url = "github:LiGoldragon/flow";
+    flow-052.inputs.nixpkgs.follows = "nixpkgs";
 
     # The retired messenger prototype, kept only for the Field monitors that
     # still name its hm-* commands (off unless enabled). Flows send through
