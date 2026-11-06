@@ -38,7 +38,7 @@ pkgs.runCommand "context-skills-contract" { } ''
     for kind in ''${pair#*:}; do
       [ -d "$root/$kind" ] || continue
       for source in "$root/$kind"/*.md; do
-        name="$kind-$(basename "$source" .md)"
+        name="$kind:$(basename "$source" .md)"
         expected=$((expected + 1))
         for surface in ${pkgs.lib.concatStringsSep " " skills.surfaces}; do
           test -s "${skills}/$surface/$name/SKILL.md" || { echo "missing $surface/$name" >&2; exit 1; }
@@ -51,11 +51,11 @@ pkgs.runCommand "context-skills-contract" { } ''
   for surface in ${pkgs.lib.concatStringsSep " " skills.surfaces}; do
     test "$(ls "${skills}/$surface" | wc -l)" -eq "$expected"
   done
-  cmp "${skills}/.claude/skills/vision-criomos/SKILL.md" "${cohort.psyche-context}/vision/criomos.md"
-  grep -q '^name: vision-criomos$' "${skills}/.opencode/skills/vision-criomos/SKILL.md"
-  grep -q '^disable-model-invocation: true$' "${skills}/.claude/skills/compensation-realization/SKILL.md"
-  test -f "${skills}/.codex/skills/compensation-realization/agents/openai.yaml"
-  if grep -q '{% if' "${skills}/.claude/skills/compensation-main-flow/SKILL.md"; then
+  cmp "${skills}/.claude/skills/vision:criomos/SKILL.md" "${cohort.psyche-context}/vision/criomos.md"
+  grep -q '^name: vision:criomos$' "${skills}/.opencode/skills/vision:criomos/SKILL.md"
+  grep -q '^disable-model-invocation: true$' "${skills}/.claude/skills/compensation:realization/SKILL.md"
+  test -f "${skills}/.codex/skills/compensation:realization/agents/openai.yaml"
+  if grep -q '{% if' "${skills}/.claude/skills/compensation:main-flow/SKILL.md"; then
     echo "harness directive left in a rendered skill" >&2; exit 1
   fi
   touch "$out"
