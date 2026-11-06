@@ -243,12 +243,10 @@ let
   services = moduleConfiguration.systemd.user.services;
   homePackages = moduleConfiguration.home.packages;
   activation = moduleConfiguration.home.activation.spiritState.data;
-  overrideMigration = moduleConfiguration.home.activation.removeObsoleteSpiritJudgeOverride;
   profileWitness = pkgs.symlinkJoin {
     name = "spirit-profile-witness";
     paths = homePackages;
   };
-  liveJudgeOverrideTarget = pkgs.writeShellScriptBin "spirit-judge-daemon-service" "exit 0";
 
   assertions = [
     {
@@ -311,14 +309,6 @@ let
       message = "the Spirit daemon must require the judgment adapter service.";
     }
     {
-      condition = overrideMigration.before == [ "reloadSystemd" ];
-      message = "the obsolete judge drop-in migration must run before systemd reload.";
-    }
-    {
-      condition = overrideMigration.after == [ "linkGeneration" ];
-      message = "the obsolete judge drop-in migration must run after generation linking.";
-    }
-    {
       condition = !(builtins.hasAttr "persona-spirit-daemon" services);
       message = "the unversioned persona-spirit daemon service must be absent.";
     }
@@ -363,7 +353,6 @@ else
     exec_start="${services.spirit-daemon.Service.ExecStart}"
     exec_start_pre="${services.spirit-daemon.Service.ExecStartPre}"
     activation_script="${pkgs.writeText "activation" activation}"
-    override_migration_activation_script="${pkgs.writeText "override-migration-activation" overrideMigration.data}"
 
     printf '%s\n' "$agent_exec_start" > agent-exec-start
     printf '%s\n' "$agent_exec_start_pre" > agent-exec-start-pre
@@ -372,7 +361,6 @@ else
     printf '%s\n' "$exec_start" > exec-start
     printf '%s\n' "$exec_start_pre" > exec-start-pre
     cat "$activation_script" > activation
-    cat "$override_migration_activation_script" > override-migration-activation
 
     grep -q '/bin/agent-daemon-service$' agent-exec-start
     ! grep -q 'agent-write-configuration' agent-exec-start
@@ -437,60 +425,6 @@ else
     ! grep -q 'spirit-migrate-production' "$activation_state"
     ! grep -q 'spirit-upgrade-store' "$activation_state"
     ! grep -q 'rm -f' "$activation_state"
-
-    override_migration_executable="$(${pkgs.gnused}/bin/sed -n \
-      's|.*\(/nix/store/[^ ]*/bin/migrate-obsolete-spirit-judge-override\).*|\1|p' \
-      override-migration-activation)"
-    test -x "$override_migration_executable"
-    grep -q '/systemd/user/spirit-judge.service.d/override.conf' override-migration-activation
-
-    fixtures="$TMPDIR/obsolete-spirit-judge-override-fixtures"
-    mkdir -p "$fixtures/absent"
-    "$override_migration_executable" "$fixtures/absent/override.conf"
-    ! test -e "$fixtures/absent/override.conf"
-
-    stale_hash=00000000000000000000000000000000
-    stale_executable="/nix/store/''${stale_hash}-spirit-judge-daemon-service/bin/spirit-judge-daemon-service"
-    mkdir -p "$fixtures/recognized-stale"
-    printf '[Service]\nExecStart=\nExecStart=%s\n' "$stale_executable" \
-      > "$fixtures/recognized-stale/override.conf"
-    "$override_migration_executable" "$fixtures/recognized-stale/override.conf"
-    ! test -e "$fixtures/recognized-stale/override.conf"
-
-    mkdir -p "$fixtures/unexpected-command"
-    printf '[Service]\nExecStart=\nExecStart=/bin/false\n' \
-      > "$fixtures/unexpected-command/override.conf"
-    if "$override_migration_executable" "$fixtures/unexpected-command/override.conf"; then
-      echo 'migration accepted an unexpected override command' >&2
-      exit 1
-    fi
-    test -f "$fixtures/unexpected-command/override.conf"
-
-    mkdir -p "$fixtures/extra-line"
-    printf '[Service]\nExecStart=\nExecStart=%s\nUnexpected=yes\n' "$stale_executable" \
-      > "$fixtures/extra-line/override.conf"
-    if "$override_migration_executable" "$fixtures/extra-line/override.conf"; then
-      echo 'migration accepted an override with extra content' >&2
-      exit 1
-    fi
-    test -f "$fixtures/extra-line/override.conf"
-
-    mkdir -p "$fixtures/live-executable"
-    printf '[Service]\nExecStart=\nExecStart=%s\n' \
-      "${liveJudgeOverrideTarget}/bin/spirit-judge-daemon-service" \
-      > "$fixtures/live-executable/override.conf"
-    if "$override_migration_executable" "$fixtures/live-executable/override.conf"; then
-      echo 'migration removed an override whose executable is still live' >&2
-      exit 1
-    fi
-    test -f "$fixtures/live-executable/override.conf"
-
-    ln -s "$fixtures/unexpected-command/override.conf" "$fixtures/symlink-override.conf"
-    if "$override_migration_executable" "$fixtures/symlink-override.conf"; then
-      echo 'migration followed an override symlink' >&2
-      exit 1
-    fi
-    test -L "$fixtures/symlink-override.conf"
 
     touch "$out"
   ''

@@ -85,14 +85,6 @@ let
     ${pkgs.coreutils}/bin/mkdir -p "$agent_state_directory"
   '';
 
-  migrateObsoleteSpiritJudgeOverride = pkgs.writeShellApplication {
-    name = "migrate-obsolete-spirit-judge-override";
-    runtimeInputs = [ pkgs.coreutils ];
-    text = builtins.readFile ./migrate-obsolete-spirit-judge-override.sh;
-  };
-
-  obsoleteSpiritJudgeOverride = "${config.xdg.configHome}/systemd/user/spirit-judge.service.d/override.conf";
-
   initializeAgentState = pkgs.writeShellScript "agent-startup-state" ''
     set -eu
 
@@ -135,16 +127,6 @@ in
       $DRY_RUN_CMD ${activateState}
       $DRY_RUN_CMD ${activateAgentState}
     '';
-
-    # One historical, unmanaged drop-in shadows the generated judge ExecStart
-    # with a collected package path. Remove only that exact stale shape after
-    # the new generation is linked and before Home Manager reloads systemd.
-    home.activation.removeObsoleteSpiritJudgeOverride =
-      lib.hm.dag.entryBetween [ "reloadSystemd" ] [ "linkGeneration" ]
-        ''
-          $DRY_RUN_CMD ${migrateObsoleteSpiritJudgeOverride}/bin/migrate-obsolete-spirit-judge-override \
-            ${lib.escapeShellArg obsoleteSpiritJudgeOverride}
-        '';
 
     systemd.user.services = {
       spirit-judge = {
