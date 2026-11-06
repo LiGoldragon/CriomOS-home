@@ -78,6 +78,7 @@
     ./profiles/min/harness.nix
     # What every Flow Nexus version shares; each version is its own unit.
     ./profiles/min/flow.nix
+    # Flow 0.51.2, retired: its package kept, no unit.
     ./profiles/min/flow-0511.nix
     # Next Flow and next Message beside the stable pair, on their own
     # sockets and stores (the stable/next pattern, lib/stable-next-service.nix).
