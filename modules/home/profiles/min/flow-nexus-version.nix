@@ -243,7 +243,7 @@ in
   options.criomosHome.${optionName} = {
     enable = lib.mkOption {
       type = lib.types.bool;
-      default = config.home.username == "li";
+      default = builtins.elem "AgentStack" user.capabilities;
     };
     unit = lib.mkOption {
       type = lib.types.str;

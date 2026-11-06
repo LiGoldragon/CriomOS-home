@@ -42,7 +42,7 @@ let
 in
 lib.mkMerge [
   {
-    home.sessionVariables = lib.mkIf (builtins.elem config.home.username [ "li" "bird" ]) {
+    home.sessionVariables = lib.mkIf (user.capabilities != [ ]) {
       CLAUDE_CODE_ARTIFACT_AUTO_OPEN = "0";
     };
 
@@ -72,13 +72,13 @@ lib.mkMerge [
             ];
           }
         ];
-      } // lib.optionalAttrs (builtins.elem config.home.username [ "li" "bird" ]) {
+      } // lib.optionalAttrs (user.capabilities != [ ]) {
         env.CLAUDE_CODE_ARTIFACT_AUTO_OPEN = "0";
       };
       modes = {
         "/permissions/defaultMode" = "always";
         "/hooks/PermissionRequest" = "always";
-      } // lib.optionalAttrs (builtins.elem config.home.username [ "li" "bird" ]) {
+      } // lib.optionalAttrs (user.capabilities != [ ]) {
         "/env/CLAUDE_CODE_ARTIFACT_AUTO_OPEN" = "always";
       };
     };

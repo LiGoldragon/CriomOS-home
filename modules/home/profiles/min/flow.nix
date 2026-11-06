@@ -16,7 +16,7 @@ in
   # this module holds what every Flow version shares.
   options.criomosHome.flow.enable = lib.mkOption {
     type = lib.types.bool;
-    default = config.home.username == "li";
+    default = builtins.elem "AgentStack" user.capabilities;
   };
   config = lib.mkIf (sizeAtLeast "Min" && cfg.enable) {
     # Flow refreshes a flow past its model's threshold when it rests, so
