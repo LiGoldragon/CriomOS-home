@@ -30,46 +30,6 @@ let
   # its protocol. The Flow next client sets CODEX_HOME=.codex-next, so the
   # ordinary .codex installation is deliberately not reused for this seat.
   codexNextHook = builtins.readFile "${inputs.herdr}/src/integration/assets/codex/herdr-agent-state.sh";
-  legacyHerdrConfig = pkgs.writeText "herdr-legacy-config.toml" ''
-    [ui.toast]
-    delivery = "terminal"
-
-    [ui]
-    agent_panel_sort = "spaces"
-  '';
-  predecessorManagedHerdrConfig = pkgs.writeText "herdr-predecessor-managed-config.toml" ''
-    [theme]
-    auto_switch = true
-    dark_name = "catppuccin"
-    light_name = "catppuccin-latte"
-
-    [ui.toast]
-    delivery = "terminal"
-
-    [ui]
-    agent_panel_sort = "spaces"
-  '';
-  # A prior managed generation added the two Flow client wrappers before
-  # this rotation. Its exact generated config is an admitted predecessor only
-  # when the separately recorded legacy backup still verifies.
-  rotationPredecessorManagedHerdrConfig = pkgs.writeText "herdr-rotation-predecessor-config.toml" ''
-    [agents]
-    codex_executables = [
-      "/nix/store/0s199vn7jivakb7kqkcc2znxw4klv840-codex-stable-flow-client/bin/codex-stable-flow-client",
-      "/nix/store/x74szg3cbsn5s41nan43kfs6wb4xww61-codex-next-flow-client/bin/codex-next-flow-client",
-    ]
-
-    [theme]
-    auto_switch = true
-    dark_name = "catppuccin"
-    light_name = "catppuccin-latte"
-
-    [ui.toast]
-    delivery = "terminal"
-
-    [ui]
-    agent_panel_sort = "spaces"
-  '';
   herdrConfig = pkgs.writeText "herdr-config.toml" ''
     [agents]
     codex_executables = [
@@ -88,14 +48,6 @@ let
     [ui]
     agent_panel_sort = "spaces"
   '';
-  configuredPredecessorHomeFiles =
-    if cfg.predecessorGeneration == null then "" else cfg.predecessorGeneration.homeFiles;
-  configuredPredecessorHerdrConfig =
-    if cfg.predecessorGeneration == null then "" else cfg.predecessorGeneration.herdrConfig;
-  configuredPredecessorHerdrConfigSha256 =
-    if cfg.predecessorGeneration == null then "" else cfg.predecessorGeneration.herdrConfigSha256;
-  configuredKvantumDanglingLinkTarget =
-    if cfg.kvantumDanglingLink == null then "" else cfg.kvantumDanglingLink.literalTarget;
 in
 {
   options.criomosHome.herdr = {
@@ -116,36 +68,6 @@ in
       readOnly = true;
       default = herdrVersionPin;
       description = "Herdr version the flake input pins (herdrdev/herdr/v${herdrVersionPin}); the declared server refuses any other package version.";
-    };
-    predecessorGeneration = lib.mkOption {
-      type = lib.types.nullOr (lib.types.submodule {
-        options.homeFiles = lib.mkOption {
-          type = lib.types.str;
-          description = "The trusted predecessor generation's Home Manager home-files output path.";
-        };
-        options.herdrConfig = lib.mkOption {
-          type = lib.types.str;
-          default = "";
-          description = "The trusted predecessor generation's declared Herdr configuration path.";
-        };
-        options.herdrConfigSha256 = lib.mkOption {
-          type = lib.types.str;
-          default = "";
-          description = "The raw SHA-256 checksum of the trusted predecessor Herdr configuration.";
-        };
-      });
-      default = null;
-      description = "Source-controlled trusted predecessor Home Manager generation for one-time managed-file transitions.";
-    };
-    kvantumDanglingLink = lib.mkOption {
-      type = lib.types.nullOr (lib.types.submodule {
-        options.literalTarget = lib.mkOption {
-          type = lib.types.str;
-          description = "The exact recorded literal target of one dangling Base16Kvantum symlink.";
-        };
-      });
-      default = null;
-      description = "Source-controlled recovery record for one known dangling Base16Kvantum symlink.";
     };
     # The Herdr server holds every open pane. Enabling this replaces a
     # server started by hand (a transient `systemd-run herdr server` unit):
@@ -252,152 +174,6 @@ in
     fi
     ${pkgs.coreutils}/bin/mv "$temporary_hooks" "$hooks_path"
     trap - EXIT
-  '';
-  # The first managed generation replaces only the observed unmanaged file.
-  # The managed target deliberately adds CriomOS theme switching afterwards.
-    home.activation.adoptHerdrConfig = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
-    herdr_config="$HOME/.config/herdr/config.toml"
-    herdr_backup_directory="''${XDG_STATE_HOME:-$HOME/.local/state}/criomos/herdr-adoption"
-    herdr_backup="$herdr_backup_directory/config.toml.pre-home-manager"
-    herdr_checksum="$herdr_backup.sha256"
-    configured_predecessor_home_files="${configuredPredecessorHomeFiles}"
-    configured_predecessor_herdr_config="${configuredPredecessorHerdrConfig}"
-    configured_predecessor_herdr_config_sha256="${configuredPredecessorHerdrConfigSha256}"
-    active_home_files="''${oldGenPath:-}/home-files"
-    if [ -n "$configured_predecessor_home_files" ]; then
-      predecessor_home_files="$configured_predecessor_home_files"
-    elif [ -n "''${oldGenPath:-}" ]; then
-      predecessor_home_files="$oldGenPath/home-files"
-    else
-      predecessor_home_files=""
-    fi
-
-    is_exact_predecessor_herdr_member() {
-      [ -n "$predecessor_home_files" ] \
-        && [ -f "$predecessor_home_files/.config/herdr/config.toml" ] \
-        && [ "$(readlink -f "$herdr_config")" = "$(readlink -f "$predecessor_home_files/.config/herdr/config.toml")" ]
-    }
-
-    is_exact_active_herdr_member() {
-      [ -n "''${oldGenPath:-}" ] \
-        && [ -f "$active_home_files/.config/herdr/config.toml" ] \
-        && [ "$(readlink -f "$herdr_config")" = "$(readlink -f "$active_home_files/.config/herdr/config.toml")" ]
-    }
-
-    is_admitted_predecessor_herdr_config() {
-      cmp -s "$herdr_config" "${predecessorManagedHerdrConfig}" \
-        || cmp -s "$herdr_config" "${rotationPredecessorManagedHerdrConfig}" \
-        || {
-          [ -n "$configured_predecessor_herdr_config" ] \
-            && [ -n "$configured_predecessor_herdr_config_sha256" ] \
-            && [ -f "$configured_predecessor_herdr_config" ] \
-            && cmp -s "$herdr_config" "$configured_predecessor_herdr_config" \
-            && actual_predecessor_checksum="$(${pkgs.coreutils}/bin/sha256sum "$herdr_config")" \
-            && actual_predecessor_checksum="''${actual_predecessor_checksum%% *}" \
-            && [ "$actual_predecessor_checksum" = "$configured_predecessor_herdr_config_sha256" ]
-        }
-    }
-
-    verify_legacy_herdr_backup() {
-      mkdir -p "$herdr_backup_directory"
-      if [ -e "$herdr_backup" ] || [ -L "$herdr_backup" ]; then
-        if [ ! -f "$herdr_backup" ] || [ -L "$herdr_backup" ] || ! cmp -s "$herdr_backup" "${legacyHerdrConfig}"; then
-          echo "Refusing Herdr adoption: existing backup differs from the observed legacy configuration" >&2
-          exit 1
-        fi
-      else
-        cp -- "$herdr_config" "$herdr_backup"
-      fi
-
-      herdr_actual_checksum="$(sha256sum "$herdr_backup")"
-      if [ -e "$herdr_checksum" ] || [ -L "$herdr_checksum" ]; then
-        if [ ! -f "$herdr_checksum" ] || [ -L "$herdr_checksum" ] \
-          || ! printf '%s\n' "$herdr_actual_checksum" | cmp -s - "$herdr_checksum"; then
-          echo "Refusing Herdr adoption: existing backup checksum does not verify" >&2
-          exit 1
-        fi
-      else
-        (umask 077; printf '%s\n' "$herdr_actual_checksum" > "$herdr_checksum")
-      fi
-    }
-
-    if [ -L "$herdr_config" ]; then
-      if [ "$(readlink -f "$herdr_config")" = "${herdrConfig}" ]; then
-        :
-      elif is_exact_active_herdr_member; then
-        # The active Home Manager generation already owns this link. Remove
-        # only the link so checkLinkTargets can replace it with the new one.
-        rm -- "$herdr_config"
-      elif is_exact_predecessor_herdr_member; then
-        # A prior managed generation is adopted only when its resolved target
-        # is the exact member of the one trusted predecessor home-files tree.
-        # It has no user-created content to preserve, so no legacy backup is
-        # required or manufactured.
-        if ! is_admitted_predecessor_herdr_config; then
-          echo "Refusing Herdr adoption: $herdr_config does not match an admitted predecessor configuration" >&2
-          exit 1
-        fi
-        rm -- "$herdr_config"
-      else
-        echo "Refusing Herdr adoption: $herdr_config is an unmanaged symlink" >&2
-        exit 1
-      fi
-    else
-      # A first managed Home generation may have no user-created Herdr
-      # configuration. There is then no state to preserve: leave the target
-      # absent so Home Manager's following checkLinkTargets step creates its
-      # managed link. A present non-regular target remains unsafe to replace.
-      if [ ! -e "$herdr_config" ]; then
-        :
-      elif [ ! -f "$herdr_config" ]; then
-        echo "Refusing Herdr adoption: $herdr_config is not a regular file" >&2
-        exit 1
-      elif ! cmp -s "$herdr_config" "${legacyHerdrConfig}"; then
-        echo "Refusing Herdr adoption: $herdr_config does not match the observed legacy configuration" >&2
-        exit 1
-      else
-        verify_legacy_herdr_backup
-        rm -- "$herdr_config"
-      fi
-    fi
-    '';
-  home.activation.adoptManagedKvantumDirectory = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
-    kvantum_directory="$HOME/.config/Kvantum/Base16Kvantum"
-    kvantum_recovery_directory="''${XDG_STATE_HOME:-$HOME/.local/state}/criomos/kvantum-adoption"
-    kvantum_recovery="$kvantum_recovery_directory/Base16Kvantum.pre-home-manager"
-    recorded_dangling_target=${lib.escapeShellArg configuredKvantumDanglingLinkTarget}
-    configured_predecessor_home_files="${configuredPredecessorHomeFiles}"
-    if [ -n "$configured_predecessor_home_files" ]; then
-      predecessor_home_files="$configured_predecessor_home_files"
-    elif [ -n "''${oldGenPath:-}" ]; then
-      predecessor_home_files="$oldGenPath/home-files"
-    else
-      predecessor_home_files=""
-    fi
-
-    preserve_kvantum_link() {
-      mkdir -p "$kvantum_recovery_directory"
-      if [ -e "$kvantum_recovery" ] || [ -L "$kvantum_recovery" ]; then
-        echo "Refusing Kvantum transition: recovery path already exists at $kvantum_recovery" >&2
-        exit 1
-      fi
-      mv -- "$kvantum_directory" "$kvantum_recovery"
-    }
-
-    if [ -L "$kvantum_directory" ]; then
-      if [ -n "$recorded_dangling_target" ] \
-        && [ "$(readlink "$kvantum_directory")" = "$recorded_dangling_target" ] \
-        && [ ! -e "$kvantum_directory" ]; then
-        preserve_kvantum_link
-      elif [ -n "$predecessor_home_files" ] \
-        && [ -d "$predecessor_home_files/.config/Kvantum/Base16Kvantum" ] \
-        && [ "$(readlink -f "$kvantum_directory")" = "$(readlink -f "$predecessor_home_files/.config/Kvantum/Base16Kvantum")" ]; then
-        preserve_kvantum_link
-      else
-        echo "Refusing Kvantum transition: $kvantum_directory is not an admitted predecessor or recorded dangling link" >&2
-        exit 1
-      fi
-    fi
   '';
     }
   ];
