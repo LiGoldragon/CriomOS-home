@@ -116,6 +116,8 @@ let
   profile =
     value:
     "{ ${value.harnessKind} ${vector (map text value.commandSigils)} ${vector value.interruptKeys} ${vector value.submitKeys} }";
+  sendServer =
+    value: "{ ${text value.codexAppServerBinary} ${text value.mcpSendServerBinary} }";
   # ConfigureNexus at meta-signal-flow 7a19023, the shape flow cfcbf5c reads;
   # its last field is the Option<PresentationPrompt.String>.
   nexusQuery = pkgs.writeText "flow-${slug}-nexus.datom" ''
@@ -128,7 +130,7 @@ let
     } }
   '';
   sendServersQuery = pkgs.writeText "flow-${slug}-send-servers.datom" ''
-    Configure.SendServers.[ { ${text "${config.criomosHome.codexNextCandidate.package}/bin/codex"} ${text "${message}/bin/message-mcp-send"} } ]
+    Configure.SendServers.${vector (map sendServer cfg.sendServers)}
   '';
   # One Configure each, in this order: the Nexus first, the investigation seat
   # after the metaflows it is launched from.
@@ -267,6 +269,23 @@ in
       type = lib.types.path;
       default = ./flow-nexus-config;
       description = "The directory of this version's immutable configuration queries, in its own schema.";
+    };
+    sendServers = lib.mkOption {
+      type = lib.types.listOf (
+        lib.types.submodule {
+          options = {
+            codexAppServerBinary = lib.mkOption { type = lib.types.str; };
+            mcpSendServerBinary = lib.mkOption { type = lib.types.str; };
+          };
+        }
+      );
+      default = [
+        {
+          codexAppServerBinary = "${config.criomosHome.codexNextCandidate.package}/bin/codex";
+          mcpSendServerBinary = "${message}/bin/message-mcp-send";
+        }
+      ];
+      description = "The MCP send servers this Nexus trusts, each paired with its Codex app-server; an empty list trusts none.";
     };
     messageNexus = lib.mkOption {
       type = lib.types.nullOr (
