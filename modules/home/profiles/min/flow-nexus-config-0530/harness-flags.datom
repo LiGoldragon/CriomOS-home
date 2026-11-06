@@ -1,5 +1,4 @@
 Configure.HarnessFlags.[
-  { { Field publisher Luna } «--disallowedTools SendMessage,ListAgents» }
   { { Psyche psycheNexus Fable } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
   { { Psyche psycheNexus Opus } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
   { { Psyche codexManager Opus } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }

@@ -2,8 +2,6 @@ Configure.LeaveOuts.[
   { { Field illustrator Sonnet } Claude [ ClaudeMd GitInstructions ] }
   { { Field core Astra } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
   { { Field core Sol } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
-  { { Field core Sonnet } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
-  { { Field publisher Luna } Claude [ ClaudeMd GitInstructions ] }
   { { Mind versionOne Astra } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
   { { Mind versionOne Sol } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
   { { Mind beliefNexus Astra } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
