@@ -27,7 +27,6 @@ let
   };
   pi-continue = pkgs.callPackage ../../../../packages/pi-continue { inherit inputs; };
   pi-session-namer = pkgs.callPackage ../../../../packages/pi-session-namer { inherit inputs; };
-  piPackageHomePath = "$HOME/.local/share/criomos/pi/package";
 
   clusterNodes = [ horizon.node ] ++ lib.attrValues (horizon.exNodes or { });
   routerNode = lib.findFirst (node: node.typeIs.largeAiRouter or false) null clusterNodes;
@@ -139,29 +138,6 @@ in
 # projected node roles still determine whether a local provider record is
 # available above.
 lib.mkIf (sizeAtLeast "Min") {
-  home.activation.preparePiPackageSymlink = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
-    if [ -d "${piPackageHomePath}" ] && [ ! -L "${piPackageHomePath}" ]; then
-      if ${pkgs.jq}/bin/jq -e '.name == "@earendil-works/pi-coding-agent"' \
-        "${piPackageHomePath}/package.json" >/dev/null; then
-        migration_directory="''${XDG_STATE_HOME:-$HOME/.local/state}/criomos/pi-package-migrations"
-        migration_timestamp="$(${pkgs.coreutils}/bin/date -u +%Y%m%dT%H%M%SZ)"
-        migration_target="$migration_directory/package.$migration_timestamp"
-        migration_counter=0
-
-        while [ -e "$migration_target" ]; do
-          migration_counter=$((migration_counter + 1))
-          migration_target="$migration_directory/package.$migration_timestamp.$migration_counter"
-        done
-
-        run ${pkgs.coreutils}/bin/mkdir -p "$migration_directory"
-        run ${pkgs.coreutils}/bin/mv "${piPackageHomePath}" "$migration_target"
-      else
-        echo "Existing Pi package path is a directory without the expected Pi package identity: ${piPackageHomePath}" >&2
-        exit 1
-      fi
-    fi
-  '';
-
   home.file.".local/share/criomos/pi/package".source = "${pi}/lib/pi-monorepo/packages/coding-agent";
   home.file.".local/share/criomos/pi/package".force = true;
 

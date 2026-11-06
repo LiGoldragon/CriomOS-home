@@ -128,7 +128,6 @@ assert remoteFiles ? ".pi/agent/packages/pi-subagents";
 assert remoteFiles ? ".pi-testing/agent/packages/pi-subagents";
 assert !(remoteFiles ? ".pi/agent/intercom/config.json");
 assert !(remoteFiles ? ".pi-testing/agent/intercom/config.json");
-assert remoteActivation ? preparePiPackageSymlink;
 assert
   builtins.length (
     builtins.filter (name: pkgs.lib.hasPrefix "mergePi" name) (builtins.attrNames remoteActivation)
