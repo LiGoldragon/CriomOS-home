@@ -35,7 +35,7 @@
         flake = false;
       };
       inputs.psyche-belief = {
-        url = "github:LiGoldragon/psyche-belief/54150c12a3267a0640a04f420401c8d60f4b54ad";
+        url = "github:LiGoldragon/psyche-belief";
         flake = false;
       };
       inputs.field-belief = {
