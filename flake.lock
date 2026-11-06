@@ -1452,11 +1452,11 @@
         "unconfigured-flow": "unconfigured-flow_2"
       },
       "locked": {
-        "lastModified": 1793992149,
-        "narHash": "sha256-mer3ARltU06K52IOdPE/7DOZ2OK7ii2a1STe7uN/Nt0=",
+        "lastModified": 1793996794,
+        "narHash": "sha256-lYzSUQmHBNUfUF0KgdAZbZAh2O5mMrU4qmqwMEC+CRY=",
         "owner": "LiGoldragon",
         "repo": "flow",
-        "rev": "abeafd1e804aac7616004affe3db443daffb0333",
+        "rev": "0e68457318807020d8954d23e5bbc29793200c12",
         "type": "github"
       },
       "original": {
