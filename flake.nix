@@ -123,7 +123,7 @@
     harness.url = "github:LiGoldragon/harness/5a5c37129f4782af075f90ae09ba7b58e73a327a";
     harness.inputs.nixpkgs.follows = "nixpkgs";
 
-    # Flow 0.51.1 stays versioned while its authenticated seats adopt it.
+    # Flow 0.51.2, retired: its package and versioned clients stay; no unit runs it.
     flow-0511.url = "github:LiGoldragon/flow";
     flow-0511.inputs.nixpkgs.follows = "nixpkgs";
 
