@@ -8,7 +8,7 @@ Configure.Models.[
   { Secondary Field gpt-6.1-sol }
   { Secondary Mind gpt-6.1-sol }
   { Secondary Psyche claude-opus-5-5 }
-  { Tertiary Field gpt-6-luna }
+  { Tertiary Field claude-sonnet-5-5 }
   { Tertiary Mind gpt-6-luna }
   { Tertiary Psyche claude-sonnet-5-5 }
 ]
