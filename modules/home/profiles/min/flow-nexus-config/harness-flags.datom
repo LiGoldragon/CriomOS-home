@@ -1,0 +1,19 @@
+Configure.HarnessFlags.[
+  { { Field publisher Quaternary } «--disallowedTools SendMessage,ListAgents» }
+  { { Psyche psycheNexus Primary } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
+  { { Psyche psycheNexus Secondary } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
+  { { Psyche codexManager Secondary } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
+  { { Psyche codexManager Tertiary } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
+  { { Psyche book Quaternary } «--disallowedTools SendMessage,ListAgents» }
+  { { Psyche book Tertiary } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
+  { { Psyche core Primary } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
+  { { Psyche core Quaternary } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
+  { { Psyche core Secondary } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
+  { { Psyche core Tertiary } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
+  { { Psyche creo Primary } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
+  { { Psyche creo Secondary } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
+  { { Psyche unity Primary } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
+  { { Psyche unity Secondary } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
+  { { Psyche persona Primary } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
+  { { Psyche persona Secondary } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
+]

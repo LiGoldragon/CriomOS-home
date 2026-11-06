@@ -128,6 +128,10 @@
     flow.url = "github:LiGoldragon/flow/b878b1b1aa622bb884ba3498a099f1c772716ea7";
     flow.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Flow 0.51.1 stays versioned while its authenticated seats adopt it.
+    flow-0511.url = "github:LiGoldragon/flow";
+    flow-0511.inputs.nixpkgs.follows = "nixpkgs";
+
     # The retired messenger prototype, kept only for the Field monitors that
     # still name its hm-* commands (off unless enabled). Flows send through
     # the Flow CLI; Home installs no hm-* command.
