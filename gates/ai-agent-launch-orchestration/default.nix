@@ -41,7 +41,6 @@ let
   profile = moduleResult.config.content;
   packageName = package: package.pname or (package.name or "");
   hasPackage = name: builtins.any (package: packageName package == name) profile.home.packages;
-  codexCleanup = profile.home.activation.removeStaleCodexConfiguration.data;
   codexMerge = profile.home.activation.mergeCodexConfig.data;
   codexActivation = pkgs.writeShellScript "ai-agent-launch-codex-activation" ''
     set -eu
@@ -49,14 +48,12 @@ let
     run() {
       "$@"
     }
-    ${codexCleanup}
     ${codexMerge}
   '';
   roleFile =
     name:
     pkgs.writeText "ai-agent-launch-${name}.toml" profile.home.file.".codex/agents/${name}.toml".text;
 in
-assert profile.home.activation ? removeStaleCodexConfiguration;
 assert profile.home.activation ? mergeCodexConfig;
 assert builtins.elem codexCliPackage profile.home.packages;
 assert !hasPackage "direct-codex";
@@ -80,9 +77,6 @@ pkgs.runCommand "ai-agent-launch-orchestration"
     model_reasoning_effort = "low"
     unrelated_setting = "preserve-me"
 
-    [orchestrator]
-    model = "obsolete-orchestrator-model"
-
     [agents]
     default_subagent_model = "obsolete-child-model"
     default_subagent_reasoning_effort = "low"
@@ -104,7 +98,6 @@ pkgs.runCommand "ai-agent-launch-orchestration"
     test "$( ${pkgs.yq-go}/bin/yq -p toml '.approval_policy' "$codexHome/.codex/config.toml" )" = "never"
     test "$( ${pkgs.yq-go}/bin/yq -p toml '.sandbox_mode' "$codexHome/.codex/config.toml" )" = "danger-full-access"
     test "$( ${pkgs.yq-go}/bin/yq -p toml '.unrelated_setting' "$codexHome/.codex/config.toml" )" = "preserve-me"
-    test "$( ${pkgs.yq-go}/bin/yq -p toml -o json 'has("orchestrator")' "$codexHome/.codex/config.toml" )" = false
 
     test "$( ${pkgs.yq-go}/bin/yq -p toml '.model' ${roleFile "default"} )" = "gpt-5.6-luna"
     test "$( ${pkgs.yq-go}/bin/yq -p toml '.model_reasoning_effort' ${roleFile "default"} )" = "xhigh"
