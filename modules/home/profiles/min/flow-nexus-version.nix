@@ -150,10 +150,7 @@ let
     "${sendServersQuery}"
     # The live declaration corpus is owner state and must not be reset by a source snapshot.
     cfg.declarationPath
-    "${cfg.configurationDirectory + "/harness-flags.datom"}"
-    "${cfg.configurationDirectory + "/investigation.datom"}"
-    "${cfg.configurationDirectory + "/default-minutes.datom"}"
-  ];
+  ] ++ map (file: "${cfg.configurationDirectory + "/${file}"}") cfg.trailingConfigurationFiles;
   # Runs before the Nexus starts, at every start, so the declared
   # configuration is in the store before any worker runs. `--configure-only`
   # opens the store, serves one Configure on the meta socket and exits, so
@@ -269,6 +266,15 @@ in
       type = lib.types.path;
       default = ./flow-nexus-config;
       description = "The directory of this version's immutable configuration queries, in its own schema.";
+    };
+    trailingConfigurationFiles = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [
+        "harness-flags.datom"
+        "investigation.datom"
+        "default-minutes.datom"
+      ];
+      description = "The query files of the configuration directory declared after the metaflow declaration, in order.";
     };
     sendServers = lib.mkOption {
       type = lib.types.listOf (

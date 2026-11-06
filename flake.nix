@@ -130,6 +130,8 @@
     # Flow 0.53.0 at its own place; the lock holds its commit.
     flow-0530.url = "github:LiGoldragon/flow";
     flow-0530.inputs.nixpkgs.follows = "nixpkgs";
+    flow-0531.url = "github:LiGoldragon/flow";
+    flow-0531.inputs.nixpkgs.follows = "nixpkgs";
 
     # The retired messenger prototype, kept only for the Field monitors that
     # still name its hm-* commands (off unless enabled). Flows send through

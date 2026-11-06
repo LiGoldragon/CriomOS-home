@@ -82,6 +82,8 @@
     ./profiles/min/flow-0511.nix
     # Flow 0.53.0 at its own place.
     ./profiles/min/flow-0530.nix
+    # Flow 0.53.1 at its own place, beside 0.53.0.
+    ./profiles/min/flow-0531.nix
     # Next Flow and next Message beside the stable pair, on their own
     # sockets and stores (the stable/next pattern, lib/stable-next-service.nix).
     ./profiles/min/flow-message-next.nix
