@@ -20,17 +20,24 @@ lib.mkIf (sizeAtLeast "Medium") {
   # one account. Higher profile tiers inherit medium capability.
   home.packages = [ wisprFlowFhs ];
 
+  # The graphical session owns the one Wispr Flow instance: started at login,
+  # restarted after a crash a bounded number of times, and kept running across
+  # Home activations, so a deploy neither launches a second copy nor brings
+  # the window up.
   systemd.user.services.wispr-flow = {
     Unit = {
       Description = "Wispr Flow speech-to-text client";
       After = [ "graphical-session.target" ];
       PartOf = [ "graphical-session.target" ];
+      StartLimitIntervalSec = 600;
+      StartLimitBurst = 3;
+      X-SwitchMethod = "keep-old";
     };
 
     Service = {
       ExecStart = "${wisprFlowFhs}/bin/wispr-flow";
       Restart = "on-failure";
-      RestartSec = "2s";
+      RestartSec = "5s";
     };
 
     Install.WantedBy = [ "graphical-session.target" ];

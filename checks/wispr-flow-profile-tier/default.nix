@@ -55,7 +55,10 @@ assert wisprService.Unit.After == [ "graphical-session.target" ];
 assert wisprService.Unit.PartOf == [ "graphical-session.target" ];
 assert wisprService.Service.ExecStart == [ "${wisprPackage}/bin/wispr-flow" ];
 assert wisprService.Service.Restart == "on-failure";
-assert wisprService.Service.RestartSec == "2s";
+assert wisprService.Service.RestartSec == "5s";
+assert wisprService.Unit.StartLimitIntervalSec == 600;
+assert wisprService.Unit.StartLimitBurst == 3;
+assert wisprService.Unit.X-SwitchMethod == "keep-old";
 assert wisprService.Install.WantedBy == [ "graphical-session.target" ];
 pkgs.runCommand "wispr-flow-profile-tier" { } ''
   test -x ${wisprPackage}/bin/wispr-flow
