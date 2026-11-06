@@ -42,6 +42,7 @@
     ./profiles/min/codex-remote-control.nix
     ./profiles/min/opencode-harness.nix
     ./profiles/min/field-luna-heartbeat.nix
+    ./profiles/min/zoekt-index.nix
     # Field monitors: declared from the hand-made units, each off unless enabled.
     ./profiles/min/field-monitoring.nix
     ./profiles/min/codex-artifact-gateway.nix
