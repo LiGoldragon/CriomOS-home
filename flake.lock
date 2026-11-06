@@ -566,7 +566,6 @@
       "original": {
         "owner": "LiGoldragon",
         "repo": "Curriculum",
-        "rev": "6ce4f87a6f1b754ad17eafb6bb73e7917c7ca3b2",
         "type": "github"
       }
     },
@@ -3900,17 +3899,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1788617409,
-        "narHash": "sha256-F8zpMiySj5FZ09NiZ2qDEfVDYHElecXg/W0a/C44Wl4=",
+        "lastModified": 1793989926,
+        "narHash": "sha256-FoMoiFA8bkCZUzzJbagva6ze7Haa+SCqJme9WsAfzHM=",
         "owner": "LiGoldragon",
         "repo": "wispr-flow-linux",
-        "rev": "e97b9587a7186ad74c5d84b2da6abfb86645b68d",
+        "rev": "d2122864b75893e3d290463234c22df78703df7b",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "wispr-flow-linux",
-        "rev": "e97b9587a7186ad74c5d84b2da6abfb86645b68d",
         "type": "github"
       }
     },
