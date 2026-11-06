@@ -80,7 +80,7 @@
         (fail "not a module source: " file))
       (let [subject (str/replace file-name #"\.md$" "")]
         (when-not (re-matches #"[a-z0-9-]+" subject) (fail "invalid subject: " file))
-        {:name (str kind "-" subject)
+        {:name (str kind ":" subject)
          :body (slurp file)
          :source (str kind "/" file-name)
          :revision revision}))))
