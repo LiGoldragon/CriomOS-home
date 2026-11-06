@@ -18,16 +18,8 @@ let
   edgeEnabled = ((horizon.node.behavesAs or { }).edge or false);
   desktopEnabled = edgeEnabled && mediumEnabled;
   birdTarget = user.name == "bird" && user.hasPublicKey && user.size == "Max" && config.home.username == "bird" && config.home.homeDirectory == "/home/bird";
-  occupied = (config.home.username == "li" && config.home.homeDirectory == "/home/li") || birdTarget;
   codexCliPackage = config.criomos.corePackages.codex;
-  # This server has an unregistered client attached.  It is frozen until that
-  # client has moved; do not replace its executable with the current package.
-  # The literal is the executable in the preserved live-unit receipt.
-  occupiedCodex = "/nix/store/wdj0sc69r4n9is1idfb32vcx5739ijkh-codex-0.153.4/bin/codex";
-  occupiedNextCodex = "/nix/store/zbznvqk2746igprz4753clizppww5551-codex-next-0.158.0-alpha.9/bin/codex";
-  # Bird's existing next endpoint is upgraded as one matched client/server
-  # pair. The legacy stable service and Li's occupied endpoints stay frozen.
-  remoteClient = if birdTarget then "${codexCliPackage}/bin/codex" else occupiedNextCodex;
+  remoteClient = if birdTarget then "${codexCliPackage}/bin/codex" else "${config.criomosHome.codexNext.rawClientPackage}/bin/codex";
   codexStable = pkgs.writeShellApplication {
     name = "codex";
     text = ''
@@ -129,10 +121,7 @@ lib.mkMerge [
         Environment = lib.optionals buildGuard.enable [
           "PATH=${buildGuard.directory}:${inheritedServicePath}"
         ];
-        # Keep this definition byte-for-byte compatible with the occupied
-        # service.  A later role transition may replace it only after its
-        # unregistered client is gone.
-        ExecStart = "${if occupied then occupiedCodex else "${codexCliPackage}/bin/codex"} app-server --remote-control --listen unix://";
+        ExecStart = "${codexCliPackage}/bin/codex app-server --remote-control --listen unix://";
         UMask = "0077";
         LimitNOFILE = 524288;
         Restart = "always";

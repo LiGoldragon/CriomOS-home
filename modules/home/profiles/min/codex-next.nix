@@ -9,13 +9,6 @@ let
   enabled = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size "Min";
   package = if birdTarget then config.criomos.corePackages.codex else pkgs.callPackage ../../../../owned-agents/codex-next { };
   birdTarget = user.name == "bird" && user.hasPublicKey && user.size == "Max" && config.home.username == "bird" && config.home.homeDirectory == "/home/bird";
-  occupied = config.home.username == "li" && config.home.homeDirectory == "/home/li";
-  # Receipt-pinned executable of the occupied endpoint.  `package` remains the
-  # reproducible source package for checks; the occupied process is deliberately
-  # not rebound to a rebuilt output during this rotation.
-  occupiedCodex = "/nix/store/zbznvqk2746igprz4753clizppww5551-codex-next-0.158.0-alpha.9/bin/codex";
-  occupiedPrepare = if birdTarget then "/nix/store/58axnpgidzhnm7kdvfkikkjdhaycpxvg-codex-next-prepare" else "/nix/store/dxqsqx4bq1ghgjf9s5yb8hzwa0krr7kd-codex-next-prepare";
-  # This is the occupied 0.158 endpoint. It remains physically unchanged; after migration it is the stable role.
   nextHome = "${config.home.homeDirectory}/.codex-next";
   socket = "${nextHome}/app-server-control/app-server-control.sock";
   recoveryUnit = "codex-remote-control-next-recovery.service";
@@ -62,7 +55,7 @@ in
       type = lib.types.package;
       readOnly = true;
       default = flowClient;
-      description = "Immutable client wrapper for the occupied endpoint, retained as the promoted stable role.";
+      description = "Immutable client wrapper for the next endpoint, the stable role.";
     };
     remoteClientPackage = lib.mkOption {
       type = lib.types.package;
@@ -86,17 +79,19 @@ in
         After = [ recoveryUnit ];
         StartLimitIntervalSec = 60;
         StartLimitBurst = 5;
+        X-SwitchMethod = "keep-old";
       };
       Service = {
         WorkingDirectory = "${config.home.homeDirectory}/primary";
         Environment = [ "CODEX_HOME=${nextHome}" ];
-        # Frozen exact live service: its PID owns the promoted stable endpoint.
-        ExecStartPre = if occupied then occupiedPrepare else "${prepare}";
-        ExecStart = "${if occupied then occupiedCodex else "${package}/bin/codex"} app-server --remote-control --listen unix://${socket}";
+        ExecStartPre = "${prepare}";
+        ExecStart = "${package}/bin/codex app-server --remote-control --listen unix://${socket}";
         UMask = "0077";
         LimitNOFILE = 524288;
-        Restart = "on-failure";
-        RestartSec = "2s";
+        # The server holds the running Codex sessions: stopping it leaves them
+        # running, and it is never restarted on its own or by an activation.
+        KillMode = "process";
+        Restart = "no";
       };
       Install.WantedBy = [ "default.target" ];
     };
