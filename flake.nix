@@ -206,20 +206,11 @@
     orchestrate.url = "github:LiGoldragon/orchestrate/c7c44cb39934b0727d724a6aa03a36a2a94cacf9";
     orchestrate.inputs.nixpkgs.follows = "nixpkgs";
 
-    # Message — the messenger: stateful local messaging daemon owning the
-    # durable agent-identity map, delivery registry, message ledger,
-    # per-recipient inboxes, and thread index (messenger.sema). Consumed in
-    # modules/home/profiles/min/message.nix, which gives it a systemd --user
-    # supervisor. Pinned coherently with the cluster relay client: the messenger
-    # (converged contracts, delivery legs, PTY control-socket delivery) plus
-    # the additive v2 -> v3 store migration — the deployed store, born at v2,
-    # is preserved aside and re-stamped on first open — on the
-    # incident-hardened sema-engine 0.11.2 orchestrate 0.14.1 runs.
+    # Message — its message-mcp-send is the send server each Flow Nexus
+    # version is configured with (flow-nexus-version.nix).
     message.url = "github:LiGoldragon/message/d5ab3000ebe86719fbcc808d7383c525b8ee03d6";
     message.inputs.nixpkgs.follows = "nixpkgs";
     message.inputs.crane.follows = "crane";
-
-    # One declared Message main package peers with the single Flow service.
 
     # `pi` (earendil-works/pi coding-agent CLI) — TypeScript npm
     # monorepo with no upstream flake. Consumed as a non-flake source
@@ -590,7 +581,6 @@
           orchestrate-wrapper-fallback = checkPkgs.callPackage ./checks/orchestrate-wrapper-fallback {
             inherit inputs;
           };
-          message-service-path = checkPkgs.callPackage ./checks/message-service-path { inherit inputs; };
           remote-build-command-guard = checkPkgs.callPackage ./checks/remote-build-command-guard {
             inherit inputs;
           };

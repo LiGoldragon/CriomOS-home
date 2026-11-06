@@ -75,12 +75,7 @@
     # Harness — the user's own harness-daemon (systemd --user unit) and its
     # clients, from the same package revision as flow-id.
     ./profiles/min/harness.nix
-    # Message — supervises the messenger daemon (durable agent-identity
-    # map + delivery registry in messenger.sema; systemd --user unit +
-    # pinned flake input).
-    ./profiles/min/message.nix
-    # Flow Nexus remains disabled until its package, native launch receipt,
-    # and durable store migration are validated for this host.
+    # What every Flow Nexus version shares; each version is its own unit.
     ./profiles/min/flow.nix
     ./profiles/min/flow-0511.nix
     # Next Flow and next Message beside the stable pair, on their own
