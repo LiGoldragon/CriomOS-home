@@ -3,16 +3,16 @@
 {
   imports = [
     (import ./flow-nexus-version.nix {
-      version = "0.51.1";
+      version = "0.51.2";
       slug = "0511";
     })
   ];
 
   # The unversioned clients move only when this Home generation activates.
   home.file.".local/bin/flow".source =
-    "${config.criomosHome.flow0511.clients}/bin/flow-0.51.1";
+    "${config.criomosHome.flow0511.clients}/bin/flow-0.51.2";
   home.file.".local/bin/flow-meta".source =
-    "${config.criomosHome.flow0511.clients}/bin/flow-meta-0.51.1";
+    "${config.criomosHome.flow0511.clients}/bin/flow-meta-0.51.2";
 
   # Adopt only the two clients installed with the running 0.51 Nexus. Home
   # Manager can then own their unversioned names without treating those
