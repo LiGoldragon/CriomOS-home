@@ -42,17 +42,17 @@ in pkgs.runCommand "curriculum-resolver-contract" {
     attempts=$((attempts - 1)); test "$attempts" -gt 0
     sleep 0.05
   done
-  query=$(${pkgs.babashka}/bin/bb -e '(require (quote [clojure.edn :as edn]) (quote [clojure.string :as str])) (let [m (:modules (edn/read-string (slurp (first *command-line-args*))))] (println (str "ComposeStartup.{ { Psyche core Secondary } Claude [ " (str/join " " (map name (:system m))) " ] [ " (str/join " " (map name (:user m))) " ] }")))' ${inputs.primary}/config/main-flow/psyche.edn)
+  query=$(${pkgs.babashka}/bin/bb -e '(require (quote [clojure.edn :as edn]) (quote [clojure.string :as str])) (let [m (:modules (edn/read-string (slurp (first *command-line-args*))))] (println (str "ComposeStartup.{ { Psyche core Opus } Claude [ " (str/join " " (map name (:system m))) " ] [ " (str/join " " (map name (:user m))) " ] }")))' ${inputs.primary}/config/main-flow/psyche.edn)
   ${deployment.runtime}/bin/curriculum "$query" > "$TMPDIR/composed.datom"
   grep -q '^StartupComposed\.' "$TMPDIR/composed.datom"
   grep -q 'These are your skills, given here; do not reload them.' "$TMPDIR/composed.datom"
   ${deployment.runtime}/bin/curriculum 'ComposeRole.{ illustrator ClaudeAgent }' > "$TMPDIR/role.datom"
   grep -q '^RoleComposed\.' "$TMPDIR/role.datom"
-  if ${deployment.runtime}/bin/curriculum 'ComposeStartup.{ { Psyche core Secondary } Claude [ spirit-core intent-main-flow ] [ /tmp/inline-context ] }' > "$TMPDIR/path.out" 2>&1; then
+  if ${deployment.runtime}/bin/curriculum 'ComposeStartup.{ { Psyche core Opus } Claude [ spirit-core intent-main-flow ] [ /tmp/inline-context ] }' > "$TMPDIR/path.out" 2>&1; then
     echo "Curriculum admitted a path-shaped module ID" >&2
     exit 1
   fi
-  if ${deployment.runtime}/bin/curriculum 'ComposeStartup.{ { Psyche core Secondary } Claude [ intent-main-flow ] [ spirit-core ] }' > "$TMPDIR/placement.out" 2>&1; then
+  if ${deployment.runtime}/bin/curriculum 'ComposeStartup.{ { Psyche core Opus } Claude [ intent-main-flow ] [ spirit-core ] }' > "$TMPDIR/placement.out" 2>&1; then
     echo "Curriculum admitted USER spirit" >&2
     exit 1
   fi
@@ -83,7 +83,7 @@ in pkgs.runCommand "curriculum-resolver-contract" {
     sleep 0.05
   done
   ${deployment.runtime}/bin/curriculum \
-    'ComposeStartup.{ { Psyche core Secondary } Claude [ intent-psyche intent-main-flow ] [] }' > "$TMPDIR/latest.datom"
+    'ComposeStartup.{ { Psyche core Opus } Claude [ intent-psyche intent-main-flow ] [] }' > "$TMPDIR/latest.datom"
   grep -q 'Every line of context is marked short-term or long-term.' "$TMPDIR/latest.datom"
   grep -q 'START_LATEST_FLOW_CONTEXT_WITNESS' "$TMPDIR/latest.datom"
   ${deployment.runtime}/bin/curriculum 'ResolveSources.[ intent-psyche intent-main-flow ]' > "$TMPDIR/latest-sources.datom"
