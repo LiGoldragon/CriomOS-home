@@ -36,15 +36,5 @@ pkgs.runCommand "rust-toolchain-check" { nativeBuildInputs = [ client ]; } ''
   done
   rustfmt
   test ! -e "$LOCAL_COMPILER_SENTINEL"
-  printf '[build]\njobs = 2\n\n' >legacy.toml
-  ${rustToolchain.retireLegacyConfig}/bin/retire-managed-local-cargo-jobs "$PWD/legacy.toml"
-  test ! -e legacy.toml
-  printf '[build]\njobs = 2\n\n[net]\noffline = true\n' >custom.toml
-  cp custom.toml custom.before
-  ${rustToolchain.retireLegacyConfig}/bin/retire-managed-local-cargo-jobs "$PWD/custom.toml"
-  cmp custom.toml custom.before
-  ln -s custom.toml symbolic.toml
-  ${rustToolchain.retireLegacyConfig}/bin/retire-managed-local-cargo-jobs "$PWD/symbolic.toml"
-  test -L symbolic.toml
   touch "$out"
 ''

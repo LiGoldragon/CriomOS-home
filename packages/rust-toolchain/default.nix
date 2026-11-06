@@ -25,24 +25,13 @@ let
       exit 126
     ''
   ) guardedCommands;
-  legacyCargoConfig = pkgs.writeText "legacy-local-cargo-config.toml" "[build]\njobs = 2\n\n";
-  retireLegacyConfig = pkgs.writeShellApplication {
-    name = "retire-managed-local-cargo-jobs";
-    runtimeInputs = [ pkgs.coreutils ];
-    text = ''
-      file="''${1:?Cargo config path required}"
-      if [ -f "$file" ] && [ ! -L "$file" ] && cmp -s ${legacyCargoConfig} "$file"; then
-        rm -- "$file"
-      fi
-    '';
-  };
   withRaw =
     toolchain:
     pkgs.runCommand "rust-toolchain-remote-only"
       {
         passthru = {
           raw = toolchain;
-          inherit guardedCommands retireLegacyConfig withRaw;
+          inherit guardedCommands withRaw;
         };
       }
       ''

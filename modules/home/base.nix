@@ -2,7 +2,6 @@
   config,
   pkgs,
   lib,
-  inputs,
   hexis,
   user,
   constants,
@@ -157,10 +156,6 @@ in
 
       activation.ensureNixProfileCompatibility = lib.hm.dag.entryBefore [ "installPackages" ] ''
         run ${nixProfileCompatibility}/bin/criomos-ensure-nix-profile-link
-      '';
-
-      activation.retireLocalCargoJobs = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        run ${inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.rust-toolchain.retireLegacyConfig}/bin/retire-managed-local-cargo-jobs "$HOME/.cargo/config.toml"
       '';
     };
 
