@@ -78,6 +78,7 @@
     ./profiles/min/harness.nix
     # What every Flow Nexus version shares; each version is its own unit.
     ./profiles/min/flow.nix
+    # Flow 0.51.2, retired: its package kept, no unit.
     ./profiles/min/flow-0511.nix
     # Flow 0.53.0 at its own place.
     ./profiles/min/flow-0530.nix

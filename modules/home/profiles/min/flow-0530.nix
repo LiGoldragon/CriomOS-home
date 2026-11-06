@@ -5,9 +5,12 @@
 # no Message Nexus. It keeps the default send-server row, because 0.53
 # reads the Codex app-servers for a flow-client Send from that row: with an
 # empty list no Codex flow could send. No Message runs, so the row's MCP
-# send server is never executed. The bare flow and flow-meta names stay on
-# 0.51.2 until 0.51 is stopped and retired.
+# send server is never executed. The bare flow and flow-meta names point
+# at it; 0.51 is retired.
 { config, ... }:
+let
+  cfg = config.criomosHome.flow0530;
+in
 {
   imports = [
     (import ./flow-nexus-version.nix {
@@ -21,4 +24,7 @@
     configurationDirectory = ./flow-nexus-config-0530;
     messageNexus = null;
   };
+
+  home.file.".local/bin/flow".source = "${cfg.clients}/bin/flow-0.53.0";
+  home.file.".local/bin/flow-meta".source = "${cfg.clients}/bin/flow-meta-0.53.0";
 }
