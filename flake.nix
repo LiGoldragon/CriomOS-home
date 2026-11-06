@@ -123,11 +123,6 @@
     harness.url = "github:LiGoldragon/harness/5a5c37129f4782af075f90ae09ba7b58e73a327a";
     harness.inputs.nixpkgs.follows = "nixpkgs";
 
-    # Flow Nexus is a pinned Home-managed service. Keep the package, client,
-    # and user unit in one immutable closure.
-    flow.url = "github:LiGoldragon/flow/b878b1b1aa622bb884ba3498a099f1c772716ea7";
-    flow.inputs.nixpkgs.follows = "nixpkgs";
-
     # Flow 0.51.1 stays versioned while its authenticated seats adopt it.
     flow-0511.url = "github:LiGoldragon/flow";
     flow-0511.inputs.nixpkgs.follows = "nixpkgs";
@@ -596,11 +591,9 @@
             inherit inputs;
           };
           message-service-path = checkPkgs.callPackage ./checks/message-service-path { inherit inputs; };
-          flow-service-path = checkPkgs.callPackage ./checks/flow-service-path { inherit inputs; };
           remote-build-command-guard = checkPkgs.callPackage ./checks/remote-build-command-guard {
             inherit inputs;
           };
-          context-deploy = checkPkgs.callPackage ./checks/context-deploy { };
           flow-message-next = checkPkgs.callPackage ./checks/flow-message-next { inherit inputs; };
           herdr-toast-delivery = checkPkgs.callPackage ./checks/herdr-toast-delivery { inherit inputs; };
           herdr-agent-executable = checkPkgs.callPackage ./checks/herdr-agent-executable { inherit inputs; };

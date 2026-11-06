@@ -28,39 +28,6 @@ let
   disabledSession = "${disabled.config.home.sessionVariablesPackage}/etc/profile.d/hm-session-vars.sh";
   cargoGuard = enabled.config.home.file.".local/libexec/remote-build-command-guard/cargo".source;
   rustcGuard = enabled.config.home.file.".local/libexec/remote-build-command-guard/rustc".source;
-  flowService =
-    guardEnabled:
-    let
-      module = import ../../modules/home/profiles/min/flow.nix {
-        inherit inputs pkgs;
-        lib = pkgs.lib;
-        user = {
-          name = "li";
-          size = "Min";
-        };
-        config = {
-          home = {
-            username = "li";
-            homeDirectory = home;
-          };
-          criomosHome.flow = {
-            enable = true;
-            package = inputs.flow.packages.${pkgs.stdenv.hostPlatform.system}.default;
-            stateDirectory = "flow-guard-check";
-            solModel = "gpt-6.1-sol";
-            landingRepository = null;
-            landingDeployRequest = null;
-          };
-          criomosHome.remoteBuildCommandGuard = {
-            enable = guardEnabled;
-            directory = guardDirectory;
-          };
-        };
-      };
-    in
-    module.config.content.systemd.user.services.flow-nexus.Service;
-  enabledFlow = flowService true;
-  disabledFlow = flowService false;
   ordinaryOutput = inputs.self.homeConfigurations.li.config;
   guardedOutput = inputs.self.homeConfigurations."li-remote-build-guard".config;
 in
@@ -69,20 +36,11 @@ assert !disabled.config.criomosHome.remoteBuildCommandGuard.enable;
 assert !ordinaryOutput.criomosHome.remoteBuildCommandGuard.enable;
 assert guardedOutput.criomosHome.remoteBuildCommandGuard.enable;
 assert
-  guardedOutput.systemd.user.services.flow-nexus.Service.Environment == enabledFlow.Environment;
-assert
   guardedOutput.systemd.user.services.codex-remote-control.Service.Environment == [
     "PATH=${guardDirectory}:%h/.local/bin:/run/wrappers/bin:/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin:/etc/profiles/per-user/%u/bin:%h/.nix-profile/bin"
   ];
 assert !(disabled.config.home.file ? ".local/libexec/remote-build-command-guard/cargo");
 assert !(disabled.config.home.file ? ".local/libexec/remote-build-command-guard/rustc");
-assert
-  enabledFlow.Environment == [
-    "PATH=${guardDirectory}:%h/.nix-profile/bin:/etc/profiles/per-user/%u/bin:/run/current-system/sw/bin"
-  ];
-assert
-  disabledFlow.Environment
-  == [ "PATH=%h/.nix-profile/bin:/etc/profiles/per-user/%u/bin:/run/current-system/sw/bin" ];
 pkgs.runCommand "remote-build-command-guard" { nativeBuildInputs = [ pkgs.coreutils ]; } ''
   set -eu
   home=${home}
