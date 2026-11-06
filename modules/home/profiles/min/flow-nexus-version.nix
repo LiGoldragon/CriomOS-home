@@ -142,15 +142,15 @@ let
   # signal, every row of metaflows.datom is OnDemand.
   queries = [
     "${nexusQuery}"
-    "${./flow-nexus-config/models.datom}"
-    "${./flow-nexus-config/thresholds.datom}"
-    "${./flow-nexus-config/leave-outs.datom}"
+    "${cfg.configurationDirectory + "/models.datom"}"
+    "${cfg.configurationDirectory + "/thresholds.datom"}"
+    "${cfg.configurationDirectory + "/leave-outs.datom"}"
     "${sendServersQuery}"
     # The live declaration corpus is owner state and must not be reset by a source snapshot.
-    "${home}/.local/state/flow-declarations/metaflows.datom"
-    "${./flow-nexus-config/harness-flags.datom}"
-    "${./flow-nexus-config/investigation.datom}"
-    "${./flow-nexus-config/default-minutes.datom}"
+    cfg.declarationPath
+    "${cfg.configurationDirectory + "/harness-flags.datom"}"
+    "${cfg.configurationDirectory + "/investigation.datom"}"
+    "${cfg.configurationDirectory + "/default-minutes.datom"}"
   ];
   # Runs before the Nexus starts, at every start, so the declared
   # configuration is in the store before any worker runs. `--configure-only`
@@ -257,6 +257,16 @@ in
       type = lib.types.strMatching "flow-[a-zA-Z0-9-]+";
       default = "flow-${slug}";
       description = "Directory under $XDG_RUNTIME_DIR holding this Nexus's flow.sock and flow-meta.sock.";
+    };
+    declarationPath = lib.mkOption {
+      type = lib.types.str;
+      default = "${home}/.local/state/flow-declarations/metaflows.datom";
+      description = "The owner's mutable metaflow declaration file this Nexus is configured from.";
+    };
+    configurationDirectory = lib.mkOption {
+      type = lib.types.path;
+      default = ./flow-nexus-config;
+      description = "The directory of this version's immutable configuration queries, in its own schema.";
     };
     messageNexus = lib.mkOption {
       type = lib.types.nullOr (

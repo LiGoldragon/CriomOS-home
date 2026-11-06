@@ -1,0 +1,19 @@
+Configure.HarnessFlags.[
+  { { Field publisher Haiku } «--disallowedTools SendMessage,ListAgents» }
+  { { Psyche psycheNexus Fable } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
+  { { Psyche psycheNexus Opus } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
+  { { Psyche codexManager Opus } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
+  { { Psyche codexManager Sonnet } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
+  { { Psyche book Haiku } «--disallowedTools SendMessage,ListAgents» }
+  { { Psyche book Sonnet } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
+  { { Psyche core Fable } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
+  { { Psyche core Haiku } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
+  { { Psyche core Opus } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
+  { { Psyche core Sonnet } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
+  { { Psyche creo Fable } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
+  { { Psyche creo Opus } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
+  { { Psyche unity Fable } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
+  { { Psyche unity Opus } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
+  { { Psyche persona Fable } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
+  { { Psyche persona Opus } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
+]
