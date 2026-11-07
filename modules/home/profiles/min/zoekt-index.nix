@@ -7,7 +7,8 @@
 }:
 # zoekt: indexed code search over the git repositories under a root.
 # The `zoekt` command reads the shards in ~/.local/share/zoekt/index;
-# a timer re-indexes every repository's HEAD, incrementally by commit.
+# a timer fetches every repository and re-indexes its origin's default
+# branch, incrementally by commit.
 let
   cfg = config.criomosHome.zoektIndex;
   sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
@@ -25,11 +26,20 @@ let
       test -d "$root" || exit 0
       index_directory="''${XDG_DATA_HOME:-$HOME/.local/share}/zoekt/index"
       mkdir -p "$index_directory"
+      # Each repository is fetched and its origin's default branch indexed,
+      # so a search answers what is published, whatever a checkout holds.
+      # A worktree's .git is a file and is left out: its repository is
+      # indexed once.
       # shellcheck disable=SC2016
-      find "$root" -maxdepth ${toString cfg.depth} -name .git -prune -print0 \
-        | xargs -0 -r -n1 -P${toString cfg.jobs} sh -c \
-            'zoekt-git-index -index "$0" -branches HEAD "$(dirname "$1")" >/dev/null 2>&1 || true' \
-            "$index_directory"
+      find "$root" -maxdepth ${toString cfg.depth} -name .git -type d -prune -print0 \
+        | xargs -0 -r -n1 -P${toString cfg.jobs} sh -c '
+            repository=$(dirname "$1")
+            git -C "$repository" remote get-url origin >/dev/null 2>&1 || exit 0
+            git -C "$repository" fetch --quiet origin >/dev/null 2>&1 || true
+            git -C "$repository" symbolic-ref -q refs/remotes/origin/HEAD >/dev/null \
+              || git -C "$repository" remote set-head origin --auto >/dev/null 2>&1 || true
+            zoekt-git-index -index "$0" -prefix refs/remotes/origin/ -branches HEAD "$repository" >/dev/null 2>&1 || true
+          ' "$index_directory"
     '';
   };
 in
