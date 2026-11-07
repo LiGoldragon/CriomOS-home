@@ -18,13 +18,13 @@
     system.url = "path:./stubs/no-system";
 
     prompt-relay-source = {
-      url = "github:LiGoldragon/primary/9d144e3fde0ec5060c19088b20c3bee93c7eb115";
+      url = "github:LiGoldragon/primary";
       flake = false;
     };
 
     # Primary's immutable Curriculum package provides the user CLI and Nexus.
     primary = {
-      url = "github:LiGoldragon/primary/4fdd3888ebc4acf5705aa6d40bf9aad9cbcbd729";
+      url = "github:LiGoldragon/primary";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.curriculum = {
         url = "github:LiGoldragon/Curriculum";
@@ -57,15 +57,15 @@
     # core-checkup is pinned to the revision the hand-made unit ran; the Field
     # census, checkup, and 98eb43 monitor to primary main; Luna research to field main.
     core-checkup-source = {
-      url = "github:LiGoldragon/primary/d3002f4bf9ae81852c3b7e5e65f4793afbc1e3da";
+      url = "github:LiGoldragon/primary";
       flake = false;
     };
     field-monitoring-source = {
-      url = "github:LiGoldragon/primary/1e8eee26974c68857a3caf9d95ceff4570146294";
+      url = "github:LiGoldragon/primary";
       flake = false;
     };
     field-luna-research-source = {
-      url = "github:LiGoldragon/field/34fe6c8899684de4f892142d4357a3ca3d67895b";
+      url = "github:LiGoldragon/field";
       flake = false;
     };
 
@@ -85,13 +85,13 @@
     # Capability-authorized artifact broker contract consumed by the Tailnet
     # gateway integration check. Production serving remains fail-closed in the
     # producer until a trusted peer-identity transport is configured.
-    plannotator-capability.url = "github:LiGoldragon/plannotator/013912e008ff";
+    plannotator-capability.url = "github:LiGoldragon/plannotator";
     plannotator-capability.inputs.nixpkgs.follows = "nixpkgs";
 
     # Compositor + shell.
     niri-flake.url = "github:sodiboo/niri-flake";
     niri-flake.inputs.nixpkgs.follows = "nixpkgs";
-    noctalia.url = "github:LiGoldragon/noctalia/9778437e8bd326d6d82340fff6b0400eee2caf6f";
+    noctalia.url = "github:LiGoldragon/noctalia";
     noctalia.inputs.nixpkgs.follows = "nixpkgs";
 
     # Styling.
@@ -108,7 +108,7 @@
     claude-answers.inputs.nixpkgs.follows = "nixpkgs";
 
     # field-clj — fail-closed, path-scoped Jujutsu commit CLI for Field.
-    field-clj.url = "git+ssh://git@github.com/LiGoldragon/field-clj.git?rev=3e5f4501e2017b97b51c7cfaff2b2e8d2a504e05";
+    field-clj.url = "git+ssh://git@github.com/LiGoldragon/field-clj.git";
     field-clj.inputs.nixpkgs.follows = "nixpkgs";
 
     # Listener — CriomOS speech-to-text runtime for the daily dictation path.
@@ -120,7 +120,7 @@
     # harness-daemon (the one-call usage snapshot). Home installs the pinned
     # package in the minimum profile beside the Codex and Claude clients and
     # runs the daemon from the same revision (modules/home/profiles/min/harness.nix).
-    harness.url = "github:LiGoldragon/harness/5a5c37129f4782af075f90ae09ba7b58e73a327a";
+    harness.url = "github:LiGoldragon/harness";
     harness.inputs.nixpkgs.follows = "nixpkgs";
 
     # Flow 0.51.2, retired: its package and versioned clients stay; no unit runs it.
@@ -134,7 +134,7 @@
     # The retired messenger prototype, kept only for the Field monitors that
     # still name its hm-* commands (off unless enabled). Flows send through
     # the Flow CLI; Home installs no hm-* command.
-    messenger-clj.url = "github:LiGoldragon/messenger-clj/cb0e384e5e091cf9cf1725311ad4490644c29e26";
+    messenger-clj.url = "github:LiGoldragon/messenger-clj";
     messenger-clj.inputs.nixpkgs.follows = "nixpkgs";
 
     # The public immutable recipe owns the audited proprietary installer source;
@@ -147,7 +147,7 @@
     # built inline via buildGoModule in modules/home/profiles/med/cli-tools.nix.
     # Wrapped with gopass-driven env injection (see lore/annas/basic-usage.md).
     annas-mcp = {
-      url = "github:LiGoldragon/annas-mcp?ref=v0.0.5";
+      url = "github:LiGoldragon/annas-mcp";
       flake = false;
     };
 
@@ -167,8 +167,8 @@
     # Agent harness managers.  Herdr supplies its official tagged flake;
     # Orca remains packaged in its dedicated repository and Home consumes
     # only that pinned package output.
-    herdr.url = "github:herdrdev/herdr/v0.8.2";
-    orca-ide.url = "github:Samuka007/nix-orca/249a8d3c1bb2842ddec882ef2c1afd28c426b19e";
+    herdr.url = "github:herdrdev/herdr";
+    orca-ide.url = "github:Samuka007/nix-orca";
 
     # Google Workspace CLI for no-MCP assistant access to Gmail, Drive,
     # Calendar, Docs, Sheets, Slides, Tasks, and People/Contacts.
@@ -178,41 +178,41 @@
     # Chroma — unified visual-state daemon (theme + warmth + brightness).
     # Replaces darkman + the nightshift-* services + the brightness shell
     # wrapper. Consumed in modules/home/profiles/min/chroma.nix.
-    chroma.url = "github:LiGoldragon/chroma/fc3a74ac5a0b5c92fc8f65d38cb8d6ba32d2bb37";
+    chroma.url = "github:LiGoldragon/chroma";
     chroma.inputs.nixpkgs.follows = "nixpkgs";
 
     # Resident Emacs projection for Chroma's desired theme state.  Home owns
     # the concrete Ignis themes and supplies this package its exact Emacs set.
-    chroma-emacs.url = "github:LiGoldragon/chroma-emacs/119a231358cf69c16161812caf69fff4b726be5c";
+    chroma-emacs.url = "github:LiGoldragon/chroma-emacs";
     chroma-emacs.inputs.nixpkgs.follows = "nixpkgs";
 
     # Spirit owns the coherent daemon, judge, judge-config, and provider
     # derivation set. Home supplies paths and unit policy but never selects
     # those service component versions independently.
-    spirit.url = "github:LiGoldragon/spirit/008d8ca0e4a309bdd922fae61681cdc97a484bac";
+    spirit.url = "github:LiGoldragon/spirit";
     spirit.inputs.nixpkgs.follows = "nixpkgs";
 
     # Agent — retained schema-derived local provider service and CLI. It is
     # independent of the Spirit-owned judge/provider composition.
-    agent.url = "github:LiGoldragon/agent/3a3534931be790e63d3db01bbd238ad044b2d35f";
+    agent.url = "github:LiGoldragon/agent";
     agent.inputs.nixpkgs.follows = "nixpkgs";
     agent.inputs.crane.follows = "crane";
 
     # Aggregator — local transcript/evidence recovery daemon. Pinned to the
     # audited source accepted for Home-profile deployment.
-    aggregator.url = "github:LiGoldragon/aggregator/f777eb2a6e92d26eb0ce7315586c939c071111a0";
+    aggregator.url = "github:LiGoldragon/aggregator";
     aggregator.inputs.nixpkgs.follows = "nixpkgs";
     aggregator.inputs.crane.follows = "crane";
 
     # Orchestrate Nexus — per-user path-reservation Nexus. Its executable owns
     # the default fresh Sema store and its ordinary/meta XDG sockets; Home
     # supplies lifecycle and client socket bindings without a bootstrap frame.
-    orchestrate.url = "github:LiGoldragon/orchestrate/c7c44cb39934b0727d724a6aa03a36a2a94cacf9";
+    orchestrate.url = "github:LiGoldragon/orchestrate";
     orchestrate.inputs.nixpkgs.follows = "nixpkgs";
 
     # Message — its message-mcp-send is the send server each Flow Nexus
     # version is configured with (flow-nexus-version.nix).
-    message.url = "github:LiGoldragon/message/d5ab3000ebe86719fbcc808d7383c525b8ee03d6";
+    message.url = "github:LiGoldragon/message";
     message.inputs.nixpkgs.follows = "nixpkgs";
     message.inputs.crane.follows = "crane";
 
@@ -222,7 +222,7 @@
     # (buildNpmPackage over the `packages/coding-agent` workspace).
     # Replaces the previous pi-mentci wrapper flake (dropped 2026-04-25).
     pi-src = {
-      url = "github:earendil-works/pi?ref=v0.84.1";
+      url = "github:earendil-works/pi";
       flake = false;
     };
 
@@ -241,7 +241,7 @@
     # Maintained reliability fork. Its ledger records the retained local
     # acceptance behavior and validation witnesses.
     pi-subagents-src = {
-      url = "github:LiGoldragon/pi-subagents-nicobailon/bfca4f8317551fa9e8e8ef82c2608a6216953216";
+      url = "github:LiGoldragon/pi-subagents-nicobailon";
       flake = false;
     };
     pi-ultra-subagents-src = {
@@ -259,7 +259,7 @@
       url = "https://registry.npmjs.org/pi-continue/-/pi-continue-0.9.3.tgz";
       flake = false;
     };
-    pi-session-namer.url = "github:LiGoldragon/pi-session-namer/76a145939d8fc52bda07117e7c04ad66f84f2114";
+    pi-session-namer.url = "github:LiGoldragon/pi-session-namer";
     pi-session-namer.inputs.nixpkgs.follows = "nixpkgs";
     pi-web-access-src = {
       type = "file";
