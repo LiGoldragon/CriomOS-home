@@ -1576,11 +1576,11 @@
         "unconfigured-flow": "unconfigured-flow_3"
       },
       "locked": {
-        "lastModified": 1794004732,
-        "narHash": "sha256-xvuYyEL9zh18HSIM5UMoqqVdM7+1yeH++ol1I9O/Gq8=",
+        "lastModified": 1794014854,
+        "narHash": "sha256-GOSGuTdOqsmHa8LEFe0LpGN8QDWAwcRJSf8z98FPCzU=",
         "owner": "LiGoldragon",
         "repo": "flow",
-        "rev": "524661f28b663dd7b6e17b1be3051580baa23923",
+        "rev": "fc27dd8676108c443886541c91fb13c054b21fe9",
         "type": "github"
       },
       "original": {
