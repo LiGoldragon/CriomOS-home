@@ -7,8 +7,9 @@
 }:
 let
   enabled = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size "Min";
-  package = if birdTarget then config.criomos.corePackages.codex else pkgs.callPackage ../../../../owned-agents/codex-next { };
-  birdTarget = user.name == "bird" && user.hasPublicKey && user.size == "Max" && config.home.username == "bird" && config.home.homeDirectory == "/home/bird";
+  package = if stableCodex then config.criomos.corePackages.codex else pkgs.callPackage ../../../../owned-agents/codex-next { };
+  # The user's key here carrying StableCodex keeps the stable core Codex and its own account data.
+  stableCodex = builtins.elem "StableCodex" user.capabilities;
   nextHome = "${config.home.homeDirectory}/.codex-next";
   socket = "${nextHome}/app-server-control/app-server-control.sock";
   recoveryUnit = "codex-remote-control-next-recovery.service";
@@ -17,9 +18,7 @@ let
     umask 077
     ${pkgs.coreutils}/bin/mkdir -p ${lib.escapeShellArg nextHome}
     ${pkgs.coreutils}/bin/chmod 700 ${lib.escapeShellArg nextHome}
-    # Bird keeps the existing auth and session data in place. Never bootstrap
-    # another authentication copy as a side effect of her package upgrade.
-    ${lib.optionalString (!birdTarget) ''
+    ${lib.optionalString (!stableCodex) ''
     # Bootstrap account data once; never share the mutable session database.
     for file in auth.json config.toml; do
       if [ ! -e ${lib.escapeShellArg nextHome}/"$file" ] && [ -f ${lib.escapeShellArg config.home.homeDirectory}/.codex/"$file" ]; then

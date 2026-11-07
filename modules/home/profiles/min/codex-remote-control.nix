@@ -17,9 +17,10 @@ let
   mediumEnabled = sizeAtLeast "Medium";
   edgeEnabled = ((horizon.node.behavesAs or { }).edge or false);
   desktopEnabled = edgeEnabled && mediumEnabled;
-  birdTarget = user.name == "bird" && user.hasPublicKey && user.size == "Max" && config.home.username == "bird" && config.home.homeDirectory == "/home/bird";
+  # The user's key here carrying StableCodex keeps the stable core Codex and its own account data.
+  stableCodex = builtins.elem "StableCodex" user.capabilities;
   codexCliPackage = config.criomos.corePackages.codex;
-  remoteClient = if birdTarget then "${codexCliPackage}/bin/codex" else "${config.criomosHome.codexNext.rawClientPackage}/bin/codex";
+  remoteClient = if stableCodex then "${codexCliPackage}/bin/codex" else "${config.criomosHome.codexNext.rawClientPackage}/bin/codex";
   codexStable = pkgs.writeShellApplication {
     name = "codex";
     text = ''
