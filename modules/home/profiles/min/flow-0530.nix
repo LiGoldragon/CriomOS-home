@@ -1,16 +1,9 @@
-# Flow Nexus 0.53.0 at its own place, beside 0.51.2: store
-# ~/.local/state/flow-0530, sockets $XDG_RUNTIME_DIR/flow-0530. It is
-# configured from its own mutable declaration file and its own Model-shaped
-# configuration directory; the 0.51 Layer files stay as they are. It admits
-# no Message Nexus. It keeps the default send-server row, because 0.53
-# reads the Codex app-servers for a flow-client Send from that row: with an
-# empty list no Codex flow could send. No Message runs, so the row's MCP
-# send server is never executed. The bare flow and flow-meta names point
-# at it; 0.51 is retired.
+# Flow Nexus 0.53.0 is retired: no unit runs it, so nothing starts or
+# restarts it at login or after a failure. Its package stays in this
+# generation under its versioned client names, so the 0.53.0 artifact and
+# its store at ~/.local/state/flow-0530 remain for an operator to read.
+# The bare flow and flow-meta names point at 0.53.1.
 { config, ... }:
-let
-  cfg = config.criomosHome.flow0530;
-in
 {
   imports = [
     (import ./flow-nexus-version.nix {
@@ -20,11 +13,11 @@ in
   ];
 
   criomosHome.flow0530 = {
+    enable = false;
     declarationPath = "${config.home.homeDirectory}/.local/state/flow-declarations/metaflows-0530.datom";
     configurationDirectory = ./flow-nexus-config-0530;
     messageNexus = null;
   };
 
-  home.file.".local/bin/flow".source = "${cfg.clients}/bin/flow-0.53.0";
-  home.file.".local/bin/flow-meta".source = "${cfg.clients}/bin/flow-meta-0.53.0";
+  home.packages = [ config.criomosHome.flow0530.clients ];
 }

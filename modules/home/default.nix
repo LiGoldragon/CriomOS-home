@@ -80,9 +80,9 @@
     ./profiles/min/flow.nix
     # Flow 0.51.2, retired: its package kept, no unit.
     ./profiles/min/flow-0511.nix
-    # Flow 0.53.0 at its own place.
+    # Flow 0.53.0, retired: its package kept, no unit.
     ./profiles/min/flow-0530.nix
-    # Flow 0.53.1 at its own place, beside 0.53.0.
+    # Flow 0.53.1 at its own place; the bare flow names point at it.
     ./profiles/min/flow-0531.nix
     # Next Flow and next Message beside the stable pair, on their own
     # sockets and stores (the stable/next pattern, lib/stable-next-service.nix).
