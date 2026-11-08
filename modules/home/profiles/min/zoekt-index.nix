@@ -30,5 +30,15 @@ in
 {
   config = lib.mkIf (sizeAtLeast "Min") {
     home.packages = [ pkgs.zoekt runner ];
+
+    # Git 2.55 configuration hooks compose with repository hook files; unlike
+    # core.hooksPath, this does not replace hooks owned by the repository.
+    programs.git.settings.hook.zoekt-index = {
+      command = "${runner}/bin/zoekt-index-repository .";
+      event = [
+        "post-commit"
+        "post-merge"
+      ];
+    };
   };
 }
