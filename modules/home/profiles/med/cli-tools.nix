@@ -51,6 +51,10 @@ lib.mkIf (sizeAtLeast "Medium") {
     inputs.field-clj.packages.${system}.default
     annas
 
+    # cf: Cloudflare's official CLI; its wrapper reads the API token
+    # from gopass at cloudflare.com/api-token when cf runs.
+    (pkgs.callPackage ../../../../packages/cf { })
+
     # bd work-tracking runtime: bd drives beads, dolt persists them,
     # and tmux/flock/lsof/pgrep are the process tools bd shells out to.
     pkgs.beads
