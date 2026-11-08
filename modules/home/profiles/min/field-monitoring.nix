@@ -5,12 +5,9 @@
   pkgs,
   ...
 }:
-# Field monitoring — the user timers that ran on ouranos as hand-made unit
-# files (core-checkup, field-census, field-checkup-shadow, field-luna-research,
-# field-monitor-98eb43), declared here from their live unit files with the
-# scripts taken from pinned sources instead of working copies. Every monitor
-# is off unless enabled: whether a monitor is kept, and on which host or
-# profile it runs, is a data decision made outside this module.
+# Field monitoring — callable versions of four jobs that once ran from
+# hand-made timers on ouranos. Their scripts come from pinned sources instead
+# of working copies. Every job is off unless enabled and has no schedule.
 #
 let
   inherit (lib)
@@ -32,8 +29,8 @@ let
   claudePackage = config.criomos.corePackages.claude;
 
   # Pinned script sources. core-checkup matches the store source the live
-  # unit ran (primary d3002f4b); the Field census, checkup, and 98eb43 monitor
-  # come from primary main 1e8eee26; Field Luna research from field main.
+  # unit ran (primary d3002f4b); the Field census and checkup come from primary
+  # main 1e8eee26; Field Luna research comes from field main.
   coreCheckupSource = inputs.core-checkup-source;
   fieldMonitoringSource = inputs.field-monitoring-source;
   fieldSource = inputs.field-luna-research-source;
@@ -69,25 +66,11 @@ let
     '';
   };
 
-  # The 98eb43 monitor names its tools and directories as absolute constants;
-  # the pinned copy has them replaced with store paths and this home's roots.
-  fieldMonitor98eb43Script = pkgs.runCommand "field-monitor-98eb43-census.mjs" { } ''
-    cp ${fieldMonitoringSource}/flows/98eb43/monitor/census.mjs $out
-    substituteInPlace $out \
-      --replace-fail "const root = '/home/li/primary';" "const root = '${cfg.primaryRoot}';" \
-      --replace-fail "const stateDirectory = '/home/li/.local/state/field-monitor-98eb43';" "const stateDirectory = '${config.xdg.stateHome}/field-monitor-98eb43';" \
-      --replace-fail "const herdr = '/home/li/.nix-profile/bin/herdr';" "const herdr = '${herdrPackage}/bin/herdr';" \
-      --replace-fail "const hmList = '/home/li/.local/bin/hm-list';" "const hmList = '${messengerCljPackage}/bin/hm-list';" \
-      --replace-fail "const hmSend = '/home/li/.local/bin/hm-send';" "const hmSend = '${messengerCljPackage}/bin/hm-send';" \
-      --replace-fail "const jj = '/home/li/.nix-profile/bin/jj';" "const jj = '${pkgs.jujutsu}/bin/jj';"
-  '';
-
   monitorNames = {
     coreCheckup = "core-checkup";
     fieldCensus = "field-census";
     fieldCheckupShadow = "field-checkup-shadow";
     fieldLunaResearch = "field-luna-research";
-    fieldMonitor98eb43 = "field-monitor-98eb43";
   };
   enabledUnitNames = lib.concatMap (option: [
     "${monitorNames.${option}}.service"
@@ -114,7 +97,7 @@ in
     };
 
     coreCheckup = {
-      enable = mkEnableOption "the bounded monitoring-only core checkup every 30 minutes";
+      enable = mkEnableOption "the bounded monitoring-only core checkup callable service";
       roster = mkOption {
         type = types.nullOr (types.attrsOf types.anything);
         default = null;
@@ -129,7 +112,7 @@ in
     };
 
     fieldCensus = {
-      enable = mkEnableOption "the passive Field census snapshot every five minutes";
+      enable = mkEnableOption "the passive Field census snapshot callable service";
       observeOnly = mkOption {
         type = types.bool;
         default = true;
@@ -144,7 +127,7 @@ in
     };
 
     fieldCheckupShadow = {
-      enable = mkEnableOption "the passive three-aspect Field checkup every thirty minutes";
+      enable = mkEnableOption "the passive three-aspect Field checkup callable service";
       rosterPath = mkOption {
         type = types.str;
         default = "${config.xdg.configHome}/field-checkup-shadow/roster.json";
@@ -154,12 +137,9 @@ in
     };
 
     fieldLunaResearch = {
-      enable = mkEnableOption "the bounded read-only Field Luna source research every 30 minutes";
+      enable = mkEnableOption "the bounded read-only Field Luna source research callable service";
     };
 
-    fieldMonitor98eb43 = {
-      enable = mkEnableOption "flow 98eb43's census monitor every five minutes (flow-scoped: drop when 98eb43 ends)";
-    };
   };
 
   config = mkMerge [
@@ -210,15 +190,6 @@ in
           ExecStart = "${nodeBin} ${coreCheckupSource}/tools/core-checkup.mjs ${coreCheckupRoster} ${cfg.coreCheckup.policyPath} %S/core-checkup/events.ndjson %S/core-checkup/state.json";
         };
       };
-      systemd.user.timers.core-checkup = {
-        Unit.Description = "Run core checkup every 30 minutes";
-        Timer = {
-          OnBootSec = "5m";
-          OnUnitActiveSec = "30min";
-          Persistent = true;
-        };
-        Install.WantedBy = [ "timers.target" ];
-      };
     })
 
     (mkIf cfg.fieldCensus.enable {
@@ -249,15 +220,6 @@ in
           UMask = "0077";
         };
       };
-      systemd.user.timers.field-census = {
-        Unit.Description = "Sample the Field census every five minutes";
-        Timer = {
-          OnBootSec = "5min";
-          OnUnitActiveSec = "5min";
-          Persistent = true;
-        };
-        Install.WantedBy = [ "timers.target" ];
-      };
     })
 
     (mkIf cfg.fieldCheckupShadow.enable {
@@ -281,15 +243,6 @@ in
           UMask = "0077";
         };
       };
-      systemd.user.timers.field-checkup-shadow = {
-        Unit.Description = "Passive three-aspect checkup every thirty minutes";
-        Timer = {
-          OnBootSec = "7min";
-          OnUnitActiveSec = "30min";
-          Persistent = true;
-        };
-        Install.WantedBy = [ "timers.target" ];
-      };
     })
 
     (mkIf cfg.fieldLunaResearch.enable {
@@ -302,36 +255,6 @@ in
           ExecStart = "${fieldLunaResearchRunner}/bin/field-luna-research-run --once";
           TimeoutStartSec = "610";
         };
-      };
-      systemd.user.timers.field-luna-research = {
-        Unit.Description = "Run bounded Field Luna research every 30 minutes";
-        Timer = {
-          OnBootSec = "5m";
-          OnUnitActiveSec = "30m";
-          Persistent = true;
-          Unit = "field-luna-research.service";
-        };
-        Install.WantedBy = [ "timers.target" ];
-      };
-    })
-
-    (mkIf cfg.fieldMonitor98eb43.enable {
-      systemd.user.services.field-monitor-98eb43 = {
-        Unit.Description = "Bounded Field Monitor 98eb43 census";
-        Service = {
-          Type = "oneshot";
-          ExecStart = "${nodeBin} ${fieldMonitor98eb43Script}";
-        };
-      };
-      systemd.user.timers.field-monitor-98eb43 = {
-        Unit.Description = "Run Field Monitor 98eb43 census every five minutes";
-        Timer = {
-          OnBootSec = "1min";
-          OnUnitActiveSec = "5min";
-          Persistent = true;
-          Unit = "field-monitor-98eb43.service";
-        };
-        Install.WantedBy = [ "timers.target" ];
       };
     })
   ];

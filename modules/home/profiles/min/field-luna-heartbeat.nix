@@ -1,7 +1,7 @@
 { config, lib, pkgs, inputs, ... }:
 # Field Luna heartbeat — bounded Field Luna retirement and archive
-# maintenance, triggered by a timer and by Hacky Messenger lifecycle paths.
-# Off unless enabled: the service, its timer, and its path unit are declared
+# maintenance, triggered by Hacky Messenger lifecycle paths.
+# Off unless enabled: the service and its path unit are declared
 # only under criomosHome.fieldLunaHeartbeat.enable, so a Home activation does
 # not start retirement work by default.
 let
@@ -16,7 +16,7 @@ let
   };
 in {
   options.criomosHome.fieldLunaHeartbeat = {
-    enable = lib.mkEnableOption "the bounded Field Luna retirement and archive maintenance (timer every 30 minutes and on Hacky Messenger lifecycle changes)";
+    enable = lib.mkEnableOption "the bounded Field Luna retirement and archive maintenance on Hacky Messenger lifecycle changes";
   };
 
   config = lib.mkIf cfg.enable {
@@ -32,11 +32,6 @@ in {
         NoNewPrivileges = true;
         ExecStart = "${runner}/bin/field-luna-heartbeat %S/field-luna-heartbeat ${inputs.prompt-relay-source}";
       };
-    };
-    systemd.user.timers.field-luna-heartbeat = {
-      Unit.Description = "Run Field Luna maintenance every 30 minutes";
-      Timer = { OnBootSec = "5m"; OnUnitActiveSec = "30min"; Persistent = true; };
-      Install.WantedBy = [ "timers.target" ];
     };
     systemd.user.paths.field-luna-heartbeat = {
       Unit.Description = "Run Field Luna maintenance after HM lifecycle changes";

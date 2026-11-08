@@ -1,8 +1,8 @@
 # Regenerates the Primary workspace skill directories from the main of
 # psyche-belief, mind-belief and field-belief as it stands now.
-# Each repository is fetched from origin main; the newer of local main and
-# the fetched main is read straight from git objects, never from a working
-# tree. Environment: PRIMARY (workspace), GENERATOR (generate.clj).
+# Each repository is read from its local main. Remote changes enter through
+# an explicit fetch; moving the local ref then triggers the path unit.
+# Environment: PRIMARY (workspace), GENERATOR (generate.clj).
 primary="${PRIMARY:-$HOME/primary}"
 generator="${GENERATOR:?GENERATOR is the path of generate.clj}"
 surfaces=".claude/skills .agents/skills .codex/skills .pi/skills .opencode/skills"
@@ -16,12 +16,7 @@ trap 'rm -rf "$work"' EXIT
 sources=()
 for name in psyche-belief mind-belief field-belief; do
   repo="$primary/repos/$name"
-  git -C "$repo" fetch --quiet origin main || echo "fetch failed for $name; using local main" >&2
   revision="$(git -C "$repo" rev-parse --verify refs/heads/main)"
-  if remote="$(git -C "$repo" rev-parse --verify --quiet refs/remotes/origin/main)" \
-    && git -C "$repo" merge-base --is-ancestor "$revision" "$remote"; then
-    revision="$remote"
-  fi
   mkdir "$work/$name"
   git -C "$repo" archive "$revision" | tar -x -C "$work/$name"
   sources+=("$work/$name=$revision")

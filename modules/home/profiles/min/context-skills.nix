@@ -45,16 +45,5 @@ in
       Install.WantedBy = [ "default.target" ];
     };
 
-    # Backstop for a push from another machine, which moves no local ref
-    # until fetched.
-    systemd.user.timers.context-skills = {
-      Unit.Description = "Fetch context main periodically";
-      Timer = {
-        OnBootSec = "1min";
-        OnUnitActiveSec = "2min";
-        Unit = "context-skills.service";
-      };
-      Install.WantedBy = [ "timers.target" ];
-    };
   };
 }
