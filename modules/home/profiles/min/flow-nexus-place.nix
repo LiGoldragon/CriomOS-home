@@ -22,23 +22,24 @@
 # unit is Type=notify. On a fresh memory it starts with the configuration
 # built into its executable. Its configuration is declared after it by its
 # configure unit, ordered After= and Requires= it, which hands the running
-# Nexus one Configure per family through flow-meta; the Nexus takes each at
+# Nexus one Configure per family through flow-nexus-meta; the Nexus takes each
+# at
 # once and answers Configured.Replaced, or Configured.Unchanged when its
 # memory already holds it. A changed declaration restarts the configure
 # unit only, never the Nexus.
 #
 # Its clients take the datom and nothing else (vision:nexus-v1): the place is
-# read from one configuration datom, $XDG_CONFIG_HOME/nexus/flow.datom,
-# `{ <place> }`. This version's own clients (flow-<version>, flow-meta-
-# <version>) and its configure unit run with XDG_CONFIG_HOME set to
-# `placeConfiguration`, a directory whose nexus/flow.datom names this
-# version's place, so they reach it whatever the user's configuration names;
-# no place is ever typed. The user's ~/.config/nexus/flow.datom is declared
-# by the version at main (flow-0533.nix).
+# read from one configuration datom, $XDG_CONFIG_HOME/nexus/flow-nexus.datom,
+# `{ <place> }`. This version's own clients (flow-nexus-<version>,
+# flow-nexus-meta-<version>) and its configure unit run with XDG_CONFIG_HOME
+# set to `placeConfiguration`, a directory whose nexus/flow-nexus.datom names
+# this version's place, so they reach it whatever the user's configuration
+# names; no place is ever typed. The user's ~/.config/nexus/flow-nexus.datom
+# is declared by the version at main (flow-0533.nix).
 #
-# The hook command it writes into every Claude flow is ~/.local/bin/flow-hook
-# when this version holds the stable hook (stableHook): Home points that
-# path at this version's flow-hook, and the configure unit declares it as the
+# The hook command it writes into every Claude flow is
+# ~/.local/bin/flow-nexus-hook when this version holds the stable hook
+# (stableHook): Home points that path at this version's flow-nexus-hook, and the configure unit declares it as the
 # Nexus's HarnessHook. The version that takes stableHook over repoints it.
 { version, slug }:
 {
@@ -66,7 +67,7 @@ let
   message = inputs.message.packages.${system}.default;
   # The hook command every Claude flow this Nexus launches runs, one path
   # across versions; Home points it at the version holding stableHook.
-  stableHookPath = ".local/bin/flow-hook";
+  stableHookPath = ".local/bin/flow-nexus-hook";
   # The Nexus a memory is configured with, as data. The build bakes the part
   # mkFlowPackage takes into the executable, for a fresh memory to start
   # with; the configure unit declares it whole to the running Nexus.
@@ -193,13 +194,13 @@ let
     cfg.declarationPath
   ]
   ++ map (file: "${cfg.configurationDirectory + "/${file}"}") cfg.trailingConfigurationFiles;
-  # The configuration home of this version's clients: its nexus/flow.datom
-  # names this version's place.
-  placeConfiguration = pkgs.writeTextDir "nexus/flow.datom" ''
+  # The configuration home of this version's clients: its
+  # nexus/flow-nexus.datom names this version's place.
+  placeConfiguration = pkgs.writeTextDir "nexus/flow-nexus.datom" ''
     { ${cfg.place} }
   '';
   # Runs once the Nexus has announced readiness, its sockets bound: each
-  # query goes to the running Nexus through flow-meta, its configuration
+  # query goes to the running Nexus through flow-nexus-meta, its configuration
   # naming this version's place, in order, and each must be taken.
   # Arguments: the query files.
   configure = pkgs.writeShellApplication {
@@ -210,7 +211,7 @@ let
       export XDG_CONFIG_HOME=${placeConfiguration}
       for query in "$@"; do
         body=$(<"$query")
-        if ! reply=$(${runtime}/bin/flow-meta "''${body//${runtimeToken}/$XDG_RUNTIME_DIR}"); then
+        if ! reply=$(${runtime}/bin/flow-nexus-meta "''${body//${runtimeToken}/$XDG_RUNTIME_DIR}"); then
           printf 'Flow Nexus ${version} at ${cfg.place} did not answer %s\n' "$query" >&2
           exit 1
         fi
@@ -222,8 +223,8 @@ let
     '';
   };
   # The <version> clients under their versioned names, reaching this
-  # version's place: `flow-<version> Metaflows` is `flow Metaflows` with the
-  # configuration naming this version's place.
+  # version's place: `flow-nexus-<version> Metaflows` is `flow-nexus
+  # Metaflows` with the configuration naming this version's place.
   versionedCli =
     name: raw:
     pkgs.writeShellScript name ''
@@ -231,8 +232,8 @@ let
     '';
   clients = pkgs.runCommand "flow-${slug}-clients" { } ''
     mkdir -p $out/bin
-    ln -s ${versionedCli "flow-${version}" "flow"} $out/bin/flow-${version}
-    ln -s ${versionedCli "flow-meta-${version}" "flow-meta"} $out/bin/flow-meta-${version}
+    ln -s ${versionedCli "flow-nexus-${version}" "flow-nexus"} $out/bin/flow-nexus-${version}
+    ln -s ${versionedCli "flow-nexus-meta-${version}" "flow-nexus-meta"} $out/bin/flow-nexus-meta-${version}
   '';
   # The place datom the Nexus is started with. %t is $XDG_RUNTIME_DIR and %S
   # $XDG_STATE_HOME, else ~/.local/state, for a user unit: the roots
@@ -319,7 +320,7 @@ in
     stableHook = lib.mkOption {
       type = lib.types.bool;
       default = false;
-      description = "Whether ~/.local/bin/flow-hook is this version's flow-hook and the Nexus's declared HarnessHook, the path it writes into the flows it launches; one version holds it at a time.";
+      description = "Whether ~/.local/bin/flow-nexus-hook is this version's flow-nexus-hook and the Nexus's declared HarnessHook, the path it writes into the flows it launches; one version holds it at a time.";
     };
     presentationPrompt = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
@@ -340,7 +341,7 @@ in
       type = lib.types.package;
       readOnly = true;
       default = placeConfiguration;
-      description = "A configuration home whose nexus/flow.datom names this version's place: its clients and its configure unit read their place from it.";
+      description = "A configuration home whose nexus/flow-nexus.datom names this version's place: its clients and its configure unit read their place from it.";
     };
   };
   config = lib.mkIf (sizeAtLeast "Min" && cfg.enable) {
@@ -352,7 +353,7 @@ in
     ];
     home.packages = [ clients ];
     home.file = lib.mkIf cfg.stableHook {
-      ${stableHookPath}.source = "${runtime}/bin/flow-hook";
+      ${stableHookPath}.source = "${runtime}/bin/flow-nexus-hook";
     };
     systemd.user.services.${cfg.unit} = {
       Unit = {
@@ -369,7 +370,7 @@ in
         # Started once both its sockets listen: READY=1.
         Type = "notify";
         WorkingDirectory = "%h";
-        ExecStart = "${runtime}/bin/flow-nexus \"${place}\"";
+        ExecStart = "${runtime}/bin/flow-nexus-daemon \"${place}\"";
         Restart = "on-failure";
         RestartSec = "100ms";
       };
