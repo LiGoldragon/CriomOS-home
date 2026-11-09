@@ -20,12 +20,6 @@
 # Nexus writes its ordinary socket into the hook configuration of every
 # Claude pane it launches, so its own flows report back to it with nothing
 # read from the environment.
-#
-# The hook command it writes there is ~/.local/bin/flow-hook when this
-# version holds the stable hook (stableHook): the unit names that path in
-# FLOW_HOOK, and Home points it at this version's flow-hook. The version that
-# takes stableHook over repoints it, so a flow launched before an upgrade
-# runs the upgraded hook.
 let
   optionName = "flow${slug}";
   cfg = config.criomosHome.${optionName};
@@ -240,9 +234,6 @@ let
     ln -s ${versionedCli "flow-meta-${version}" "flow-meta" "flow-meta.sock"} $out/bin/flow-meta-${version}
   '';
   socketDirectory = "%t/${cfg.runtimeDirectory}";
-  # The hook command every Claude flow this Nexus launches runs, one path
-  # across versions; Home points it at the version holding stableHook.
-  stableHookPath = ".local/bin/flow-hook";
   start = "{ «${socketDirectory}/flow.sock» «${socketDirectory}/flow-meta.sock» «%h/.local/state/${cfg.stateDirectory}/flow.sema» None }";
 in
 {
@@ -317,16 +308,6 @@ in
       };
       description = "The Message Nexus this Nexus admits as a meta peer; null admits none.";
     };
-    notifiesReadiness = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
-      description = "Whether this version's Nexus sends READY=1 to $NOTIFY_SOCKET once both its sockets are bound, so its unit is Type=notify and is started only once it serves.";
-    };
-    stableHook = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
-      description = "Whether ~/.local/bin/flow-hook is this version's flow-hook and this Nexus writes that stable path into the flows it launches; one version holds it at a time.";
-    };
     presentationPrompt = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
       default = null;
@@ -352,9 +333,6 @@ in
       }
     ];
     home.packages = [ clients ];
-    home.file = lib.mkIf cfg.stableHook {
-      ${stableHookPath}.source = "${runtime}/bin/flow-hook";
-    };
     systemd.user.services.${cfg.unit} = {
       Unit = {
         Description = "Flow Nexus ${version}";
@@ -364,16 +342,13 @@ in
         After = [ "curriculum-nexus.service" ];
       };
       Service = {
-        # A Nexus that announces readiness is started once both its sockets
-        # listen; an earlier one, which never announces, stays simple.
-        Type = if cfg.notifiesReadiness then "notify" else "simple";
+        Type = "simple";
         WorkingDirectory = "%h";
         StateDirectory = cfg.stateDirectory;
         StateDirectoryMode = "0700";
         RuntimeDirectory = cfg.runtimeDirectory;
         RuntimeDirectoryMode = "0700";
         ExecStart = "${runtime}/bin/flow-nexus \"${start}\"";
-        Environment = lib.optional cfg.stableHook "FLOW_HOOK=%h/${stableHookPath}";
         ExecStartPre = "${configure}/bin/configure-flow-${slug} ${lib.escapeShellArgs ([ start "${socketDirectory}/flow-meta.sock" ] ++ queries)}";
         Restart = "on-failure";
         RestartSec = "100ms";
