@@ -12,12 +12,15 @@
 # of them is a turn ending, from the Flow Nexus at the same place, which the
 # daemon subscribes to through the translator. So the order is Flow, then
 # the translator, then the daemon:
-# - the translator is ordered after Flow's unit, part of it and wanted by
-#   it: Flow started or restarted brings it up after Flow's readiness;
+# - the translator wants Flow's unit and is ordered after it, and is not
+#   bound to it: Energy keeps running when Flow stops, and the translator
+#   subscribes again when Flow's socket appears at the place (an inotify
+#   event, never a timer), as Curriculum is wanted by Flow and reconnected
+#   to when it returns;
 # - the daemon is ordered after the translator, bound to it and wanted by
-#   it: it starts once the translator serves, and is restarted with it, so
-#   its subscription to Flow's turn ends, opened at start, is opened again
-#   whenever Flow comes back. The opening is the daemon's first reading.
+#   it: it starts once the translator serves, and holds Flow's turn ends
+#   open through it across Flow going and coming back. The first opening
+#   is the daemon's first reading.
 #
 # The place is shared with every other Nexus at it and declared by
 # nexus-places.nix, so neither unit names a RuntimeDirectory or
@@ -92,7 +95,7 @@ in
         in
         if flow0533.enable && flow0533.place == cfg.place then flow0533.unit else null;
       defaultText = lib.literalExpression "the Flow 0.53.3 unit, when it is enabled at this place";
-      description = "The unit of the Flow Nexus at this place, whose turn ends Energy reads on: the translator is ordered after it and started and restarted with it. Null when no Flow runs at the place.";
+      description = "The unit of the Flow Nexus at this place, whose turn ends Energy reads on: the translator wants it and is ordered after it, and keeps running when it stops. Null when no Flow runs at the place.";
     };
     package = lib.mkOption {
       type = lib.types.package;
@@ -119,10 +122,10 @@ in
       Unit = {
         Description = "Energy Nexus translator at ${cfg.place}";
         After = [ places.unit ] ++ flow;
-        PartOf = flow;
+        Wants = flow;
       };
       Service = service "energy-translator";
-      Install.WantedBy = [ "default.target" ] ++ flow;
+      Install.WantedBy = [ "default.target" ];
     };
     systemd.user.services.${cfg.unit} = {
       Unit = {

@@ -911,11 +911,11 @@
         "rust-build": "rust-build_3"
       },
       "locked": {
-        "lastModified": 1794232563,
-        "narHash": "sha256-7dTMZog/TwPGhYgojI3rcVOB9xQspuHXE1aPC7RAM1s=",
+        "lastModified": 1794233610,
+        "narHash": "sha256-p+B4TJ8YcK3P/v6XD8TI/Vd1aKrDBV/ZNFGph7GVQZ4=",
         "owner": "LiGoldragon",
         "repo": "energy-nexus",
-        "rev": "c92a3125d875a2076efac367fc59cbba0e49910a",
+        "rev": "cbb725a49f49e74e7cd667ae418634b21fda4f73",
         "type": "github"
       },
       "original": {
