@@ -27,6 +27,15 @@
 # memory already holds it. A changed declaration restarts the configure
 # unit only, never the Nexus.
 #
+# Its clients take the datom and nothing else (vision:nexus-v1): the place is
+# read from one configuration datom, $XDG_CONFIG_HOME/nexus/flow.datom,
+# `{ <place> }`. This version's own clients (flow-<version>, flow-meta-
+# <version>) and its configure unit run with XDG_CONFIG_HOME set to
+# `placeConfiguration`, a directory whose nexus/flow.datom names this
+# version's place, so they reach it whatever the user's configuration names;
+# no place is ever typed. The user's ~/.config/nexus/flow.datom is declared
+# by the version at main (flow-0533.nix).
+#
 # The hook command it writes into every Claude flow is ~/.local/bin/flow-hook
 # when this version holds the stable hook (stableHook): Home points that
 # path at this version's flow-hook, and the configure unit declares it as the
@@ -184,17 +193,24 @@ let
     cfg.declarationPath
   ]
   ++ map (file: "${cfg.configurationDirectory + "/${file}"}") cfg.trailingConfigurationFiles;
+  # The configuration home of this version's clients: its nexus/flow.datom
+  # names this version's place.
+  placeConfiguration = pkgs.writeTextDir "nexus/flow.datom" ''
+    { ${cfg.place} }
+  '';
   # Runs once the Nexus has announced readiness, its sockets bound: each
-  # query goes to the running Nexus through flow-meta at its place, in order,
-  # and each must be taken. Arguments: the query files.
+  # query goes to the running Nexus through flow-meta, its configuration
+  # naming this version's place, in order, and each must be taken.
+  # Arguments: the query files.
   configure = pkgs.writeShellApplication {
     name = "configure-flow-${slug}";
     runtimeInputs = [ pkgs.coreutils ];
     text = ''
       : "''${XDG_RUNTIME_DIR:?the unit runs with XDG_RUNTIME_DIR}"
+      export XDG_CONFIG_HOME=${placeConfiguration}
       for query in "$@"; do
         body=$(<"$query")
-        if ! reply=$(${runtime}/bin/flow-meta ${lib.escapeShellArg cfg.place} "''${body//${runtimeToken}/$XDG_RUNTIME_DIR}"); then
+        if ! reply=$(${runtime}/bin/flow-meta "''${body//${runtimeToken}/$XDG_RUNTIME_DIR}"); then
           printf 'Flow Nexus ${version} at ${cfg.place} did not answer %s\n' "$query" >&2
           exit 1
         fi
@@ -206,11 +222,12 @@ let
     '';
   };
   # The <version> clients under their versioned names, reaching this
-  # version's place: `flow-<version> Metaflows` is `flow <place> Metaflows`.
+  # version's place: `flow-<version> Metaflows` is `flow Metaflows` with the
+  # configuration naming this version's place.
   versionedCli =
     name: raw:
     pkgs.writeShellScript name ''
-      exec ${runtime}/bin/${raw} ${lib.escapeShellArg cfg.place} "$*"
+      XDG_CONFIG_HOME=${placeConfiguration} exec ${runtime}/bin/${raw} "$*"
     '';
   clients = pkgs.runCommand "flow-${slug}-clients" { } ''
     mkdir -p $out/bin
@@ -318,6 +335,12 @@ in
       type = lib.types.package;
       readOnly = true;
       default = clients;
+    };
+    placeConfiguration = lib.mkOption {
+      type = lib.types.package;
+      readOnly = true;
+      default = placeConfiguration;
+      description = "A configuration home whose nexus/flow.datom names this version's place: its clients and its configure unit read their place from it.";
     };
   };
   config = lib.mkIf (sizeAtLeast "Min" && cfg.enable) {

@@ -9,7 +9,12 @@
 # It holds the stable hook: once its unit runs, ~/.local/bin/flow-hook is its
 # flow-hook and its declared HarnessHook, so every Claude flow it launches
 # runs that path, which the next version to hold it repoints.
-{ config, ... }:
+#
+# Being the version at main, it declares the user's Flow CLI configuration,
+# ~/.config/nexus/flow.datom, `{ main }` (vision:nexus-v1): `flow '<datom>'`
+# and `flow-meta '<datom>'` of 0.53.3 read their place from it, and no place
+# is typed. The 0.53.1 clients read no configuration.
+{ config, lib, ... }:
 {
   imports = [
     (import ./flow-nexus-place.nix {
@@ -27,4 +32,8 @@
   };
 
   home.packages = [ config.criomosHome.flow0533.clients ];
+
+  xdg.configFile."nexus/flow.datom" = lib.mkIf (config.criomosHome.flow0533.place == "main") {
+    source = "${config.criomosHome.flow0533.placeConfiguration}/nexus/flow.datom";
+  };
 }

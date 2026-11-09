@@ -30,9 +30,11 @@
 # not start. Stopped, each removes its own sockets and nothing else.
 #
 # The clients are on PATH: energy-nexus, energy-nexus-meta and energy-pace,
-# each `<client> <place> '<query>'`. Energy's configuration (thresholds, the
-# Flow and Codex programs, reminders, targets) is state in its memory, set
-# through energy-nexus-meta.
+# each taking the datom and nothing else (vision:nexus-v1): `energy-nexus
+# '<query>'`, `energy-pace [Claude|Codex]`. Their place is read from
+# ~/.config/nexus/energy-nexus.datom, `{ <place> }`, declared here; no place
+# is typed. Energy's configuration (thresholds, the Flow and Codex programs,
+# reminders, targets) is state in its memory, set through energy-nexus-meta.
 {
   config,
   inputs,
@@ -119,6 +121,10 @@ in
       }
     ];
     home.packages = [ clients ];
+    # The clients' configuration: the place they reach.
+    xdg.configFile."nexus/energy-nexus.datom".text = ''
+      { ${cfg.place} }
+    '';
     systemd.user.services.${cfg.translatorUnit} = {
       Unit = {
         Description = "Energy Nexus translator at ${cfg.place}";
