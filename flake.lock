@@ -1957,11 +1957,10 @@
       "locked": {
         "lastModified": 1794247724,
         "narHash": "sha256-l+UiMCf+mkZad6VVOGhMBdlc9bncacg02g2t1/nrdxI=",
-        "ref": "refs/heads/0.53.3-soft-idle",
+        "owner": "LiGoldragon",
+        "repo": "flow",
         "rev": "a3e7617891156d7b22ca54e8e61a03c8af7f47de",
-        "revCount": 1044,
-        "type": "git",
-        "url": "file:///git/worktrees/flow-0533-soft-idle-65029d"
+        "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
