@@ -119,30 +119,22 @@ let
     ${config.programs.niri.package}/bin/niri msg action power-off-monitors || true
   '';
 
+  # logind emits Lock on a session object when the session is asked to
+  # lock (loginctl lock-session, lock-sessions, idle). The listener waits
+  # on that signal for every session from the start, and acts on the ones
+  # that belong to this user; it needs no session id from its environment.
   lockListener = pkgs.writeShellScript "criomos-lock-listener" ''
     set -eu
 
-    session_path=
-    while [ -z "$session_path" ]; do
-      session_id="''${XDG_SESSION_ID:-}"
-      if [ -z "$session_id" ]; then
-        session_id="$(${pkgs.systemd}/bin/loginctl show-user "$USER" -p Display --value 2>/dev/null || true)"
-      fi
-
-      if [ -n "$session_id" ]; then
-        session_path="$(${pkgs.systemd}/bin/loginctl show-session "$session_id" -p Path --value 2>/dev/null || true)"
-      fi
-
-      if [ -z "$session_path" ]; then
-        ${pkgs.coreutils}/bin/sleep 2
-      fi
-    done
-
-    ${pkgs.glib}/bin/gdbus monitor --system --dest org.freedesktop.login1 --object-path "$session_path" \
+    ${pkgs.glib}/bin/gdbus monitor --system --dest org.freedesktop.login1 \
       | while IFS= read -r line; do
           case "$line" in
-            *".Lock"*)
-              ${pkgs.systemd}/bin/systemctl --user start criomos-lock-session.service || true
+            /org/freedesktop/login1/session/*": org.freedesktop.login1.Session.Lock "*)
+              session_path="''${line%%:*}"
+              session_user="$(${pkgs.systemd}/bin/busctl get-property org.freedesktop.login1 "$session_path" org.freedesktop.login1.Session Name 2>/dev/null || true)"
+              if [ "$session_user" = "s \"$USER\"" ]; then
+                ${pkgs.systemd}/bin/systemctl --user start criomos-lock-session.service || true
+              fi
               ;;
           esac
         done
@@ -195,7 +187,7 @@ in
       Install.WantedBy = [ "default.target" ];
       Service = {
         ExecStart = "${lockListener}";
-        Restart = "on-failure";
+        Restart = "always";
         RestartSec = 2;
       };
     };
