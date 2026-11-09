@@ -1955,11 +1955,11 @@
         "unconfigured-flow": "unconfigured-flow_5"
       },
       "locked": {
-        "lastModified": 1794255379,
+        "lastModified": 1794256227,
         "narHash": "sha256-BDO80IqxhbuOxPcex6Lx1iWF/YX4Epa6IcuuAyQYFaQ=",
         "owner": "LiGoldragon",
         "repo": "flow",
-        "rev": "2dee189e9c03a9b4d8aaca31509947801ec60d1d",
+        "rev": "a59869d10bcfeb89bb6a81d007965b577cc93ce0",
         "type": "github"
       },
       "original": {
