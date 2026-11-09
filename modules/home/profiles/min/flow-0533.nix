@@ -30,6 +30,8 @@
     stableHook = true;
     declarationPath = "${config.home.homeDirectory}/.local/state/flow-declarations/metaflows-0533.datom";
     messageNexus = null;
+    # 0.53.3 reads a Model where earlier versions read a layer.
+    configurationDirectory = ./flow-nexus-config-0533;
   };
 
   home.packages = [ config.criomosHome.flow0533.clients ];

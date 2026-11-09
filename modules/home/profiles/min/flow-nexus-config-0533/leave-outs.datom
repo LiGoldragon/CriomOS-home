@@ -1,0 +1,42 @@
+Configure.LeaveOuts.[
+  { { Field illustrator Sonnet } Claude [ ClaudeMd GitInstructions ] }
+  { { Field core Astra } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Field core Sol } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Field semaV0 Astra } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Field semaV0 Opus } Claude [ ClaudeMd GitInstructions ] }
+  { { Mind versionOne Astra } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Mind versionOne Sol } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Mind beliefNexus Astra } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Mind beliefNexus Sol } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Mind prototyping Astra } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Mind prototyping Sol } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Mind versionZero Astra } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Mind versionZero Sol } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Mind codexManager Sol } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Mind core Astra } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Mind core Sol } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Mind flow Sol } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Mind books Sol } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Mind ethos Sol } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Mind nexus Sol } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Mind context Sol } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Mind obsidian Astra } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Mind obsidian Sol } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Psyche communication Fable } Claude [ ClaudeMd GitInstructions ] }
+  { { Psyche communication Opus } Claude [ ClaudeMd GitInstructions ] }
+  { { Psyche book Opus } Claude [ ClaudeMd GitInstructions ] }
+  { { Psyche core Fable } Claude [ ClaudeMd GitInstructions ] }
+  { { Psyche core Opus } Claude [ ClaudeMd GitInstructions ] }
+  { { Psyche core Sonnet } Claude [ ClaudeMd GitInstructions ] }
+  { { Psyche flow Fable } Claude [ ClaudeMd GitInstructions ] }
+  { { Psyche flow Opus } Claude [ ClaudeMd GitInstructions ] }
+  { { Psyche ethos Fable } Claude [ ClaudeMd GitInstructions ] }
+  { { Psyche ethos Opus } Claude [ ClaudeMd GitInstructions ] }
+  { { Psyche nexus Opus } Claude [ ClaudeMd GitInstructions ] }
+  { { Psyche spirit Fable } Claude [ ClaudeMd GitInstructions ] }
+  { { Psyche spirit Opus } Claude [ ClaudeMd GitInstructions ] }
+  { { Psyche chronos Fable } Claude [ ClaudeMd GitInstructions ] }
+  { { Psyche chronos Opus } Claude [ ClaudeMd GitInstructions ] }
+  { { Psyche research Fable } Claude [ ClaudeMd GitInstructions ] }
+  { { Psyche research Opus } Claude [ ClaudeMd GitInstructions ] }
+]
