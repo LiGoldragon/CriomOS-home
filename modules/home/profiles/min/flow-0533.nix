@@ -3,10 +3,10 @@
 # flow-nexus-meta-0.53.3).
 # It starts in its place (flow-nexus-place.nix): main, the place every flow
 # reports to, whose sockets are $XDG_RUNTIME_DIR/nexus/main/ and whose memory
-# is ~/.local/state/nexus/main/flow.sema. No unit runs it yet; its activation
-# enables it, once the version at main has stopped (flows/ff3882/
-# cutover-0533.md). The bare flow and flow-meta names stay on 0.53.1; the bare
-# flow-nexus and flow-nexus-meta come at the cutover.
+# is ~/.local/state/nexus/main/flow.sema. It is the version at main, enabled
+# for a user with AgentStack as every version is; 0.53.1 is retired
+# (flows/ff3882/cutover-0533.md). The bare flow-nexus and flow-nexus-meta are
+# its own CLIs.
 #
 # It holds the stable hook: once its unit runs, ~/.local/bin/flow-nexus-hook is
 # its flow-nexus-hook and its declared HarnessHook, so every Claude flow it launches
@@ -26,7 +26,6 @@
   ];
 
   criomosHome.flow0533 = {
-    enable = false;
     place = "main";
     stableHook = true;
     declarationPath = "${config.home.homeDirectory}/.local/state/flow-declarations/metaflows-0533.datom";
@@ -34,6 +33,9 @@
   };
 
   home.packages = [ config.criomosHome.flow0533.clients ];
+
+  home.file.".local/bin/flow-nexus".source = "${config.criomosHome.flow0533.package}/bin/flow-nexus";
+  home.file.".local/bin/flow-nexus-meta".source = "${config.criomosHome.flow0533.package}/bin/flow-nexus-meta";
 
   xdg.configFile."nexus/flow-nexus.datom" = lib.mkIf (config.criomosHome.flow0533.place == "main") {
     source = "${config.criomosHome.flow0533.placeConfiguration}/nexus/flow-nexus.datom";
