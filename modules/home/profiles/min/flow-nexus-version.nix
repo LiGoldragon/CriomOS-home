@@ -317,6 +317,11 @@ in
       };
       description = "The Message Nexus this Nexus admits as a meta peer; null admits none.";
     };
+    notifiesReadiness = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Whether this version's Nexus sends READY=1 to $NOTIFY_SOCKET once both its sockets are bound, so its unit is Type=notify and is started only once it serves.";
+    };
     stableHook = lib.mkOption {
       type = lib.types.bool;
       default = false;
@@ -359,7 +364,9 @@ in
         After = [ "curriculum-nexus.service" ];
       };
       Service = {
-        Type = "simple";
+        # A Nexus that announces readiness is started once both its sockets
+        # listen; an earlier one, which never announces, stays simple.
+        Type = if cfg.notifiesReadiness then "notify" else "simple";
         WorkingDirectory = "%h";
         StateDirectory = cfg.stateDirectory;
         StateDirectoryMode = "0700";

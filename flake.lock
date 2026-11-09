@@ -1861,11 +1861,11 @@
         "unconfigured-flow": "unconfigured-flow_5"
       },
       "locked": {
-        "lastModified": 1794219250,
-        "narHash": "sha256-yU9VgsfJRekVZtL6vHnGahNwCP8v86EOSPy35le6hmQ=",
+        "lastModified": 1794221233,
+        "narHash": "sha256-5uBwe1Y+hygPflKksklcp3xZYeEX/19u5WjQnhe/NVk=",
         "ref": "refs/heads/0.53.3-soft-idle",
-        "rev": "8863a45d75d624a23f358e1ea0bcef2cf803e3d7",
-        "revCount": 1031,
+        "rev": "e670d34c825bd8b320f3bb48d24f3de041b272ca",
+        "revCount": 1032,
         "type": "git",
         "url": "file:///git/worktrees/flow-0533-soft-idle-65029d"
       },
@@ -2096,17 +2096,17 @@
         "nixpkgs": "nixpkgs_5"
       },
       "locked": {
-        "lastModified": 1794217512,
-        "narHash": "sha256-Epk1TXh966eLyJQKaOt95nHIS5/TsJNiIh2GjjLp5vE=",
+        "lastModified": 1794220408,
+        "narHash": "sha256-xEo+vSCLTPwHAP1Qu3IuHs8FDgU5Lf8VZe7za5xDH9k=",
         "owner": "LiGoldragon",
         "repo": "message",
-        "rev": "9e833e649a6d0a78b26828dcf1a42b0f4833496b",
+        "rev": "e0a0fe7a097983eb116ccd8290326e637e541b4c",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "message",
-        "rev": "9e833e649a6d0a78b26828dcf1a42b0f4833496b",
+        "rev": "e0a0fe7a097983eb116ccd8290326e637e541b4c",
         "type": "github"
       }
     },

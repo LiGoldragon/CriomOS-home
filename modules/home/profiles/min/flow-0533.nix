@@ -6,6 +6,9 @@
 # It holds the stable hook: once its unit runs, ~/.local/bin/flow-hook is its
 # flow-hook, and every Claude flow it launches runs that path, which the next
 # version to hold it repoints.
+#
+# Its Nexus announces readiness (READY=1 once both sockets are bound), so its
+# unit is Type=notify: a unit ordered after it finds both sockets listening.
 { config, ... }:
 {
   imports = [
@@ -18,6 +21,7 @@
   criomosHome.flow0533 = {
     enable = false;
     stableHook = true;
+    notifiesReadiness = true;
     declarationPath = "${config.home.homeDirectory}/.local/state/flow-declarations/metaflows-0533.datom";
     messageNexus = null;
   };
