@@ -132,6 +132,10 @@
     flow-0530.inputs.nixpkgs.follows = "nixpkgs";
     flow-0531.url = "github:LiGoldragon/flow";
     flow-0531.inputs.nixpkgs.follows = "nixpkgs";
+    # Flow 0.53.3, built per crate on the build base. It follows no Home
+    # input: its nixpkgs is the base's, which gives its crates the store paths
+    # every repository on the base shares.
+    flow-0533.url = "github:LiGoldragon/flow";
 
     # The retired messenger prototype, kept only for the Field monitors that
     # still name its hm-* commands (off unless enabled). Flows send through
