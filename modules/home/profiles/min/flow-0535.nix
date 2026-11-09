@@ -28,11 +28,11 @@
   criomosHome.flow0535 = {
     place = "main";
     stableHook = true;
-    # The living configuration of the machines, kept in the cluster repository.
+    # The complex definition, kept in its own repository.
     ownerDeclarations = {
-      models = "${inputs.goldragon}/models-0533.datom";
-      thresholds = "${inputs.goldragon}/thresholds-0533.datom";
-      metaflows = "${inputs.goldragon}/metaflows-0533.datom";
+      models = "${inputs.complex}/models-0533.datom";
+      thresholds = "${inputs.complex}/thresholds-0533.datom";
+      metaflows = "${inputs.complex}/metaflows-0533.datom";
     };
     messageNexus = null;
     # 0.53.3 and later read a Model where earlier versions read a layer.

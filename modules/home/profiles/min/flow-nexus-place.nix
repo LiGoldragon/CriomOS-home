@@ -182,7 +182,9 @@ let
   # metaflow. Until Continuity is its own state family with its own signal,
   # every row of metaflows.datom is OnDemand.
   # An owner-declared family, by its written path; another, from this version's configuration directory.
-  declaredPath = family: "${cfg.declarationDirectory}/${baseNameOf (toString cfg.ownerDeclarations.${family})}";
+  declaredPath =
+    family:
+    "${cfg.declarationDirectory}/${builtins.unsafeDiscardStringContext (baseNameOf (toString cfg.ownerDeclarations.${family}))}";
   declared =
     family:
     if cfg.ownerDeclarations ? ${family} then
@@ -282,7 +284,7 @@ in
     ownerDeclarations = lib.mkOption {
       type = lib.types.attrsOf lib.types.path;
       default = { };
-      example = lib.literalExpression ''{ models = "''${inputs.goldragon}/models-0533.datom"; }'';
+      example = lib.literalExpression ''{ models = "''${inputs.complex}/models-0533.datom"; }'';
       description = "The families the owner declares in his own repository, models, thresholds and metaflows, each named to its file there. Activation writes each into declarationDirectory under its own file name, a change to any restarts the configure unit, which replays it. A family absent here is taken from configurationDirectory, and metaflows from declarationDirectory's metaflows.datom.";
     };
     configurationDirectory = lib.mkOption {
