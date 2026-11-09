@@ -137,6 +137,11 @@
     # every repository on the base shares.
     flow-0533.url = "github:LiGoldragon/flow";
 
+    # The cluster repository: the living configuration of the machines beside
+    # the cluster data, read here as files (the Flow metaflows among them).
+    goldragon.url = "github:LiGoldragon/goldragon";
+    goldragon.flake = false;
+
     # The Energy Nexus at its place (modules/home/profiles/min/energy-nexus.nix).
     # It builds with its own pins: Home overrides none of its inputs.
     energy-nexus.url = "github:LiGoldragon/energy-nexus";

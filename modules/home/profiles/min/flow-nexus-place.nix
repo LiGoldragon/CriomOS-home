@@ -190,7 +190,7 @@ let
   ]
   ++ lib.optional cfg.stableHook "${harnessHookQuery}"
   ++ [
-    # The live declaration corpus is owner state and must not be reset by a source snapshot.
+    # The metaflow declaration: the owner's, kept in his repository when declarationSource names it.
     cfg.declarationPath
   ]
   ++ map (file: "${cfg.configurationDirectory + "/${file}"}") cfg.trailingConfigurationFiles;
@@ -270,6 +270,11 @@ in
       type = lib.types.str;
       default = "${home}/.local/state/flow-declarations/metaflows.datom";
       description = "The owner's mutable metaflow declaration file this Nexus is configured from.";
+    };
+    declarationSource = lib.mkOption {
+      type = lib.types.nullOr lib.types.path;
+      default = null;
+      description = "The metaflow declaration in the owner's repository. When set, activation writes it to declarationPath and a change to it restarts the configure unit, which replays it.";
     };
     configurationDirectory = lib.mkOption {
       type = lib.types.path;
@@ -352,9 +357,17 @@ in
       }
     ];
     home.packages = [ clients ];
-    home.file = lib.mkIf cfg.stableHook {
-      ${stableHookPath}.source = "${runtime}/bin/flow-nexus-hook";
-    };
+    home.file = lib.mkMerge [
+      (lib.mkIf cfg.stableHook {
+        ${stableHookPath}.source = "${runtime}/bin/flow-nexus-hook";
+      })
+      (lib.mkIf (cfg.declarationSource != null) {
+        ${lib.removePrefix "${home}/" cfg.declarationPath} = {
+          source = cfg.declarationSource;
+          force = true;
+        };
+      })
+    ];
     systemd.user.services.${cfg.unit} = {
       Unit = {
         Description = "Flow Nexus ${version} at ${cfg.place}";
@@ -384,6 +397,7 @@ in
         Description = "Flow Nexus ${version} configuration at ${cfg.place}";
         Requires = [ "${cfg.unit}.service" ];
         After = [ "${cfg.unit}.service" ];
+        X-Restart-Triggers = lib.optional (cfg.declarationSource != null) "${cfg.declarationSource}";
       };
       Service = {
         Type = "oneshot";

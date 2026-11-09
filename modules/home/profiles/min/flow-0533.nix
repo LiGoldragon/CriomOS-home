@@ -16,7 +16,7 @@
 # ~/.config/nexus/flow-nexus.datom, `{ main }` (vision:nexus-v1):
 # `flow-nexus '<datom>'` and `flow-nexus-meta '<datom>'` of 0.53.3 read their
 # place from it, and no place is typed. The 0.53.1 clients read no configuration.
-{ config, lib, ... }:
+{ config, lib, inputs, ... }:
 {
   imports = [
     (import ./flow-nexus-place.nix {
@@ -29,6 +29,8 @@
     place = "main";
     stableHook = true;
     declarationPath = "${config.home.homeDirectory}/.local/state/flow-declarations/metaflows-0533.datom";
+    # The living configuration of the machines, kept in the cluster repository.
+    declarationSource = "${inputs.goldragon}/metaflows-0533.datom";
     messageNexus = null;
     # 0.53.3 reads a Model where earlier versions read a layer.
     configurationDirectory = ./flow-nexus-config-0533;
