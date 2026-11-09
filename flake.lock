@@ -1955,11 +1955,11 @@
         "unconfigured-flow": "unconfigured-flow_5"
       },
       "locked": {
-        "lastModified": 1794234329,
-        "narHash": "sha256-JxBLLxjxH7B+L8ycKPTY47hg2m9oGPLElVNfbpIfBXw=",
+        "lastModified": 1794236922,
+        "narHash": "sha256-XnYG5fzMZlvWGboKyjvXMhZaxlCfJRus+2gaaDqMbx4=",
         "ref": "refs/heads/0.53.3-soft-idle",
-        "rev": "397a5205c0c84045624216379faeeb3949474af6",
-        "revCount": 1036,
+        "rev": "e0c2ddb33f9a28b78e85c673b893de2bba826bb7",
+        "revCount": 1037,
         "type": "git",
         "url": "file:///git/worktrees/flow-0533-soft-idle-65029d"
       },
