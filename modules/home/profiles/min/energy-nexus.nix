@@ -6,10 +6,18 @@
 #   $XDG_STATE_HOME/nexus/<place>/.
 # - energy-translator, the translator, its own process: energy-translator.sock,
 #   energy-meta-translator.sock and energy-emission.sock, its memory
-#   energy-translator.rkyv. It is ordered after the daemon and bound to it,
-#   and wanted by it, so it starts, stops and restarts with the daemon.
+#   energy-translator.rkyv.
 # Each process sends READY=1 once its sockets listen, so each unit is
-# Type=notify: the translator starts once the daemon serves.
+# Type=notify. Energy reads a provider on events, never on an interval; one
+# of them is a turn ending, from the Flow Nexus at the same place, which the
+# daemon subscribes to through the translator. So the order is Flow, then
+# the translator, then the daemon:
+# - the translator is ordered after Flow's unit, part of it and wanted by
+#   it: Flow started or restarted brings it up after Flow's readiness;
+# - the daemon is ordered after the translator, bound to it and wanted by
+#   it: it starts once the translator serves, and is restarted with it, so
+#   its subscription to Flow's turn ends, opened at start, is opened again
+#   whenever Flow comes back. The opening is the daemon's first reading.
 #
 # The place is shared with every other Nexus at it and declared by
 # nexus-places.nix, so neither unit names a RuntimeDirectory or
@@ -18,9 +26,9 @@
 # not start. Stopped, each removes its own sockets and nothing else.
 #
 # The clients are on PATH: energy-nexus, energy-nexus-meta and energy-pace,
-# each `<client> <place> '<query>'`. Energy's configuration (polling
-# minutes, the Flow and Codex programs, reminders, targets) is state in its
-# memory, set through energy-nexus-meta.
+# each `<client> <place> '<query>'`. Energy's configuration (thresholds, the
+# Flow and Codex programs, reminders, targets) is state in its memory, set
+# through energy-nexus-meta.
 {
   config,
   inputs,
@@ -32,6 +40,7 @@
 let
   cfg = config.criomosHome.energyNexus;
   places = config.criomosHome.nexusPlaces;
+  flow = lib.optional (cfg.flowUnit != null) "${cfg.flowUnit}.service";
   sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
   package = inputs.energy-nexus.packages.${pkgs.stdenv.hostPlatform.system}.default;
   # The place's name and its two directories, as each process takes them.
@@ -73,7 +82,17 @@ in
       type = lib.types.str;
       readOnly = true;
       default = "energy-translator";
-      description = "The translator's unit, bound to the daemon's.";
+      description = "The translator's unit; the daemon's is bound to it.";
+    };
+    flowUnit = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default =
+        let
+          flow0533 = config.criomosHome.flow0533;
+        in
+        if flow0533.enable && flow0533.place == cfg.place then flow0533.unit else null;
+      defaultText = lib.literalExpression "the Flow 0.53.3 unit, when it is enabled at this place";
+      description = "The unit of the Flow Nexus at this place, whose turn ends Energy reads on: the translator is ordered after it and started and restarted with it. Null when no Flow runs at the place.";
     };
     package = lib.mkOption {
       type = lib.types.package;
@@ -96,25 +115,29 @@ in
       }
     ];
     home.packages = [ clients ];
-    systemd.user.services.${cfg.unit} = {
-      Unit = {
-        Description = "Energy Nexus daemon at ${cfg.place}";
-        After = [ places.unit ];
-      };
-      Service = service "energy-nexus-daemon";
-      Install.WantedBy = [ "default.target" ];
-    };
     systemd.user.services.${cfg.translatorUnit} = {
       Unit = {
         Description = "Energy Nexus translator at ${cfg.place}";
-        After = [
-          places.unit
-          "${cfg.unit}.service"
-        ];
-        BindsTo = [ "${cfg.unit}.service" ];
+        After = [ places.unit ] ++ flow;
+        PartOf = flow;
       };
       Service = service "energy-translator";
-      Install.WantedBy = [ "${cfg.unit}.service" ];
+      Install.WantedBy = [ "default.target" ] ++ flow;
+    };
+    systemd.user.services.${cfg.unit} = {
+      Unit = {
+        Description = "Energy Nexus daemon at ${cfg.place}";
+        After = [
+          places.unit
+          "${cfg.translatorUnit}.service"
+        ];
+        BindsTo = [ "${cfg.translatorUnit}.service" ];
+      };
+      Service = service "energy-nexus-daemon";
+      Install.WantedBy = [
+        "default.target"
+        "${cfg.translatorUnit}.service"
+      ];
     };
   };
 }
