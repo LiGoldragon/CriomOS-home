@@ -28,9 +28,12 @@
   criomosHome.flow0535 = {
     place = "main";
     stableHook = true;
-    declarationPath = "${config.home.homeDirectory}/.local/state/flow-declarations/metaflows-0533.datom";
     # The living configuration of the machines, kept in the cluster repository.
-    declarationSource = "${inputs.goldragon}/metaflows-0533.datom";
+    ownerDeclarations = {
+      models = "${inputs.goldragon}/models-0533.datom";
+      thresholds = "${inputs.goldragon}/thresholds-0533.datom";
+      metaflows = "${inputs.goldragon}/metaflows-0533.datom";
+    };
     messageNexus = null;
     # 0.53.3 and later read a Model where earlier versions read a layer.
     configurationDirectory = ./flow-nexus-config-0533;

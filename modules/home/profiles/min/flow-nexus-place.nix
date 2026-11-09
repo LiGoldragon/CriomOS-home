@@ -181,17 +181,25 @@ let
   # resets every seat a signal moved. No signal sets Continuity on one
   # metaflow. Until Continuity is its own state family with its own signal,
   # every row of metaflows.datom is OnDemand.
+  # An owner-declared family, by its written path; another, from this version's configuration directory.
+  declaredPath = family: "${cfg.declarationDirectory}/${baseNameOf (toString cfg.ownerDeclarations.${family})}";
+  declared =
+    family:
+    if cfg.ownerDeclarations ? ${family} then
+      declaredPath family
+    else
+      "${cfg.configurationDirectory + "/${family}.datom"}";
   queries = [
     "${nexusQuery}"
-    "${cfg.configurationDirectory + "/models.datom"}"
-    "${cfg.configurationDirectory + "/thresholds.datom"}"
+    (declared "models")
+    (declared "thresholds")
     "${cfg.configurationDirectory + "/leave-outs.datom"}"
     "${sendServersQuery}"
   ]
   ++ lib.optional cfg.stableHook "${harnessHookQuery}"
   ++ [
-    # The metaflow declaration: the owner's, kept in his repository when declarationSource names it.
-    cfg.declarationPath
+    # The metaflow declaration: the owner's, kept in his repository when ownerDeclarations names it.
+    (if cfg.ownerDeclarations ? metaflows then declaredPath "metaflows" else "${cfg.declarationDirectory}/metaflows.datom")
   ]
   ++ map (file: "${cfg.configurationDirectory + "/${file}"}") cfg.trailingConfigurationFiles;
   # The configuration home of this version's clients: its
@@ -266,15 +274,16 @@ in
       default = "next";
       description = "The place this version runs at: main, the stable one every flow reports to, or next, a candidate with its own memory.";
     };
-    declarationPath = lib.mkOption {
+    declarationDirectory = lib.mkOption {
       type = lib.types.str;
-      default = "${home}/.local/state/flow-declarations/metaflows.datom";
-      description = "The owner's mutable metaflow declaration file this Nexus is configured from.";
+      default = "${home}/.local/state/flow-declarations";
+      description = "Where the owner's declarations are written for the configure unit to replay.";
     };
-    declarationSource = lib.mkOption {
-      type = lib.types.nullOr lib.types.path;
-      default = null;
-      description = "The metaflow declaration in the owner's repository. When set, activation writes it to declarationPath and a change to it restarts the configure unit, which replays it.";
+    ownerDeclarations = lib.mkOption {
+      type = lib.types.attrsOf lib.types.path;
+      default = { };
+      example = lib.literalExpression ''{ models = "''${inputs.goldragon}/models-0533.datom"; }'';
+      description = "The families the owner declares in his own repository, models, thresholds and metaflows, each named to its file there. Activation writes each into declarationDirectory under its own file name, a change to any restarts the configure unit, which replays it. A family absent here is taken from configurationDirectory, and metaflows from declarationDirectory's metaflows.datom.";
     };
     configurationDirectory = lib.mkOption {
       type = lib.types.path;
@@ -361,12 +370,13 @@ in
       (lib.mkIf cfg.stableHook {
         ${stableHookPath}.source = "${runtime}/bin/flow-nexus-hook";
       })
-      (lib.mkIf (cfg.declarationSource != null) {
-        ${lib.removePrefix "${home}/" cfg.declarationPath} = {
-          source = cfg.declarationSource;
+      (lib.mapAttrs' (
+        family: source:
+        lib.nameValuePair (lib.removePrefix "${home}/" (declaredPath family)) {
+          inherit source;
           force = true;
-        };
-      })
+        }
+      ) cfg.ownerDeclarations)
     ];
     systemd.user.services.${cfg.unit} = {
       Unit = {
@@ -397,7 +407,7 @@ in
         Description = "Flow Nexus ${version} configuration at ${cfg.place}";
         Requires = [ "${cfg.unit}.service" ];
         After = [ "${cfg.unit}.service" ];
-        X-Restart-Triggers = lib.optional (cfg.declarationSource != null) "${cfg.declarationSource}";
+        X-Restart-Triggers = map toString (lib.attrValues cfg.ownerDeclarations);
       };
       Service = {
         Type = "oneshot";

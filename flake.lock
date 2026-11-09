@@ -2006,11 +2006,11 @@
     "goldragon": {
       "flake": false,
       "locked": {
-        "lastModified": 1794261152,
-        "narHash": "sha256-9/BxkWwyI/WFL33GqCqdqz3W5vI2Pewh2KYI6Qxrc7Q=",
+        "lastModified": 1794268668,
+        "narHash": "sha256-Kl18u4/532CNWGUHu2ZoBitn4ezlWMHc+ZQXwgE5YDs=",
         "owner": "LiGoldragon",
         "repo": "goldragon",
-        "rev": "aaf3c43799de5c3e750fc25c10764176c3bb32d2",
+        "rev": "412982b5b79caf80c432667ad8170f9d8bf4ec6f",
         "type": "github"
       },
       "original": {
