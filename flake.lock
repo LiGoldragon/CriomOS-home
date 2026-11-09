@@ -994,7 +994,7 @@
     "fenix_12": {
       "inputs": {
         "nixpkgs": [
-          "flow-0533",
+          "flow-0534",
           "base",
           "nixpkgs"
         ],
@@ -1017,7 +1017,7 @@
     "fenix_13": {
       "inputs": {
         "nixpkgs": [
-          "flow-0533",
+          "flow-0534",
           "message",
           "nixpkgs"
         ],
@@ -1040,7 +1040,7 @@
     "fenix_14": {
       "inputs": {
         "nixpkgs": [
-          "flow-0533",
+          "flow-0534",
           "migration-predecessor",
           "nixpkgs"
         ],
@@ -1063,7 +1063,7 @@
     "fenix_15": {
       "inputs": {
         "nixpkgs": [
-          "flow-0533",
+          "flow-0534",
           "migration-predecessor",
           "unconfigured-flow",
           "nixpkgs"
@@ -1087,7 +1087,7 @@
     "fenix_16": {
       "inputs": {
         "nixpkgs": [
-          "flow-0533",
+          "flow-0534",
           "unconfigured-flow",
           "nixpkgs"
         ],
@@ -1946,7 +1946,7 @@
         "type": "github"
       }
     },
-    "flow-0533": {
+    "flow-0534": {
       "inputs": {
         "base": "base",
         "curriculum": "curriculum_7",
@@ -1955,11 +1955,11 @@
         "unconfigured-flow": "unconfigured-flow_5"
       },
       "locked": {
-        "lastModified": 1794256227,
-        "narHash": "sha256-BDO80IqxhbuOxPcex6Lx1iWF/YX4Epa6IcuuAyQYFaQ=",
+        "lastModified": 1794261107,
+        "narHash": "sha256-LFPjCpy+uK12z1V5qbRzEFVo5EEm+XydtbUBhD01uVI=",
         "owner": "LiGoldragon",
         "repo": "flow",
-        "rev": "a59869d10bcfeb89bb6a81d007965b577cc93ce0",
+        "rev": "4db2e68c596bb7da7252c55ec991d7f898673bee",
         "type": "github"
       },
       "original": {
@@ -3339,7 +3339,7 @@
         "flow-0511": "flow-0511",
         "flow-0530": "flow-0530",
         "flow-0531": "flow-0531",
-        "flow-0533": "flow-0533",
+        "flow-0534": "flow-0534",
         "goldragon": "goldragon",
         "google-workspace-cli": "google-workspace-cli",
         "harness": "harness",
