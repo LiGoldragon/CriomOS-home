@@ -14,9 +14,10 @@
 # the translator, then the daemon:
 # - the translator wants Flow's unit and is ordered after it, and is not
 #   bound to it: Energy keeps running when Flow stops, and the translator
-#   subscribes again when Flow's socket appears at the place (an inotify
-#   event, never a timer), as Curriculum is wanted by Flow and reconnected
-#   to when it returns;
+#   subscribes again when Flow's socket is moved to its name at the place
+#   (inotify IN_MOVED_TO, which Flow does only once the socket listens;
+#   never a timer), as Curriculum is wanted by Flow and reconnected to when
+#   it returns;
 # - the daemon is ordered after the translator, bound to it and wanted by
 #   it: it starts once the translator serves, and holds Flow's turn ends
 #   open through it across Flow going and coming back. The first opening

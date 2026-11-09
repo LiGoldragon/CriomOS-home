@@ -911,11 +911,11 @@
         "rust-build": "rust-build_3"
       },
       "locked": {
-        "lastModified": 1794233610,
-        "narHash": "sha256-p+B4TJ8YcK3P/v6XD8TI/Vd1aKrDBV/ZNFGph7GVQZ4=",
+        "lastModified": 1794234490,
+        "narHash": "sha256-9vxNwrL4FSpXWvRKFxLycqhpHbcPKdaujomggWLIzHA=",
         "owner": "LiGoldragon",
         "repo": "energy-nexus",
-        "rev": "cbb725a49f49e74e7cd667ae418634b21fda4f73",
+        "rev": "de2cde566d9c268f4465cca37fb0f51c2039d1a6",
         "type": "github"
       },
       "original": {
@@ -1955,11 +1955,11 @@
         "unconfigured-flow": "unconfigured-flow_5"
       },
       "locked": {
-        "lastModified": 1794230708,
-        "narHash": "sha256-XmJAClNuFkfjMzuzdRM5VSzcaTCn41KuVjsXdUX4bxg=",
+        "lastModified": 1794234329,
+        "narHash": "sha256-JxBLLxjxH7B+L8ycKPTY47hg2m9oGPLElVNfbpIfBXw=",
         "ref": "refs/heads/0.53.3-soft-idle",
-        "rev": "fd015d2d49df1ed65e72e2b309a627b774446f42",
-        "revCount": 1035,
+        "rev": "397a5205c0c84045624216379faeeb3949474af6",
+        "revCount": 1036,
         "type": "git",
         "url": "file:///git/worktrees/flow-0533-soft-idle-65029d"
       },
