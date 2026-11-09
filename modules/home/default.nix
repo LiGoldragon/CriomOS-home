@@ -76,6 +76,11 @@
     # Harness — the user's own harness-daemon (systemd --user unit) and its
     # clients, from the same package revision as flow-id.
     ./profiles/min/harness.nix
+    # The Nexus places, $XDG_RUNTIME_DIR/nexus/<place>/ and
+    # ~/.local/state/nexus/<place>/: declared once, owned by no Nexus.
+    ./profiles/min/nexus-places.nix
+    # The Energy Nexus at its place.
+    ./profiles/min/energy-nexus.nix
     # What every Flow Nexus version shares; each version is its own unit.
     ./profiles/min/flow.nix
     # Flow 0.51.2, retired: its package kept, no unit.

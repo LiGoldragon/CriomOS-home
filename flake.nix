@@ -137,6 +137,10 @@
     # every repository on the base shares.
     flow-0533.url = "github:LiGoldragon/flow";
 
+    # The Energy Nexus at its place (modules/home/profiles/min/energy-nexus.nix).
+    energy-nexus.url = "github:LiGoldragon/energy-nexus";
+    energy-nexus.inputs.nixpkgs.follows = "nixpkgs";
+
     # The retired messenger prototype, kept only for the Field monitors that
     # still name its hm-* commands (off unless enabled). Flows send through
     # the Flow CLI; Home installs no hm-* command.

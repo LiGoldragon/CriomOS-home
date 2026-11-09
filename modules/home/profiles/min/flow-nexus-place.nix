@@ -13,6 +13,11 @@
 # $XDG_RUNTIME_DIR/nexus/main/flow.sock, the socket whichever version is
 # main serves.
 #
+# The place's two directories are shared with every other Nexus at it and
+# declared once by nexus-places.nix; the unit names no RuntimeDirectory or
+# StateDirectory, is ordered after the unit that makes them, and asserts its
+# place is declared.
+#
 # The Nexus announces readiness (READY=1 once both sockets are bound), so its
 # unit is Type=notify. On a fresh memory it starts with the configuration
 # built into its executable. Its configuration is declared after it by its
@@ -38,6 +43,7 @@
 let
   optionName = "flow${slug}";
   cfg = config.criomosHome.${optionName};
+  places = config.criomosHome.nexusPlaces;
   # The user's runtime directory is known only to the running unit (systemd
   # sets XDG_RUNTIME_DIR, %t in the unit); no uid is declared here. A path in
   # a query names it by this token, which configure-flow-<slug> replaces with
@@ -214,7 +220,7 @@ let
   # The place datom the Nexus is started with. %t is $XDG_RUNTIME_DIR and %S
   # $XDG_STATE_HOME, else ~/.local/state, for a user unit: the roots
   # vision:nexus-v1 names. The directories are shared with every other Nexus
-  # at the same place; the Nexus makes its own if absent, so the unit names no
+  # at the same place and declared by nexus-places.nix, so the unit names no
   # RuntimeDirectory or StateDirectory that a stop would remove.
   place = "{ ${text cfg.place} ${text "%t/nexus/${cfg.place}"} ${text "%S/nexus/${cfg.place}"} }";
 in
@@ -315,6 +321,12 @@ in
     };
   };
   config = lib.mkIf (sizeAtLeast "Min" && cfg.enable) {
+    assertions = [
+      {
+        assertion = builtins.elem cfg.place places.places;
+        message = "criomosHome.${optionName}.place ${cfg.place} is not one of criomosHome.nexusPlaces.places.";
+      }
+    ];
     home.packages = [ clients ];
     home.file = lib.mkIf cfg.stableHook {
       ${stableHookPath}.source = "${runtime}/bin/flow-hook";
@@ -325,7 +337,10 @@ in
         # The Nexus composes every launch's context through Curriculum
         # (ComposeStartup at Start, wake and resume); without it no flow starts.
         Wants = [ "curriculum-nexus.service" ];
-        After = [ "curriculum-nexus.service" ];
+        After = [
+          "curriculum-nexus.service"
+          places.unit
+        ];
       };
       Service = {
         # Started once both its sockets listen: READY=1.
