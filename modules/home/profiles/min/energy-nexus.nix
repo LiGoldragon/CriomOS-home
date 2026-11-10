@@ -94,10 +94,10 @@ in
       type = lib.types.nullOr lib.types.str;
       default =
         let
-          flow0535 = config.criomosHome.flow0535;
+          flow0540 = config.criomosHome.flow0540;
         in
-        if flow0535.enable && flow0535.place == cfg.place then flow0535.unit else null;
-      defaultText = lib.literalExpression "the Flow 0.53.5 unit, when it is enabled at this place";
+        if flow0540.enable && flow0540.place == cfg.place then flow0540.unit else null;
+      defaultText = lib.literalExpression "the Flow 0.54.0 unit, when it is enabled at this place";
       description = "The unit of the Flow Nexus at this place, whose turn ends Energy reads on: the translator wants it and is ordered after it, and keeps running when it stops. Null when no Flow runs at the place.";
     };
     package = lib.mkOption {

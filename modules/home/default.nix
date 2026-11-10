@@ -89,8 +89,8 @@
     ./profiles/min/flow-0530.nix
     # Flow 0.53.1 at its own place; the bare flow names point at it.
     ./profiles/min/flow-0531.nix
-    # Flow 0.53.5, the version at main.
-    ./profiles/min/flow-0535.nix
+    # Flow 0.54.0, the version at main.
+    ./profiles/min/flow-0540.nix
     # Next Flow and next Message beside the stable pair, on their own
     # sockets and stores (the stable/next pattern, lib/stable-next-service.nix).
     ./profiles/min/flow-message-next.nix

@@ -132,10 +132,10 @@
     flow-0530.inputs.nixpkgs.follows = "nixpkgs";
     flow-0531.url = "github:LiGoldragon/flow";
     flow-0531.inputs.nixpkgs.follows = "nixpkgs";
-    # Flow 0.53.5, built per crate on the build base. It follows no Home
+    # Flow 0.54.0, built per crate on the build base. It follows no Home
     # input: its nixpkgs is the base's, which gives its crates the store paths
     # every repository on the base shares.
-    flow-0535.url = "github:LiGoldragon/flow";
+    flow-0540.url = "github:LiGoldragon/flow";
 
     # The complex definition: its metaflows, models and thresholds, read here
     # as files and written for the Flow Nexus to replay.
