@@ -137,13 +137,6 @@ Important current shape:
 - Noctalia shows Listener recording/transcribing/copied/error state through the
   `listener-level` plugin, which consumes `$XDG_RUNTIME_DIR/listener/status.sock`
   JSON lines and must not carry transcript text.
-- DJI Mic keepalive keeps the microphone hot by holding a PipeWire stream
-  open through a loopback sink. It may call BlueZ `Connect` before the device
-  is connected, but after PipeWire exposes the Bluetooth card it must repair
-  profile churn through PipeWire profile reassertion. Do not use BlueZ
-  profile-specific connection calls as the steady-state repair loop; that
-  hammers the wrong HSP/HFP side on this device and reintroduces the wake-delay
-  failure.
 
 Do not put API keys in Nix, system-wide environment, shell profiles, or
 bar/widget scripts. If a change needs a paid STT call, ask first unless

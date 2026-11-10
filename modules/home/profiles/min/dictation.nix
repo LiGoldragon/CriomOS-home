@@ -167,64 +167,6 @@ mkIf (sizeAtLeast "Min" && behavesAs.edge) {
     };
   };
 
-  xdg.configFile."pipewire/pipewire.conf.d/60-dji-mic-keepalive.conf".text = ''
-    context.objects = [
-      {
-        factory = adapter
-        args = {
-          factory.name = support.null-audio-sink
-          media.class = "Audio/Sink"
-          node.name = "dji_mic_keepalive_sink"
-          node.description = "DJI Mic Keepalive Sink"
-          object.linger = true
-          monitor.channel-volumes = true
-          priority.session = 1
-          audio.position = [ MONO ]
-        }
-      }
-    ]
-
-    context.modules = [
-      {
-        name = libpipewire-module-loopback
-        args = {
-          node.description = "DJI Mic Keepalive"
-          capture.props = {
-            node.name = "dji_mic_keepalive_capture"
-            target.object = "bluez_input.04:A8:5A:0B:EB:B0"
-            audio.position = [ MONO ]
-            stream.dont-remix = true
-            node.passive = false
-          }
-          playback.props = {
-            node.name = "dji_mic_keepalive_playback"
-            target.object = "dji_mic_keepalive_sink"
-            audio.position = [ MONO ]
-            stream.dont-remix = true
-            node.passive = false
-          }
-        }
-      }
-    ]
-  '';
-
-  xdg.configFile."wireplumber/wireplumber.conf.d/60-dji-source-priority.conf".text = ''
-    monitor.bluez.rules = [
-      {
-        matches = [
-          {
-            node.name = "bluez_input.04_A8_5A_0B_EB_B0.0"
-          }
-        ]
-        actions = {
-          update-props = {
-            priority.session = 3000
-          }
-        }
-      }
-    ]
-  '';
-
   programs.niri.settings = {
     spawn-at-startup = [
       { command = [ "${startDictationServices}" ]; }
