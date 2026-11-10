@@ -37,6 +37,14 @@
     messageNexus = null;
     # 0.53.3 and later read a Model where earlier versions read a layer.
     configurationDirectory = ./flow-nexus-config-0533;
+    # The handover warning: each model warned at 15 percent before its
+    # threshold, every 10 minutes, to write its handover and refresh.
+    trailingConfigurationFiles = [
+      "harness-flags.datom"
+      "investigation.datom"
+      "default-minutes.datom"
+      "handover-policies.datom"
+    ];
   };
 
   home.packages = [ config.criomosHome.flow0540.clients ];
