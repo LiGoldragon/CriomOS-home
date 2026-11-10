@@ -139,7 +139,7 @@
 
     # The complex definition: its metaflows, models and thresholds, read here
     # as files and written for the Flow Nexus to replay.
-    complex.url = "github:LiGoldragon/COMPLEX-NAME";
+    complex.url = "github:LiGoldragon/goldragon-persona";
     complex.flake = false;
 
     # The Energy Nexus at its place (modules/home/profiles/min/energy-nexus.nix).
