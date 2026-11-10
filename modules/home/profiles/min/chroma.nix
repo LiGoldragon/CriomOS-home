@@ -6,6 +6,7 @@
   user,
   horizon,
   textScale,
+  hexis,
   ...
 }:
 let
@@ -173,6 +174,16 @@ mkIf (sizeAtLeast "Min" && behavesAs.edge) {
     chromaSetDarkTheme
     pkgs.dconf
   ];
+
+  # Claude Code follows the terminal chroma switches: "auto" reads the
+  # terminal background at start, then each color-scheme report (Mode 2031)
+  # the terminal sends through Herdr.
+  home.activation.claudeFollowsTerminalTheme = inputs.hexis.lib.mkManagedConfig {
+    inherit lib pkgs hexis;
+    file = "$HOME/.claude/settings.json";
+    declared.theme = "auto";
+    modes."/theme" = "always";
+  };
 
   systemd.user.services.chroma-daemon = {
     Unit = {
