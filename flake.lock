@@ -321,11 +321,11 @@
     "complex": {
       "flake": false,
       "locked": {
-        "lastModified": 1794268832,
-        "narHash": "sha256-2x5oRsJcOpuM6G3UAR4VsCO7GwciI9CzTGD/p8EM9GQ=",
+        "lastModified": 1794286778,
+        "narHash": "sha256-pp409+8rFzKCxfxsc1PCfows+3CcDKMe4sRlHMXlcjA=",
         "owner": "LiGoldragon",
         "repo": "goldragon-persona",
-        "rev": "e0b24c51d6f7240f796d0d9a7bea582c7dce64af",
+        "rev": "2c9fefa42ba060ee57b6482077b2cb8ee46527f2",
         "type": "github"
       },
       "original": {
