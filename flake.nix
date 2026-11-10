@@ -647,9 +647,6 @@
           claude-desktop-launcher-linkage = checkPkgs.callPackage ./gates/claude-desktop-launcher-linkage {
             inherit inputs;
           };
-          claude-desktop-egl-linkage = checkPkgs.callPackage ./gates/claude-desktop-egl-linkage {
-            inherit inputs;
-          };
           desktop-app-support = checkPkgs.callPackage ./gates/desktop-app-support {
             inherit inputs;
           };

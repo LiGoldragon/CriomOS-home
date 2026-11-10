@@ -65,22 +65,6 @@ let
   versionData = builtins.fromJSON (builtins.readFile ./hashes.json);
   inherit (versionData) version urls hashes;
   platform = stdenvNoCC.hostPlatform.system;
-  # The automatic formatelf hook is sourced from nativeBuildInputs.  This
-  # follow-on hook must be sourced after it so its post-fixup action runs after
-  # formatelf's RPATH normalization.
-  claudeDesktopEglFixupHook =
-    pkgs.makeSetupHook
-      {
-        name = "claude-desktop-egl-fixup-hook";
-      }
-      (
-        pkgs.writeText "claude-desktop-egl-fixup-hook.sh" ''
-          claudeDesktopEglFixup() {
-            ${patchelf}/bin/patchelf --add-rpath ${libglvnd}/lib "$out/lib/claude-desktop/libGLESv2.so"
-          }
-          postFixupHooks+=(claudeDesktopEglFixup)
-        ''
-      );
   desktopItem = makeDesktopItem {
     name = pname;
     desktopName = "Claude";
@@ -129,7 +113,6 @@ stdenvNoCC.mkDerivation {
     copyDesktopItems
     makeWrapper
     patchelf
-    claudeDesktopEglFixupHook
   ];
   buildInputs = [
     adwaita-icon-theme
@@ -161,6 +144,8 @@ stdenvNoCC.mkDerivation {
     nspr
     nss
     pango
+    # The 4.x claude-native binding links libpipewire-0.3 directly.
+    pipewire
     libseccomp
     systemdLibs
   ];

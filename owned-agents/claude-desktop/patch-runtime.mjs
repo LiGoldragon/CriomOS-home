@@ -52,27 +52,44 @@ function replaceOne(source, marker, replacement) {
   return source.slice(0, start) + replacement + source.slice(methodEnd(source, start));
 }
 
-function prefixOne(source, marker, prefix) {
-  const start = source.indexOf(marker);
-  if (start < 0) return null;
-  if (source.indexOf(marker, start + marker.length) >= 0) {
-    throw new Error(`ambiguous runtime method: ${marker}`);
-  }
-  return source.slice(0, start + marker.length) + prefix + source.slice(start + marker.length);
+// Prefix the body of the one method declared as `async NAME(...){`, whatever
+// its parameter list: upstream adds parameters between builds.
+function prefixMethod(source, name, prefix) {
+  const head = new RegExp(`async ${name}\\([^)]*\\)\\{`, "g");
+  const matches = [...source.matchAll(head)];
+  if (matches.length === 0) return null;
+  if (matches.length > 1) throw new Error(`ambiguous runtime method: ${name}`);
+  const bodyStart = matches[0].index + matches[0][0].length;
+  return source.slice(0, bodyStart) + prefix + source.slice(bodyStart);
 }
 
 await collect(appDirectory);
+
+// The manager's constructor is the member declared immediately before
+// initLocalBinary, and it initializes localBinaryInitPromise to null. The
+// override is appended as the constructor's last statements, so it does not
+// depend on what upstream's constructor happens to end with (1.x ended with a
+// dead `process.env.CLAUDE_CODE_LOCAL_BINARY` read; 4.x dropped it).
 let constructorPatched = false;
-const constructorMarker = "process.env.CLAUDE_CODE_LOCAL_BINARY}";
-const constructorReplacement = `this.localBinaryOverridePath=${JSON.stringify(declaredClaudeCode)},this.localBinaryInitPromise=this.initLocalBinary(this.localBinaryOverridePath)}`;
+const initMarker = "async initLocalBinary(e){";
+const constructorMarker = "constructor(){";
+const constructorAppend = `;this.localBinaryOverridePath=${JSON.stringify(declaredClaudeCode)},this.localBinaryInitPromise=this.initLocalBinary(this.localBinaryOverridePath)`;
 for (const file of files) {
   const source = await readFile(file, "utf8");
-  const start = source.indexOf(constructorMarker);
-  if (start < 0) continue;
-  if (constructorPatched || source.indexOf(constructorMarker, start + constructorMarker.length) >= 0) {
+  const initStart = source.indexOf(initMarker);
+  if (initStart < 0) continue;
+  if (constructorPatched || source.indexOf(initMarker, initStart + initMarker.length) >= 0) {
     throw new Error("ambiguous Claude Code local-override constructor");
   }
-  await writeFile(file, source.replace(constructorMarker, constructorReplacement));
+  const constructorStart = source.lastIndexOf(constructorMarker, initStart);
+  if (constructorStart < 0 || methodEnd(source, constructorStart) !== initStart) {
+    throw new Error("Claude Code local-override constructor was not found immediately before initLocalBinary");
+  }
+  if (!source.slice(constructorStart, initStart).includes("this.localBinaryInitPromise=null")) {
+    throw new Error("Claude Code local-override constructor does not initialize localBinaryInitPromise");
+  }
+  const constructorClose = initStart - 1;
+  await writeFile(file, source.slice(0, constructorClose) + constructorAppend + source.slice(constructorClose));
   constructorPatched = true;
 }
 if (!constructorPatched) throw new Error("Claude Code local-override constructor was not found");
@@ -172,18 +189,18 @@ for (const file of files) {
 }
 if (!binaryPatched) throw new Error("Claude Code local-binary method was not found");
 
-for (const [marker, prefix] of [
-  ["async invalidateHostBinary(e){", "if(this.localBinaryOverridePath)return;"],
-  ["async prepareForVM(e){", "if(this.localBinaryOverridePath)throw Error(`CCD local override cannot be materialized for a VM`);"],
+for (const [name, prefix] of [
+  ["invalidateHostBinary", "if(this.localBinaryOverridePath)return;"],
+  ["prepareForVM", "if(this.localBinaryOverridePath)throw Error(`CCD local override cannot be materialized for a VM`);"],
 ]) {
   let patched = false;
   for (const file of files) {
     const source = await readFile(file, "utf8");
-    const result = prefixOne(source, marker, prefix);
+    const result = prefixMethod(source, name, prefix);
     if (result === null) continue;
-    if (patched) throw new Error(`runtime method occurs in more than one file: ${marker}`);
+    if (patched) throw new Error(`runtime method occurs in more than one file: ${name}`);
     await writeFile(file, result);
     patched = true;
   }
-  if (!patched) throw new Error(`runtime method was not found: ${marker}`);
+  if (!patched) throw new Error(`runtime method was not found: ${name}`);
 }
