@@ -478,6 +478,9 @@ in
       mpd = {
         enable = true;
         musicDirectory = "~/Music";
+        # Each user's daemon listens on a socket of its own: on a host with
+        # several users, one shared 127.0.0.1:6600 lets only the first bind.
+        network.listenAddress = "${config.services.mpd.dataDir}/socket";
       };
 
       pueue = {

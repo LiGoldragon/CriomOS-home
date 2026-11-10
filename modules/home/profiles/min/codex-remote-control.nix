@@ -116,7 +116,12 @@ lib.mkMerge [
     home.packages = [ codexRemote ];
 
     systemd.user.services.codex-remote-control = {
-      Unit.Description = "Codex Remote Control app-server";
+      # It serves the primary checkout; on a host where this user has none,
+      # the unit is skipped rather than failing at its working directory.
+      Unit = {
+        Description = "Codex Remote Control app-server";
+        ConditionPathIsDirectory = primaryWorkspace;
+      };
       Service = {
         WorkingDirectory = primaryWorkspace;
         Environment = lib.optionals buildGuard.enable [

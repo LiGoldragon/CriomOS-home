@@ -74,6 +74,9 @@ in
       # state instead of an unbounded restart loop.
       Unit = {
         Description = "Codex Remote Control next server";
+        # It serves the primary checkout; on a host where this user has none,
+        # the unit is skipped rather than failing at its working directory.
+        ConditionPathIsDirectory = "${config.home.homeDirectory}/primary";
         Conflicts = [ recoveryUnit ];
         After = [ recoveryUnit ];
         StartLimitIntervalSec = 60;
