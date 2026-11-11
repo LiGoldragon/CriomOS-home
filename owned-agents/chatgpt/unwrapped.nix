@@ -36,6 +36,7 @@ let
     pango
     pipewire
     systemd
+    tpm2-tss
     wayland
     xdg-utils
     libx11
@@ -96,6 +97,8 @@ stdenv.mkDerivation {
     pipewire
     stdenv.cc.cc.lib
     systemd
+    # remote-control-device-key.node links libtss2-esys, -mu and -tcti-device.
+    tpm2-tss
     wayland
     libx11
     libxcomposite
