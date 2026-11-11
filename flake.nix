@@ -723,6 +723,9 @@
             inputs.niri-flake.homeModules.config
             inputs.noctalia.homeModules.default
           ];
+          # programs.noctalia is declared by the noctalia flake's module;
+          # Home Manager's own declaration of it is left out.
+          disabledModules = [ "programs/noctalia" ];
           # mkForce because the consumer (e.g. CriomOS userHomes.nix)
           # also passes its own `inputs` via extraSpecialArgs, which
           # would otherwise win the priority race.
