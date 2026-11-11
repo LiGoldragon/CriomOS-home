@@ -12,7 +12,7 @@ let
   sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
 in
 {
-  # The Flow Nexus runs as one declared unit per version (flow-nexus-version.nix);
+  # The Flow Nexus runs as one declared unit per version (flow-nexus-place.nix);
   # this module holds what every Flow version shares.
   options.criomosHome.flow.enable = lib.mkOption {
     type = lib.types.bool;

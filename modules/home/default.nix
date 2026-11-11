@@ -83,12 +83,6 @@
     ./profiles/min/energy-nexus.nix
     # What every Flow Nexus version shares; each version is its own unit.
     ./profiles/min/flow.nix
-    # Flow 0.51.2, retired: its package kept, no unit.
-    ./profiles/min/flow-0511.nix
-    # Flow 0.53.0, retired: its package kept, no unit.
-    ./profiles/min/flow-0530.nix
-    # Flow 0.53.1 at its own place; the bare flow names point at it.
-    ./profiles/min/flow-0531.nix
     # Flow 0.54.3, the version at main.
     ./profiles/min/flow-0540.nix
     # Next Flow and next Message beside the stable pair, on their own

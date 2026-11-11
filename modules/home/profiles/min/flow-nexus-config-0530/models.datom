@@ -1,9 +1,0 @@
-Configure.Models.[
-  { Fable claude-fable-5-1 }
-  { Opus claude-opus-5-5 }
-  { Sonnet claude-sonnet-5-5 }
-  { Haiku claude-haiku-5-5 }
-  { Astra gpt-6-astra }
-  { Sol gpt-6.1-sol }
-  { Luna gpt-6-luna }
-]

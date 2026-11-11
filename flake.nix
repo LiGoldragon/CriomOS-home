@@ -26,6 +26,7 @@
     primary = {
       url = "github:LiGoldragon/primary";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flow.follows = "flow-0540";
       inputs.curriculum = {
         url = "github:LiGoldragon/Curriculum";
         flake = false;
@@ -123,15 +124,6 @@
     harness.url = "github:LiGoldragon/harness";
     harness.inputs.nixpkgs.follows = "nixpkgs";
 
-    # Flow 0.51.2, retired: its package and versioned clients stay; no unit runs it.
-    flow-0511.url = "github:LiGoldragon/flow";
-    flow-0511.inputs.nixpkgs.follows = "nixpkgs";
-
-    # Flow 0.53.0 at its own place; the lock holds its commit.
-    flow-0530.url = "github:LiGoldragon/flow";
-    flow-0530.inputs.nixpkgs.follows = "nixpkgs";
-    flow-0531.url = "github:LiGoldragon/flow";
-    flow-0531.inputs.nixpkgs.follows = "nixpkgs";
     # Flow 0.54.3, built per crate on the build base. It follows no Home
     # input: its nixpkgs is the base's, which gives its crates the store paths
     # every repository on the base shares.
@@ -226,7 +218,7 @@
     orchestrate.inputs.nixpkgs.follows = "nixpkgs";
 
     # Message — its message-mcp-send is the send server each Flow Nexus
-    # version is configured with (flow-nexus-version.nix).
+    # version is configured with (flow-nexus-place.nix).
     message.url = "github:LiGoldragon/message";
     message.inputs.nixpkgs.follows = "nixpkgs";
     message.inputs.crane.follows = "crane";
