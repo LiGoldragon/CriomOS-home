@@ -164,6 +164,9 @@ in
     programs.zsh.initContent = lib.mkBefore terminalInitHook;
 
     stylix = {
+      # Home takes the system's package set (useGlobalPkgs), which carries
+      # no overlays of Home's own.
+      overlays.enable = false;
       enable = true;
       autoEnable = true;
       polarity = "dark";
