@@ -139,6 +139,11 @@ let
       # the Nexus with it at every start, so this value is never launched
       # from.
       runtimeDirectory = "/run/flow-${slug}-undeclared-runtime";
+    }
+    # Flow 0.54.3 and later compose the Herdr session into a fresh memory's
+    # Nexus; an earlier version's mkFlowPackage takes no such field.
+    // lib.optionalAttrs (cfg.herdrSession != null) {
+      herdrSession = cfg.herdrSession;
     };
   };
   # Datom rendering of the attribute-held families.
