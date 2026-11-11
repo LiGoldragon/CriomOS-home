@@ -37,6 +37,10 @@
       metaflows = "${inputs.complex}/metaflows-0533.datom";
     };
     messageNexus = null;
+    # Every launch opens its pane in Herdr's default session, where the
+    # flows run (Flow 0.54.3's Configure.Nexus names it). This lands with
+    # the relock of flow-0540 to Flow 0.54.3; 0.54.2 reads no such field.
+    herdrSession = "default";
     # 0.53.3 and later read a Model where earlier versions read a layer.
     configurationDirectory = ./flow-nexus-config-0533;
     # The handover warning: each model warned at 15 percent before its

@@ -153,8 +153,9 @@ let
     "{ ${value.harnessKind} ${vector (map text value.commandSigils)} ${vector value.interruptKeys} ${vector value.submitKeys} }";
   sendServer =
     value: "{ ${text value.codexAppServerBinary} ${text value.mcpSendServerBinary} }";
-  # ConfigureNexus as meta-signal-flow 72.0.0 reads it; its last field is
-  # the Option<PresentationPrompt.String>.
+  # ConfigureNexus as meta-signal-flow reads it: from 75.0.0 (Flow 0.54.3)
+  # its last field is the HerdrSessionName every launch opens in, after the
+  # Option<PresentationPrompt.String>; earlier versions end at the prompt.
   nexusQuery = pkgs.writeText "flow-${slug}-nexus.datom" ''
     Configure.Nexus.{ ${text nexus.sourceRoot} ${endpoint nexus.stableCodex} ${endpoint nexus.nextCodex} ${vector (map profile nexus.harnessProfiles)} ${vector nexus.metaAspects} ${
       option (if cfg.messageNexus == null then null else text cfg.messageNexus.socket)
@@ -162,7 +163,7 @@ let
       option (if cfg.messageNexus == null then null else text cfg.messageNexus.binary)
     } ${text nexus.curriculumNexusPath} ${toString nexus.lease} ${
       option (if cfg.presentationPrompt == null then null else text cfg.presentationPrompt)
-    } }
+    }${lib.optionalString (cfg.herdrSession != null) " ${text cfg.herdrSession}"} }
   '';
   sendServersQuery = pkgs.writeText "flow-${slug}-send-servers.datom" ''
     Configure.SendServers.${vector (map sendServer cfg.sendServers)}
@@ -342,6 +343,11 @@ in
       type = lib.types.nullOr lib.types.str;
       default = null;
       description = "Text the Psyche core Primary system prompt carries; null carries none.";
+    };
+    herdrSession = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      description = "The one Herdr session every launch opens its pane in (Flow 0.54.3 and later, whose Configure.Nexus names it); null for a version before 0.54.3, whose Configure.Nexus has no such field.";
     };
     package = lib.mkOption {
       type = lib.types.package;
