@@ -45,6 +45,9 @@ let
     [ui.toast]
     delivery = "terminal"
 
+    [ui.sound]
+    enabled = false
+
     [ui]
     agent_panel_sort = "spaces"
   '';
