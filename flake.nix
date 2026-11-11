@@ -220,8 +220,6 @@
     # Message — its message-mcp-send is the send server each Flow Nexus
     # version is configured with (flow-nexus-place.nix).
     message.url = "github:LiGoldragon/message";
-    message.inputs.nixpkgs.follows = "nixpkgs";
-    message.inputs.crane.follows = "crane";
 
     # `pi` (earendil-works/pi coding-agent CLI) — TypeScript npm
     # monorepo with no upstream flake. Consumed as a non-flake source
