@@ -97,7 +97,7 @@ in
           flow0540 = config.criomosHome.flow0540;
         in
         if flow0540.enable && flow0540.place == cfg.place then flow0540.unit else null;
-      defaultText = lib.literalExpression "the Flow 0.54.1 unit, when it is enabled at this place";
+      defaultText = lib.literalExpression "the Flow 0.54.2 unit, when it is enabled at this place";
       description = "The unit of the Flow Nexus at this place, whose turn ends Energy reads on: the translator wants it and is ordered after it, and keeps running when it stops. Null when no Flow runs at the place.";
     };
     package = lib.mkOption {
