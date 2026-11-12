@@ -3,6 +3,7 @@ let
   user = {
     name = "next-test";
     size = "Min";
+    capabilities = [ ];
   };
   configuration =
     (inputs.home-manager.lib.homeManagerConfiguration {
