@@ -92,6 +92,9 @@
     # Replaces darkman + nightshift + the brightness shell wrapper.
     # Per-user systemd unit + apply script + default config.nota.
     ./profiles/min/chroma.nix
+    # Libnewt widgets use terminal defaults and live terminal palette slots,
+    # so Chroma also recolours already-open nmtui sessions.
+    ./profiles/min/nmtui-theme.nix
     # Despite the filename, this configures programs.noctalia
     # (bar widgets, idle timer, lock timeout). Without it the user
     # gets noctalia's upstream defaults.
