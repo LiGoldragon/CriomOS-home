@@ -545,7 +545,7 @@
         // {
           chroma-datom-config = checkPkgs.callPackage ./checks/chroma-datom-config { inherit inputs; };
           chroma-emacs-resident = checkPkgs.callPackage ./checks/chroma-emacs-resident { inherit inputs; };
-          nmtui-theme = checkPkgs.callPackage ./checks/nmtui-theme { };
+          nmtui-theme = import ./checks/nmtui-theme { pkgs = checkPkgs; };
           horizon-user-projection = checkPkgs.callPackage ./checks/horizon-user-projection { };
           default-opener = checkPkgs.callPackage ./checks/default-opener { inherit inputs; };
           listener-dictation-bindings = checkPkgs.callPackage ./checks/listener-dictation-bindings {
