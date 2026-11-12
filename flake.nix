@@ -552,6 +552,7 @@
           };
           listener-level-widget = checkPkgs.callPackage ./checks/listener-level-widget { };
           active-network-widget = checkPkgs.callPackage ./checks/active-network-widget { };
+          zoekt-index-offload = checkPkgs.callPackage ./checks/zoekt-index-offload { inherit inputs; };
           solar-time-widget = checkPkgs.callPackage ./checks/solar-time-widget { };
           keyboard-layout-policy = checkPkgs.callPackage ./checks/keyboard-layout-policy { inherit inputs; };
           emacs-rust-analyzer-autostart = checkPkgs.callPackage ./checks/emacs-rust-analyzer-autostart { };
