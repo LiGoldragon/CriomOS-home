@@ -22,6 +22,9 @@ let
       ];
     }).config;
   herdrPackage = configuration.criomosHome.herdr.package;
+  expectedStablePackage = pkgs.callPackage ../../owned-agents/codex {
+    manifestFile = ../../owned-agents/codex/stable-hashes.json;
+  };
   stableClient = configuration.criomosHome.herdr.stableCodexClientPackage;
   nextRaw = configuration.criomosHome.codexNextCandidate.package;
   nextClient = configuration.criomosHome.codexNextCandidate.clientPackage;
@@ -38,7 +41,7 @@ pkgs.runCommand "herdr-agent-executable-contract" { } ''
   remote=${nextRemoteClient}/bin/codex-next
 
   grep -F 'export CODEX_HOME=' "$stable"
-  grep -F 'exec ${configuration.criomos.corePackages.codex}/bin/codex "$@"' "$stable"
+  grep -F 'exec ${expectedStablePackage}/bin/codex "$@"' "$stable"
   ! grep -F -- '--remote' "$stable"
   grep -F 'export CODEX_HOME=' "$next"
   grep -F 'exec ${nextRaw}/bin/codex "$@"' "$next"
