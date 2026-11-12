@@ -19,6 +19,7 @@ let
         inputs = testInputs;
         user = {
           inherit name;
+          capabilities = lib.optional (name == "bird") "StableCodex";
           size = "Max";
           hasPublicKey = true;
         };
