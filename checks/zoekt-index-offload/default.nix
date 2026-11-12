@@ -19,6 +19,8 @@ let
           stateVersion = "26.05";
         };
         criomosHome.zoektIndex.indexingHost = "index-builder.example";
+        criomosHome.zoektIndex.machineIdentityFile = toString (pkgs.writeText "machine-id" "0123456789abcdef0123456789abcdef\n");
+        criomosHome.zoektIndex.remoteWorkRoot = "/tmp/zoekt-index-offload-check-remote";
       }
     ];
   };
@@ -62,6 +64,11 @@ pkgs.runCommand "zoekt-index-offload"
     test "$(jq -r .repository "$request/request.json")" = "$repository"
     test "$(jq -r .repositoryIdentity "$request/request.json")" = "$repository"
     test "$(jq -r .revision "$request/request.json")" = "$first"
+    test "$(jq -r .indexingHost "$request/request.json")" = "index-builder.example"
+    remote_work_key=$(jq -r .remoteWorkKey "$request/request.json")
+    test "$(printf '%s' "$remote_work_key" | sed -n '/^[0-9a-f]\{64\}$/p')" = "$remote_work_key"
+    test "$(jq -r .remoteWorkRoot "$request/request.json")" = "/tmp/zoekt-index-offload-check-remote"
+    test "$(jq -r .remoteWorkPath "$request/request.json")" = "/tmp/zoekt-index-offload-check-remote/$remote_work_key"
 
     # The accepted request owns the commit even after its source repository
     # rewrites and prunes that history.
@@ -78,6 +85,7 @@ pkgs.runCommand "zoekt-index-offload"
     test "$(find "$XDG_STATE_HOME/zoekt-index/requests" -mindepth 1 -maxdepth 1 -type d | wc -l)" -eq 2
     test "$(find "$XDG_STATE_HOME/zoekt-index/requests" -mindepth 2 -maxdepth 2 -name request.json -exec jq -r .revision {} \; | sort -u | wc -l)" -eq 2
     test "$(find "$XDG_STATE_HOME/zoekt-index/requests" -mindepth 2 -maxdepth 2 -name request.json -exec jq -r .sequence {} \; | sort -n | tr '\n' ' ')" = "1 2 "
+    test "$(find "$XDG_STATE_HOME/zoekt-index/requests" -mindepth 2 -maxdepth 2 -name request.json -exec jq -r .remoteWorkKey {} \; | sort -u | wc -l)" -eq 2
 
     # Exercise native per-shard rename, stale deletion, and an already-open
     # mapping surviving replacement without retaining a named generation.

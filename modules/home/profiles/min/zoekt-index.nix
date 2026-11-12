@@ -69,6 +69,8 @@ let
         revision=$(git -C "$repository" rev-parse --verify HEAD)
         identity=$(git -C "$repository" remote get-url origin 2>/dev/null || printf '%s' "$repository")
         repository_key=$(printf '%s' "$identity" | sha256sum | cut -d ' ' -f 1)
+        machine_identity=$(cat ${lib.escapeShellArg cfg.machineIdentityFile})
+        numeric_user_identity=$(id -u)
         exec 8>"$state_directory/enqueue.lock"
         flock 8
         sequence_file="$state_directory/next-sequence"
@@ -81,6 +83,12 @@ let
         printf '%s\n' "$sequence" > "$sequence_temporary"
         mv "$sequence_temporary" "$sequence_file"
         sequence_name=$(printf '%020d' "$sequence")
+        remote_work_key=$(printf '%s\0%s\0%s\0%s\0%s' \
+          "$machine_identity" "$numeric_user_identity" "$sequence" "$repository_key" "$revision" \
+          | sha256sum | cut -d ' ' -f 1)
+        indexing_host=${lib.escapeShellArg cfg.indexingHost}
+        remote_work_root=${lib.escapeShellArg cfg.remoteWorkRoot}
+        remote_work_path="$remote_work_root/$remote_work_key"
         temporary=$(mktemp -d "$queue_directory/.request.XXXXXX")
         trap 'rm -rf "$temporary"' EXIT
         git init --bare --quiet "$temporary/source.git"
@@ -94,8 +102,12 @@ let
           --arg repositoryIdentity "$identity" \
           --arg repositoryKey "$repository_key" \
           --arg revision "$revision" \
+          --arg indexingHost "$indexing_host" \
+          --arg remoteWorkKey "$remote_work_key" \
+          --arg remoteWorkRoot "$remote_work_root" \
+          --arg remoteWorkPath "$remote_work_path" \
           --argjson sequence "$sequence" \
-          '{repository: $repository, repositoryIdentity: $repositoryIdentity, repositoryKey: $repositoryKey, revision: $revision, sequence: $sequence}' \
+          '{repository: $repository, repositoryIdentity: $repositoryIdentity, repositoryKey: $repositoryKey, revision: $revision, sequence: $sequence, indexingHost: $indexingHost, remoteWorkKey: $remoteWorkKey, remoteWorkRoot: $remoteWorkRoot, remoteWorkPath: $remoteWorkPath}' \
           > "$temporary/request.json"
         mv "$temporary" "$queue_directory/$sequence_name-$repository_key-$revision"
         trap - EXIT
@@ -146,7 +158,13 @@ let
         request_directory=$1
         request="$request_directory/request.json"
         source_repository="$request_directory/source.git"
-        index_host=${lib.escapeShellArg cfg.indexingHost}
+        index_host=$(jq -er .indexingHost "$request") || return
+        remote_work_key=$(jq -er .remoteWorkKey "$request") || return
+        remote_work_root=$(jq -er .remoteWorkRoot "$request") || return
+        remote_work=$(jq -er .remoteWorkPath "$request") || return
+        test "$(printf '%s' "$remote_work_key" | sed -n '/^[0-9a-f]\{64\}$/p')" = "$remote_work_key" || return
+        test "$(printf '%s' "$remote_work_root" | sed -n '/^\/[A-Za-z0-9._\/-]*$/p')" = "$remote_work_root" || return
+        test "$remote_work" = "$remote_work_root/$remote_work_key" || return
         revision=$(jq -er .revision "$request") || return
         test "$(git -C "$source_repository" rev-parse HEAD)" = "$revision" || return
 
@@ -160,20 +178,23 @@ let
         }
 
         local_work=$(mktemp -d "$state_directory/.work.XXXXXX") || return
-        remote_work=
         # shellcheck disable=SC2329 # invoked by the EXIT/INT/TERM trap
         cleanup() {
           rm -rf "$local_work"
-          if [ -n "$remote_work" ]; then
+          if [ -n "''${remote_cleanup_needed:-}" ]; then
             bounded ssh -n "''${ssh_options[@]}" "$index_host" rm -rf -- "$remote_work" >/dev/null 2>&1 || true
           fi
         }
         trap cleanup EXIT INT TERM
         mkdir -p "$local_work/result"
 
+        # The request owns one deterministic remote directory. Reclaiming it
+        # is the first remote action of every attempt, so a transport loss or
+        # process death leaves work that the same retained request will find.
+        bounded ssh -n "''${ssh_options[@]}" "$index_host" \
+          "mkdir -p -- $(dirname "$remote_work") && rm -rf -- $remote_work && mkdir -- $remote_work" || return
+        remote_cleanup_needed=1
         NIX_SSHOPTS="$nix_ssh_options" bounded nix copy --to "ssh://$index_host" ${remoteIndexer} || return
-        # shellcheck disable=SC2016 # XDG_RUNTIME_DIR is expanded by the remote shell
-        remote_work=$(bounded ssh -n "''${ssh_options[@]}" "$index_host" 'mktemp -d "''${XDG_RUNTIME_DIR:-/tmp}/zoekt-index.XXXXXX"') || return
         bounded rsync --timeout="$operation_timeout" -a -e "$remote_shell" -- \
           "$request" "$source_repository" "$index_host:$remote_work/" || return
         bounded ssh -n "''${ssh_options[@]}" "$index_host" ${remoteIndexer}/bin/zoekt-index-snapshot "$remote_work" || return
@@ -182,6 +203,8 @@ let
         find "$local_work/result" -maxdepth 1 -type f -name '*.zoekt' -print -quit | grep -q . || return
 
         install_shards "$local_work/result" || return
+        bounded ssh -n "''${ssh_options[@]}" "$index_host" rm -rf -- "$remote_work" || return
+        remote_cleanup_needed=
         rm -rf -- "$request_directory"
       )
 
@@ -269,6 +292,16 @@ in
     type = lib.types.ints.positive;
     default = 300;
     description = "Maximum time for each remote indexing transport operation.";
+  };
+  options.criomosHome.zoektIndex.remoteWorkRoot = lib.mkOption {
+    type = lib.types.strMatching "^/[A-Za-z0-9._/-]+$";
+    default = "/tmp/zoekt-index-${config.home.username}";
+    description = "Absolute directory on the indexing host that holds request-owned temporary work.";
+  };
+  options.criomosHome.zoektIndex.machineIdentityFile = lib.mkOption {
+    type = lib.types.str;
+    default = "/etc/machine-id";
+    description = "File containing the stable local machine identity used to own remote work.";
   };
 
   config = lib.mkIf (sizeAtLeast "Min") {
