@@ -1,5 +1,7 @@
 # Upgrades
 
+Flow 0.54.7: matched Flow 5d70c7b8 and Energy 0.3.2 cd4c85c0; ordinary/meta clients and hooks come from the same Flow package. The 0540 unit/place and 3G memory/zero-swap limit remain. Before activation, preserve a verified stopped-store backup: the upgraded Flow store is incompatible with 0.54.6.
+
 ## Next Flow 0.17.0 and next Message 0.17.0 (next slot moves together)
 
 The next slot moves from Flow 0.16.0 / Message 0.16.0 to Flow 0.17.0
