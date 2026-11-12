@@ -90,23 +90,23 @@ pkgs.runCommand "zoekt-index-offload"
 
     hook_wrapper="$TMPDIR/zoekt-hook"
     cat > "$hook_wrapper" <<'HOOK'
-    #!/bin/sh
-    set -eu
-    source_git_directory=$(git rev-parse --absolute-git-dir)
-    raw_selected_directory=$(git -C "$HOOK_DECOY" rev-parse --absolute-git-dir)
-    if [ "$raw_selected_directory" = "$source_git_directory" ]; then
-      printf 'original-context-leak %s\n' "$source_git_directory" >> "$HOOK_CONTEXT_EVIDENCE"
-    else
-      test "$raw_selected_directory" = "$HOOK_DECOY"
-      printf 'ordinary-context %s\n' "$source_git_directory" >> "$HOOK_CONTEXT_EVIDENCE"
-    fi
-    export GIT_INDEX_FILE="$(git rev-parse --path-format=absolute --git-path index)"
-    export GIT_COMMON_DIR="$(git rev-parse --path-format=absolute --git-common-dir)"
-    export GIT_OBJECT_DIRECTORY="$(git rev-parse --path-format=absolute --git-path objects)"
-    export GIT_ALTERNATE_OBJECT_DIRECTORIES="$HOOK_ALTERNATE_OBJECTS"
-    export GIT_NAMESPACE=zoekt-hook-context-check
-    exec ${cfg.programs.git.settings.hook.zoekt-index.command}
-    HOOK
+#!/bin/sh
+set -eu
+source_git_directory=$(git rev-parse --absolute-git-dir)
+raw_selected_directory=$(git -C "$HOOK_DECOY" rev-parse --absolute-git-dir)
+if [ "$raw_selected_directory" = "$source_git_directory" ]; then
+  printf 'original-context-leak %s\n' "$source_git_directory" >> "$HOOK_CONTEXT_EVIDENCE"
+else
+  test "$raw_selected_directory" = "$HOOK_DECOY"
+  printf 'ordinary-context %s\n' "$source_git_directory" >> "$HOOK_CONTEXT_EVIDENCE"
+fi
+export GIT_INDEX_FILE="$(git rev-parse --path-format=absolute --git-path index)"
+export GIT_COMMON_DIR="$(git rev-parse --path-format=absolute --git-common-dir)"
+export GIT_OBJECT_DIRECTORY="$(git rev-parse --path-format=absolute --git-path objects)"
+export GIT_ALTERNATE_OBJECT_DIRECTORIES="$HOOK_ALTERNATE_OBJECTS"
+export GIT_NAMESPACE=zoekt-hook-context-check
+exec ${cfg.programs.git.settings.hook.zoekt-index.command}
+HOOK
     chmod +x "$hook_wrapper"
     git config --global user.name test
     git config --global user.email test@localhost
