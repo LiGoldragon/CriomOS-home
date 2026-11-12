@@ -84,14 +84,28 @@ pkgs.runCommand "zoekt-index-offload"
     export XDG_DATA_HOME="$TMPDIR/data"
     result_one="$TMPDIR/result-one"
     result_two="$TMPDIR/result-two"
-    mkdir "$result_one" "$result_two"
+    unrelated_result="$TMPDIR/unrelated-result"
+    mkdir "$result_one" "$result_two" "$unrelated_result"
     git -C "$request/source.git" remote set-url origin https://github.com/example/fixture.git
     zoekt-git-index -index "$result_one" -branches HEAD "$request/source.git"
-    ${offload}/bin/zoekt-index-offload install-shards fixture "$result_one"
-    manifest="$XDG_DATA_HOME/zoekt/index/.manifests/fixture"
-    installed=$(head -n1 "$manifest")
-    printf 'obsolete.zoekt\n' >> "$manifest"
-    printf 'obsolete' > "$XDG_DATA_HOME/zoekt/index/obsolete.zoekt"
+    unrelated_repository="$TMPDIR/unrelated-repository"
+    git init -q "$unrelated_repository"
+    git -C "$unrelated_repository" config user.name test
+    git -C "$unrelated_repository" config user.email test@localhost
+    printf 'unrelated\n' > "$unrelated_repository/source"
+    git -C "$unrelated_repository" add source
+    git -C "$unrelated_repository" commit -qm unrelated
+    git -C "$unrelated_repository" remote add origin https://github.com/example/unrelated.git
+    zoekt-git-index -index "$unrelated_result" -branches HEAD "$unrelated_repository"
+    ${offload}/bin/zoekt-index-offload install-shards "$unrelated_result"
+    unrelated_name=$(basename "$unrelated_result"/*.zoekt)
+    ${offload}/bin/zoekt-index-offload install-shards "$result_one"
+    installed=$(basename "$result_one"/*.zoekt)
+    native_family=$(printf '%s\n' "$installed" | sed -n 's/_v[0-9][0-9]*\.[0-9][0-9]*\.zoekt$//p')
+    stale_shard="''${native_family}_v16.99999.zoekt"
+    older_format_shard="''${native_family}_v15.00000.zoekt"
+    cp "$XDG_DATA_HOME/zoekt/index/$installed" "$XDG_DATA_HOME/zoekt/index/$stale_shard"
+    cp "$XDG_DATA_HOME/zoekt/index/$installed" "$XDG_DATA_HOME/zoekt/index/$older_format_shard"
     mkfifo "$TMPDIR/mapped" "$TMPDIR/replaced"
     python3 - "$XDG_DATA_HOME/zoekt/index/$installed" "$TMPDIR/mapped" "$TMPDIR/replaced" <<'PY' &
 import hashlib, mmap, os, sys
@@ -118,10 +132,14 @@ PY
     git -C "$snapshot_two" symbolic-ref HEAD refs/heads/snapshot
     git -C "$snapshot_two" remote add origin https://github.com/example/fixture.git
     zoekt-git-index -index "$result_two" -branches HEAD "$snapshot_two"
-    ${offload}/bin/zoekt-index-offload install-shards fixture "$result_two"
-    test ! -e "$XDG_DATA_HOME/zoekt/index/obsolete.zoekt"
+    ${offload}/bin/zoekt-index-offload install-shards "$result_two"
+    test ! -e "$XDG_DATA_HOME/zoekt/index/$stale_shard"
+    test ! -e "$XDG_DATA_HOME/zoekt/index/$older_format_shard"
+    test -e "$XDG_DATA_HOME/zoekt/index/$unrelated_name"
     printf 'replaced\n' > "$TMPDIR/replaced"
     wait "$mapper"
+    ! zoekt -index_dir "$XDG_DATA_HOME/zoekt/index" first | grep -F first
+    zoekt -index_dir "$XDG_DATA_HOME/zoekt/index" third | grep -F third
     test ! -e "$XDG_DATA_HOME/zoekt/index-generations"
     touch "$out"
   ''
