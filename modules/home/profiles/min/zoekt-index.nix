@@ -8,6 +8,21 @@
 let
   sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
   cfg = config.criomosHome.zoektIndex;
+  gitRepositoryContext = ''
+    git_without_repository_context() (
+      while IFS= read -r variable; do
+        unset "$variable"
+      done < <(git rev-parse --local-env-vars)
+      unset GIT_NAMESPACE
+      command git "$@"
+    )
+
+    git_in_repository() (
+      repository=$1
+      shift
+      git_without_repository_context -C "$repository" "$@"
+    )
+  '';
 
   # This exact derivation is copied to the indexing host. Both ends therefore
   # use the package set selected by this Home generation.
@@ -19,6 +34,8 @@ let
       pkgs.zoekt
     ];
     text = ''
+      ${gitRepositoryContext}
+
       if [ "$#" -ne 1 ]; then
         echo "usage: zoekt-index-snapshot WORK_DIRECTORY" >&2
         exit 2
@@ -28,7 +45,7 @@ let
       source_repository="$work_directory/source.git"
       index_directory="$work_directory/index"
       revision=$(jq -er .revision "$request")
-      test "$(git -C "$source_repository" rev-parse HEAD)" = "$revision"
+      test "$(git_in_repository "$source_repository" rev-parse HEAD)" = "$revision"
       mkdir -p "$index_directory"
       zoekt-git-index -index "$index_directory" -branches HEAD "$source_repository"
     '';
@@ -52,6 +69,8 @@ let
       pkgs.util-linux
     ];
     text = ''
+      ${gitRepositoryContext}
+
       if [ "$#" -lt 1 ]; then
         echo "usage: zoekt-index-offload enqueue REPOSITORY | drain | install-shards RESULT_DIRECTORY" >&2
         exit 2
@@ -65,9 +84,9 @@ let
           echo "usage: zoekt-index-offload enqueue REPOSITORY" >&2
           exit 2
         fi
-        repository=$(git -C "$1" rev-parse --show-toplevel)
-        revision=$(git -C "$repository" rev-parse --verify HEAD)
-        identity=$(git -C "$repository" remote get-url origin 2>/dev/null || printf '%s' "$repository")
+        repository=$(git_in_repository "$1" rev-parse --show-toplevel)
+        revision=$(git_in_repository "$repository" rev-parse --verify HEAD)
+        identity=$(git_in_repository "$repository" remote get-url origin 2>/dev/null || printf '%s' "$repository")
         repository_key=$(printf '%s' "$identity" | sha256sum | cut -d ' ' -f 1)
         machine_identity=$(cat ${lib.escapeShellArg cfg.machineIdentityFile})
         numeric_user_identity=$(id -u)
@@ -91,12 +110,12 @@ let
         remote_work_path="$remote_work_root/$remote_work_key"
         temporary=$(mktemp -d "$queue_directory/.request.XXXXXX")
         trap 'rm -rf "$temporary"' EXIT
-        git init --bare --quiet "$temporary/source.git"
-        git -C "$temporary/source.git" fetch --quiet --depth=1 "$repository" \
+        git_without_repository_context init --bare --quiet "$temporary/source.git"
+        git_in_repository "$temporary/source.git" fetch --quiet --depth=1 "$repository" \
           "$revision:refs/heads/snapshot"
-        git -C "$temporary/source.git" symbolic-ref HEAD refs/heads/snapshot
-        git -C "$temporary/source.git" remote add origin "$identity"
-        test "$(git -C "$temporary/source.git" rev-parse HEAD)" = "$revision"
+        git_in_repository "$temporary/source.git" symbolic-ref HEAD refs/heads/snapshot
+        git_in_repository "$temporary/source.git" remote add origin "$identity"
+        test "$(git_in_repository "$temporary/source.git" rev-parse HEAD)" = "$revision"
         jq -n \
           --arg repository "$repository" \
           --arg repositoryIdentity "$identity" \
@@ -166,7 +185,7 @@ let
         test "$(printf '%s' "$remote_work_root" | sed -n '/^\/[A-Za-z0-9._\/-]*$/p')" = "$remote_work_root" || return
         test "$remote_work" = "$remote_work_root/$remote_work_key" || return
         revision=$(jq -er .revision "$request") || return
-        test "$(git -C "$source_repository" rev-parse HEAD)" = "$revision" || return
+        test "$(git_in_repository "$source_repository" rev-parse HEAD)" = "$revision" || return
 
         connection_timeout=${toString cfg.connectionTimeoutSeconds}
         operation_timeout=${toString cfg.operationTimeoutSeconds}
