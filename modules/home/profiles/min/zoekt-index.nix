@@ -53,7 +53,7 @@ let
     ];
     text = ''
       if [ "$#" -lt 1 ]; then
-        echo "usage: zoekt-index-offload enqueue REPOSITORY | drain | install-shards REPOSITORY_KEY RESULT_DIRECTORY" >&2
+        echo "usage: zoekt-index-offload enqueue REPOSITORY | drain | install-shards RESULT_DIRECTORY" >&2
         exit 2
       fi
       state_directory="''${XDG_STATE_HOME:-$HOME/.local/state}/zoekt-index"
@@ -102,46 +102,44 @@ let
       )
 
       install_shards() (
-        repository_key=$1
-        result_directory=$2
+        result_directory=$1
         data_directory="''${XDG_DATA_HOME:-$HOME/.local/share}/zoekt"
         index_path="$data_directory/index"
-        mkdir -p "$data_directory"
-
-        # Convert the superseded generation layout once, preserving its active
-        # shard set before native per-shard publication begins.
-        if [ -L "$index_path" ]; then
-          previous=$(readlink -f "$index_path")
-          imported=$(mktemp -d "$data_directory/.index-import.XXXXXX")
-          cp -a "$previous/." "$imported/"
-          rm "$index_path"
-          mv "$imported" "$index_path"
-          rm -rf "$data_directory/index-generations" "$data_directory/index-current"
-        fi
-
-        mkdir -p "$index_path/.manifests"
-        manifest="$index_path/.manifests/$repository_key"
+        mkdir -p "$index_path"
+        test ! -L "$index_path"
         incoming=$(mktemp -d "$data_directory/.index-incoming.XXXXXX")
         trap 'rm -rf "$incoming"' EXIT
-        new_manifest="$incoming/manifest"
-        : > "$new_manifest"
+        new_names="$incoming/new-names"
+        : > "$new_names"
+        native_family=
         for new_shard in "$result_directory"/*.zoekt; do
-          shard_name="$repository_key-$(basename "$new_shard")"
+          test -f "$new_shard"
+          shard_name=$(basename "$new_shard")
+          shard_family=$(printf '%s\n' "$shard_name" | sed -n 's/_v[0-9][0-9]*\.[0-9][0-9]*\.zoekt$//p')
+          test -n "$shard_family"
+          if [ -z "$native_family" ]; then
+            native_family=$shard_family
+          else
+            test "$shard_family" = "$native_family"
+          fi
           cp "$new_shard" "$incoming/$shard_name"
-          printf '%s\n' "$shard_name" >> "$new_manifest"
+          printf '%s\n' "$shard_name" >> "$new_names"
         done
+        test -n "$native_family"
 
         # Zoekt itself publishes each completed artifact with rename and then
-        # unlinks stale shards. Mirroring that protocol keeps opened mmaps valid.
+        # unlinks stale members of the same native repository-name family.
         while IFS= read -r shard_name; do
           mv -T "$incoming/$shard_name" "$index_path/$shard_name"
-        done < "$new_manifest"
-        if [ -f "$manifest" ]; then
-          while IFS= read -r old_shard; do
-            grep -Fxq "$old_shard" "$new_manifest" || rm -f -- "$index_path/$old_shard"
-          done < "$manifest"
-        fi
-        mv -T "$new_manifest" "$manifest"
+        done < "$new_names"
+        for existing_shard in "$index_path"/*.zoekt; do
+          test -f "$existing_shard" || continue
+          existing_name=$(basename "$existing_shard")
+          existing_family=$(printf '%s\n' "$existing_name" | sed -n 's/_v[0-9][0-9]*\.[0-9][0-9]*\.zoekt$//p')
+          if [ "$existing_family" = "$native_family" ] && ! grep -Fxq "$existing_name" "$new_names"; then
+            rm -f -- "$existing_shard"
+          fi
+        done
       )
 
       process_request() (
@@ -149,7 +147,6 @@ let
         request="$request_directory/request.json"
         source_repository="$request_directory/source.git"
         index_host=${lib.escapeShellArg cfg.indexingHost}
-        repository_key=$(jq -er .repositoryKey "$request") || return
         revision=$(jq -er .revision "$request") || return
         test "$(git -C "$source_repository" rev-parse HEAD)" = "$revision" || return
 
@@ -184,7 +181,7 @@ let
           "$index_host:$remote_work/index/" "$local_work/result/" || return
         find "$local_work/result" -maxdepth 1 -type f -name '*.zoekt' -print -quit | grep -q . || return
 
-        install_shards "$repository_key" "$local_work/result" || return
+        install_shards "$local_work/result" || return
         rm -rf -- "$request_directory"
       )
 
@@ -229,11 +226,11 @@ let
           ;;
         install-shards)
           shift
-          [ "$#" -eq 2 ] || { echo "usage: zoekt-index-offload install-shards REPOSITORY_KEY RESULT_DIRECTORY" >&2; exit 2; }
+          [ "$#" -eq 1 ] || { echo "usage: zoekt-index-offload install-shards RESULT_DIRECTORY" >&2; exit 2; }
           install_shards "$@"
           ;;
         *)
-          echo "usage: zoekt-index-offload enqueue REPOSITORY | drain | install-shards REPOSITORY_KEY RESULT_DIRECTORY" >&2
+          echo "usage: zoekt-index-offload enqueue REPOSITORY | drain | install-shards RESULT_DIRECTORY" >&2
           exit 2
           ;;
       esac
