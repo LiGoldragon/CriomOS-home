@@ -20,6 +20,7 @@ let
       extraSpecialArgs = {
         inherit inputs;
         user = {
+          capabilities = [ ];
           size = "Min";
           useColemak = false;
           hasPublicKey = false;
