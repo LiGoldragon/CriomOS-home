@@ -1,6 +1,6 @@
-# Flow Nexus 0.54.3, built per crate on the build base: its configured package
-# and its clients under their versioned names (flow-nexus-0.54.3,
-# flow-nexus-meta-0.54.3). A patch release keeps the 0.54 slug, 0540, so its
+# Flow Nexus 0.54.4, built per crate on the build base: its configured package
+# and its clients under their versioned names (flow-nexus-0.54.4,
+# flow-nexus-meta-0.54.4). A patch release keeps the 0.54 slug, 0540, so its
 # input, units and option are those of 0.54.0, and the switch restarts
 # flow-nexus-0540 on the same memory.
 # It starts in its place (flow-nexus-place.nix): main, the place every flow
@@ -16,13 +16,13 @@
 #
 # Being the version at main, it declares the user's Flow CLI configuration,
 # ~/.config/nexus/flow-nexus.datom, `{ main }` (vision:nexus-v1):
-# `flow-nexus '<datom>'` and `flow-nexus-meta '<datom>'` of 0.54.3 read their
+# `flow-nexus '<datom>'` and `flow-nexus-meta '<datom>'` of 0.54.4 read their
 # place from it, and no place is typed. The 0.53.1 clients read no configuration.
 { config, lib, inputs, ... }:
 {
   imports = [
     (import ./flow-nexus-place.nix {
-      version = "0.54.3";
+      version = "0.54.4";
       slug = "0540";
     })
   ];
@@ -50,6 +50,13 @@
       "default-minutes.datom"
       "handover-policies.datom"
     ];
+  };
+
+  # The Nexus at main is held to 3G of memory and no swap, so the kernel
+  # stops a runaway Nexus at that size.
+  systemd.user.services.${config.criomosHome.flow0540.unit}.Service = {
+    MemoryMax = "3G";
+    MemorySwapMax = "0";
   };
 
   home.packages = [ config.criomosHome.flow0540.clients ];

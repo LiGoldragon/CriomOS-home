@@ -124,7 +124,7 @@
     harness.url = "github:LiGoldragon/harness";
     harness.inputs.nixpkgs.follows = "nixpkgs";
 
-    # Flow 0.54.3, built per crate on the build base. It follows no Home
+    # Flow 0.54.4, built per crate on the build base. It follows no Home
     # input: its nixpkgs is the base's, which gives its crates the store paths
     # every repository on the base shares.
     flow-0540.url = "github:LiGoldragon/flow";
