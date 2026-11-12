@@ -16,4 +16,6 @@ Configure.HarnessFlags.[
   { { Psyche unity Opus } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
   { { Psyche persona Fable } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
   { { Psyche persona Opus } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
+  { { Psyche beliefReview Fable } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
+  { { Psyche beliefReview Opus } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
 ]

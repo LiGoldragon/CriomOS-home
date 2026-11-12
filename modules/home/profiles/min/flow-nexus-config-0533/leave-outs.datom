@@ -39,4 +39,6 @@ Configure.LeaveOuts.[
   { { Psyche chronos Opus } Claude [ ClaudeMd GitInstructions ] }
   { { Psyche research Fable } Claude [ ClaudeMd GitInstructions ] }
   { { Psyche research Opus } Claude [ ClaudeMd GitInstructions ] }
+  { { Psyche beliefReview Fable } Claude [ ClaudeMd GitInstructions ] }
+  { { Psyche beliefReview Opus } Claude [ ClaudeMd GitInstructions ] }
 ]
