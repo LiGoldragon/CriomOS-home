@@ -27,6 +27,7 @@ let
   };
   moduleResult = import ../../modules/home/profiles/min/chroma.nix {
     inherit inputs lib pkgs;
+    hexis = inputs.hexis.packages.${pkgs.stdenv.hostPlatform.system}.default;
     config = {
       criomosHome.visualTheme = {
         darkThemeSwitchTiming = "Early";
