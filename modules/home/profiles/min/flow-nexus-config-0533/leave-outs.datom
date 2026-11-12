@@ -13,7 +13,7 @@ Configure.LeaveOuts.[
   { { Mind versionZero Astra } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
   { { Mind versionZero Sol } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
   { { Mind codexManager Sol } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
-  { { Mind core Astra } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
+  { { Mind core Astra } Codex [] }
   { { Mind core Sol } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
   { { Mind flow Sol } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
   { { Mind books Sol } Codex [ CodexAgentsMd CodexSkillListing CodexCollaborationMode CodexEnvironmentContext CodexPermissions CodexDeveloperInstructions ] }
@@ -41,4 +41,12 @@ Configure.LeaveOuts.[
   { { Psyche research Opus } Claude [ ClaudeMd GitInstructions ] }
   { { Psyche beliefReview Fable } Claude [ ClaudeMd GitInstructions ] }
   { { Psyche beliefReview Opus } Claude [ ClaudeMd GitInstructions ] }
+  { { Mind curriculum Astra } Codex [] }
+  { { Mind curriculum Sol } Codex [] }
+  { { Mind survey Sol } Codex [] }
+  { { Field upkeep Sol } Codex [] }
+  { { Field inventory Sol } Codex [] }
+  { { Field heartbeat Sol } Codex [] }
+  { { Mind research Sol } Codex [] }
+  { { Mind researchTools Sol } Codex [] }
 ]
