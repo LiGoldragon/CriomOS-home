@@ -39,6 +39,8 @@ pkgs.runCommand "zoekt-index-offload"
     nativeBuildInputs = [
       pkgs.git
       pkgs.jq
+      pkgs.python3
+      pkgs.zoekt
     ];
   }
   ''
@@ -56,16 +58,70 @@ pkgs.runCommand "zoekt-index-offload"
     first=$(git -C "$repository" rev-parse HEAD)
     ${offload}/bin/zoekt-index-offload enqueue "$repository"
 
-    request=$(find "$XDG_STATE_HOME/zoekt-index/requests" -type f -name '*.json')
-    test "$(jq -r .repository "$request")" = "$repository"
-    test "$(jq -r .repositoryIdentity "$request")" = "$repository"
-    test "$(jq -r .revision "$request")" = "$first"
+    request=$(find "$XDG_STATE_HOME/zoekt-index/requests" -mindepth 1 -maxdepth 1 -type d)
+    test "$(jq -r .repository "$request/request.json")" = "$repository"
+    test "$(jq -r .repositoryIdentity "$request/request.json")" = "$repository"
+    test "$(jq -r .revision "$request/request.json")" = "$first"
+
+    # The accepted request owns the commit even after its source repository
+    # rewrites and prunes that history.
+    printf 'amended\n' > "$repository/source"
+    git -C "$repository" commit -qam amended --amend
+    git -C "$repository" reflog expire --expire=now --all
+    git -C "$repository" gc --prune=now
+    ! git -C "$repository" cat-file -e "$first^{commit}"
+    test "$(git -C "$request/source.git" rev-parse HEAD)" = "$first"
 
     printf 'second\n' >> "$repository/source"
     git -C "$repository" commit -qam second
     ${offload}/bin/zoekt-index-offload enqueue "$repository"
-    test "$(find "$XDG_STATE_HOME/zoekt-index/requests" -type f -name '*.json' | wc -l)" -eq 2
-    test "$(find "$XDG_STATE_HOME/zoekt-index/requests" -type f -name '*.json' -exec jq -r .revision {} \; | sort -u | wc -l)" -eq 2
-    test "$(find "$XDG_STATE_HOME/zoekt-index/requests" -type f -name '*.json' -exec jq -r .sequence {} \; | sort -n | tr '\n' ' ')" = "1 2 "
+    test "$(find "$XDG_STATE_HOME/zoekt-index/requests" -mindepth 1 -maxdepth 1 -type d | wc -l)" -eq 2
+    test "$(find "$XDG_STATE_HOME/zoekt-index/requests" -mindepth 2 -maxdepth 2 -name request.json -exec jq -r .revision {} \; | sort -u | wc -l)" -eq 2
+    test "$(find "$XDG_STATE_HOME/zoekt-index/requests" -mindepth 2 -maxdepth 2 -name request.json -exec jq -r .sequence {} \; | sort -n | tr '\n' ' ')" = "1 2 "
+
+    # Exercise native per-shard rename, stale deletion, and an already-open
+    # mapping surviving replacement without retaining a named generation.
+    export XDG_DATA_HOME="$TMPDIR/data"
+    result_one="$TMPDIR/result-one"
+    result_two="$TMPDIR/result-two"
+    mkdir "$result_one" "$result_two"
+    git -C "$request/source.git" remote set-url origin https://github.com/example/fixture.git
+    zoekt-git-index -index "$result_one" -branches HEAD "$request/source.git"
+    ${offload}/bin/zoekt-index-offload install-shards fixture "$result_one"
+    manifest="$XDG_DATA_HOME/zoekt/index/.manifests/fixture"
+    installed=$(head -n1 "$manifest")
+    printf 'obsolete.zoekt\n' >> "$manifest"
+    printf 'obsolete' > "$XDG_DATA_HOME/zoekt/index/obsolete.zoekt"
+    mkfifo "$TMPDIR/mapped" "$TMPDIR/replaced"
+    python3 - "$XDG_DATA_HOME/zoekt/index/$installed" "$TMPDIR/mapped" "$TMPDIR/replaced" <<'PY' &
+import hashlib, mmap, os, sys
+path, mapped_event, replaced_event = sys.argv[1:]
+with open(path, "rb") as source:
+    old = mmap.mmap(source.fileno(), 0, access=mmap.ACCESS_READ)
+    digest = hashlib.sha256(old).digest()
+    with open(mapped_event, "w") as event:
+        event.write("mapped\n")
+    with open(replaced_event) as event:
+        event.read()
+    assert hashlib.sha256(old).digest() == digest
+    old.close()
+PY
+    mapper=$!
+    read -r mapped < "$TMPDIR/mapped"
+    printf 'third\n' >> "$repository/source"
+    git -C "$repository" add source
+    git -C "$repository" commit -qm third
+    second=$(git -C "$repository" rev-parse HEAD)
+    snapshot_two="$TMPDIR/snapshot-two.git"
+    git init --bare -q "$snapshot_two"
+    git -C "$snapshot_two" fetch -q --depth=1 "$repository" "$second:refs/heads/snapshot"
+    git -C "$snapshot_two" symbolic-ref HEAD refs/heads/snapshot
+    git -C "$snapshot_two" remote add origin https://github.com/example/fixture.git
+    zoekt-git-index -index "$result_two" -branches HEAD "$snapshot_two"
+    ${offload}/bin/zoekt-index-offload install-shards fixture "$result_two"
+    test ! -e "$XDG_DATA_HOME/zoekt/index/obsolete.zoekt"
+    printf 'replaced\n' > "$TMPDIR/replaced"
+    wait "$mapper"
+    test ! -e "$XDG_DATA_HOME/zoekt/index-generations"
     touch "$out"
   ''
