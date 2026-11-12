@@ -1,8 +1,12 @@
 { pkgs, inputs, ... }:
 let
   lib = pkgs.lib;
-  # The stable endpoint is the independently pinned package selected by Home.
-  selected = pkgs.callPackage ../../owned-agents/codex { };
+  # A distinct injected canonical package proves consumers select the option,
+  # rather than independently repeating a version or constructor.
+  selected = pkgs.writeShellScriptBin "codex" ''
+    printf '%s\n' "$CODEX_HOME" "$@"
+  '';
+  expectedNextPackage = pkgs.callPackage ../../owned-agents/codex-next { };
   fakeClaude = pkgs.writeShellScriptBin "claude" "exit 0";
   fakeHexis = pkgs.writeShellScriptBin "hexis" "exit 0";
   testInputs = inputs // {
@@ -60,13 +64,15 @@ assert
 assert (next bird).Environment == [ "CODEX_HOME=/home/bird/.codex-next" ];
 assert builtins.isString (next bird).ExecStartPre;
 assert lib.hasSuffix
-  "-codex-next-${(pkgs.callPackage ../../owned-agents/codex-next { }).version}/bin/codex app-server --remote-control --listen unix:///home/li/.codex-next/app-server-control/app-server-control.sock"
+  "-codex-next-${expectedNextPackage.version}/bin/codex app-server --remote-control --listen unix:///home/li/.codex-next/app-server-control/app-server-control.sock"
   liNext;
-assert lib.hasSuffix "-codex-${selected.version}/bin/codex app-server --remote-control --listen unix://"
-  liStable;
-# This correction does not retire or upgrade Bird's other occupied endpoint.
-assert lib.hasSuffix "-codex-${selected.version}/bin/codex app-server --remote-control --listen unix://"
-  birdStable;
+assert
+  liStable
+  == "${selected}/bin/codex app-server --remote-control --listen unix://";
+# Bird's stable endpoint keeps the injected canonical package and its listen identity.
+assert
+  birdStable
+  == "${selected}/bin/codex app-server --remote-control --listen unix://";
 assert
   builtins.attrNames bird.systemd.user.services == [
     "codex-remote-control"
