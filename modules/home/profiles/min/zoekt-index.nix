@@ -283,7 +283,23 @@ let
     name = "zoekt-index-repository";
     runtimeInputs = [ offload ];
     text = ''
-      exec zoekt-index-offload enqueue "$@"
+      if [ "$#" -eq 0 ] || [ -z "$1" ]; then
+        echo "ZoektHook.InvalidRepository" >&2
+        exit 2
+      fi
+      repository=$1
+      shift
+      case "$#" in
+        0) ;;
+        1)
+          case "$1" in
+            0|1) ;;
+            *) echo "ZoektHook.InvalidMergePayload" >&2; exit 2 ;;
+          esac
+          ;;
+        *) echo "ZoektHook.InvalidArity" >&2; exit 2 ;;
+      esac
+      exec zoekt-index-offload enqueue "$repository"
     '';
   };
   networkEvent = pkgs.writeShellApplication {
