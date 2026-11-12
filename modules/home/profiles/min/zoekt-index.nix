@@ -53,14 +53,14 @@ let
     ];
     text = ''
       if [ "$#" -lt 1 ]; then
-        echo "usage: zoekt-index-offload enqueue REPOSITORY | drain" >&2
+        echo "usage: zoekt-index-offload enqueue REPOSITORY | drain | install-shards REPOSITORY_KEY RESULT_DIRECTORY" >&2
         exit 2
       fi
       state_directory="''${XDG_STATE_HOME:-$HOME/.local/state}/zoekt-index"
       queue_directory="$state_directory/requests"
       mkdir -p "$queue_directory"
 
-      enqueue() {
+      enqueue() (
         if [ "$#" -ne 1 ]; then
           echo "usage: zoekt-index-offload enqueue REPOSITORY" >&2
           exit 2
@@ -81,8 +81,14 @@ let
         printf '%s\n' "$sequence" > "$sequence_temporary"
         mv "$sequence_temporary" "$sequence_file"
         sequence_name=$(printf '%020d' "$sequence")
-        temporary=$(mktemp "$queue_directory/.request.XXXXXX")
-        trap 'rm -f "$temporary"' EXIT
+        temporary=$(mktemp -d "$queue_directory/.request.XXXXXX")
+        trap 'rm -rf "$temporary"' EXIT
+        git init --bare --quiet "$temporary/source.git"
+        git -C "$temporary/source.git" fetch --quiet --depth=1 "$repository" \
+          "$revision:refs/heads/snapshot"
+        git -C "$temporary/source.git" symbolic-ref HEAD refs/heads/snapshot
+        git -C "$temporary/source.git" remote add origin "$identity"
+        test "$(git -C "$temporary/source.git" rev-parse HEAD)" = "$revision"
         jq -n \
           --arg repository "$repository" \
           --arg repositoryIdentity "$identity" \
@@ -90,98 +96,102 @@ let
           --arg revision "$revision" \
           --argjson sequence "$sequence" \
           '{repository: $repository, repositoryIdentity: $repositoryIdentity, repositoryKey: $repositoryKey, revision: $revision, sequence: $sequence}' \
-          > "$temporary"
-        mv "$temporary" "$queue_directory/$sequence_name-$repository_key-$revision.json"
+          > "$temporary/request.json"
+        mv "$temporary" "$queue_directory/$sequence_name-$repository_key-$revision"
         trap - EXIT
-      }
+      )
 
-      install_generation() {
+      install_shards() (
         repository_key=$1
         result_directory=$2
         data_directory="''${XDG_DATA_HOME:-$HOME/.local/share}/zoekt"
         index_path="$data_directory/index"
-        generations="$data_directory/index-generations"
-        current="$data_directory/index-current"
-        mkdir -p "$data_directory" "$generations" || return
+        mkdir -p "$data_directory"
 
-        if [ ! -L "$index_path" ]; then
-          imported="$generations/imported"
-          rm -rf "$imported" || return
-          if [ -d "$index_path" ]; then
-            mv "$index_path" "$imported" || return
-          else
-            mkdir "$imported" || return
-          fi
-          mkdir -p "$imported/.manifests" || return
-          rm -f "$current.new" || return
-          ln -s "$imported" "$current.new" || return
-          mv -T "$current.new" "$current" || return
-          ln -s "$current" "$index_path" || return
+        # Convert the superseded generation layout once, preserving its active
+        # shard set before native per-shard publication begins.
+        if [ -L "$index_path" ]; then
+          previous=$(readlink -f "$index_path")
+          imported=$(mktemp -d "$data_directory/.index-import.XXXXXX")
+          cp -a "$previous/." "$imported/"
+          rm "$index_path"
+          mv "$imported" "$index_path"
+          rm -rf "$data_directory/index-generations" "$data_directory/index-current"
         fi
 
-        previous=$(readlink -f "$current") || return
-        generation=$(mktemp -d "$generations/.generation.XXXXXX") || return
-        cp -al "$previous/." "$generation/" || return
-        mkdir -p "$generation/.manifests" || return
-        manifest="$generation/.manifests/$repository_key"
+        mkdir -p "$index_path/.manifests"
+        manifest="$index_path/.manifests/$repository_key"
+        incoming=$(mktemp -d "$data_directory/.index-incoming.XXXXXX")
+        trap 'rm -rf "$incoming"' EXIT
+        new_manifest="$incoming/manifest"
+        : > "$new_manifest"
+        for new_shard in "$result_directory"/*.zoekt; do
+          shard_name="$repository_key-$(basename "$new_shard")"
+          cp "$new_shard" "$incoming/$shard_name"
+          printf '%s\n' "$shard_name" >> "$new_manifest"
+        done
+
+        # Zoekt itself publishes each completed artifact with rename and then
+        # unlinks stale shards. Mirroring that protocol keeps opened mmaps valid.
+        while IFS= read -r shard_name; do
+          mv -T "$incoming/$shard_name" "$index_path/$shard_name"
+        done < "$new_manifest"
         if [ -f "$manifest" ]; then
           while IFS= read -r old_shard; do
-            rm -f -- "$generation/$old_shard" || return
+            grep -Fxq "$old_shard" "$new_manifest" || rm -f -- "$index_path/$old_shard"
           done < "$manifest"
         fi
-        rm -f "$manifest" || return
-        : > "$manifest" || return
-        for new_shard in "$result_directory"/*.zoekt; do
-          rm -f -- "$generation/$(basename "$new_shard")" || return
-          shard_name="$repository_key-$(basename "$new_shard")"
-          cp "$new_shard" "$generation/$shard_name" || return
-          printf '%s\n' "$shard_name" >> "$manifest" || return
-        done
-        final_generation="$generations/$(basename "$generation" | sed 's/^\.//')"
-        mv "$generation" "$final_generation" || return
-        rm -f "$current.new" || return
-        ln -s "$final_generation" "$current.new" || return
-        mv -T "$current.new" "$current" || return
-      }
+        mv -T "$new_manifest" "$manifest"
+      )
 
-      process_request() {
-        request=$1
+      process_request() (
+        request_directory=$1
+        request="$request_directory/request.json"
+        source_repository="$request_directory/source.git"
         index_host=${lib.escapeShellArg cfg.indexingHost}
-        repository=$(jq -er .repository "$request") || return
-        identity=$(jq -er .repositoryIdentity "$request") || return
         repository_key=$(jq -er .repositoryKey "$request") || return
         revision=$(jq -er .revision "$request") || return
-        git -C "$repository" cat-file -e "$revision^{commit}" || return
+        test "$(git -C "$source_repository" rev-parse HEAD)" = "$revision" || return
+
+        connection_timeout=${toString cfg.connectionTimeoutSeconds}
+        operation_timeout=${toString cfg.operationTimeoutSeconds}
+        ssh_options=(-o BatchMode=yes -o "ConnectTimeout=$connection_timeout")
+        nix_ssh_options="-o BatchMode=yes -o ConnectTimeout=$connection_timeout"
+        remote_shell="ssh $nix_ssh_options"
+        bounded() {
+          timeout --foreground --signal=TERM "''${operation_timeout}s" "$@"
+        }
 
         local_work=$(mktemp -d "$state_directory/.work.XXXXXX") || return
-        mkdir -p "$local_work/result" || return
-        cp "$request" "$local_work/request.json" || return
-        git init --bare --quiet "$local_work/source.git" || return
-        git -C "$local_work/source.git" fetch --quiet --depth=1 "$repository" \
-          "$revision:refs/heads/snapshot" || return
-        git -C "$local_work/source.git" symbolic-ref HEAD refs/heads/snapshot || return
-        git -C "$local_work/source.git" remote add origin "$identity" || return
-        test "$(git -C "$local_work/source.git" rev-parse HEAD)" = "$revision" || return
+        remote_work=
+        # shellcheck disable=SC2329 # invoked by the EXIT/INT/TERM trap
+        cleanup() {
+          rm -rf "$local_work"
+          if [ -n "$remote_work" ]; then
+            bounded ssh -n "''${ssh_options[@]}" "$index_host" rm -rf -- "$remote_work" >/dev/null 2>&1 || true
+          fi
+        }
+        trap cleanup EXIT INT TERM
+        mkdir -p "$local_work/result"
 
-        nix copy --to "ssh://$index_host" ${remoteIndexer} || return
-        remote_work=$(ssh -n "$index_host" 'mktemp -d "''${XDG_RUNTIME_DIR:-/tmp}/zoekt-index.XXXXXX"') || return
-        rsync -a -- "$local_work/request.json" "$local_work/source.git" "$index_host:$remote_work/" || return
-        ssh -n "$index_host" ${remoteIndexer}/bin/zoekt-index-snapshot "$remote_work" || return
-        rsync -a -- "$index_host:$remote_work/index/" "$local_work/result/" || return
+        NIX_SSHOPTS="$nix_ssh_options" bounded nix copy --to "ssh://$index_host" ${remoteIndexer} || return
+        # shellcheck disable=SC2016 # XDG_RUNTIME_DIR is expanded by the remote shell
+        remote_work=$(bounded ssh -n "''${ssh_options[@]}" "$index_host" 'mktemp -d "''${XDG_RUNTIME_DIR:-/tmp}/zoekt-index.XXXXXX"') || return
+        bounded rsync --timeout="$operation_timeout" -a -e "$remote_shell" -- \
+          "$request" "$source_repository" "$index_host:$remote_work/" || return
+        bounded ssh -n "''${ssh_options[@]}" "$index_host" ${remoteIndexer}/bin/zoekt-index-snapshot "$remote_work" || return
+        bounded rsync --timeout="$operation_timeout" -a -e "$remote_shell" -- \
+          "$index_host:$remote_work/index/" "$local_work/result/" || return
         find "$local_work/result" -maxdepth 1 -type f -name '*.zoekt' -print -quit | grep -q . || return
 
-        install_generation "$repository_key" "$local_work/result" || return
-        rm -f -- "$request"
-        rm -rf "$local_work"
-        ssh -n "$index_host" rm -rf -- "$remote_work" >/dev/null 2>&1 || true
-      }
+        install_shards "$repository_key" "$local_work/result" || return
+        rm -rf -- "$request_directory"
+      )
 
       drain_once() {
-        requests=("$queue_directory"/*.json)
-        [ -e "''${requests[0]}" ] || return 0
-        for request in "''${requests[@]}"; do
+        while IFS= read -r -d "" request; do
           process_request "$request" || return 1
-        done
+        done < <(find "$queue_directory" -mindepth 1 -maxdepth 1 -type d ! -name '.*' -print0 | sort -z)
       }
 
       drain() {
@@ -217,8 +227,13 @@ let
           [ "$#" -eq 0 ] || { echo "usage: zoekt-index-offload drain" >&2; exit 2; }
           drain
           ;;
+        install-shards)
+          shift
+          [ "$#" -eq 2 ] || { echo "usage: zoekt-index-offload install-shards REPOSITORY_KEY RESULT_DIRECTORY" >&2; exit 2; }
+          install_shards "$@"
+          ;;
         *)
-          echo "usage: zoekt-index-offload enqueue REPOSITORY | drain" >&2
+          echo "usage: zoekt-index-offload enqueue REPOSITORY | drain | install-shards REPOSITORY_KEY RESULT_DIRECTORY" >&2
           exit 2
           ;;
       esac
@@ -247,6 +262,16 @@ in
     type = lib.types.str;
     default = "prometheus";
     description = "SSH host that turns immutable repository snapshots into local zoekt shards.";
+  };
+  options.criomosHome.zoektIndex.connectionTimeoutSeconds = lib.mkOption {
+    type = lib.types.ints.positive;
+    default = 10;
+    description = "Maximum time to establish each SSH connection to the indexing host.";
+  };
+  options.criomosHome.zoektIndex.operationTimeoutSeconds = lib.mkOption {
+    type = lib.types.ints.positive;
+    default = 300;
+    description = "Maximum time for each remote indexing transport operation.";
   };
 
   config = lib.mkIf (sizeAtLeast "Min") {
