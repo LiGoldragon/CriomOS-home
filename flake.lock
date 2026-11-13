@@ -1117,11 +1117,11 @@
     "field-belief": {
       "flake": false,
       "locked": {
-        "lastModified": 1794613519,
-        "narHash": "sha256-tZg1e8mIJU82v5ioExr/1hFKf0E6yonGfLZhLnyxcs0=",
+        "lastModified": 1794614002,
+        "narHash": "sha256-CufAZ5IcVbSI22SQB76hO+krV/k3YAE9eeWKmiEr97k=",
         "owner": "LiGoldragon",
         "repo": "field-belief",
-        "rev": "3ce7a6867263c88d80a0e6e063aaa52504015242",
+        "rev": "dc93e8c8b0ff7754d8b2a27cb23f5e0f381f05aa",
         "type": "github"
       },
       "original": {
@@ -2748,11 +2748,11 @@
     "psyche-belief": {
       "flake": false,
       "locked": {
-        "lastModified": 1794613512,
-        "narHash": "sha256-zQJO4ujLx6gX/lkG7sITBsjPHA7VgoSfge61Al8YF44=",
+        "lastModified": 1794613999,
+        "narHash": "sha256-hd13eLceslZ2Dz0MFM2rhP4rkn5PQHAChNAlOIVRmbQ=",
         "owner": "LiGoldragon",
         "repo": "psyche-belief",
-        "rev": "c8ac2a6511d71ac6947cf58d37c89ec810b883ca",
+        "rev": "95770ff032dd301250bc08844b36f2c61af033e0",
         "type": "github"
       },
       "original": {

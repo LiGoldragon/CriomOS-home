@@ -85,7 +85,7 @@ in pkgs.runCommand "curriculum-resolver-contract" {
     sleep 0.05
   done
   ${deployment.runtime}/bin/curriculum \
-    'ComposeStartup.{ { Psyche core Opus } Claude [ intent:psyche:0 intent:main-flow:0 ] [] [] }' > "$TMPDIR/latest.datom"
+    'ComposeStartup.{ { Psyche core Opus } Claude [ spirit:core:0 intent:psyche:0 intent:main-flow:0 ] [] [] }' > "$TMPDIR/latest.datom"
   grep -q 'START_LATEST_FLOW_CONTEXT_WITNESS' "$TMPDIR/latest.datom"
   ${deployment.runtime}/bin/curriculum 'ResolveSources.[ intent:psyche:0 intent:main-flow:0 ]' > "$TMPDIR/latest-sources.datom"
   grep -q "$latest" "$TMPDIR/latest-sources.datom"
