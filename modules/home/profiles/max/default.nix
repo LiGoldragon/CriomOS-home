@@ -9,7 +9,7 @@
 let
   inherit (lib) optionals mkIf mkMerge;
   inherit (user) isMultimediaDev;
-  chromeVersion = "156.0.8078.47";
+  chromeVersion = "157.0.8103.78";
   chromeDebArch =
     {
       "x86_64-linux" = "amd64";
@@ -24,8 +24,8 @@ let
           url = "https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_${chromeVersion}-1_${chromeDebArch}.deb";
           hash =
             {
-              amd64 = "sha256-bJLNIukMbj4lXXgpkVQ/ogkduGFOhTapcadDOlxNesg=";
-              arm64 = "sha256-VFeZnt355l/AUqbTRNyvJHct4AYam9IrqvmeQEPkWY8=";
+              amd64 = "sha256-TXQGNrXJb2h3mGAsWq1qWicPRN0C5I2wY4rneqSGexs=";
+              arm64 = "sha256-a+CPtilocDmsfOlm8nwsWi39HcFwe1SbNS3jNbPobdI=";
             }
             .${chromeDebArch};
         };
