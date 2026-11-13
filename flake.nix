@@ -32,7 +32,7 @@
         flake = false;
       };
       inputs.mind-belief = {
-        url = "github:LiGoldragon/mind-belief/b8c7e5753dd2603fc592c89b5e55d8fb8cfadd4f";
+        url = "github:LiGoldragon/mind-belief";
         flake = false;
       };
       inputs.psyche-belief = {
@@ -40,7 +40,7 @@
         flake = false;
       };
       inputs.field-belief = {
-        url = "github:LiGoldragon/field-belief/873a55a2f6a6e94d2ae867821f6c9d404eb839a7";
+        url = "github:LiGoldragon/field-belief";
         flake = false;
       };
 
