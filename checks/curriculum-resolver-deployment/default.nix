@@ -16,6 +16,7 @@ in pkgs.runCommand "curriculum-resolver-contract" {
     target="$TMPDIR/origins/$name"
     mkdir -p "$target"
     cp -R "$source"/. "$target"/
+    chmod -R u+w "$target"
     git -C "$target" init --quiet --initial-branch=main
     git -C "$target" config user.email test@example.invalid
     git -C "$target" config user.name CurriculumTest
