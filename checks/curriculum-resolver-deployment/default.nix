@@ -9,6 +9,7 @@ in pkgs.runCommand "curriculum-resolver-contract" {
   mkdir -p "$HOME"
   export XDG_RUNTIME_DIR="$TMPDIR/runtime"
   ${pkgs.lib.concatMapStringsSep "\n" (value: "export " + pkgs.lib.escapeShellArg value) (deployment.environment "$TMPDIR/workspace")}
+  mkdir -p "$CURRICULUM_RECORDS_DIR"
   make_source() {
     name="$1"
     source="$2"
