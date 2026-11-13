@@ -6,7 +6,8 @@ let
   selected = pkgs.writeShellScriptBin "codex" ''
     printf '%s\n' "$CODEX_HOME" "$@"
   '';
-  expectedNextPackage = pkgs.callPackage ../../owned-agents/codex-next { };
+  selectedStableServer = pkgs.writeShellScriptBin "codex" "echo stable-server";
+  selectedNextServer = pkgs.writeShellScriptBin "codex" "echo next-server";
   fakeClaude = pkgs.writeShellScriptBin "claude" "exit 0";
   fakeHexis = pkgs.writeShellScriptBin "hexis" "exit 0";
   testInputs = inputs // {
@@ -36,6 +37,8 @@ let
           home.homeDirectory = "/home/${name}";
           home.stateVersion = "26.05";
           criomos.corePackages.codex = selected;
+          criomos.corePackages.codexServer = selectedStableServer;
+          criomos.corePackages.codexNextServer = selectedNextServer;
           criomos.corePackages.claude = fakeClaude;
         }
       ];
@@ -60,19 +63,21 @@ assert birdClient == selected;
 assert liClient == selected;
 assert
   birdNext
-  == "${selected}/bin/codex app-server --remote-control --listen unix:///home/bird/.codex-next/app-server-control/app-server-control.sock";
+  == "${selectedNextServer}/bin/codex app-server --remote-control --listen unix:///home/bird/.codex-next/app-server-control/app-server-control.sock";
 assert (next bird).Environment == [ "CODEX_HOME=/home/bird/.codex-next" ];
 assert builtins.isString (next bird).ExecStartPre;
-assert lib.hasSuffix
-  "-codex-next-${expectedNextPackage.version}/bin/codex app-server --remote-control --listen unix:///home/li/.codex-next/app-server-control/app-server-control.sock"
-  liNext;
+assert
+  liNext
+  == "${selectedNextServer}/bin/codex app-server --remote-control --listen unix:///home/li/.codex-next/app-server-control/app-server-control.sock";
 assert
   liStable
-  == "${selected}/bin/codex app-server --remote-control --listen unix://";
-# Bird's stable endpoint keeps the injected canonical package and its listen identity.
+  == "${selectedStableServer}/bin/codex app-server --remote-control --listen unix://";
+# Every user receives the same stable server selection and its listen identity.
 assert
   birdStable
-  == "${selected}/bin/codex app-server --remote-control --listen unix://";
+  == "${selectedStableServer}/bin/codex app-server --remote-control --listen unix://";
+assert selected != selectedStableServer;
+assert selected != selectedNextServer;
 assert
   builtins.attrNames bird.systemd.user.services == [
     "codex-remote-control"

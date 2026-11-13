@@ -1,7 +1,6 @@
 { inputs, pkgs, ... }:
 let
   system = pkgs.stdenv.hostPlatform.system;
-  codexCliPackage = pkgs.callPackage ../../owned-agents/codex { inherit inputs; };
   corePackagesModule = ../../modules/home/core-packages.nix;
   guardModule = ../../modules/home/profiles/min/default-opener.nix;
   codexRemoteControlModule = ../../modules/home/profiles/min/codex-remote-control.nix;
@@ -35,14 +34,17 @@ let
   codexUser = {
     name = "codex-remote-control-test";
     size = "Min";
+    capabilities = [ ];
   };
   nonCodexUser = {
     name = "codex-remote-control-test";
     size = "Zero";
+    capabilities = [ ];
   };
   secondCodexUser = {
     name = "codex-remote-control-second";
     size = "Min";
+    capabilities = [ ];
   };
   configuration = mkConfiguration codexUser true;
   disabledConfiguration = mkConfiguration codexUser false;
@@ -55,6 +57,7 @@ let
       {
         name = embeddedUserName;
         size = "Min";
+        capabilities = [ ];
       }
     ];
   };
@@ -89,6 +92,7 @@ let
     ];
   };
   remoteControlService = configuration.systemd.user.services.codex-remote-control;
+  codexServerPackage = configuration.criomos.corePackages.codexServer;
   activationPackage = configuration.home.activationPackage;
 in
 assert configuration.systemd.user.services ? codex-remote-control;
@@ -114,7 +118,7 @@ assert
 assert builtins.length remoteControlService.Service.ExecStart == 1;
 pkgs.runCommand "codex-remote-control-contract" { inherit activationPackage; } ''
   set -eu
-  test "${builtins.head remoteControlService.Service.ExecStart}" = "${codexCliPackage}/bin/codex app-server --remote-control --listen unix://"
+  test "${builtins.head remoteControlService.Service.ExecStart}" = "${codexServerPackage}/bin/codex app-server --remote-control --listen unix://"
   test -f "$activationPackage/home-files/.config/systemd/user/codex-remote-control.service"
   grep -F 'codex app-server --remote-control --listen unix://' \
     "$activationPackage/home-files/.config/systemd/user/codex-remote-control.service"

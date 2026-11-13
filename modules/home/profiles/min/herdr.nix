@@ -12,8 +12,8 @@ let
   herdrPackage = pkgs.callPackage ../../../../packages/herdr { inherit inputs; };
   # Matches the flake input `herdr.url = "github:herdrdev/herdr/v0.8.2"`.
   herdrVersionPin = "0.8.2";
-  stableCodexPackage = pkgs.callPackage ../../../../owned-agents/codex {
-    manifestFile = ../../../../owned-agents/codex/stable-hashes.json;
+  stableCodexPackage = pkgs.callPackage "${inputs.deployed-codex-source}/owned-agents/codex" {
+    manifestFile = "${inputs.deployed-codex-source}/owned-agents/codex/stable-hashes.json";
   };
   stableCodexClientPackage = pkgs.writeShellApplication {
     name = "codex-stable-flow-client";
