@@ -13,6 +13,8 @@ let
   nextHome = "${config.home.homeDirectory}/.codex-next";
   socket = "${nextHome}/app-server-control/app-server-control.sock";
   recoveryUnit = "codex-remote-control-next-recovery.service";
+  occupiedNextServerExecutable = "/nix/store/g2sfx3dccpi3294i1p70vafpaa84jfb8-codex-next-0.158.0-alpha.9/bin/codex";
+  occupiedNextPrepare = "/nix/store/zxxdr7rajm50pk46yk86qb6jaxxl3j69-codex-next-prepare";
   prepare = pkgs.writeShellScript "codex-next-prepare" ''
     set -eu
     umask 077
@@ -86,8 +88,8 @@ in
       Service = {
         WorkingDirectory = "${config.home.homeDirectory}/primary";
         Environment = [ "CODEX_HOME=${nextHome}" ];
-        ExecStartPre = "${prepare}";
-        ExecStart = "${package}/bin/codex app-server --remote-control --listen unix://${socket}";
+        ExecStartPre = occupiedNextPrepare;
+        ExecStart = "${occupiedNextServerExecutable} app-server --remote-control --listen unix://${socket}";
         UMask = "0077";
         LimitNOFILE = 524288;
         # The server holds the running Codex sessions: stopping it leaves them
