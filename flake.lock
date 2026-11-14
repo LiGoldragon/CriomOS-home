@@ -759,11 +759,11 @@
         "rust-build": "rust-build_3"
       },
       "locked": {
-        "lastModified": 1794674582,
-        "narHash": "sha256-0+rIfs3zuaOPqK6W/ahs8+uA8hAmpZhF4DeTmwv8ZG8=",
+        "lastModified": 1794674988,
+        "narHash": "sha256-KwpgsRD0CHpjCgiqyzMr4aHNgNCQY+osClNIDkQfWOg=",
         "owner": "LiGoldragon",
         "repo": "energy-nexus",
-        "rev": "8bc0857b6c7507f2e164e302e677fe858d706f53",
+        "rev": "f069745f0d5c79ff612c78a61c1e31067e119114",
         "type": "github"
       },
       "original": {
