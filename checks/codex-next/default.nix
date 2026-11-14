@@ -10,6 +10,7 @@ let
       inherit pkgs;
       extraSpecialArgs = { inherit inputs user; };
       modules = [
+        ../../modules/home/core-packages.nix
         ../../modules/home/profiles/min/codex-next.nix
         ../../modules/home/profiles/min/codex-next-candidate.nix
         {
