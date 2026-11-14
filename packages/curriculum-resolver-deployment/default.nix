@@ -4,7 +4,8 @@ let
   # Curriculum exports its per-crate package through the shared build-base
   # workspace construction.  Consume that package rather than importing its
   # generated Cargo.nix in Home.
-  runtime = inputs.curriculum-source.packages.${system}.curriculum;
+  runtime = inputs.curriculum-source.packages.${system}.curriculum-nexus;
+  cliRuntime = inputs.curriculum-source.packages.${system}.curriculum;
   sourceRoot = homeDirectory: "${homeDirectory}/.local/state/curriculum-context";
   environment = homeDirectory: let
     root = sourceRoot homeDirectory;
@@ -65,7 +66,7 @@ let
       "$CURRICULUM_FIELD_CONTEXT_URL"
   '';
   cli = pkgs.writeShellScriptBin "curriculum" ''
-    exec ${runtime}/bin/curriculum "$@"
+    exec ${cliRuntime}/bin/curriculum "$@"
   '';
   unit = pkgs.writeText "curriculum-declared-runtime.conf" (''
     [Service]
@@ -83,7 +84,7 @@ let
 in
 pkgs.runCommand "curriculum-resolver-deployment" {
   passthru = {
-    inherit runtime environment unit refresh;
+    inherit runtime cliRuntime environment unit refresh;
     inherit (inputs.primary.inputs) psyche-belief mind-belief field-belief;
   };
 } ''
