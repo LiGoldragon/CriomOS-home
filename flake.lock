@@ -175,11 +175,11 @@
         "nixpkgs": "nixpkgs_3"
       },
       "locked": {
-        "lastModified": 1794680799,
-        "narHash": "sha256-YD7rrofNhn2eKvD+38uQGNW/7CCIw/26REJfmHwZ6jU=",
+        "lastModified": 1794688815,
+        "narHash": "sha256-zgLY1Soa2sidKLflAyJz4WeDvcEnOFlx24uqtMC0cUA=",
         "owner": "LiGoldragon",
         "repo": "build-base",
-        "rev": "79188c7dc23078878fc662236fb1d23a7af5edaa",
+        "rev": "ec5d5d92eb4058b3dc900ce84595508ee573f61b",
         "type": "github"
       },
       "original": {
@@ -1563,11 +1563,11 @@
         "translator": "translator"
       },
       "locked": {
-        "lastModified": 1794681982,
-        "narHash": "sha256-RU5WfcqspqtY4U5OqZbvyhiJTVFsk7JROA/OUSNOX+g=",
+        "lastModified": 1794693906,
+        "narHash": "sha256-pbgSA4O9QKR6+wG11OW0dJ3/1QJvQ+QgIXxmalYl3a8=",
         "owner": "LiGoldragon",
         "repo": "flow",
-        "rev": "234bfe4d96221232687606dd031cd44b17305b98",
+        "rev": "4062fb292a454fb423eb7f4293eb8fc18fc22b6d",
         "type": "github"
       },
       "original": {
