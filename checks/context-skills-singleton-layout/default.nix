@@ -7,7 +7,7 @@ pkgs.runCommand "context-skills-singleton-layout" {
   generator=${../../packages/context-skills/generate.clj}
 
   valid="$TMPDIR/valid"
-  mkdir -p "$valid/vision/nexus" "$valid/inquiry/question"
+  mkdir -p "$valid/vision/nexus" "$valid/inquiry/question" "$valid/role"
   cat > "$valid/vision/nexus/0.md" <<'MODULE'
 ---
 description: First Nexus account
@@ -21,10 +21,12 @@ description: Current Nexus account
 one body
 MODULE
   printf '%s\n' 'question body' > "$valid/inquiry/question/12.md"
+  printf '%s\n' 'procedure body' > "$valid/role/book-reader-procedure.md"
 
   bb "$generator" "$TMPDIR/out" "$valid=revision-one"
   cat > "$TMPDIR/expected-modules" <<'EXPECTED'
 inquiry:question:12 revision-one inquiry/question/12.md
+role:book-reader-procedure revision-one role/book-reader-procedure.md
 vision:nexus:0 revision-one vision/nexus/0.md
 vision:nexus:1 revision-one vision/nexus/1.md
 EXPECTED
@@ -33,6 +35,7 @@ EXPECTED
   grep -F 'zero body' "$TMPDIR/out/.claude/skills/vision:nexus:0/SKILL.md"
   grep -F 'one body' "$TMPDIR/out/.agents/skills/vision:nexus:1/SKILL.md"
   grep -F 'question body' "$TMPDIR/out/.opencode/skills/inquiry:question:12/SKILL.md"
+  grep -F 'procedure body' "$TMPDIR/out/.pi/skills/role:book-reader-procedure/SKILL.md"
 
   expect_failure() {
     name="$1"
@@ -45,10 +48,10 @@ EXPECTED
     grep -F "$expected" "$TMPDIR/$name.err"
   }
 
-  flat="$TMPDIR/flat"
-  mkdir -p "$flat/vision"
-  printf '%s\n' flat > "$flat/vision/nexus.md"
-  expect_failure flat "$flat" 'not a module topic directory:'
+  wrong_kind_flat="$TMPDIR/wrong-kind-flat"
+  mkdir -p "$wrong_kind_flat/vision"
+  printf '%s\n' flat > "$wrong_kind_flat/vision/nexus.md"
+  expect_failure wrong-kind-flat "$wrong_kind_flat" 'not a module topic directory:'
 
   bad_topic="$TMPDIR/bad-topic"
   mkdir -p "$bad_topic/vision/Bad_Topic"
@@ -84,6 +87,16 @@ EXPECTED
     exit 1
   fi
   grep -F 'duplicate module ids: vision:nexus:0' "$TMPDIR/duplicate.err"
+
+  duplicate_role="$TMPDIR/duplicate-role"
+  mkdir -p "$duplicate_role/role"
+  printf '%s\n' duplicate > "$duplicate_role/role/book-reader-procedure.md"
+  if bb "$generator" "$TMPDIR/out-duplicate-role" "$valid=revision-one" "$duplicate_role=revision-two" \
+      >"$TMPDIR/duplicate-role.out" 2>"$TMPDIR/duplicate-role.err"; then
+    echo 'expected duplicate flat role identity fixture to fail' >&2
+    exit 1
+  fi
+  grep -F 'duplicate module ids: role:book-reader-procedure' "$TMPDIR/duplicate-role.err"
 
   touch "$out"
 ''

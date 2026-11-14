@@ -75,29 +75,51 @@
 
 ;; Temporary filesystem adapter. Curriculum's client module listing will
 ;; replace this traversal and supply identity, description and file together.
+(defn flat-role-module [file revision]
+  (let [file-name (.getName file)]
+    (when-not (and (.isFile file) (not (symbolic-link? file)) (str/ends-with? file-name ".md"))
+      (fail "not a module topic directory: " file))
+    (let [subject (str/replace file-name #"\.md$" "")]
+      (when-not (re-matches #"[a-z0-9-]+" subject) (fail "invalid role subject: " file))
+      {:name (str "role:" subject)
+       :body (slurp file)
+       :source (str "role/" file-name)
+       :revision revision})))
+
+(defn singleton-modules [kind topic-dir revision]
+  (let [topic (.getName topic-dir)]
+    (when-not (and (.isDirectory topic-dir) (not (symbolic-link? topic-dir)))
+      (fail "not a module topic directory: " topic-dir))
+    (when-not (re-matches #"[a-z0-9-]+" topic)
+      (fail "invalid topic: " topic-dir))
+    (for [file (sort-by #(.getName %) (.listFiles topic-dir))
+          :let [file-name (.getName file)]]
+      (do
+        (when-not (and (.isFile file) (not (symbolic-link? file)) (str/ends-with? file-name ".md"))
+          (fail "not a module source: " file))
+        (let [version (str/replace file-name #"\.md$" "")]
+          (when-not (re-matches #"(?:0|[1-9][0-9]*)" version) (fail "invalid version: " file))
+          {:name (str kind ":" topic ":" version)
+           :body (slurp file)
+           :source (str kind "/" topic "/" file-name)
+           :revision revision})))))
+
 (defn modules [root revision]
-  (for [kind module-types
-        :let [kind-dir (io/file root kind)]
-        :when (.exists kind-dir)
-        :let [_ (when-not (and (.isDirectory kind-dir) (not (symbolic-link? kind-dir)))
-                  (fail "not a module kind directory: " kind-dir))]
-        topic-dir (sort-by #(.getName %) (.listFiles kind-dir))
-        :let [topic (.getName topic-dir)
-              _ (when-not (and (.isDirectory topic-dir) (not (symbolic-link? topic-dir)))
-                  (fail "not a module topic directory: " topic-dir))
-              _ (when-not (re-matches #"[a-z0-9-]+" topic)
-                  (fail "invalid topic: " topic-dir))]
-        file (sort-by #(.getName %) (.listFiles topic-dir))
-        :let [file-name (.getName file)]]
-    (do
-      (when-not (and (.isFile file) (not (symbolic-link? file)) (str/ends-with? file-name ".md"))
-        (fail "not a module source: " file))
-      (let [version (str/replace file-name #"\.md$" "")]
-        (when-not (re-matches #"(?:0|[1-9][0-9]*)" version) (fail "invalid version: " file))
-        {:name (str kind ":" topic ":" version)
-         :body (slurp file)
-         :source (str kind "/" topic "/" file-name)
-         :revision revision}))))
+  (mapcat
+    (fn [kind]
+      (let [kind-dir (io/file root kind)]
+        (if-not (.exists kind-dir)
+          []
+          (do
+            (when-not (and (.isDirectory kind-dir) (not (symbolic-link? kind-dir)))
+              (fail "not a module kind directory: " kind-dir))
+            (mapcat
+              (fn [entry]
+                (if (and (= kind "role") (.isFile entry))
+                  [(flat-role-module entry revision)]
+                  (singleton-modules kind entry revision)))
+              (sort-by #(.getName %) (.listFiles kind-dir)))))))
+    module-types))
 
 (let [[out & sources] *command-line-args*
       all (mapcat #(apply modules (str/split % #"=" 2)) sources)
