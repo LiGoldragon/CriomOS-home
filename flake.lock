@@ -359,11 +359,11 @@
     "complex": {
       "flake": false,
       "locked": {
-        "lastModified": 1794628088,
-        "narHash": "sha256-LWEFl3E0yBnIYrNHA4sr/jygnB2xO/3f6Frk88mZ+08=",
+        "lastModified": 1794630076,
+        "narHash": "sha256-CYKFdX4Q22LdCwo8gVQwOJoA1T75fWvWAxGs5Gp5iDg=",
         "owner": "LiGoldragon",
         "repo": "goldragon-persona",
-        "rev": "183cd9d9cde744f7c0df2147616692877447338c",
+        "rev": "d3c49c0cd5c7cc318bee76ec07ff9be177d95b4c",
         "type": "github"
       },
       "original": {
@@ -621,11 +621,11 @@
         "base": "base"
       },
       "locked": {
-        "lastModified": 1794623503,
-        "narHash": "sha256-6Bzpx3HRii/qhr6ZzDTMnbo/8r0/SazxJ4BSDHuQWu0=",
+        "lastModified": 1794629565,
+        "narHash": "sha256-jX9NZsbeJTIaVLh2HXSL5ufdaNgr47xmU4QlQ3obtSw=",
         "owner": "LiGoldragon",
         "repo": "Curriculum",
-        "rev": "26e14b22c986537ead9b994e8044d8717167ccda",
+        "rev": "e3ffb318e4575a67323a52214711856d9a206ed0",
         "type": "github"
       },
       "original": {
