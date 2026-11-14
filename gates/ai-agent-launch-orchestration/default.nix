@@ -30,7 +30,7 @@ let
     modules = [
       ../../modules/home/core-packages.nix
       ../../modules/home/profiles/min/default.nix
-      ../../modules/home/profiles/min/remote-build-command-guard.nix
+      ../../modules/home/profiles/min/default-opener.nix
       ../../modules/home/profiles/min/codex-remote-control.nix
       {
         home = {

@@ -26,7 +26,7 @@ let
       };
       modules = [
         corePackagesModule
-        ../../modules/home/profiles/min/remote-build-command-guard.nix
+        ../../modules/home/profiles/min/default-opener.nix
         codexRemoteControlModule
         {
           criomos.corePackages = {
