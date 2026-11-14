@@ -38,7 +38,7 @@ let
   configToml =
     builtins.readFile
       homeConfiguration.config.xdg.configFile."noctalia/config.toml".source;
-  parsedConfigToml = builtins.fromTOML configToml;
+  parsedConfigToml = builtins.fromTOML (builtins.unsafeDiscardStringContext configToml);
   noctaliaShell = inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default;
   noctaliaExecutable = pkgs.lib.getExe' noctaliaShell "noctalia";
   generatedConfig = pkgs.writeText "noctalia-settings-composition.toml" configToml;
