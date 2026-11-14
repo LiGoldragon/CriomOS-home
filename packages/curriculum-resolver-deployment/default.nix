@@ -1,14 +1,10 @@
 { pkgs, inputs, ... }:
 let
   system = pkgs.stdenv.hostPlatform.system;
-  # Curriculum's Nexus and CLI, built per crate on Curriculum's own build base
-  # with the datom feature its CLI and its declarations reader require.
-  context = inputs.curriculum-source.inputs.base.lib.contexts.${system};
-  runtime = (import "${inputs.curriculum-source}/Cargo.nix" {
-    inherit (context) pkgs buildRustCrateForPkgs;
-    defaultCrateOverrides = context.crateOverrides;
-    rootFeatures = [ "default" "datom" ];
-  }).rootCrate.build;
+  # Curriculum exports its per-crate package through the shared build-base
+  # workspace construction.  Consume that package rather than importing its
+  # generated Cargo.nix in Home.
+  runtime = inputs.curriculum-source.packages.${system}.curriculum;
   sourceRoot = homeDirectory: "${homeDirectory}/.local/state/curriculum-context";
   environment = homeDirectory: let
     root = sourceRoot homeDirectory;
