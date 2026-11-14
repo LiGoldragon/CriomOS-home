@@ -3,9 +3,10 @@
 ;; Arguments: out, then one "<root>=<revision>" per context repository.
 (require '[clojure.java.io :as io]
          '[clojure.string :as str])
+(import '[java.nio.file Files])
 
 (def module-types
-  ["vision" "intent" "spirit" "knowledge" "compensation" "role" "raw"])
+  ["vision" "intent" "spirit" "knowledge" "compensation" "role" "raw" "inquiry"])
 
 ;; Every surface a harness reads, the harness its text is rendered for,
 ;; and whether it carries Codex's invocation policy file.
@@ -69,20 +70,33 @@
       (str/replace rendered "user-only: true" "disable-model-invocation: true")
       :else rendered)))
 
+(defn symbolic-link? [file]
+  (Files/isSymbolicLink (.toPath file)))
+
+;; Temporary filesystem adapter. Curriculum's client module listing will
+;; replace this traversal and supply identity, description and file together.
 (defn modules [root revision]
   (for [kind module-types
-        :let [dir (io/file root kind)]
-        :when (.isDirectory dir)
-        file (sort-by #(.getName %) (.listFiles dir))
+        :let [kind-dir (io/file root kind)]
+        :when (.exists kind-dir)
+        :let [_ (when-not (and (.isDirectory kind-dir) (not (symbolic-link? kind-dir)))
+                  (fail "not a module kind directory: " kind-dir))]
+        topic-dir (sort-by #(.getName %) (.listFiles kind-dir))
+        :let [topic (.getName topic-dir)
+              _ (when-not (and (.isDirectory topic-dir) (not (symbolic-link? topic-dir)))
+                  (fail "not a module topic directory: " topic-dir))
+              _ (when-not (re-matches #"[a-z0-9-]+" topic)
+                  (fail "invalid topic: " topic-dir))]
+        file (sort-by #(.getName %) (.listFiles topic-dir))
         :let [file-name (.getName file)]]
     (do
-      (when-not (and (.isFile file) (str/ends-with? file-name ".md"))
+      (when-not (and (.isFile file) (not (symbolic-link? file)) (str/ends-with? file-name ".md"))
         (fail "not a module source: " file))
-      (let [subject (str/replace file-name #"\.md$" "")]
-        (when-not (re-matches #"[a-z0-9-]+" subject) (fail "invalid subject: " file))
-        {:name (str kind ":" subject)
+      (let [version (str/replace file-name #"\.md$" "")]
+        (when-not (re-matches #"(?:0|[1-9][0-9]*)" version) (fail "invalid version: " file))
+        {:name (str kind ":" topic ":" version)
          :body (slurp file)
-         :source (str kind "/" file-name)
+         :source (str kind "/" topic "/" file-name)
          :revision revision}))))
 
 (let [[out & sources] *command-line-args*
