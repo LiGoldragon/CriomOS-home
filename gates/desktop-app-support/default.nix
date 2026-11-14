@@ -58,6 +58,7 @@ pkgs.runCommand "desktop-app-support-contract"
     nativeBuildInputs = [
       pkgs.coreutils
       pkgs.dpkg
+      pkgs.gnutar
       pkgs.gnugrep
       pkgs.python3
       pkgs.xdg-utils
@@ -71,9 +72,11 @@ pkgs.runCommand "desktop-app-support-contract"
     # or inject a desktop-local Claude Code binary.
     claude_pristine="$TMPDIR/claude-pristine"
     mkdir -p "$claude_pristine"
-    dpkg-deb -x ${claudePristineArchive} "$claude_pristine"
+    dpkg-deb --fsys-tarfile ${claudePristineArchive} \
+      | tar --extract --to-stdout ./usr/lib/claude-desktop/resources/app.asar \
+      > "$claude_pristine/app.asar"
     cmp \
-      "$claude_pristine/usr/lib/claude-desktop/resources/app.asar" \
+      "$claude_pristine/app.asar" \
       ${claudeDesktopPackage}/lib/claude-desktop/resources/app.asar
 
     # This archive is fetched independently from the ChatGPT derivation. The
