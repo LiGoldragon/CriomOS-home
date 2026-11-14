@@ -20,6 +20,13 @@ let
   wisprStatusService = pkgs.replaceVars ./noctalia-plugins/wispr-status/WisprStatusService.luau {
     SOCAT = "${pkgs.socat}/bin/socat";
   };
+  batteryNotificationPython = pkgs.python3.withPackages (pythonPackages: [ pythonPackages.dbus-next ]);
+  batteryNotification = pkgs.writeShellApplication {
+    name = "criomos-battery-notification";
+    text = ''
+      exec ${batteryNotificationPython}/bin/python ${./battery_notification.py}
+    '';
+  };
 in
 lib.mkIf behavesAs.edge {
   home.packages = [ pkgs.libnotify ];
@@ -62,6 +69,10 @@ lib.mkIf behavesAs.edge {
       widget.listener-level.type = "criomos/listener-level:level";
       widget.tray.drawer = true;
       widget.battery.display_mode = "graphic";
+      # Mako owns the warning surface. Noctalia continues to present battery
+      # state in the bar without creating a second notification.
+      battery.warning_threshold = 0;
+      notification.enable_daemon = false;
       bar.main = {
         margin_ends = 0;
         start = [
@@ -180,7 +191,10 @@ lib.mkIf behavesAs.edge {
       margin = "8";
       width = 380;
       height = 120;
-      default-timeout = 5000;
+      # Mako owns notification lifetime. Sender-requested timeouts, including
+      # persistent zero, resolve to these bounded surface durations.
+      ignore-timeout = true;
+      default-timeout = 3000;
       layer = "overlay";
       anchor = "top-right";
       icons = true;
@@ -193,15 +207,26 @@ lib.mkIf behavesAs.edge {
         history = 0;
       };
 
-      # Critical-urgency notifications get a longer timeout than the
-      # 5s default so they're easier to catch when heads-down, but
-      # never sticky-forever — every notification clears itself
-      # eventually so the user doesn't accumulate a click-away queue.
+      # Critical notices receive their own bounded surface duration.
       "urgency=critical" = {
         border-color = lib.mkForce "${colors.base08}cc";
-        default-timeout = 30000;
+        default-timeout = 10000;
       };
 
     };
+  };
+
+  systemd.user.services.battery-notification = {
+    Unit = {
+      Description = "Event-driven battery warnings through Mako";
+      PartOf = [ "graphical-session.target" ];
+      After = [ "graphical-session-pre.target" ];
+    };
+    Service = {
+      ExecStart = "${batteryNotification}/bin/criomos-battery-notification";
+      Restart = "on-failure";
+      RestartSec = "2s";
+    };
+    Install.WantedBy = [ "graphical-session.target" ];
   };
 }

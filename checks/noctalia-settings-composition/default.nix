@@ -33,6 +33,8 @@ let
     ];
   };
   settings = homeConfiguration.config.programs.noctalia.settings;
+  makoSettings = homeConfiguration.config.services.mako.settings;
+  batteryNotificationService = homeConfiguration.config.systemd.user.services.battery-notification;
   configToml =
     builtins.readFile
       homeConfiguration.config.xdg.configFile."noctalia/config.toml".source;
@@ -47,10 +49,27 @@ let
     else
       activation.reconcileNoctaliaThemeMode.data;
   reconcileNoctaliaSettingsScript = pkgs.writeShellScript "reconcile-noctalia-settings" reconcileNoctaliaSettings;
+  batteryNotificationPython = pkgs.python3.withPackages (pythonPackages: [ pythonPackages.dbus-next ]);
 in
 assert pkgs.lib.assertMsg (
   settings.theme.mode == "external"
 ) "Noctalia must consume Chroma's external light/dark mode";
+assert pkgs.lib.assertMsg (
+  makoSettings.ignore-timeout
+  && makoSettings.default-timeout == 3000
+  && makoSettings."urgency=critical".default-timeout == 10000
+) "Mako must replace every requested lifetime with its bounded normal and critical durations";
+assert pkgs.lib.assertMsg (
+  settings.battery.warning_threshold == 0
+  && !settings.notification.enable_daemon
+) "Noctalia must leave battery warnings and the freedesktop notification service to Mako";
+assert pkgs.lib.assertMsg (
+  pkgs.lib.hasSuffix
+    "/bin/criomos-battery-notification"
+    (builtins.head batteryNotificationService.Service.ExecStart)
+  && batteryNotificationService.Service.Restart == "on-failure"
+  && batteryNotificationService.Install.WantedBy == [ "graphical-session.target" ]
+) "the event-driven battery warning service must run with the graphical session";
 assert pkgs.lib.assertMsg (
   settings.theme.source == "wallpaper"
 ) "the declared Noctalia theme source must override Stylix's custom-palette target";
@@ -163,5 +182,7 @@ pkgs.runCommand "noctalia-settings-composition" { nativeBuildInputs = [ noctalia
       echo 'Noctalia validator reported an obsolete setting' >&2
       exit 1
     fi
+    ${batteryNotificationPython}/bin/python ${./battery_notification_test.py} \
+      ${../../modules/home/profiles/min/battery_notification.py}
     touch "$out"
 ''
