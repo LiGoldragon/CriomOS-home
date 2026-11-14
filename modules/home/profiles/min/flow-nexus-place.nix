@@ -197,11 +197,17 @@ let
       declaredPath family
     else
       "${cfg.configurationDirectory + "/${family}.datom"}";
+  # A Flow before 0.55.0 declares leave-outs as a family of their own; from
+  # 0.55.0 each permaflow carries its own in the metaflow declaration, and
+  # its configuration directory holds no leave-outs.datom.
+  leaveOutsQuery = cfg.configurationDirectory + "/leave-outs.datom";
   queries = [
     "${nexusQuery}"
     (declared "models")
     (declared "thresholds")
-    "${cfg.configurationDirectory + "/leave-outs.datom"}"
+  ]
+  ++ lib.optional (builtins.pathExists leaveOutsQuery) "${leaveOutsQuery}"
+  ++ [
     "${sendServersQuery}"
   ]
   ++ lib.optional cfg.stableHook "${harnessHookQuery}"
