@@ -20,6 +20,7 @@ let
   # The user's key here carrying StableCodex keeps the stable core Codex and its own account data.
   stableCodex = builtins.elem "StableCodex" user.capabilities;
   codexCliPackage = config.criomos.corePackages.codex;
+  codexServerPackage = config.criomos.corePackages.codexServer;
   remoteClient = if stableCodex then "${codexCliPackage}/bin/codex" else "${config.criomosHome.codexNext.rawClientPackage}/bin/codex";
   codexStable = pkgs.writeShellApplication {
     name = "codex";
@@ -127,7 +128,7 @@ lib.mkMerge [
         Environment = lib.optionals buildGuard.enable [
           "PATH=${buildGuard.directory}:${inheritedServicePath}"
         ];
-        ExecStart = "${codexCliPackage}/bin/codex app-server --remote-control --listen unix://";
+        ExecStart = "${codexServerPackage}/bin/codex app-server --remote-control --listen unix://";
         UMask = "0077";
         LimitNOFILE = 524288;
         Restart = "always";

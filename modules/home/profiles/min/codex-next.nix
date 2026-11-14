@@ -13,6 +13,7 @@ let
   nextHome = "${config.home.homeDirectory}/.codex-next";
   socket = "${nextHome}/app-server-control/app-server-control.sock";
   recoveryUnit = "codex-remote-control-next-recovery.service";
+  serverPackage = config.criomos.corePackages.codexNextServer;
   prepare = pkgs.writeShellScript "codex-next-prepare" ''
     set -eu
     umask 077
@@ -87,7 +88,7 @@ in
         WorkingDirectory = "${config.home.homeDirectory}/primary";
         Environment = [ "CODEX_HOME=${nextHome}" ];
         ExecStartPre = "${prepare}";
-        ExecStart = "${package}/bin/codex app-server --remote-control --listen unix://${socket}";
+        ExecStart = "${serverPackage}/bin/codex app-server --remote-control --listen unix://${socket}";
         UMask = "0077";
         LimitNOFILE = 524288;
         # The server holds the running Codex sessions: stopping it leaves them

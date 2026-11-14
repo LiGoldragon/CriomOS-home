@@ -1,9 +1,6 @@
-{
-  lib,
-  runCommand,
-  python3,
-}:
+{ pkgs, ... }:
 let
+  inherit (pkgs) lib runCommand python3;
   evaluated = lib.evalModules {
     modules = [
       ../../modules/home/profiles/min/nmtui-theme.nix

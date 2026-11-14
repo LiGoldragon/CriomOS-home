@@ -680,6 +680,22 @@
         "type": "github"
       }
     },
+    "deployed-codex-source": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1794510250,
+        "narHash": "sha256-/QQqaRKd8MKF0s8eD40arcYz/CdQ2vX4IcPV0cUdjro=",
+        "owner": "LiGoldragon",
+        "repo": "CriomOS-home",
+        "rev": "0b430341a594f1b1ee31e986c4dbd0d537e6ffe7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LiGoldragon",
+        "repo": "CriomOS-home",
+        "type": "github"
+      }
+    },
     "dotos": {
       "flake": false,
       "locked": {
@@ -2748,11 +2764,11 @@
     "psyche-belief": {
       "flake": false,
       "locked": {
-        "lastModified": 1794613999,
-        "narHash": "sha256-hd13eLceslZ2Dz0MFM2rhP4rkn5PQHAChNAlOIVRmbQ=",
+        "lastModified": 1794616992,
+        "narHash": "sha256-xnwMRmHi8hzEgBViLhnFug/rsONI5bC5ybA9xGLuXyI=",
         "owner": "LiGoldragon",
         "repo": "psyche-belief",
-        "rev": "95770ff032dd301250bc08844b36f2c61af033e0",
+        "rev": "68ec535d8ff8772dd423c065adf8ba2746c22dcd",
         "type": "github"
       },
       "original": {
@@ -2821,6 +2837,7 @@
         "crane": "crane_3",
         "criomos-lib": "criomos-lib",
         "curriculum-source": "curriculum-source",
+        "deployed-codex-source": "deployed-codex-source",
         "energy-nexus": "energy-nexus",
         "field-clj": "field-clj",
         "field-luna-research-source": "field-luna-research-source",
