@@ -2,19 +2,29 @@
 let
   guardModule = ../../modules/home/profiles/min/default-opener.nix;
   home = "/tmp/remote-build-command-guard";
+  user = {
+    name = "remote-build-command-guard-check";
+    size = "Min";
+    capabilities = [ ];
+  };
   configuration =
     guardEnabled:
     inputs.home-manager.lib.homeManagerConfiguration {
       inherit pkgs;
       extraSpecialArgs = {
-        user.size = "Min";
+        inherit inputs user;
+        horizon.node.behavesAs.edge = false;
+        hexis = inputs.hexis.packages.${pkgs.stdenv.hostPlatform.system}.default;
       };
       modules = [
+        ../../modules/home/core-packages.nix
         guardModule
+        ../../modules/home/profiles/min/codex-next.nix
+        ../../modules/home/profiles/min/codex-remote-control.nix
         {
           criomosHome.remoteBuildCommandGuard.enable = guardEnabled;
           home = {
-            username = "remote-build-command-guard-check";
+            username = user.name;
             homeDirectory = home;
             stateVersion = "26.05";
           };
@@ -28,8 +38,8 @@ let
   disabledSession = "${disabled.config.home.sessionVariablesPackage}/etc/profile.d/hm-session-vars.sh";
   cargoGuard = enabled.config.home.file.".local/libexec/remote-build-command-guard/cargo".source;
   rustcGuard = enabled.config.home.file.".local/libexec/remote-build-command-guard/rustc".source;
-  ordinaryOutput = inputs.self.homeConfigurations.li.config;
-  guardedOutput = inputs.self.homeConfigurations."li-remote-build-guard".config;
+  ordinaryOutput = disabled.config;
+  guardedOutput = enabled.config;
 in
 assert enabled.config.criomosHome.remoteBuildCommandGuard.enable;
 assert !disabled.config.criomosHome.remoteBuildCommandGuard.enable;
