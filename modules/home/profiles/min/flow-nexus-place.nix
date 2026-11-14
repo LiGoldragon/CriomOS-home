@@ -346,6 +346,24 @@ in
       default = false;
       description = "Whether ~/.local/bin/flow-nexus-hook is this version's flow-nexus-hook and the Nexus's declared HarnessHook, the path it writes into the flows it launches; one version holds it at a time.";
     };
+    memoryLimit = lib.mkOption {
+      type = lib.types.nullOr (
+        lib.types.submodule {
+          options = {
+            maximum = lib.mkOption {
+              type = lib.types.str;
+              description = "The unit's MemoryMax: the size at which the kernel stops the Nexus.";
+            };
+            swapMaximum = lib.mkOption {
+              type = lib.types.str;
+              description = "The unit's MemorySwapMax.";
+            };
+          };
+        }
+      );
+      default = null;
+      description = "The memory the Nexus unit is held to; null holds it to none. It is part of the unit, so it exists only where the unit does.";
+    };
     presentationPrompt = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
       default = null;
@@ -411,6 +429,10 @@ in
         ExecStart = "${runtime}/bin/flow-nexus-daemon \"${place}\"";
         Restart = "on-failure";
         RestartSec = "100ms";
+      }
+      // lib.optionalAttrs (cfg.memoryLimit != null) {
+        MemoryMax = cfg.memoryLimit.maximum;
+        MemorySwapMax = cfg.memoryLimit.swapMaximum;
       };
       Install.WantedBy = [ "default.target" ];
     };

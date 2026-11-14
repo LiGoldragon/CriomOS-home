@@ -32,6 +32,12 @@
   criomosHome.flow0550 = {
     place = "main";
     stableHook = true;
+    # The Nexus at main is held to 3G of memory and no swap, so the kernel
+    # stops a runaway Nexus at that size.
+    memoryLimit = {
+      maximum = "3G";
+      swapMaximum = "0";
+    };
     messageNexus = null;
     # Every launch opens its pane in Herdr's default session, where the
     # flows run (Flow 0.54.3's Configure.Nexus names it).
@@ -46,13 +52,6 @@
       "default-minutes.datom"
       "handover-policies.datom"
     ];
-  };
-
-  # The Nexus at main is held to 3G of memory and no swap, so the kernel
-  # stops a runaway Nexus at that size.
-  systemd.user.services.${config.criomosHome.flow0550.unit}.Service = {
-    MemoryMax = "3G";
-    MemorySwapMax = "0";
   };
 
   home.packages = [ config.criomosHome.flow0550.clients ];
