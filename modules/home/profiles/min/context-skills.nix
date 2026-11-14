@@ -29,6 +29,7 @@ in
         Type = "oneshot";
         ExecStart = "${regenerate}/bin/context-skills-regenerate";
       };
+      Install.WantedBy = [ "default.target" ];
     };
 
     # A change to refs/heads/main (a commit or a fast-forward) or to
