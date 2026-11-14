@@ -1,10 +1,7 @@
 { inputs, pkgs, ... }:
 let
   system = pkgs.stdenv.hostPlatform.system;
-  lib = pkgs.lib // {
-    hm.dag.entryBefore = _dependencies: data: { inherit data; };
-    hm.dag.entryAfter = _dependencies: data: { inherit data; };
-  };
+  lib = pkgs.lib;
   codexCliPackage = pkgs.callPackage ../../owned-agents/codex { inherit inputs; };
   claudeCodePackage = pkgs.callPackage ../../owned-agents/claude-code { inherit inputs; };
   fixtureUser = {
@@ -14,31 +11,46 @@ let
     gitSigningKey = null;
     matrixId = null;
     size = "Min";
+    capabilities = [ "StableCodex" ];
     isMultimediaDev = false;
     emailAddress = "ai-agent-launch-check@example.invalid";
     githubId = "ai-agent-launch-check";
     name = "AI agent launch check";
   };
-  moduleResult = import ../../modules/home/profiles/min/default.nix {
-    inherit inputs lib pkgs;
-    criomos-lib = inputs.criomos-lib.lib;
-    user = fixtureUser;
-    # The real projection, not a hand-written shape. See fixtures/horizon.nix.
-    horizon = import ../../fixtures/horizon.nix;
-    config = {
-      home.homeDirectory = "/tmp/ai-agent-launch-check";
-      xdg.configHome = "/tmp/ai-agent-launch-check/.config";
-      stylix.polarity = "dark";
-      criomos.corePackages = {
-        codex = codexCliPackage;
-        claude = claudeCodePackage;
-        flowId = pkgs.hello;
-      };
+  configuration = inputs.home-manager.lib.homeManagerConfiguration {
+    inherit pkgs;
+    extraSpecialArgs = {
+      inherit inputs;
+      user = fixtureUser;
+      criomos-lib = inputs.criomos-lib.lib;
+      horizon = import ../../fixtures/horizon.nix;
+      hexis = inputs.hexis.packages.${system}.default;
+      rustToolchain = pkgs.rustc;
     };
-    hexis = inputs.hexis.packages.${system}.default;
-    rustToolchain = pkgs.rustc;
+    modules = [
+      ../../modules/home/core-packages.nix
+      ../../modules/home/profiles/min/default.nix
+      ../../modules/home/profiles/min/remote-build-command-guard.nix
+      ../../modules/home/profiles/min/codex-remote-control.nix
+      {
+        home = {
+          username = "ai-agent-launch-check";
+          homeDirectory = "/tmp/ai-agent-launch-check";
+          stateVersion = "26.05";
+        };
+        xdg.configHome = "/tmp/ai-agent-launch-check/.config";
+        stylix.polarity = "dark";
+        criomos.corePackages = {
+          codex = codexCliPackage;
+          codexServer = codexCliPackage;
+          codexNextServer = codexCliPackage;
+          claude = claudeCodePackage;
+          flowId = pkgs.hello;
+        };
+      }
+    ];
   };
-  profile = moduleResult.config.content;
+  profile = configuration.config;
   packageName = package: package.pname or (package.name or "");
   hasPackage = name: builtins.any (package: packageName package == name) profile.home.packages;
   codexMerge = profile.home.activation.mergeCodexConfig.data;
