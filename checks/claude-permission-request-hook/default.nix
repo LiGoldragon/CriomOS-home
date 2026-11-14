@@ -7,6 +7,7 @@ let
   user = {
     name = "hook-user";
     size = "Min";
+    capabilities = [ ];
   };
   horizon = {
     node = {
