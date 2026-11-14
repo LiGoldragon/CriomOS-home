@@ -1,7 +1,14 @@
 { pkgs, inputs, ... }:
 let
   system = pkgs.stdenv.hostPlatform.system;
-  runtime = inputs.flow-0540.packages.${system}.curriculum;
+  # Curriculum's Nexus and CLI, built per crate on Curriculum's own build base
+  # with the datom feature its CLI and its declarations reader require.
+  context = inputs.curriculum-source.inputs.base.lib.contexts.${system};
+  runtime = (import "${inputs.curriculum-source}/Cargo.nix" {
+    inherit (context) pkgs buildRustCrateForPkgs;
+    defaultCrateOverrides = context.crateOverrides;
+    rootFeatures = [ "default" "datom" ];
+  }).rootCrate.build;
   sourceRoot = homeDirectory: "${homeDirectory}/.local/state/curriculum-context";
   environment = homeDirectory: let
     root = sourceRoot homeDirectory;
@@ -78,7 +85,6 @@ let
     ExecStartPost=
   '');
 in
-assert inputs.curriculum-source.rev == inputs.flow-0540.inputs.curriculum.rev;
 pkgs.runCommand "curriculum-resolver-deployment" {
   passthru = {
     inherit runtime environment unit refresh;

@@ -54,12 +54,10 @@
 
     };
 
-    # The CLI reads role configuration at the process boundary; keep the
-    # matching authored Curriculum source available to the Home service.
-    curriculum-source = {
-      url = "github:LiGoldragon/Curriculum";
-      flake = false;
-    };
+    # The Curriculum the Home service runs: its Nexus and CLI are built from
+    # this revision's own Cargo.nix on the build base its lock names, and the
+    # CLI reads this revision's role configuration at the process boundary.
+    curriculum-source.url = "github:LiGoldragon/Curriculum";
 
     # Field monitoring script sources (modules/home/profiles/min/field-monitoring.nix).
     # core-checkup is pinned to the revision the hand-made unit ran; the Field
