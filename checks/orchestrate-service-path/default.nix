@@ -98,7 +98,8 @@ else
       sleep 0.05
     done
     kill -0 "$nexus_pid"
-    test -f ${lib.escapeShellArg "${stateDirectory}/orchestrate-nexus.sema"}
+    test -f ${lib.escapeShellArg "${stateDirectory}/orchestrate-nexus.memory"}
+    test ! -e ${lib.escapeShellArg "${stateDirectory}/orchestrate-nexus.sema"}
     test -f "$legacy_store"
     test -S ${lib.escapeShellArg ordinarySocketPath}
     test -S ${lib.escapeShellArg metaSocketPath}
