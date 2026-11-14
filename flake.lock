@@ -2823,11 +2823,11 @@
     "psyche-belief": {
       "flake": false,
       "locked": {
-        "lastModified": 1794626333,
-        "narHash": "sha256-t0QzKALeq4BrQVoMJkfPzHk/+mzfx9NO5eJw2q7FNTY=",
+        "lastModified": 1794627477,
+        "narHash": "sha256-As8LM0vSOX6MLMF4pUa/5s0Zq7bUI0DWstgeff92zpk=",
         "owner": "LiGoldragon",
         "repo": "psyche-belief",
-        "rev": "883a8de3bccdb10a37d4619b44533d711353e495",
+        "rev": "09c5adebc31c0a4bc847bb6c25c64dec5659de4d",
         "type": "github"
       },
       "original": {
