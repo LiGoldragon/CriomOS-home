@@ -1,4 +1,4 @@
-{ lib, pkgs, inputs, ... }:
+{ pkgs, inputs, ... }:
 let
   system = pkgs.stdenv.hostPlatform.system;
   hexisPackage = inputs.hexis.packages.${system}.default;
@@ -30,7 +30,7 @@ let
         };
 
         programs.noctalia.validateConfig = false;
-        programs.niri.package = lib.mkForce pkgs.niri;
+        programs.niri.package = pkgs.lib.mkForce pkgs.niri;
       }
     ];
   };
