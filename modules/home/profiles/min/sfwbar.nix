@@ -43,7 +43,8 @@ lib.mkIf behavesAs.edge {
           "screen-off" = {
             enabled = true;
             timeout = 300;
-            action = "screen_off";
+            action = "command";
+            command = "${config.programs.niri.package}/bin/niri msg action power-off-monitors";
           };
           lock = {
             enabled = true;

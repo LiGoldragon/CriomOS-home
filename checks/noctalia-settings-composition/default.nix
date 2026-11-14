@@ -1,4 +1,4 @@
-{ pkgs, inputs, ... }:
+{ lib, pkgs, inputs, ... }:
 let
   system = pkgs.stdenv.hostPlatform.system;
   hexisPackage = inputs.hexis.packages.${system}.default;
@@ -11,6 +11,7 @@ let
     };
     modules = [
       inputs.stylix.homeModules.stylix
+      inputs.niri-flake.homeModules.config
       inputs.noctalia.homeModules.default
       ../../modules/home/profiles/min/sfwbar.nix
       {
@@ -29,6 +30,7 @@ let
         };
 
         programs.noctalia.validateConfig = false;
+        programs.niri.package = lib.mkForce pkgs.niri;
       }
     ];
   };
@@ -104,7 +106,8 @@ assert pkgs.lib.assertMsg (
     parsedConfigToml.idle.behavior."screen-off" == {
       enabled = true;
       timeout = 300;
-      action = "screen_off";
+      action = "command";
+      command = "${homeConfiguration.config.programs.niri.package}/bin/niri msg action power-off-monitors";
     }
   &&
     parsedConfigToml.idle.behavior.lock == {
