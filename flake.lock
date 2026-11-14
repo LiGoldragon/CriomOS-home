@@ -88,11 +88,11 @@
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1794480374,
-        "narHash": "sha256-wvCO7sf9oalyuRbAaKufG+1f/krMPvITUMisjNf/AsE=",
+        "lastModified": 1794619908,
+        "narHash": "sha256-BPGZrz8f4QLOzU3SPkqlfNAAGYhCVARC1cr+XSqySs8=",
         "owner": "LiGoldragon",
         "repo": "build-base",
-        "rev": "cd61cac70a81319bc5fc79c9c8d10d752a3fd227",
+        "rev": "306abea49416664db33286b3cf0ed0039dcbccb2",
         "type": "github"
       },
       "original": {
@@ -334,22 +334,6 @@
       "original": {
         "owner": "LiGoldragon",
         "repo": "clj-build",
-        "type": "github"
-      }
-    },
-    "complex": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1794617844,
-        "owner": "LiGoldragon",
-        "repo": "goldragon-persona",
-        "rev": "cd9222c1aae69b62db6d5de6304801578fc44aa6",
-        "type": "github",
-        "narHash": "sha256-F2EdjraLNSe6CSAKKkldiv6a/PSOCcACx4aNCLp4PZA="
-      },
-      "original": {
-        "owner": "LiGoldragon",
-        "repo": "goldragon-persona",
         "type": "github"
       }
     },
@@ -1040,7 +1024,7 @@
     "fenix_6": {
       "inputs": {
         "nixpkgs": [
-          "flow-0540",
+          "flow-0550",
           "base",
           "nixpkgs"
         ],
@@ -1063,7 +1047,7 @@
     "fenix_7": {
       "inputs": {
         "nixpkgs": [
-          "flow-0540",
+          "flow-0550",
           "migration-predecessor",
           "nixpkgs"
         ],
@@ -1086,7 +1070,7 @@
     "fenix_8": {
       "inputs": {
         "nixpkgs": [
-          "flow-0540",
+          "flow-0550",
           "migration-predecessor",
           "unconfigured-flow",
           "nixpkgs"
@@ -1110,7 +1094,7 @@
     "fenix_9": {
       "inputs": {
         "nixpkgs": [
-          "flow-0540",
+          "flow-0550",
           "unconfigured-flow",
           "nixpkgs"
         ],
@@ -1542,7 +1526,7 @@
         "type": "github"
       }
     },
-    "flow-0540": {
+    "flow-0550": {
       "inputs": {
         "base": "base",
         "curriculum": "curriculum",
@@ -1550,11 +1534,11 @@
         "unconfigured-flow": "unconfigured-flow_2"
       },
       "locked": {
-        "lastModified": 1794613628,
-        "narHash": "sha256-36ULui4ZStekuRlSrk1rfkpV1/QWbE3r+/4jb68/iNo=",
+        "lastModified": 1794620193,
+        "narHash": "sha256-TMHEmqPn4q+SLf2WzDG9atcR3RsqYE1omoSQ0iy30ms=",
         "owner": "LiGoldragon",
         "repo": "flow",
-        "rev": "c8f526ce348e6fff8ce53f76de76174a10ca4329",
+        "rev": "99792c7a4801863517bef2eb586ee85f90d54b78",
         "type": "github"
       },
       "original": {
@@ -2722,7 +2706,7 @@
         "dotos-text-query": "dotos-text-query",
         "field-belief": "field-belief",
         "flow": [
-          "flow-0540"
+          "flow-0550"
         ],
         "mind-belief": "mind-belief",
         "nixpkgs": [
@@ -2832,7 +2816,6 @@
         "chroma": "chroma",
         "chroma-emacs": "chroma-emacs",
         "claude-answers": "claude-answers",
-        "complex": "complex",
         "core-checkup-source": "core-checkup-source",
         "crane": "crane_3",
         "criomos-lib": "criomos-lib",
@@ -2842,7 +2825,7 @@
         "field-clj": "field-clj",
         "field-luna-research-source": "field-luna-research-source",
         "field-monitoring-source": "field-monitoring-source",
-        "flow-0540": "flow-0540",
+        "flow-0550": "flow-0550",
         "google-workspace-cli": "google-workspace-cli",
         "harness": "harness",
         "herdr": "herdr",

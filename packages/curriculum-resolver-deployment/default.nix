@@ -1,7 +1,7 @@
 { pkgs, inputs, ... }:
 let
   system = pkgs.stdenv.hostPlatform.system;
-  runtime = inputs.flow-0540.packages.${system}.curriculum;
+  runtime = inputs.flow-0550.packages.${system}.curriculum;
   sourceRoot = homeDirectory: "${homeDirectory}/.local/state/curriculum-context";
   environment = homeDirectory: let
     root = sourceRoot homeDirectory;
@@ -78,7 +78,7 @@ let
     ExecStartPost=
   '');
 in
-assert inputs.curriculum-source.rev == inputs.flow-0540.inputs.curriculum.rev;
+assert inputs.curriculum-source.rev == inputs.flow-0550.inputs.curriculum.rev;
 pkgs.runCommand "curriculum-resolver-deployment" {
   passthru = {
     inherit runtime environment unit refresh;

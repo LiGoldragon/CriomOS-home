@@ -1,14 +1,9 @@
 Configure.Models.[
-  { Primary Field gpt-6-astra }
-  { Primary Mind gpt-6-astra }
-  { Primary Psyche claude-fable-5-1 }
-  { Quaternary Field gpt-6-luna }
-  { Quaternary Mind gpt-6-luna }
-  { Quaternary Psyche claude-haiku-5-5 }
-  { Secondary Field gpt-6.1-sol }
-  { Secondary Mind gpt-6.1-sol }
-  { Secondary Psyche claude-opus-5-5 }
-  { Tertiary Field claude-sonnet-5-5 }
-  { Tertiary Mind gpt-6-luna }
-  { Tertiary Psyche claude-sonnet-5-5 }
+  { Astra gpt-6-astra }
+  { Fable claude-fable-5-2 }
+  { Haiku claude-haiku-5-5 }
+  { Luna gpt-6-luna }
+  { Opus claude-opus-5-5 }
+  { Sol gpt-6.1-sol }
+  { Sonnet claude-sonnet-5-5 }
 ]

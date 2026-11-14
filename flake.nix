@@ -33,7 +33,7 @@
     primary = {
       url = "github:LiGoldragon/primary";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flow.follows = "flow-0540";
+      inputs.flow.follows = "flow-0550";
       inputs.curriculum = {
         url = "github:LiGoldragon/Curriculum";
         flake = false;
@@ -131,15 +131,10 @@
     harness.url = "github:LiGoldragon/harness";
     harness.inputs.nixpkgs.follows = "nixpkgs";
 
-    # Flow 0.54.7, built per crate on the build base. It follows no Home
+    # Flow 0.55.0, built per crate on the build base. It follows no Home
     # input: its nixpkgs is the base's, which gives its crates the store paths
     # every repository on the base shares.
-    flow-0540.url = "github:LiGoldragon/flow";
-
-    # The complex definition: its metaflows, models and thresholds, read here
-    # as files and written for the Flow Nexus to replay.
-    complex.url = "github:LiGoldragon/goldragon-persona";
-    complex.flake = false;
+    flow-0550.url = "github:LiGoldragon/flow";
 
     # The Energy Nexus at its place (modules/home/profiles/min/energy-nexus.nix).
     # It builds with its own pins: Home overrides none of its inputs.

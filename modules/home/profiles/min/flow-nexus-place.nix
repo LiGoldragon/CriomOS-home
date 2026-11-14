@@ -198,23 +198,18 @@ let
       declaredPath family
     else
       "${cfg.configurationDirectory + "/${family}.datom"}";
-  # A Flow before 0.55.0 declares leave-outs as a family of their own; from
-  # 0.55.0 each permaflow carries its own in the metaflow declaration, and
-  # its configuration directory holds no leave-outs.datom.
-  leaveOutsQuery = cfg.configurationDirectory + "/leave-outs.datom";
+  # Each permaflow carries its own leave-outs in the metaflow declaration
+  # (Flow 0.55.0, meta-signal-flow 78); there is no leave-out family.
   queries = [
     "${nexusQuery}"
     (declared "models")
     (declared "thresholds")
-  ]
-  ++ lib.optional (builtins.pathExists leaveOutsQuery) "${leaveOutsQuery}"
-  ++ [
     "${sendServersQuery}"
   ]
   ++ lib.optional cfg.stableHook "${harnessHookQuery}"
   ++ [
-    # The metaflow declaration: the owner's, kept in his repository when ownerDeclarations names it.
-    (if cfg.ownerDeclarations ? metaflows then declaredPath "metaflows" else "${cfg.declarationDirectory}/metaflows.datom")
+    # The permaflow declarations, after the models their leave-outs' harness is read from.
+    (declared "metaflows")
   ]
   ++ map (file: "${cfg.configurationDirectory + "/${file}"}") cfg.trailingConfigurationFiles;
   # The configuration home of this version's clients: its
@@ -297,8 +292,8 @@ in
     ownerDeclarations = lib.mkOption {
       type = lib.types.attrsOf lib.types.path;
       default = { };
-      example = lib.literalExpression ''{ models = "''${inputs.complex}/models-0533.datom"; }'';
-      description = "The families the owner declares in his own repository, models, thresholds and metaflows, each named to its file there. Activation writes each into declarationDirectory under its own file name, a change to any restarts the configure unit, which replays it. A family absent here is taken from configurationDirectory, and metaflows from declarationDirectory's metaflows.datom.";
+      example = lib.literalExpression ''{ models = "''${inputs.owner}/models.datom"; }'';
+      description = "The families the owner declares in his own repository, models, thresholds and metaflows, each named to its file there. Activation writes each into declarationDirectory under its own file name, a change to any restarts the configure unit, which replays it. A family absent here is taken from configurationDirectory.";
     };
     configurationDirectory = lib.mkOption {
       type = lib.types.path;
