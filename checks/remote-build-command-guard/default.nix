@@ -7,14 +7,21 @@ let
     size = "Min";
     capabilities = [ ];
   };
+  fakeCodex = pkgs.writeShellScriptBin "codex" "exit 0";
+  fakeClaude = pkgs.writeShellScriptBin "claude" "exit 0";
+  fakeHexis = pkgs.writeShellScriptBin "hexis" "exit 0";
+  testInputs = inputs // {
+    hexis.lib.mkManagedConfig = { lib, ... }: lib.hm.dag.entryAfter [ "writeBoundary" ] "";
+  };
   configuration =
     guardEnabled:
     inputs.home-manager.lib.homeManagerConfiguration {
       inherit pkgs;
       extraSpecialArgs = {
-        inherit inputs user;
+        inputs = testInputs;
+        inherit user;
         horizon.node.behavesAs.edge = false;
-        hexis = inputs.hexis.packages.${pkgs.stdenv.hostPlatform.system}.default;
+        hexis = fakeHexis;
       };
       modules = [
         ../../modules/home/core-packages.nix
@@ -23,6 +30,12 @@ let
         ../../modules/home/profiles/min/codex-remote-control.nix
         {
           criomosHome.remoteBuildCommandGuard.enable = guardEnabled;
+          criomos.corePackages = {
+            codex = fakeCodex;
+            codexServer = fakeCodex;
+            codexNextServer = fakeCodex;
+            claude = fakeClaude;
+          };
           home = {
             username = user.name;
             homeDirectory = home;
