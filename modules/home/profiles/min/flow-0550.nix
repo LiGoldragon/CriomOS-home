@@ -1,4 +1,4 @@
-# Flow Nexus 0.55.0, built per crate on the build base: its configured package
+# Flow Nexus 0.55.0, built per crate on the build base: its package
 # and its clients under their versioned names (flow-nexus-0.55.0,
 # flow-nexus-meta-0.55.0). It starts in its place (flow-nexus-place.nix):
 # main, the place every flow reports to, whose sockets are
