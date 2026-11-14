@@ -12,8 +12,8 @@
 # meta-signal-flow 78's shape: the models, the thresholds and the permaflows,
 # each permaflow carrying its own leave-outs, among them.
 #
-# It holds the stable hook: once its unit runs, ~/.local/bin/flow-nexus-hook is
-# its flow-nexus-hook and its declared HarnessHook, so every Claude flow it launches
+# It holds the stable hook: once its unit runs, ~/.local/bin/flow-hook is
+# its flow-hook and its declared HarnessHook, so every Claude flow it launches
 # runs that path, which the next version to hold it repoints.
 #
 # Being the version at main, it declares the user's Flow CLI configuration,
