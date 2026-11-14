@@ -39,8 +39,8 @@
 # is declared by the version at main (flow-0533.nix).
 #
 # The hook command it writes into every Claude flow is
-# ~/.local/bin/flow-nexus-hook when this version holds the stable hook
-# (stableHook): Home points that path at this version's flow-nexus-hook, and the configure unit declares it as the
+# ~/.local/bin/flow-hook when this version holds the stable hook
+# (stableHook): Home points that path at this version's flow-hook, and the configure unit declares it as the
 # Nexus's HarnessHook. The version that takes stableHook over repoints it.
 { version, slug }:
 {
@@ -68,7 +68,7 @@ let
   message = inputs.message.packages.${system}.default;
   # The hook command every Claude flow this Nexus launches runs, one path
   # across versions; Home points it at the version holding stableHook.
-  stableHookPath = ".local/bin/flow-nexus-hook";
+  stableHookPath = ".local/bin/flow-hook";
   # The Nexus a memory is configured with, as data. The build bakes the part
   # mkFlowPackage takes into the executable, for a fresh memory to start
   # with; the configure unit declares it whole to the running Nexus.
@@ -344,7 +344,7 @@ in
     stableHook = lib.mkOption {
       type = lib.types.bool;
       default = false;
-      description = "Whether ~/.local/bin/flow-nexus-hook is this version's flow-nexus-hook and the Nexus's declared HarnessHook, the path it writes into the flows it launches; one version holds it at a time.";
+      description = "Whether ~/.local/bin/flow-hook is this version's flow-hook and the Nexus's declared HarnessHook, the path it writes into the flows it launches; one version holds it at a time.";
     };
     memoryLimit = lib.mkOption {
       type = lib.types.nullOr (
@@ -401,7 +401,7 @@ in
     home.packages = [ clients ];
     home.file = lib.mkMerge [
       (lib.mkIf cfg.stableHook {
-        ${stableHookPath}.source = "${runtime}/bin/flow-nexus-hook";
+        ${stableHookPath}.source = "${runtime}/bin/flow-hook";
       })
       (lib.mapAttrs' (
         family: source:
