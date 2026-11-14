@@ -2764,11 +2764,11 @@
     "psyche-belief": {
       "flake": false,
       "locked": {
-        "lastModified": 1794616992,
-        "narHash": "sha256-xnwMRmHi8hzEgBViLhnFug/rsONI5bC5ybA9xGLuXyI=",
+        "lastModified": 1794617778,
+        "narHash": "sha256-hpZM+sj6y/hKILpNmDVLy98SPXSFYoruue1kohHogf8=",
         "owner": "LiGoldragon",
         "repo": "psyche-belief",
-        "rev": "68ec535d8ff8772dd423c065adf8ba2746c22dcd",
+        "rev": "65bd154c2b397c022460ba9867618071d4bc5be6",
         "type": "github"
       },
       "original": {
