@@ -1,5 +1,7 @@
 # Upgrades
 
+The Flow clients are `flow` and `flow-meta` (branch w0f8-90d453; needs a Flow whose binaries carry these names, so `flow-0550` is repinned in the same change). `~/.local/bin/flow-nexus` and `~/.local/bin/flow-nexus-meta` are removed and `~/.local/bin/flow` and `~/.local/bin/flow-meta` take their place; the versioned clients are `flow-<version>` and `flow-meta-<version>`; the configure unit runs `flow-meta`. The daemon, the hook `~/.local/bin/flow-nexus-hook`, the units, the sockets and `~/.config/nexus/flow-nexus.datom` are unchanged. Whatever names the old clients by path moves with it: CriomOS's `harness-update` notify command, the Energy Nexus's configured Flow program (`Configure.Program.{ Flow /home/li/.local/bin/flow }`), and the generated skills and agent definitions (Curriculum regeneration).
+
 Flow 0.54.7: matched Flow 5d70c7b8 and Energy 0.3.2 cd4c85c0; ordinary/meta clients and hooks come from the same Flow package. The 0540 unit/place and 3G memory/zero-swap limit remain. Before activation, preserve a verified stopped-store backup: the upgraded Flow store is incompatible with 0.54.6.
 
 ## Next Flow 0.17.0 and next Message 0.17.0 (next slot moves together)

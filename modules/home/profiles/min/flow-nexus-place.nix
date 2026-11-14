@@ -22,7 +22,7 @@
 # unit is Type=notify. On a fresh memory it starts with the configuration
 # built into its executable. Its configuration is declared after it by its
 # configure unit, ordered After= and Requires= it, which hands the running
-# Nexus one Configure per family through flow-nexus-meta; the Nexus takes each
+# Nexus one Configure per family through flow-meta; the Nexus takes each
 # at
 # once and answers Configured with the change it was given, echoed whole,
 # also when its memory already holds it (an earlier Flow answers
@@ -31,8 +31,8 @@
 #
 # Its clients take the datom and nothing else (vision:nexus-v1): the place is
 # read from one configuration datom, $XDG_CONFIG_HOME/nexus/flow-nexus.datom,
-# `{ <place> }`. This version's own clients (flow-nexus-<version>,
-# flow-nexus-meta-<version>) and its configure unit run with XDG_CONFIG_HOME
+# `{ <place> }`. This version's own clients (flow-<version>,
+# flow-meta-<version>) and its configure unit run with XDG_CONFIG_HOME
 # set to `placeConfiguration`, a directory whose nexus/flow-nexus.datom names
 # this version's place, so they reach it whatever the user's configuration
 # names; no place is ever typed. The user's ~/.config/nexus/flow-nexus.datom
@@ -218,7 +218,7 @@ let
     { ${cfg.place} }
   '';
   # Runs once the Nexus has announced readiness, its sockets bound: each
-  # query goes to the running Nexus through flow-nexus-meta, its configuration
+  # query goes to the running Nexus through flow-meta, its configuration
   # naming this version's place, in order, and each must be taken.
   # Arguments: the query files.
   configure = pkgs.writeShellApplication {
@@ -229,7 +229,7 @@ let
       export XDG_CONFIG_HOME=${placeConfiguration}
       for query in "$@"; do
         body=$(<"$query")
-        if ! reply=$(${runtime}/bin/flow-nexus-meta "''${body//${runtimeToken}/$XDG_RUNTIME_DIR}"); then
+        if ! reply=$(${runtime}/bin/flow-meta "''${body//${runtimeToken}/$XDG_RUNTIME_DIR}"); then
           printf 'Flow Nexus ${version} at ${cfg.place} did not answer %s\n' "$query" >&2
           exit 1
         fi
@@ -241,7 +241,7 @@ let
     '';
   };
   # The <version> clients under their versioned names, reaching this
-  # version's place: `flow-nexus-<version> Metaflows` is `flow-nexus
+  # version's place: `flow-<version> Metaflows` is `flow
   # Metaflows` with the configuration naming this version's place.
   versionedCli =
     name: raw:
@@ -250,8 +250,8 @@ let
     '';
   clients = pkgs.runCommand "flow-${slug}-clients" { } ''
     mkdir -p $out/bin
-    ln -s ${versionedCli "flow-nexus-${version}" "flow-nexus"} $out/bin/flow-nexus-${version}
-    ln -s ${versionedCli "flow-nexus-meta-${version}" "flow-nexus-meta"} $out/bin/flow-nexus-meta-${version}
+    ln -s ${versionedCli "flow-${version}" "flow"} $out/bin/flow-${version}
+    ln -s ${versionedCli "flow-meta-${version}" "flow-meta"} $out/bin/flow-meta-${version}
   '';
   # The place datom the Nexus is started with. %t is $XDG_RUNTIME_DIR and %S
   # $XDG_STATE_HOME, else ~/.local/state, for a user unit: the roots
