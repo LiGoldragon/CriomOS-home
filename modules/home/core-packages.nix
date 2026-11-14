@@ -13,15 +13,6 @@
       description = "The canonical Codex CLI derivation used by every Home consumer.";
     };
 
-    codexServer = lib.mkOption {
-      type = lib.types.package;
-      default = pkgs.callPackage "${inputs.deployed-codex-source}/owned-agents/codex" {
-        inherit inputs;
-      };
-      defaultText = lib.literalExpression ''pkgs.callPackage "${inputs.deployed-codex-source}/owned-agents/codex" { inherit inputs; }'';
-      description = "The deployed stable Codex server derivation selected for every user.";
-    };
-
     codexNextServer = lib.mkOption {
       type = lib.types.package;
       default = pkgs.callPackage "${inputs.deployed-codex-source}/owned-agents/codex-next" { };

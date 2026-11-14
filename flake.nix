@@ -51,7 +51,6 @@
         flake = false;
       };
 
-
     };
 
     # The Curriculum the Home service runs: its Nexus and CLI are built from
@@ -633,9 +632,6 @@
           };
         }
         // lib.optionalAttrs (desktopAppSupported _system) {
-          claude-desktop-declared-cli = checkPkgs.callPackage ./gates/claude-desktop-declared-cli {
-            inherit inputs;
-          };
           claude-desktop-launcher-linkage = checkPkgs.callPackage ./gates/claude-desktop-launcher-linkage {
             inherit inputs;
           };
@@ -648,12 +644,6 @@
             inherit inputs;
           };
           codex-next = checkPkgs.callPackage ./checks/codex-next { inherit inputs; };
-          codex-remote-control = checkPkgs.callPackage ./gates/codex-remote-control {
-            inherit inputs;
-          };
-          codex-remote-control-vm = checkPkgs.callPackage ./gates/codex-remote-control-vm {
-            inherit inputs;
-          };
         }
       ) derivationChecks;
 

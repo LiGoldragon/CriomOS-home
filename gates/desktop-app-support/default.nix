@@ -16,24 +16,36 @@ let
   chatgptPackage = ownedAgentPackages.chatgptPackage;
   chatgptUnwrapped = chatgptPackage.passthru.unwrapped;
   chatgptCompanion = "${chatgptUnwrapped}/lib/chatgpt/resources/codex";
+  claudeDesktopPackage = ownedAgentPackages.claudeDesktopPackage;
+  claudeSourceData = builtins.fromJSON (
+    builtins.readFile ../../owned-agents/claude-desktop/hashes.json
+  );
+  claudePristineArchive = pkgs.fetchurl {
+    url = claudeSourceData.urls.${system} or (throw "Unsupported Claude Desktop platform: ${system}");
+    hash =
+      claudeSourceData.hashes.${system} or (throw "Unsupported Claude Desktop platform: ${system}");
+  };
   chatgptGeneratedBytecodeDirectory = ../../owned-agents/chatgpt/__pycache__;
   chatgptRetiredPatcher = ../../owned-agents/chatgpt/patch-asar.py;
-  chatgptWrapperProbeUnwrapped = pkgs.runCommand "chatgpt-wrapper-probe-unwrapped" {
-    passthru.version = source.version;
-  } ''
-    mkdir -p "$out/bin" "$out/share"
-    cat > "$out/bin/chatgpt" <<'EOF'
-    #!${pkgs.runtimeShell}
-    printf '%s|%s|%s|%s|%s|%s\n' \
-      "''${CODEX_APP_SERVER_USE_LOCAL_DAEMON-}" \
-      "''${CODEX_CLI_PATH-}" \
-      "''${CODEX_APP_SERVER_FORCE_CLI-}" \
-      "''${CODEX_APP_SERVER_CLI_COMMAND-}" \
-      "''${CODEX_APP_TOOLS_PIPE_PATH-}" \
-      "$*" > "$CHATGPT_WRAPPER_PROBE_OUT"
-    EOF
-    chmod +x "$out/bin/chatgpt"
-  '';
+  chatgptWrapperProbeUnwrapped =
+    pkgs.runCommand "chatgpt-wrapper-probe-unwrapped"
+      {
+        passthru.version = source.version;
+      }
+      ''
+        mkdir -p "$out/bin" "$out/share"
+        cat > "$out/bin/chatgpt" <<'EOF'
+        #!${pkgs.runtimeShell}
+        printf '%s|%s|%s|%s|%s|%s\n' \
+          "''${CODEX_APP_SERVER_USE_LOCAL_DAEMON-}" \
+          "''${CODEX_CLI_PATH-}" \
+          "''${CODEX_APP_SERVER_FORCE_CLI-}" \
+          "''${CODEX_APP_SERVER_CLI_COMMAND-}" \
+          "''${CODEX_APP_TOOLS_PIPE_PATH-}" \
+          "$*" > "$CHATGPT_WRAPPER_PROBE_OUT"
+        EOF
+        chmod +x "$out/bin/chatgpt"
+      '';
   chatgptWrapperProbe = homePkgs.callPackage ../../owned-agents/chatgpt {
     chatgpt-unwrapped = chatgptWrapperProbeUnwrapped;
     commandLineArgs = "--ozone-platform=wayland";
@@ -53,6 +65,16 @@ pkgs.runCommand "desktop-app-support-contract"
   }
   ''
     set -eu
+
+    # Claude Desktop retains its vendor application archive.  CriomOS wraps
+    # the executable for its libraries and Wayland flags but does not select
+    # or inject a desktop-local Claude Code binary.
+    claude_pristine="$TMPDIR/claude-pristine"
+    mkdir -p "$claude_pristine"
+    dpkg-deb -x ${claudePristineArchive} "$claude_pristine"
+    cmp \
+      "$claude_pristine/usr/lib/claude-desktop/resources/app.asar" \
+      ${claudeDesktopPackage}/lib/claude-desktop/resources/app.asar
 
     # This archive is fetched independently from the ChatGPT derivation. The
     # bundled Desktop Core remains byte-identical vendor product. The ASAR

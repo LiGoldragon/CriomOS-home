@@ -46,7 +46,6 @@ let
             stylix.polarity = "dark";
             criomos.corePackages = {
               codex = codexCliPackage;
-              codexServer = codexCliPackage;
               codexNextServer = codexCliPackage;
               claude = claudeCodePackage;
               flowId = pkgs.hello;

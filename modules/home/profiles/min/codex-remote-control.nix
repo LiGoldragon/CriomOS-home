@@ -10,8 +10,6 @@
 }:
 let
   sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
-  buildGuard = config.criomosHome.remoteBuildCommandGuard;
-  inheritedServicePath = "%h/.local/bin:/run/wrappers/bin:/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin:/etc/profiles/per-user/%u/bin:%h/.nix-profile/bin";
   primaryWorkspace = "${config.home.homeDirectory}/primary";
   primaryWorkspacePointer = lib.replaceStrings [ "~" "/" ] [ "~0" "~1" ] primaryWorkspace;
   mediumEnabled = sizeAtLeast "Medium";
@@ -20,8 +18,11 @@ let
   # The user's key here carrying StableCodex keeps the stable core Codex and its own account data.
   stableCodex = builtins.elem "StableCodex" user.capabilities;
   codexCliPackage = config.criomos.corePackages.codex;
-  codexServerPackage = config.criomos.corePackages.codexServer;
-  remoteClient = if stableCodex then "${codexCliPackage}/bin/codex" else "${config.criomosHome.codexNext.rawClientPackage}/bin/codex";
+  remoteClient =
+    if stableCodex then
+      "${codexCliPackage}/bin/codex"
+    else
+      "${config.criomosHome.codexNext.rawClientPackage}/bin/codex";
   codexStable = pkgs.writeShellApplication {
     name = "codex";
     text = ''
@@ -34,10 +35,10 @@ let
     endpoint = "unix://${config.home.homeDirectory}/.codex-next/app-server-control/app-server-control.sock";
   };
   claudeCodePackage = config.criomos.corePackages.claude;
-  claudePermissionRequestHook = pkgs.callPackage ../../../../owned-agents/claude-code/permission-request-hook.nix { };
-  claudeDesktopPackage =pkgs.callPackage ../../../../owned-agents/claude-desktop {
-    inherit claudeCodePackage;
-  };
+  claudePermissionRequestHook =
+    pkgs.callPackage ../../../../owned-agents/claude-code/permission-request-hook.nix
+      { };
+  claudeDesktopPackage = pkgs.callPackage ../../../../owned-agents/claude-desktop { };
   chatgpt = pkgs.callPackage ../../../../owned-agents/chatgpt {
     commandLineArgs = "--ozone-platform=wayland";
   };
@@ -74,13 +75,15 @@ lib.mkMerge [
             ];
           }
         ];
-      } // lib.optionalAttrs (user.capabilities != [ ]) {
+      }
+      // lib.optionalAttrs (user.capabilities != [ ]) {
         env.CLAUDE_CODE_ARTIFACT_AUTO_OPEN = "0";
       };
       modes = {
         "/permissions/defaultMode" = "always";
         "/hooks/PermissionRequest" = "always";
-      } // lib.optionalAttrs (user.capabilities != [ ]) {
+      }
+      // lib.optionalAttrs (user.capabilities != [ ]) {
         "/env/CLAUDE_CODE_ARTIFACT_AUTO_OPEN" = "always";
       };
     };
@@ -115,27 +118,6 @@ lib.mkMerge [
   }
   (lib.mkIf (sizeAtLeast "Min") {
     home.packages = [ codexRemote ];
-
-    systemd.user.services.codex-remote-control = {
-      # It serves the primary checkout; on a host where this user has none,
-      # the unit is skipped rather than failing at its working directory.
-      Unit = {
-        Description = "Codex Remote Control app-server";
-        ConditionPathIsDirectory = primaryWorkspace;
-      };
-      Service = {
-        WorkingDirectory = primaryWorkspace;
-        Environment = lib.optionals buildGuard.enable [
-          "PATH=${buildGuard.directory}:${inheritedServicePath}"
-        ];
-        ExecStart = "${codexServerPackage}/bin/codex app-server --remote-control --listen unix://";
-        UMask = "0077";
-        LimitNOFILE = 524288;
-        Restart = "always";
-        RestartSec = "2s";
-      };
-      Install.WantedBy = [ "default.target" ];
-    };
   })
   (lib.mkIf desktopEnabled {
     home.packages = [

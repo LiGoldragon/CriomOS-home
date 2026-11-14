@@ -2,7 +2,6 @@
 let
   homePkgs = pkgs;
   ownedAgentPackages = import ../../lib/owned-agent-packages.nix { inherit inputs pkgs; };
-  claudeCodePackage = ownedAgentPackages.claudeCodePackage;
   claudeDesktopPackage = ownedAgentPackages.claudeDesktopPackage;
 in
 pkgs.runCommand "claude-desktop-launcher-linkage"

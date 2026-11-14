@@ -32,7 +32,6 @@ let
           criomosHome.remoteBuildCommandGuard.enable = guardEnabled;
           criomos.corePackages = {
             codex = fakeCodex;
-            codexServer = fakeCodex;
             codexNextServer = fakeCodex;
             claude = fakeClaude;
           };
@@ -58,10 +57,6 @@ assert enabled.config.criomosHome.remoteBuildCommandGuard.enable;
 assert !disabled.config.criomosHome.remoteBuildCommandGuard.enable;
 assert !ordinaryOutput.criomosHome.remoteBuildCommandGuard.enable;
 assert guardedOutput.criomosHome.remoteBuildCommandGuard.enable;
-assert
-  guardedOutput.systemd.user.services.codex-remote-control.Service.Environment == [
-    "PATH=${guardDirectory}:%h/.local/bin:/run/wrappers/bin:/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin:/etc/profiles/per-user/%u/bin:%h/.nix-profile/bin"
-  ];
 assert !(disabled.config.home.file ? ".local/libexec/remote-build-command-guard/cargo");
 assert !(disabled.config.home.file ? ".local/libexec/remote-build-command-guard/rustc");
 pkgs.runCommand "remote-build-command-guard" { nativeBuildInputs = [ pkgs.coreutils ]; } ''

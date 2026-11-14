@@ -134,7 +134,7 @@ assert
 assert !(remoteActivation ? mergePiIntercomConfig);
 assert !(remoteActivation ? mergePiTestingIntercomConfig);
 assert remoteConfiguration.config.systemd.user.services ? orchestrate-nexus;
-assert remoteConfiguration.config.systemd.user.services ? codex-remote-control;
+assert !(remoteConfiguration.config.systemd.user.services ? codex-remote-control);
 assert !(remoteConfiguration.config.systemd.user.services ? spirit-judge);
 assert !(remoteConfiguration.config.systemd.user.services ? spirit-daemon);
 assert orchestrateConfiguration.config.systemd.user.services ? orchestrate-nexus;

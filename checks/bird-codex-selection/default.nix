@@ -6,7 +6,6 @@ let
   selected = pkgs.writeShellScriptBin "codex" ''
     printf '%s\n' "$CODEX_HOME" "$@"
   '';
-  selectedStableServer = pkgs.writeShellScriptBin "codex" "echo stable-server";
   selectedNextServer = pkgs.writeShellScriptBin "codex" "echo next-server";
   fakeClaude = pkgs.writeShellScriptBin "claude" "exit 0";
   fakeHexis = pkgs.writeShellScriptBin "hexis" "exit 0";
@@ -37,7 +36,6 @@ let
           home.homeDirectory = "/home/${name}";
           home.stateVersion = "26.05";
           criomos.corePackages.codex = selected;
-          criomos.corePackages.codexServer = selectedStableServer;
           criomos.corePackages.codexNextServer = selectedNextServer;
           criomos.corePackages.claude = fakeClaude;
         }
@@ -46,7 +44,6 @@ let
   bird = mkConfiguration "bird";
   li = mkConfiguration "li";
   next = configuration: configuration.systemd.user.services.codex-remote-control-next.Service;
-  stable = configuration: configuration.systemd.user.services.codex-remote-control.Service;
   birdClient = builtins.head (
     builtins.filter (package: lib.getName package == "codex") bird.home.packages
   );
@@ -55,8 +52,6 @@ let
   );
   birdNext = builtins.head (next bird).ExecStart;
   liNext = builtins.head (next li).ExecStart;
-  liStable = builtins.head (stable li).ExecStart;
-  birdStable = builtins.head (stable bird).ExecStart;
 in
 assert bird.criomosHome.codexNext.rawClientPackage == selected;
 assert birdClient == selected;
@@ -69,25 +64,16 @@ assert builtins.isString (next bird).ExecStartPre;
 assert
   liNext
   == "${selectedNextServer}/bin/codex app-server --remote-control --listen unix:///home/li/.codex-next/app-server-control/app-server-control.sock";
-assert
-  liStable
-  == "${selectedStableServer}/bin/codex app-server --remote-control --listen unix://";
-# Every user receives the same stable server selection and its listen identity.
-assert
-  birdStable
-  == "${selectedStableServer}/bin/codex app-server --remote-control --listen unix://";
-assert selected != selectedStableServer;
 assert selected != selectedNextServer;
 assert
   builtins.attrNames bird.systemd.user.services == [
-    "codex-remote-control"
     "codex-remote-control-next"
   ];
 pkgs.runCommand "bird-codex-matched-selection" { } ''
-    # No Bird auth bootstrap or copy is introduced by its new preparation script.
-    if grep -Eq 'auth.json|config.toml|install -m600' ${(next bird).ExecStartPre}; then
-      echo 'Bird upgrade must preserve auth in place, not bootstrap another copy' >&2
-      exit 1
-    fi
-    touch "$out"
+  # No Bird auth bootstrap or copy is introduced by its new preparation script.
+  if grep -Eq 'auth.json|config.toml|install -m600' ${(next bird).ExecStartPre}; then
+    echo 'Bird upgrade must preserve auth in place, not bootstrap another copy' >&2
+    exit 1
+  fi
+  touch "$out"
 ''
