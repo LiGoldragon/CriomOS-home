@@ -1,6 +1,6 @@
 {
   inputs,
-  lib,
+  lib ? pkgs.lib,
   pkgs,
   ...
 }:
