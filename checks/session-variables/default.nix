@@ -23,7 +23,7 @@ pkgs.runCommand "home-session-variables"
   ''
     set -eu
 
-    sessionVariables="$activationPackage/etc/profile.d/hm-session-vars.sh"
+    sessionVariables="$activationPackage/home-path/etc/profile.d/hm-session-vars.sh"
     test -f "$sessionVariables"
     grep -F 'export CRIOMOS_SESSION_VARIABLE_WITNESS="configured"' "$sessionVariables"
     touch "$out"
