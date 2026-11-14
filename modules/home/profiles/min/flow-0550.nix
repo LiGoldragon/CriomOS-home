@@ -1,12 +1,12 @@
 # Flow Nexus 0.55.0, built per crate on the build base: its package
-# and its clients under their versioned names (flow-nexus-0.55.0,
-# flow-nexus-meta-0.55.0). It starts in its place (flow-nexus-place.nix):
+# and its clients under their versioned names (flow-0.55.0,
+# flow-meta-0.55.0). It starts in its place (flow-nexus-place.nix):
 # main, the place every flow reports to, whose sockets are
 # $XDG_RUNTIME_DIR/nexus/main/ and whose memory is
 # ~/.local/state/nexus/main/flow.sema, which it opens and upgrades from 0.54.7
 # in place. It is the version at main, enabled for a user with AgentStack as
-# every version is; 0.54.7 is retired. The bare flow-nexus and
-# flow-nexus-meta are its own CLIs.
+# every version is; 0.54.7 is retired. The bare flow and
+# flow-meta are its own CLIs.
 #
 # Every family it is configured with is declared in flow-nexus-config, in
 # meta-signal-flow 78's shape: the models, the thresholds and the permaflows,
@@ -18,7 +18,7 @@
 #
 # Being the version at main, it declares the user's Flow CLI configuration,
 # ~/.config/nexus/flow-nexus.datom, `{ main }` (vision:nexus-v1):
-# `flow-nexus '<datom>'` and `flow-nexus-meta '<datom>'` read their place from it,
+# `flow '<datom>'` and `flow-meta '<datom>'` read their place from it,
 # and no place is typed.
 { config, lib, ... }:
 {
@@ -56,8 +56,8 @@
 
   home.packages = [ config.criomosHome.flow0550.clients ];
 
-  home.file.".local/bin/flow-nexus".source = "${config.criomosHome.flow0550.package}/bin/flow-nexus";
-  home.file.".local/bin/flow-nexus-meta".source = "${config.criomosHome.flow0550.package}/bin/flow-nexus-meta";
+  home.file.".local/bin/flow".source = "${config.criomosHome.flow0550.package}/bin/flow";
+  home.file.".local/bin/flow-meta".source = "${config.criomosHome.flow0550.package}/bin/flow-meta";
 
   xdg.configFile."nexus/flow-nexus.datom" = lib.mkIf (config.criomosHome.flow0550.place == "main") {
     source = "${config.criomosHome.flow0550.placeConfiguration}/nexus/flow-nexus.datom";

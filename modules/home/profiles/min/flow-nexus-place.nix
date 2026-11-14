@@ -26,7 +26,7 @@
 # unit is Type=notify. The executable holds no configuration: a new memory
 # starts unconfigured, answering Unconfigured. Its configuration is declared
 # after it by its configure unit, ordered After= and Requires= it, which hands
-# the running Nexus one Configure per family through flow-nexus-meta,
+# the running Nexus one Configure per family through flow-meta,
 # Configure.Nexus first; the Nexus takes each at once and answers Configured
 # with the change it was given, echoed whole, also when its memory already
 # holds it. A changed declaration restarts the configure unit only, never the
@@ -37,7 +37,7 @@
 # $XDG_CONFIG_HOME/nexus/flow-nexus.datom, `{ <place> }`, and the sockets are
 # found in the Runtime of that place's place file, under the same
 # configuration home; they read no XDG_RUNTIME_DIR. This version's own clients
-# (flow-nexus-<version>, flow-nexus-meta-<version>) and its configure unit run
+# (flow-<version>, flow-meta-<version>) and its configure unit run
 # with XDG_CONFIG_HOME set to `placeConfiguration`, a directory whose
 # nexus/flow-nexus.datom names this version's place and whose
 # nexus/<place>/flow-nexus.signal is the place file Home wrote, so they reach
@@ -213,7 +213,7 @@ let
       ln -s ${placeFile} $out/nexus/${cfg.place}/flow-nexus.signal
     '';
   # Runs once the Nexus has announced readiness, its sockets bound: each
-  # query goes to the running Nexus through flow-nexus-meta, its configuration
+  # query goes to the running Nexus through flow-meta, its configuration
   # naming this version's place, in order, and each must be taken.
   # Arguments: the query files.
   configure = pkgs.writeShellApplication {
@@ -224,7 +224,7 @@ let
       export XDG_CONFIG_HOME=${placeConfiguration}
       for query in "$@"; do
         body=$(<"$query")
-        if ! reply=$(${runtime}/bin/flow-nexus-meta "''${body//${runtimeToken}/$XDG_RUNTIME_DIR}"); then
+        if ! reply=$(${runtime}/bin/flow-meta "''${body//${runtimeToken}/$XDG_RUNTIME_DIR}"); then
           printf 'Flow Nexus ${version} at ${cfg.place} did not answer %s\n' "$query" >&2
           exit 1
         fi
@@ -236,7 +236,7 @@ let
     '';
   };
   # The <version> clients under their versioned names, reaching this
-  # version's place: `flow-nexus-<version> Metaflows` is `flow-nexus
+  # version's place: `flow-<version> Metaflows` is `flow
   # Metaflows` with the configuration naming this version's place.
   versionedCli =
     name: raw:
@@ -245,8 +245,8 @@ let
     '';
   clients = pkgs.runCommand "flow-${slug}-clients" { } ''
     mkdir -p $out/bin
-    ln -s ${versionedCli "flow-nexus-${version}" "flow-nexus"} $out/bin/flow-nexus-${version}
-    ln -s ${versionedCli "flow-nexus-meta-${version}" "flow-nexus-meta"} $out/bin/flow-nexus-meta-${version}
+    ln -s ${versionedCli "flow-${version}" "flow"} $out/bin/flow-${version}
+    ln -s ${versionedCli "flow-meta-${version}" "flow-meta"} $out/bin/flow-meta-${version}
   '';
   # The place's two directories, as the place file holds them. The runtime
   # directory is the user manager's own %t, /run/user/<uid>; a Lojix activation
