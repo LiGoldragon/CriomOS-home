@@ -175,11 +175,11 @@
         "nixpkgs": "nixpkgs_3"
       },
       "locked": {
-        "lastModified": 1794643989,
-        "narHash": "sha256-8dX4ND2pO7a9lc95m2EPBEs9MD5bx6bIp19EOZrg7hA=",
+        "lastModified": 1794680799,
+        "narHash": "sha256-YD7rrofNhn2eKvD+38uQGNW/7CCIw/26REJfmHwZ6jU=",
         "owner": "LiGoldragon",
         "repo": "build-base",
-        "rev": "9706bad39951b754defe5c3f164cb6284e2e1450",
+        "rev": "79188c7dc23078878fc662236fb1d23a7af5edaa",
         "type": "github"
       },
       "original": {
@@ -190,8 +190,8 @@
     },
     "base_3": {
       "inputs": {
-        "fenix": "fenix_14",
-        "nixpkgs": "nixpkgs_8"
+        "fenix": "fenix_13",
+        "nixpkgs": "nixpkgs_7"
       },
       "locked": {
         "lastModified": 1794634196,
@@ -404,21 +404,6 @@
     },
     "crane_11": {
       "locked": {
-        "lastModified": 1780532242,
-        "narHash": "sha256-D+BsdpxmtUwtqGoY0IXPhHgTlmqgcZKCEo1oMyn7ep0=",
-        "owner": "ipetkov",
-        "repo": "crane",
-        "rev": "59a82a1222dd3b2080b5cc52a1a2e8d5f1b77f37",
-        "type": "github"
-      },
-      "original": {
-        "owner": "ipetkov",
-        "repo": "crane",
-        "type": "github"
-      }
-    },
-    "crane_12": {
-      "locked": {
         "lastModified": 1776635034,
         "narHash": "sha256-OEOJrT3ZfwbChzODfIH4GzlNTtOFuZFWPtW7jIeR8xU=",
         "owner": "ipetkov",
@@ -509,21 +494,6 @@
     },
     "crane_7": {
       "locked": {
-        "lastModified": 1788465171,
-        "narHash": "sha256-Y1/TTVXjYXGF068IThQH9fPSZ0SIE74PABlUxnWTUH0=",
-        "owner": "ipetkov",
-        "repo": "crane",
-        "rev": "eb35abda9f232cc6610b1d1e3200d15c49b7ac54",
-        "type": "github"
-      },
-      "original": {
-        "owner": "ipetkov",
-        "repo": "crane",
-        "type": "github"
-      }
-    },
-    "crane_8": {
-      "locked": {
         "lastModified": 1778106249,
         "narHash": "sha256-cM/AuKy5tMhwOOQIbha8ZRRMHVfNf7cv2aljIw+qoCg=",
         "owner": "ipetkov",
@@ -537,13 +507,28 @@
         "type": "github"
       }
     },
-    "crane_9": {
+    "crane_8": {
       "locked": {
         "lastModified": 1777335812,
         "narHash": "sha256-bEg5xoAxAwsyfnGhkEX7RJViTIBIYPd8ISg4O1c0HFc=",
         "owner": "ipetkov",
         "repo": "crane",
         "rev": "5e0fb2f64edff2822249f21293b8304dedaaf676",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ipetkov",
+        "repo": "crane",
+        "type": "github"
+      }
+    },
+    "crane_9": {
+      "locked": {
+        "lastModified": 1780532242,
+        "narHash": "sha256-D+BsdpxmtUwtqGoY0IXPhHgTlmqgcZKCEo1oMyn7ep0=",
+        "owner": "ipetkov",
+        "repo": "crane",
+        "rev": "59a82a1222dd3b2080b5cc52a1a2e8d5f1b77f37",
         "type": "github"
       },
       "original": {
@@ -655,23 +640,6 @@
     "curriculum_4": {
       "flake": false,
       "locked": {
-        "lastModified": 1792991139,
-        "narHash": "sha256-6AFaGZaXy/3vZRhJernVmFhBGI/o3RVb9IwW/AEIQAk=",
-        "owner": "LiGoldragon",
-        "repo": "Curriculum",
-        "rev": "91acf293a0d0cce1793b458d5377fe78f841e0c1",
-        "type": "github"
-      },
-      "original": {
-        "owner": "LiGoldragon",
-        "repo": "Curriculum",
-        "rev": "91acf293a0d0cce1793b458d5377fe78f841e0c1",
-        "type": "github"
-      }
-    },
-    "curriculum_5": {
-      "flake": false,
-      "locked": {
         "lastModified": 1794623503,
         "narHash": "sha256-6Bzpx3HRii/qhr6ZzDTMnbo/8r0/SazxJ4BSDHuQWu0=",
         "owner": "LiGoldragon",
@@ -682,6 +650,22 @@
       "original": {
         "owner": "LiGoldragon",
         "repo": "Curriculum",
+        "type": "github"
+      }
+    },
+    "datom-codec": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1794257160,
+        "narHash": "sha256-TcRIc4h8i4rFH33WuTEa9IASXY0XP1eGxtkWl6anl6E=",
+        "owner": "LiGoldragon",
+        "repo": "datom-codec",
+        "rev": "09a0526949b043f921b6d3ce115b7f455291f2e2",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LiGoldragon",
+        "repo": "datom-codec",
         "type": "github"
       }
     },
@@ -772,6 +756,30 @@
         "type": "github"
       }
     },
+    "ethos-zero": {
+      "inputs": {
+        "base": [
+          "flow-0550",
+          "translator",
+          "base"
+        ],
+        "datom-codec": "datom-codec",
+        "protos": "protos"
+      },
+      "locked": {
+        "lastModified": 1794277716,
+        "narHash": "sha256-wbHITBEhDb1teeoEiCnxo66VQR4J42VKOTZNallViFA=",
+        "owner": "LiGoldragon",
+        "repo": "ethos-zero",
+        "rev": "18e2ea6bba64ce8bc478941ca4e16d134c76d04f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LiGoldragon",
+        "repo": "ethos-zero",
+        "type": "github"
+      }
+    },
     "fenix": {
       "inputs": {
         "nixpkgs": [
@@ -797,33 +805,10 @@
     "fenix_10": {
       "inputs": {
         "nixpkgs": [
-          "flow-0550",
-          "unconfigured-flow",
-          "nixpkgs"
-        ],
-        "rust-analyzer-src": "rust-analyzer-src_10"
-      },
-      "locked": {
-        "lastModified": 1789644068,
-        "narHash": "sha256-wt1Mee04mQYtOPolRGHbZFb3CyHKidFryurtWuOZOao=",
-        "owner": "nix-community",
-        "repo": "fenix",
-        "rev": "f8ac2cd5626cc565f546e1053ab4591cfe0b3ea9",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nix-community",
-        "repo": "fenix",
-        "type": "github"
-      }
-    },
-    "fenix_11": {
-      "inputs": {
-        "nixpkgs": [
           "harness",
           "nixpkgs"
         ],
-        "rust-analyzer-src": "rust-analyzer-src_11"
+        "rust-analyzer-src": "rust-analyzer-src_10"
       },
       "locked": {
         "lastModified": 1778576139,
@@ -839,13 +824,13 @@
         "type": "github"
       }
     },
-    "fenix_12": {
+    "fenix_11": {
       "inputs": {
         "nixpkgs": [
           "hexis",
           "nixpkgs"
         ],
-        "rust-analyzer-src": "rust-analyzer-src_12"
+        "rust-analyzer-src": "rust-analyzer-src_11"
       },
       "locked": {
         "lastModified": 1781901863,
@@ -861,13 +846,13 @@
         "type": "github"
       }
     },
-    "fenix_13": {
+    "fenix_12": {
       "inputs": {
         "nixpkgs": [
           "listener",
           "nixpkgs"
         ],
-        "rust-analyzer-src": "rust-analyzer-src_13"
+        "rust-analyzer-src": "rust-analyzer-src_12"
       },
       "locked": {
         "lastModified": 1782900513,
@@ -883,14 +868,14 @@
         "type": "github"
       }
     },
-    "fenix_14": {
+    "fenix_13": {
       "inputs": {
         "nixpkgs": [
           "message",
           "base",
           "nixpkgs"
         ],
-        "rust-analyzer-src": "rust-analyzer-src_14"
+        "rust-analyzer-src": "rust-analyzer-src_13"
       },
       "locked": {
         "lastModified": 1794142885,
@@ -906,10 +891,33 @@
         "type": "github"
       }
     },
-    "fenix_15": {
+    "fenix_14": {
       "inputs": {
         "nixpkgs": [
           "orchestrate",
+          "rust-build",
+          "nixpkgs"
+        ],
+        "rust-analyzer-src": "rust-analyzer-src_14"
+      },
+      "locked": {
+        "lastModified": 1781901863,
+        "narHash": "sha256-B3GatmIZGQCnJkYoes3a5OqsMNexf0PO3fpeDJDZND4=",
+        "owner": "nix-community",
+        "repo": "fenix",
+        "rev": "6914a98b7864cb3ef33cb0a2581f8aed3d354e48",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "fenix",
+        "type": "github"
+      }
+    },
+    "fenix_15": {
+      "inputs": {
+        "nixpkgs": [
+          "spirit",
           "rust-build",
           "nixpkgs"
         ],
@@ -932,33 +940,10 @@
     "fenix_16": {
       "inputs": {
         "nixpkgs": [
-          "spirit",
-          "rust-build",
-          "nixpkgs"
-        ],
-        "rust-analyzer-src": "rust-analyzer-src_16"
-      },
-      "locked": {
-        "lastModified": 1781901863,
-        "narHash": "sha256-B3GatmIZGQCnJkYoes3a5OqsMNexf0PO3fpeDJDZND4=",
-        "owner": "nix-community",
-        "repo": "fenix",
-        "rev": "6914a98b7864cb3ef33cb0a2581f8aed3d354e48",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nix-community",
-        "repo": "fenix",
-        "type": "github"
-      }
-    },
-    "fenix_17": {
-      "inputs": {
-        "nixpkgs": [
           "substack-cli",
           "nixpkgs"
         ],
-        "rust-analyzer-src": "rust-analyzer-src_17"
+        "rust-analyzer-src": "rust-analyzer-src_16"
       },
       "locked": {
         "lastModified": 1781901863,
@@ -1575,14 +1560,14 @@
         "base": "base_2",
         "curriculum": "curriculum",
         "migration-predecessor": "migration-predecessor",
-        "unconfigured-flow": "unconfigured-flow_2"
+        "translator": "translator"
       },
       "locked": {
-        "lastModified": 1794655770,
-        "narHash": "sha256-icskASTFncKY9+73D98Hw/lpxwH7q2agl/61WJcCRWU=",
+        "lastModified": 1794681982,
+        "narHash": "sha256-RU5WfcqspqtY4U5OqZbvyhiJTVFsk7JROA/OUSNOX+g=",
         "owner": "LiGoldragon",
         "repo": "flow",
-        "rev": "eabddc8d29ddd30b4665065cec4bee57ea7410ce",
+        "rev": "234bfe4d96221232687606dd031cd44b17305b98",
         "type": "github"
       },
       "original": {
@@ -1649,8 +1634,8 @@
     },
     "harness": {
       "inputs": {
-        "crane": "crane_8",
-        "fenix": "fenix_11",
+        "crane": "crane_7",
+        "fenix": "fenix_10",
         "nixpkgs": [
           "nixpkgs"
         ]
@@ -1671,7 +1656,7 @@
     },
     "herdr": {
       "inputs": {
-        "nixpkgs": "nixpkgs_7",
+        "nixpkgs": "nixpkgs_6",
         "rust-overlay": "rust-overlay"
       },
       "locked": {
@@ -1691,8 +1676,8 @@
     "hexis": {
       "inputs": {
         "blueprint": "blueprint_2",
-        "crane": "crane_9",
-        "fenix": "fenix_12",
+        "crane": "crane_8",
+        "fenix": "fenix_11",
         "nixpkgs": [
           "nixpkgs"
         ]
@@ -1786,7 +1771,7 @@
         "crane": [
           "crane"
         ],
-        "fenix": "fenix_13",
+        "fenix": "fenix_12",
         "nixpkgs": [
           "nixpkgs"
         ]
@@ -2090,22 +2075,6 @@
         "type": "github"
       }
     },
-    "nixpkgs_10": {
-      "locked": {
-        "lastModified": 1783776592,
-        "narHash": "sha256-UgCQzxeWI75XM8G+hPrPh+MKzEPjG3SpAj7dtqSbksA=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "e7a3ca8092b61ff85b6a45bf863ea2b2d6a661b3",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "nixos-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nixpkgs_2": {
       "locked": {
         "lastModified": 1793735720,
@@ -2171,22 +2140,6 @@
     },
     "nixpkgs_6": {
       "locked": {
-        "lastModified": 1786599213,
-        "narHash": "sha256-yNJd40f11EzXBjSByCB7IPpeFFAdeoSKKM67dGkfFoU=",
-        "owner": "LiGoldragon",
-        "repo": "nixpkgs",
-        "rev": "0e251e24a4f24e036a084b6b4b2d2491af4167f4",
-        "type": "github"
-      },
-      "original": {
-        "owner": "LiGoldragon",
-        "ref": "main",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs_7": {
-      "locked": {
         "lastModified": 1779357205,
         "narHash": "sha256-cCO8aTqss5x9Ky8GWkpY0Hy5fyTZEbtifSUV8QjSzic=",
         "owner": "NixOS",
@@ -2197,6 +2150,21 @@
       "original": {
         "owner": "NixOS",
         "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_7": {
+      "locked": {
+        "lastModified": 1786599213,
+        "narHash": "sha256-yNJd40f11EzXBjSByCB7IPpeFFAdeoSKKM67dGkfFoU=",
+        "owner": "LiGoldragon",
+        "repo": "nixpkgs",
+        "rev": "0e251e24a4f24e036a084b6b4b2d2491af4167f4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LiGoldragon",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -2212,22 +2180,23 @@
       },
       "original": {
         "owner": "LiGoldragon",
+        "ref": "main",
         "repo": "nixpkgs",
         "type": "github"
       }
     },
     "nixpkgs_9": {
       "locked": {
-        "lastModified": 1786599213,
-        "narHash": "sha256-yNJd40f11EzXBjSByCB7IPpeFFAdeoSKKM67dGkfFoU=",
-        "owner": "LiGoldragon",
+        "lastModified": 1783776592,
+        "narHash": "sha256-UgCQzxeWI75XM8G+hPrPh+MKzEPjG3SpAj7dtqSbksA=",
+        "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "0e251e24a4f24e036a084b6b4b2d2491af4167f4",
+        "rev": "e7a3ca8092b61ff85b6a45bf863ea2b2d6a661b3",
         "type": "github"
       },
       "original": {
-        "owner": "LiGoldragon",
-        "ref": "main",
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -2311,7 +2280,7 @@
     },
     "orca-ide": {
       "inputs": {
-        "nixpkgs": "nixpkgs_10"
+        "nixpkgs": "nixpkgs_9"
       },
       "locked": {
         "lastModified": 1787381882,
@@ -2759,7 +2728,7 @@
     },
     "primary": {
       "inputs": {
-        "curriculum": "curriculum_5",
+        "curriculum": "curriculum_4",
         "dotos": "dotos",
         "dotos-config": "dotos-config",
         "dotos-text-query": "dotos-text-query",
@@ -2801,6 +2770,22 @@
       "original": {
         "owner": "LiGoldragon",
         "repo": "primary",
+        "type": "github"
+      }
+    },
+    "protos": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1794256958,
+        "narHash": "sha256-64lMjBC1Kly7o0PsvfNdXW7Hk1dpzyZyr5BX3Oe/PAM=",
+        "owner": "LiGoldragon",
+        "repo": "protos",
+        "rev": "c93b598025984f8a73e70aa18b8e8a6fdfdfdfd8",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LiGoldragon",
+        "repo": "protos",
         "type": "github"
       }
     },
@@ -2895,7 +2880,7 @@
         "message": "message",
         "messenger-clj": "messenger-clj",
         "niri-flake": "niri-flake",
-        "nixpkgs": "nixpkgs_9",
+        "nixpkgs": "nixpkgs_8",
         "noctalia": "noctalia",
         "orca-ide": "orca-ide",
         "orchestrate": "orchestrate",
@@ -2980,23 +2965,6 @@
     "rust-analyzer-src_10": {
       "flake": false,
       "locked": {
-        "lastModified": 1789506595,
-        "narHash": "sha256-YCeFChL7C5GWwnped2TXDjxfwa5MhlqRzq8De2lMat0=",
-        "owner": "rust-lang",
-        "repo": "rust-analyzer",
-        "rev": "fa88768e772857f332bc8383e3a1c5a4212f9a6e",
-        "type": "github"
-      },
-      "original": {
-        "owner": "rust-lang",
-        "ref": "nightly",
-        "repo": "rust-analyzer",
-        "type": "github"
-      }
-    },
-    "rust-analyzer-src_11": {
-      "flake": false,
-      "locked": {
         "lastModified": 1778486429,
         "narHash": "sha256-RCXX2yVDIOXyrU3aTQ6wCoEweQBE9cCnRVfgbCc8M6c=",
         "owner": "rust-lang",
@@ -3011,7 +2979,7 @@
         "type": "github"
       }
     },
-    "rust-analyzer-src_12": {
+    "rust-analyzer-src_11": {
       "flake": false,
       "locked": {
         "lastModified": 1781714865,
@@ -3028,7 +2996,7 @@
         "type": "github"
       }
     },
-    "rust-analyzer-src_13": {
+    "rust-analyzer-src_12": {
       "flake": false,
       "locked": {
         "lastModified": 1782864348,
@@ -3045,7 +3013,7 @@
         "type": "github"
       }
     },
-    "rust-analyzer-src_14": {
+    "rust-analyzer-src_13": {
       "flake": false,
       "locked": {
         "lastModified": 1794096810,
@@ -3053,6 +3021,23 @@
         "owner": "rust-lang",
         "repo": "rust-analyzer",
         "rev": "03ae6be57aa063bb373f69eead3b8e15168a45d2",
+        "type": "github"
+      },
+      "original": {
+        "owner": "rust-lang",
+        "ref": "nightly",
+        "repo": "rust-analyzer",
+        "type": "github"
+      }
+    },
+    "rust-analyzer-src_14": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1781714865,
+        "narHash": "sha256-NIhErKpfs4EUx8N4x8yNYG8/vTzKv9cQn5QmuQI83jM=",
+        "owner": "rust-lang",
+        "repo": "rust-analyzer",
+        "rev": "abb1301c3c14a40645bb2588b1cc858fe374b527",
         "type": "github"
       },
       "original": {
@@ -3080,23 +3065,6 @@
       }
     },
     "rust-analyzer-src_16": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1781714865,
-        "narHash": "sha256-NIhErKpfs4EUx8N4x8yNYG8/vTzKv9cQn5QmuQI83jM=",
-        "owner": "rust-lang",
-        "repo": "rust-analyzer",
-        "rev": "abb1301c3c14a40645bb2588b1cc858fe374b527",
-        "type": "github"
-      },
-      "original": {
-        "owner": "rust-lang",
-        "ref": "nightly",
-        "repo": "rust-analyzer",
-        "type": "github"
-      }
-    },
-    "rust-analyzer-src_17": {
       "flake": false,
       "locked": {
         "lastModified": 1781714865,
@@ -3323,8 +3291,8 @@
     },
     "rust-build_4": {
       "inputs": {
-        "crane": "crane_10",
-        "fenix": "fenix_15",
+        "crane": "crane_9",
+        "fenix": "fenix_14",
         "flake-utils": "flake-utils_11",
         "nixpkgs": [
           "orchestrate",
@@ -3347,8 +3315,8 @@
     },
     "rust-build_5": {
       "inputs": {
-        "crane": "crane_11",
-        "fenix": "fenix_16",
+        "crane": "crane_10",
+        "fenix": "fenix_15",
         "flake-utils": "flake-utils_14",
         "nixpkgs": [
           "spirit",
@@ -3880,8 +3848,8 @@
     },
     "substack-cli": {
       "inputs": {
-        "crane": "crane_12",
-        "fenix": "fenix_17",
+        "crane": "crane_11",
+        "fenix": "fenix_16",
         "flake-utils": "flake-utils_17",
         "nixpkgs": [
           "nixpkgs"
@@ -4277,6 +4245,28 @@
         "type": "github"
       }
     },
+    "translator": {
+      "inputs": {
+        "base": [
+          "flow-0550",
+          "base"
+        ],
+        "ethos-zero": "ethos-zero"
+      },
+      "locked": {
+        "lastModified": 1794680776,
+        "narHash": "sha256-/jovRKGD76mtvuq2KXySQ25F6BB58OO76/84aIBBFOE=",
+        "owner": "LiGoldragon",
+        "repo": "translator",
+        "rev": "6892a15b11653a2ef8932a4390b34f5e81583744",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LiGoldragon",
+        "repo": "translator",
+        "type": "github"
+      }
+    },
     "tree-sitter-dotos": {
       "flake": false,
       "locked": {
@@ -4317,28 +4307,6 @@
         "curriculum": "curriculum_3",
         "fenix": "fenix_9",
         "nixpkgs": "nixpkgs_5"
-      },
-      "locked": {
-        "lastModified": 1793398358,
-        "narHash": "sha256-7nb1xsS2E95ZlwqVUObefTzuBYXfwRaflVvzysvLthQ=",
-        "owner": "LiGoldragon",
-        "repo": "flow",
-        "rev": "d3ab87ee18b1dd30947d5f0089f5abb4bafa80d5",
-        "type": "github"
-      },
-      "original": {
-        "owner": "LiGoldragon",
-        "repo": "flow",
-        "rev": "d3ab87ee18b1dd30947d5f0089f5abb4bafa80d5",
-        "type": "github"
-      }
-    },
-    "unconfigured-flow_2": {
-      "inputs": {
-        "crane": "crane_7",
-        "curriculum": "curriculum_4",
-        "fenix": "fenix_10",
-        "nixpkgs": "nixpkgs_6"
       },
       "locked": {
         "lastModified": 1793398358,

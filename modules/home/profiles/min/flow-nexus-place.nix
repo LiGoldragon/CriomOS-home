@@ -1,9 +1,13 @@
 # A Flow Nexus unit that starts in its place (vision:nexus-v1, "A Nexus starts
 # in its place"): `slug` is the version without its dots (0533), `version`
-# the dotted one (0.53.3). It is started with one datom, its place:
-# `{ <place> %t/nexus/<place> %S/nexus/<place> }`, its sockets in Runtime
-# (flow.sock, flow-meta.sock) and its memory in State (flow.sema). Nothing
-# else reaches it from the unit: no environment, no other argument.
+# the dotted one (0.53.3). It is started with the place's name, `main` or
+# `next`, and reads nothing at start but its Place, from its place file,
+# $XDG_CONFIG_HOME/nexus/<place>/flow-nexus.signal: the place's Runtime
+# (flow.sock, flow-meta.sock) and State (flow.sema). The file is written at
+# every activation, with translator's nexus-configure, for it holds the user's
+# runtime directory, /run/user/<uid>/nexus/<place>, which no declaration holds;
+# a Nexus with no place file refuses to start, naming it, so Home always
+# writes it. Nothing else reaches the unit: no environment, no other argument.
 #
 # Two places are two names: the stable version runs at `main`, a candidate
 # at `next` with its own memory. A version becomes main by being started at
@@ -19,24 +23,27 @@
 # place is declared.
 #
 # The Nexus announces readiness (READY=1 once both sockets are bound), so its
-# unit is Type=notify. On a fresh memory it starts with the configuration
-# built into its executable. Its configuration is declared after it by its
-# configure unit, ordered After= and Requires= it, which hands the running
-# Nexus one Configure per family through flow-nexus-meta; the Nexus takes each
-# at
-# once and answers Configured with the change it was given, echoed whole,
-# also when its memory already holds it (an earlier Flow answers
-# Configured.Replaced or Configured.Unchanged). A changed declaration
-# restarts the configure unit only, never the Nexus.
+# unit is Type=notify. The executable holds no configuration: a new memory
+# starts unconfigured, answering Unconfigured. Its configuration is declared
+# after it by its configure unit, ordered After= and Requires= it, which hands
+# the running Nexus one Configure per family through flow-nexus-meta,
+# Configure.Nexus first; the Nexus takes each at once and answers Configured
+# with the change it was given, echoed whole, also when its memory already
+# holds it. A changed declaration restarts the configure unit only, never the
+# Nexus.
 #
-# Its clients take the datom and nothing else (vision:nexus-v1): the place is
-# read from one configuration datom, $XDG_CONFIG_HOME/nexus/flow-nexus.datom,
-# `{ <place> }`. This version's own clients (flow-nexus-<version>,
-# flow-nexus-meta-<version>) and its configure unit run with XDG_CONFIG_HOME
-# set to `placeConfiguration`, a directory whose nexus/flow-nexus.datom names
-# this version's place, so they reach it whatever the user's configuration
-# names; no place is ever typed. The user's ~/.config/nexus/flow-nexus.datom
-# is declared by the version at main (flow-0533.nix).
+# Its clients take the datom and nothing else (vision:nexus-v1): the place
+# name is read from one configuration datom,
+# $XDG_CONFIG_HOME/nexus/flow-nexus.datom, `{ <place> }`, and the sockets are
+# found in the Runtime of that place's place file, under the same
+# configuration home; they read no XDG_RUNTIME_DIR. This version's own clients
+# (flow-nexus-<version>, flow-nexus-meta-<version>) and its configure unit run
+# with XDG_CONFIG_HOME set to `placeConfiguration`, a directory whose
+# nexus/flow-nexus.datom names this version's place and whose
+# nexus/<place>/flow-nexus.signal is the place file Home wrote, so they reach
+# it whatever the user's configuration names; no place is ever typed. The
+# user's ~/.config/nexus/flow-nexus.datom is declared by the version at main
+# (flow-0550.nix).
 #
 # The hook command it writes into every Claude flow is
 # ~/.local/bin/flow-nexus-hook when this version holds the stable hook
@@ -69,9 +76,8 @@ let
   # The hook command every Claude flow this Nexus launches runs, one path
   # across versions; Home points it at the version holding stableHook.
   stableHookPath = ".local/bin/flow-nexus-hook";
-  # The Nexus a memory is configured with, as data. The build bakes the part
-  # mkFlowPackage takes into the executable, for a fresh memory to start
-  # with; the configure unit declares it whole to the running Nexus.
+  # The Nexus a memory is configured with, as data: the configure unit
+  # declares it whole to the running Nexus.
   nexus = {
     sourceRoot = "${home}/primary";
     stableCodex = {
@@ -122,31 +128,11 @@ let
     curriculumNexusPath = "${runtimeToken}/curriculum/curriculum.sock";
     lease = 60;
   };
-  # Flow <version> is built only through mkFlowPackage: its executable carries
-  # the configuration a fresh memory starts with.
-  runtime = inputs."flow-${slug}".lib.${system}.mkFlowPackage {
-    defaultConfiguration = {
-      inherit (nexus)
-        sourceRoot
-        stableCodex
-        nextCodex
-        harnessProfiles
-        metaAspects
-        ;
-      presentationPrompt = cfg.presentationPrompt;
-      # mkFlowPackage asks for an absolute path to derive a fresh memory's
-      # Curriculum socket from. The real one is the running unit's runtime
-      # directory, which no declaration holds; the configure unit declares
-      # the Nexus with it at every start, so this value is never launched
-      # from.
-      runtimeDirectory = "/run/flow-${slug}-undeclared-runtime";
-    }
-    # Flow 0.54.3 and later compose the Herdr session into a fresh memory's
-    # Nexus; an earlier version's mkFlowPackage takes no such field.
-    // lib.optionalAttrs (cfg.herdrSession != null) {
-      herdrSession = cfg.herdrSession;
-    };
-  };
+  # Flow <version>, built once: its executable holds no configuration.
+  runtime = inputs."flow-${slug}".packages.${system}.default;
+  # translator's nexus-configure, the one tool that compiles a place written
+  # in datom into the place file every Nexus reads at start.
+  nexusConfigure = inputs."flow-${slug}".packages.${system}.nexus-configure;
   # Datom rendering of the attribute-held families.
   text = value: "«${value}»";
   vector = values: "[ ${lib.concatMapStrings (value: "${value} ") values}]";
@@ -212,11 +198,20 @@ let
     (declared "metaflows")
   ]
   ++ map (file: "${cfg.configurationDirectory + "/${file}"}") cfg.trailingConfigurationFiles;
+  # The place file of this version's place, where the Nexus reads it: under
+  # the user's configuration home, written at activation (it holds the user's
+  # runtime directory).
+  placeFile = "${config.xdg.configHome}/nexus/${cfg.place}/flow-nexus.signal";
   # The configuration home of this version's clients: its
-  # nexus/flow-nexus.datom names this version's place.
-  placeConfiguration = pkgs.writeTextDir "nexus/flow-nexus.datom" ''
-    { ${cfg.place} }
-  '';
+  # nexus/flow-nexus.datom names this version's place, and the place file it
+  # names is the one Home wrote, reached through a link that is read at run
+  # time, so the clients and the Nexus hold one place.
+  placeConfiguration =
+    pkgs.runCommand "flow-${slug}-place-configuration" { } ''
+      mkdir -p $out/nexus/${cfg.place}
+      echo '{ ${cfg.place} }' > $out/nexus/flow-nexus.datom
+      ln -s ${placeFile} $out/nexus/${cfg.place}/flow-nexus.signal
+    '';
   # Runs once the Nexus has announced readiness, its sockets bound: each
   # query goes to the running Nexus through flow-nexus-meta, its configuration
   # naming this version's place, in order, and each must be taken.
@@ -253,12 +248,13 @@ let
     ln -s ${versionedCli "flow-nexus-${version}" "flow-nexus"} $out/bin/flow-nexus-${version}
     ln -s ${versionedCli "flow-nexus-meta-${version}" "flow-nexus-meta"} $out/bin/flow-nexus-meta-${version}
   '';
-  # The place datom the Nexus is started with. %t is $XDG_RUNTIME_DIR and %S
-  # $XDG_STATE_HOME, else ~/.local/state, for a user unit: the roots
-  # vision:nexus-v1 names. The directories are shared with every other Nexus
-  # at the same place and declared by nexus-places.nix, so the unit names no
-  # RuntimeDirectory or StateDirectory that a stop would remove.
-  place = "{ ${text cfg.place} ${text "%t/nexus/${cfg.place}"} ${text "%S/nexus/${cfg.place}"} }";
+  # The place's two directories, as the place file holds them. The runtime
+  # directory is the user manager's own %t, /run/user/<uid>; a Lojix activation
+  # runs without XDG_RUNTIME_DIR, so the uid names it. The state directory is
+  # %S, the configured XDG state home. The directories are shared with every
+  # other Nexus at the same place and declared by nexus-places.nix, so the unit
+  # names no RuntimeDirectory or StateDirectory that a stop would remove.
+  placeText = "{ ${text cfg.place} ${text "\${runtimeRoot}/nexus/${cfg.place}"} ${text "${config.xdg.stateHome}/nexus/${cfg.place}"} }";
 in
 {
   options.criomosHome.${optionName} = {
@@ -399,6 +395,18 @@ in
       }
     ];
     home.packages = [ clients ];
+    # The place file the Nexus and its clients read, written at every
+    # activation: it holds the user's runtime directory, /run/user/<uid>/...,
+    # which no declaration holds, and with no place file the Nexus refuses to
+    # start. It is written before the units are reloaded, so a Nexus that
+    # restarts at the switch finds it.
+    home.activation.${"flowPlace${slug}"} = lib.hm.dag.entryBetween [ "reloadSystemd" ] [ "writeBoundary" ] ''
+      runtimeRoot="/run/user/$(id -u)"
+      placeDatom="$(mktemp)"
+      printf '%s\n' "${placeText}" > "$placeDatom"
+      run ${nexusConfigure}/bin/nexus-configure "Compile.{ «$placeDatom» «${placeFile}» }"
+      rm -f "$placeDatom"
+    '';
     home.file = lib.mkMerge [
       (lib.mkIf cfg.stableHook {
         ${stableHookPath}.source = "${runtime}/bin/flow-nexus-hook";
@@ -426,7 +434,7 @@ in
         # Started once both its sockets listen: READY=1.
         Type = "notify";
         WorkingDirectory = "%h";
-        ExecStart = "${runtime}/bin/flow-nexus-daemon \"${place}\"";
+        ExecStart = "${runtime}/bin/flow-nexus-daemon ${cfg.place}";
         Restart = "on-failure";
         RestartSec = "100ms";
       }
