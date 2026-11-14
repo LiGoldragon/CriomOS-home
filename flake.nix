@@ -451,12 +451,10 @@
           };
         in
         criomOSPkgs.pkgs.extend (lib.composeManyExtensions packageOverlays);
-      checkPkgsForSystem =
-        targetSystem:
-        if targetSystem == pkgs.stdenv.hostPlatform.system then
-          pkgs
-        else
-          mkCriomOSPkgsForSystem targetSystem;
+      # Checks name their target system explicitly and therefore construct
+      # that package universe directly. Standalone checks have no projected
+      # OS system input from which to select an ambient package universe.
+      checkPkgsForSystem = mkCriomOSPkgsForSystem;
       ownedPackagesForSystem =
         system:
         let
