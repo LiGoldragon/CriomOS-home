@@ -359,11 +359,11 @@
     "complex": {
       "flake": false,
       "locked": {
-        "lastModified": 1794626476,
-        "narHash": "sha256-BZBCoLxp71tNF5g3qibDp5HWcthm+VAVdz9E/5YTs50=",
+        "lastModified": 1794628088,
+        "narHash": "sha256-LWEFl3E0yBnIYrNHA4sr/jygnB2xO/3f6Frk88mZ+08=",
         "owner": "LiGoldragon",
         "repo": "goldragon-persona",
-        "rev": "22c31daeb02e9adf53a01490c368b5d8789ea859",
+        "rev": "183cd9d9cde744f7c0df2147616692877447338c",
         "type": "github"
       },
       "original": {
@@ -2823,11 +2823,11 @@
     "psyche-belief": {
       "flake": false,
       "locked": {
-        "lastModified": 1794627477,
-        "narHash": "sha256-As8LM0vSOX6MLMF4pUa/5s0Zq7bUI0DWstgeff92zpk=",
+        "lastModified": 1794627831,
+        "narHash": "sha256-F6N78w6HD/ZrSVyRU+bFQTgtS5KnjNjQe8sx84z+O0E=",
         "owner": "LiGoldragon",
         "repo": "psyche-belief",
-        "rev": "09c5adebc31c0a4bc847bb6c25c64dec5659de4d",
+        "rev": "fdd8775ac006b1f638897b5f120b1e1fb3a96410",
         "type": "github"
       },
       "original": {

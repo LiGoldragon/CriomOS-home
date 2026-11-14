@@ -6,7 +6,7 @@ Configure.HarnessFlags.[
   { { Psyche codexManager Sonnet } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
   { { Psyche book Haiku } «--disallowedTools SendMessage,ListAgents» }
   { { Psyche book Sonnet } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
-  { { Psyche core Fable } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
+  { { Psyche core Fable } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents,AskUserQuestion» }
   { { Psyche core Haiku } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
   { { Psyche core Opus } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
   { { Psyche core Sonnet } «--disallowedTools Artifact,ArtifactComments,ArtifactData,SendMessage,ListAgents» }
