@@ -8,6 +8,8 @@ let
   user = {
     name = testUser;
     size = "Min";
+    capabilities = [ "StableCodex" ];
+    publicKeys = [ ];
   };
   testHome = "/home/${testUser}";
   testUid = 1000;
@@ -24,8 +26,16 @@ let
       };
       modules = [
         corePackagesModule
+        ../../modules/home/profiles/min/remote-build-command-guard.nix
         codexRemoteControlModule
         {
+          criomos.corePackages = {
+            codex = codexCliPackage;
+            codexServer = codexCliPackage;
+            codexNextServer = codexCliPackage;
+            claude = pkgs.hello;
+            flowId = pkgs.hello;
+          };
           home = {
             username = testUser;
             homeDirectory = testHome;
