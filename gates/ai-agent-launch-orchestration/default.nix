@@ -121,7 +121,7 @@ pkgs.runCommand "ai-agent-launch-orchestration"
     test "$( ${pkgs.yq-go}/bin/yq -p toml '.model_reasoning_effort' ${roleFile "default"} )" = "xhigh"
     test "$( ${pkgs.yq-go}/bin/yq -p toml '.model' ${roleFile "explorer"} )" = "gpt-5.6-luna"
     test "$( ${pkgs.yq-go}/bin/yq -p toml '.model_reasoning_effort' ${roleFile "explorer"} )" = "xhigh"
-    test "$( ${pkgs.yq-go}/bin/yq -p toml '.model' ${roleFile "worker"} )" = "gpt-5.6-terra"
+    test "$( ${pkgs.yq-go}/bin/yq -p toml '.model' ${roleFile "worker"} )" = "gpt-5.6-luna"
     test "$( ${pkgs.yq-go}/bin/yq -p toml '.model_reasoning_effort' ${roleFile "worker"} )" = "high"
 
     touch "$out"
