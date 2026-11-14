@@ -32,22 +32,28 @@ let
       ../../modules/home/profiles/min/default.nix
       ../../modules/home/profiles/min/default-opener.nix
       ../../modules/home/profiles/min/codex-remote-control.nix
-      {
-        home = {
-          username = "ai-agent-launch-check";
-          homeDirectory = "/tmp/ai-agent-launch-check";
-          stateVersion = "26.05";
-        };
-        xdg.configHome = "/tmp/ai-agent-launch-check/.config";
-        stylix.polarity = "dark";
-        criomos.corePackages = {
-          codex = codexCliPackage;
-          codexServer = codexCliPackage;
-          codexNextServer = codexCliPackage;
-          claude = claudeCodePackage;
-          flowId = pkgs.hello;
-        };
-      }
+      (
+        { lib, ... }:
+        {
+          options.stylix.polarity = lib.mkOption { type = lib.types.str; };
+          config = {
+            home = {
+              username = "ai-agent-launch-check";
+              homeDirectory = "/tmp/ai-agent-launch-check";
+              stateVersion = "26.05";
+            };
+            xdg.configHome = "/tmp/ai-agent-launch-check/.config";
+            stylix.polarity = "dark";
+            criomos.corePackages = {
+              codex = codexCliPackage;
+              codexServer = codexCliPackage;
+              codexNextServer = codexCliPackage;
+              claude = claudeCodePackage;
+              flowId = pkgs.hello;
+            };
+          };
+        }
+      )
     ];
   };
   profile = configuration.config;
