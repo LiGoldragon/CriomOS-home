@@ -24,9 +24,10 @@
 # configure unit, ordered After= and Requires= it, which hands the running
 # Nexus one Configure per family through flow-nexus-meta; the Nexus takes each
 # at
-# once and answers Configured.Replaced, or Configured.Unchanged when its
-# memory already holds it. A changed declaration restarts the configure
-# unit only, never the Nexus.
+# once and answers Configured with the change it was given, echoed whole,
+# also when its memory already holds it (an earlier Flow answers
+# Configured.Replaced or Configured.Unchanged). A changed declaration
+# restarts the configure unit only, never the Nexus.
 #
 # Its clients take the datom and nothing else (vision:nexus-v1): the place is
 # read from one configuration datom, $XDG_CONFIG_HOME/nexus/flow-nexus.datom,
@@ -238,7 +239,7 @@ let
           exit 1
         fi
         case "$reply" in
-          Configured.Replaced|Configured.Unchanged) printf '%s %s\n' "$(basename "$query")" "$reply" ;;
+          Configured.*) printf '%s Configured\n' "$(basename "$query")" ;;
           *) printf 'Flow Nexus ${version} refused %s: %s\n' "$query" "$reply" >&2; exit 1 ;;
         esac
       done
