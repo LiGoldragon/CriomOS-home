@@ -44,17 +44,17 @@ in pkgs.runCommand "curriculum-resolver-contract" {
     attempts=$((attempts - 1)); test "$attempts" -gt 0
     sleep 0.05
   done
-  query='ComposeStartup.{ { Psyche core Opus } Claude [ spirit:core:0 intent:main-flow:0 ] [ vision:code:0 ] [] }'
+  query='ComposeStartup.{ { Psyche core Opus } Claude [ { Spirit core Single.0 } { Intent main-flow Single.0 } ] [ { Vision code Single.0 } ] [] }'
   ${deployment.runtime}/bin/curriculum "$query" > "$TMPDIR/composed.datom"
   grep -q '^StartupComposed\.' "$TMPDIR/composed.datom"
   grep -q 'These are your skills, given here; do not reload them.' "$TMPDIR/composed.datom"
   ${deployment.runtime}/bin/curriculum 'ComposeRole.{ illustrator ClaudeAgent }' > "$TMPDIR/role.datom"
   grep -q '^RoleComposed\.' "$TMPDIR/role.datom"
-  if ${deployment.runtime}/bin/curriculum 'ComposeStartup.{ { Psyche core Opus } Claude [ spirit:core:0 intent:main-flow:0 ] [ /tmp/inline-context ] [] }' > "$TMPDIR/path.out" 2>&1; then
+  if ${deployment.runtime}/bin/curriculum 'ComposeStartup.{ { Psyche core Opus } Claude [ { Spirit core Single.0 } { Intent main-flow Single.0 } ] [ { Vision /tmp/inline-context Single.0 } ] [] }' > "$TMPDIR/path.out" 2>&1; then
     echo "Curriculum admitted a path-shaped module ID" >&2
     exit 1
   fi
-  if ${deployment.runtime}/bin/curriculum 'ComposeStartup.{ { Psyche core Opus } Claude [ intent:main-flow:0 ] [ spirit:core:0 ] [] }' > "$TMPDIR/placement.out" 2>&1; then
+  if ${deployment.runtime}/bin/curriculum 'ComposeStartup.{ { Psyche core Opus } Claude [ { Intent main-flow Single.0 } ] [ { Spirit core Single.0 } ] [] }' > "$TMPDIR/placement.out" 2>&1; then
     echo "Curriculum admitted USER spirit" >&2
     exit 1
   fi
@@ -85,9 +85,9 @@ in pkgs.runCommand "curriculum-resolver-contract" {
     sleep 0.05
   done
   ${deployment.runtime}/bin/curriculum \
-    'ComposeStartup.{ { Psyche core Opus } Claude [ spirit:core:0 intent:psyche:0 intent:main-flow:0 ] [] [] }' > "$TMPDIR/latest.datom"
+    'ComposeStartup.{ { Psyche core Opus } Claude [ { Spirit core Single.0 } { Intent psyche Single.0 } { Intent main-flow Single.0 } ] [] [] }' > "$TMPDIR/latest.datom"
   grep -q 'START_LATEST_FLOW_CONTEXT_WITNESS' "$TMPDIR/latest.datom"
-  ${deployment.runtime}/bin/curriculum 'ResolveSources.[ intent:psyche:0 intent:main-flow:0 ]' > "$TMPDIR/latest-sources.datom"
+  ${deployment.runtime}/bin/curriculum 'ResolveSources.[ { Intent psyche Single.0 } { Intent main-flow Single.0 } ]' > "$TMPDIR/latest-sources.datom"
   grep -q "$latest" "$TMPDIR/latest-sources.datom"
   touch "$out"
 ''
