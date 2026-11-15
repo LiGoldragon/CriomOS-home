@@ -44,6 +44,9 @@ SCRIPT
   }).config;
   replay = configuration.criomosHome.flow0550.replayPackage;
   services = configuration.systemd.user.services;
+  authoredServices = ((import ../../modules/home/profiles/min/flow-nexus-place.nix {
+    version = "0.55.0"; slug = "0550";
+  }) { config = configuration; inputs = fixtureInputs; inherit lib pkgs user; }).config.content.systemd.user.services;
   expectedUnit = {
     Unit = {
       Description = "Flow Nexus 0.55.0 at main";
@@ -51,10 +54,9 @@ SCRIPT
       After = [ "curriculum-nexus.service" "systemd-tmpfiles-setup.service" ];
     };
     Service = {
-      Environment = [ ];
       Type = "notify";
       WorkingDirectory = "%h";
-      ExecStart = [ "${runtime}/bin/flow-nexus-daemon main" ];
+      ExecStart = "${runtime}/bin/flow-nexus-daemon main";
       Restart = "on-failure";
       RestartSec = "100ms";
       MemoryMax = "3G";
@@ -64,7 +66,7 @@ SCRIPT
   };
 in
 assert !(services ? flow-configure-0550);
-assert services.flow-nexus-0550 == expectedUnit;
+assert authoredServices.flow-nexus-0550 == expectedUnit;
 assert builtins.length replay.queryFiles == 10;
 assert builtins.elem replay configuration.home.packages;
 pkgs.runCommand "flow-manual-replay-contract" { nativeBuildInputs = [ pkgs.coreutils ]; } ''
