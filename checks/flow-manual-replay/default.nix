@@ -51,6 +51,7 @@ SCRIPT
       After = [ "curriculum-nexus.service" "systemd-tmpfiles-setup.service" ];
     };
     Service = {
+      Environment = [ ];
       Type = "notify";
       WorkingDirectory = "%h";
       ExecStart = "${runtime}/bin/flow-nexus-daemon main";
