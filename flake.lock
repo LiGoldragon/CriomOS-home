@@ -2208,11 +2208,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794459601,
-        "narHash": "sha256-CDukY0vQbvTFCuynuUaFks0M/mWO/TyBC3N9I/hITns=",
+        "lastModified": 1794757296,
+        "narHash": "sha256-z9UhjPgEg+zlKSWODbZOKhB8/oMkfHFvY7avkdIAGCw=",
         "owner": "LiGoldragon",
         "repo": "noctalia",
-        "rev": "aa309de3f1afc6b88bc3a0cc6c4031867af72b0f",
+        "rev": "2079829d3adaf154f34803b49d5aeccbb4d25b55",
         "type": "github"
       },
       "original": {
