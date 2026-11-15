@@ -54,7 +54,7 @@ SCRIPT
       Environment = [ ];
       Type = "notify";
       WorkingDirectory = "%h";
-      ExecStart = "${runtime}/bin/flow-nexus-daemon main";
+      ExecStart = [ "${runtime}/bin/flow-nexus-daemon main" ];
       Restart = "on-failure";
       RestartSec = "100ms";
       MemoryMax = "3G";
