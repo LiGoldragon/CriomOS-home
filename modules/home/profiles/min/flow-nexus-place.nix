@@ -22,28 +22,15 @@
 # StateDirectory, is ordered after the unit that makes them, and asserts its
 # place is declared.
 #
-# The Nexus announces readiness (READY=1 once both sockets are bound), so its
-# unit is Type=notify. The executable holds no configuration: a new memory
-# starts unconfigured, answering Unconfigured. Its configuration is declared
-# after it by its configure unit, ordered After= and Requires= it, which hands
-# the running Nexus one Configure per family through flow-meta,
-# Configure.Nexus first; the Nexus takes each at once and answers Configured
-# with the change it was given, echoed whole, also when its memory already
-# holds it. A changed declaration restarts the configure unit only, never the
-# Nexus.
+# The Nexus announces readiness (READY=1 once both sockets are bound).
+# Its executable opens its existing Memory without configuration replay.
+# Bootstrap configuration is retained as source and applied only when the
+# owner explicitly invokes flow-replay-<version> at this configured place.
+# Home activation and service startup never invoke the replay command.
 #
-# Its clients take the datom and nothing else (vision:nexus-v1): the place
-# name is read from one configuration datom,
-# $XDG_CONFIG_HOME/nexus/flow-nexus.datom, `{ <place> }`, and the sockets are
-# found in the Runtime of that place's place file, under the same
-# configuration home; they read no XDG_RUNTIME_DIR. This version's own clients
-# (flow-<version>, flow-meta-<version>) and its configure unit run
-# with XDG_CONFIG_HOME set to `placeConfiguration`, a directory whose
-# nexus/flow-nexus.datom names this version's place and whose
-# nexus/<place>/flow-nexus.signal is the place file Home wrote, so they reach
-# it whatever the user's configuration names; no place is ever typed. The
-# user's ~/.config/nexus/flow-nexus.datom is declared by the version at main
-# (flow-0550.nix).
+# Versioned clients and the replay command share placeConfiguration: its
+# nexus/flow-nexus.datom names this version's configured place, and its
+# nexus/<place>/flow-nexus.signal links to the place file Home materializes.
 #
 # The hook command it writes into every Claude flow is
 # ~/.local/bin/flow-hook when this version holds the stable hook
@@ -64,7 +51,7 @@ let
   places = config.criomosHome.nexusPlaces;
   # The user's runtime directory is known only to the running unit (systemd
   # sets XDG_RUNTIME_DIR, %t in the unit); no uid is declared here. A path in
-  # a query names it by this token, which configure-flow-<slug> replaces with
+  # a query names it by this token, which flow-replay-<version> replaces with
   # $XDG_RUNTIME_DIR before sending.
   runtimeToken = "@XDG_RUNTIME_DIR@";
   system = pkgs.stdenv.hostPlatform.system;
@@ -164,17 +151,10 @@ let
   harnessHookQuery = pkgs.writeText "flow-${slug}-harness-hook.datom" ''
     Configure.HarnessHook.${text "${home}/${stableHookPath}"}
   '';
-  # One Configure each, in this order: the Nexus first, the investigation seat
-  # after the metaflows it is launched from.
-  #
-  # FIXME(Mind core): Maintained is state, set by signal, never declared. Flow
-  # <version> stores it inside the definition family: Continuity is a field of
-  # ConfigureMetaflow (meta-signal-flow ethos/signal.ethos), and
-  # Configure.Metaflows replaces that family whole, so this declaration
-  # resets every seat a signal moved. No signal sets Continuity on one
-  # metaflow. Until Continuity is its own state family with its own signal,
-  # every row of metaflows.datom is OnDemand.
-  # An owner-declared family, by its written path; another, from this version's configuration directory.
+  # Bootstrap families replace their corresponding Memory configuration.
+  # They are applied only by an explicit replay, in the order below.
+  # An owner-declared family uses its written path; other families use this
+  # version's immutable configuration directory.
   declaredPath =
     family:
     "${cfg.declarationDirectory}/${builtins.unsafeDiscardStringContext (baseNameOf (toString cfg.ownerDeclarations.${family}))}";
@@ -212,16 +192,19 @@ let
       echo '{ ${cfg.place} }' > $out/nexus/flow-nexus.datom
       ln -s ${placeFile} $out/nexus/${cfg.place}/flow-nexus.signal
     '';
-  # Runs once the Nexus has announced readiness, its sockets bound: each
-  # query goes to the running Nexus through flow-meta, its configuration
-  # naming this version's place, in order, and each must be taken.
-  # Arguments: the query files.
-  configure = pkgs.writeShellApplication {
-    name = "configure-flow-${slug}";
+  # An explicit owner action against the configured, already running place.
+  # This command neither starts the Nexus nor changes its target or query order.
+  replay = pkgs.writeShellApplication {
+    name = "flow-replay-${version}";
     runtimeInputs = [ pkgs.coreutils ];
     text = ''
-      : "''${XDG_RUNTIME_DIR:?the unit runs with XDG_RUNTIME_DIR}"
+      if [ "$#" -ne 0 ]; then
+        printf 'Usage: flow-replay-${version}\n' >&2
+        exit 2
+      fi
+      : "''${XDG_RUNTIME_DIR:?replay requires XDG_RUNTIME_DIR}"
       export XDG_CONFIG_HOME=${placeConfiguration}
+      set -- ${lib.escapeShellArgs queries}
       for query in "$@"; do
         body=$(<"$query")
         if ! reply=$(${runtime}/bin/flow-meta "''${body//${runtimeToken}/$XDG_RUNTIME_DIR}"); then
@@ -234,6 +217,7 @@ let
         esac
       done
     '';
+    derivationArgs.passthru.queryFiles = queries;
   };
   # The <version> clients under their versioned names, reaching this
   # version's place: `flow-<version> Metaflows` is `flow
@@ -267,11 +251,6 @@ in
       readOnly = true;
       default = "flow-nexus-${slug}";
     };
-    configureUnit = lib.mkOption {
-      type = lib.types.str;
-      readOnly = true;
-      default = "flow-configure-${slug}";
-    };
     place = lib.mkOption {
       type = lib.types.enum [
         "main"
@@ -283,13 +262,13 @@ in
     declarationDirectory = lib.mkOption {
       type = lib.types.str;
       default = "${home}/.local/state/flow-declarations";
-      description = "Where the owner's declarations are written for the configure unit to replay.";
+      description = "Where the owner's bootstrap declarations are linked for explicit replay.";
     };
     ownerDeclarations = lib.mkOption {
       type = lib.types.attrsOf lib.types.path;
       default = { };
       example = lib.literalExpression ''{ models = "''${inputs.owner}/models.datom"; }'';
-      description = "The families the owner declares in his own repository, models, thresholds and metaflows, each named to its file there. Activation writes each into declarationDirectory under its own file name, a change to any restarts the configure unit, which replays it. A family absent here is taken from configurationDirectory.";
+      description = "The families the owner declares in his own repository, models, thresholds and metaflows, each named to its file there. Activation links each into declarationDirectory under its own file name. Only an explicit replay applies a family to Memory. A family absent here is taken from configurationDirectory.";
     };
     configurationDirectory = lib.mkOption {
       type = lib.types.path;
@@ -375,6 +354,12 @@ in
       readOnly = true;
       default = runtime;
     };
+    replayPackage = lib.mkOption {
+      type = lib.types.package;
+      readOnly = true;
+      default = replay;
+      description = "The explicitly invoked bootstrap replay command, bound to this version's configured place.";
+    };
     clients = lib.mkOption {
       type = lib.types.package;
       readOnly = true;
@@ -384,7 +369,7 @@ in
       type = lib.types.package;
       readOnly = true;
       default = placeConfiguration;
-      description = "A configuration home whose nexus/flow-nexus.datom names this version's place: its clients and its configure unit read their place from it.";
+      description = "A configuration home whose nexus/flow-nexus.datom names this version's place: its clients and its explicit replay command read their place from it.";
     };
   };
   config = lib.mkIf (sizeAtLeast "Min" && cfg.enable) {
@@ -394,7 +379,7 @@ in
         message = "criomosHome.${optionName}.place ${cfg.place} is not one of criomosHome.nexusPlaces.places.";
       }
     ];
-    home.packages = [ clients ];
+    home.packages = [ clients replay ];
     # The place file the Nexus and its clients read, written at every
     # activation: it holds the user's runtime directory, /run/user/<uid>/...,
     # which no declaration holds, and with no place file the Nexus refuses to
@@ -443,23 +428,6 @@ in
         MemorySwapMax = cfg.memoryLimit.swapMaximum;
       };
       Install.WantedBy = [ "default.target" ];
-    };
-    # The configuration, declared to the running Nexus. It starts with the
-    # Nexus and after it (Type=notify: after its sockets are bound), and is
-    # stopped or restarted with it; a changed declaration restarts it alone.
-    systemd.user.services.${cfg.configureUnit} = {
-      Unit = {
-        Description = "Flow Nexus ${version} configuration at ${cfg.place}";
-        Requires = [ "${cfg.unit}.service" ];
-        After = [ "${cfg.unit}.service" ];
-        X-Restart-Triggers = map toString (lib.attrValues cfg.ownerDeclarations);
-      };
-      Service = {
-        Type = "oneshot";
-        RemainAfterExit = true;
-        ExecStart = "${configure}/bin/configure-flow-${slug} ${lib.escapeShellArgs queries}";
-      };
-      Install.WantedBy = [ "${cfg.unit}.service" ];
     };
   };
 }
