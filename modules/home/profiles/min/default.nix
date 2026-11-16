@@ -322,7 +322,9 @@ let
     directClaude
     pkgs.llama-cpp
     (pkgs.callPackage ../../../../packages/gws { inherit inputs; })
-    (pkgs.callPackage ../../../../packages/playwright-cli { })
+    (pkgs.callPackage ../../../../packages/playwright-cli {
+      extensionTokenEntry = config.criomosHome.playwrightChrome.secretEntry;
+    })
     (pkgs.callPackage ../../../../packages/plannotator { })
     # `codex-remote-control.nix` owns the sole logical `codex` launcher.
     # Adding the raw package here would race it in the profile PATH.
@@ -429,6 +431,12 @@ in
     ./herdr.nix
     ./pi-models.nix
   ];
+
+  options.criomosHome.playwrightChrome.secretEntry = lib.mkOption {
+    type = lib.types.str;
+    default = "playwright.dev/mcp-extension-token";
+    description = "GoPass entry read by playwright-chrome when PLAYWRIGHT_MCP_EXTENSION_TOKEN is unset.";
+  };
 
   config = mkIf (sizeAtLeast "Min") {
     fonts.fontconfig = {

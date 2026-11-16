@@ -1,5 +1,30 @@
-{ pkgs, ... }:
-
+{ pkgs, extensionTokenEntry ? null, ... }:
+let
+  tokenGuard = ''
+    if [ "''${PLAYWRIGHT_MCP_EXTENSION_TOKEN+set}" = set ]; then
+      if [ -z "$PLAYWRIGHT_MCP_EXTENSION_TOKEN" ]; then
+        printf '%s\n' 'playwright-chrome: PLAYWRIGHT_MCP_EXTENSION_TOKEN is empty' >&2
+        exit 1
+      fi
+    else
+      tokenEntry=${pkgs.lib.escapeShellArg (if extensionTokenEntry == null then "" else extensionTokenEntry)}
+      if [ -z "$tokenEntry" ]; then
+        printf '%s\n' 'playwright-chrome: secret entry is not configured' >&2
+        exit 1
+      fi
+      if ! token="$(${pkgs.gopass}/bin/gopass show -o "$tokenEntry" 2>/dev/null)"; then
+        printf 'playwright-chrome: cannot read secret entry %s\n' "$tokenEntry" >&2
+        exit 1
+      fi
+      if [ -z "$token" ]; then
+        printf 'playwright-chrome: secret entry %s is empty\n' "$tokenEntry" >&2
+        exit 1
+      fi
+      export PLAYWRIGHT_MCP_EXTENSION_TOKEN="$token"
+      unset token tokenEntry
+    fi
+  '';
+in
 pkgs.buildNpmPackage {
   pname = "playwright-cli";
   version = "0.1.13";
@@ -25,8 +50,8 @@ pkgs.buildNpmPackage {
       --add-flags "$out/lib/playwright-cli/node_modules/@playwright/cli/playwright-cli.js"
 
     makeWrapper "$out/bin/playwright-cli" "$out/bin/playwright-chrome" \
-      --run 'if [ -z "''${PLAYWRIGHT_MCP_EXECUTABLE_PATH:-}" ]; then if command -v google-chrome >/dev/null 2>&1; then export PLAYWRIGHT_MCP_EXECUTABLE_PATH="$(command -v google-chrome)"; elif command -v chromium >/dev/null 2>&1; then export PLAYWRIGHT_MCP_EXECUTABLE_PATH="$(command -v chromium)"; fi; fi' \
-      --run 'if [ -z "''${PLAYWRIGHT_MCP_EXTENSION_TOKEN:-}" ]; then token="$(${pkgs.gopass}/bin/gopass show -o chrome-browser/playwright-mcp-extension-token 2>/dev/null || true)"; if [ -n "$token" ]; then export PLAYWRIGHT_MCP_EXTENSION_TOKEN="$token"; fi; unset token; fi'
+      --run ${pkgs.lib.escapeShellArg tokenGuard} \
+      --run 'if [ -z "''${PLAYWRIGHT_MCP_EXECUTABLE_PATH:-}" ]; then if command -v google-chrome >/dev/null 2>&1; then export PLAYWRIGHT_MCP_EXECUTABLE_PATH="$(command -v google-chrome)"; elif command -v chromium >/dev/null 2>&1; then export PLAYWRIGHT_MCP_EXECUTABLE_PATH="$(command -v chromium)"; fi; fi'
 
     runHook postInstall
   '';
