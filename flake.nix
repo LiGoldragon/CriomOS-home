@@ -604,6 +604,7 @@
           field-monitoring = checkPkgs.callPackage ./checks/field-monitoring { inherit inputs; };
           gws = checkPkgs.callPackage ./checks/gws { inherit inputs; };
           playwright-cli = checkPkgs.callPackage ./checks/playwright-cli { };
+          browser-read = checkPkgs.callPackage ./checks/browser-read { };
           plannotator = checkPkgs.callPackage ./checks/plannotator { };
           spirit-deployment = checkPkgs.callPackage ./checks/spirit-deployment { inherit inputs; };
           flow-id = checkPkgs.callPackage ./checks/flow-id { inherit inputs; };
