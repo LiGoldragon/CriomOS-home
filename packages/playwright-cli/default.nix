@@ -1,5 +1,6 @@
 { pkgs, extensionTokenEntry ? null, ... }:
 let
+  browserRead = import ./browser-read.nix { inherit pkgs; };
   tokenGuard = ''
     if [ "''${PLAYWRIGHT_MCP_EXTENSION_TOKEN+set}" = set ]; then
       if [ -z "$PLAYWRIGHT_MCP_EXTENSION_TOKEN" ]; then
@@ -52,6 +53,10 @@ pkgs.buildNpmPackage {
     makeWrapper "$out/bin/playwright-cli" "$out/bin/playwright-chrome" \
       --run ${pkgs.lib.escapeShellArg tokenGuard} \
       --run 'if [ -z "''${PLAYWRIGHT_MCP_EXECUTABLE_PATH:-}" ]; then if command -v google-chrome >/dev/null 2>&1; then export PLAYWRIGHT_MCP_EXECUTABLE_PATH="$(command -v google-chrome)"; elif command -v chromium >/dev/null 2>&1; then export PLAYWRIGHT_MCP_EXECUTABLE_PATH="$(command -v chromium)"; fi; fi'
+
+    makeWrapper "${pkgs.nodejs}/bin/node" "$out/bin/browser-read" \
+      --add-flags ${pkgs.lib.escapeShellArg (toString browserRead)} \
+      --add-flags "$out/bin/playwright-chrome"
 
     runHook postInstall
   '';
