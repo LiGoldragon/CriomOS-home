@@ -1563,11 +1563,11 @@
         "translator": "translator"
       },
       "locked": {
-        "lastModified": 1794874604,
-        "narHash": "sha256-+FsLUAzXYyiCVrFDdL3pxSVRA/uin98Ao/c8HLUI1tA=",
+        "lastModified": 1794891331,
+        "narHash": "sha256-8Rl5SeNBGQBv5bFQKqpDpvCJwJXDEQabbeJnvvWOHVU=",
         "owner": "LiGoldragon",
         "repo": "flow",
-        "rev": "61242e2dfe7db8f472e5b1d353f857d7d3bbc464",
+        "rev": "fc7ecd9e1ec60caa4499c7db7676dc3bfe7d9828",
         "type": "github"
       },
       "original": {
