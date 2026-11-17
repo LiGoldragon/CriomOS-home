@@ -8,13 +8,12 @@
 # every version is; 0.54.7 is retired. The bare flow and
 # flow-meta are its own CLIs.
 #
-# Every family it is configured with is declared in flow-nexus-config, in
-# meta-signal-flow 78's shape: the models, the thresholds and the permaflows,
-# each permaflow carrying its own leave-outs, among them.
+# Its configuration is committed in Flow Memory and changed through the meta
+# socket. Home provides its deployment location and executables.
 #
 # It holds the stable hook: once its unit runs, ~/.local/bin/flow-hook is
-# its flow-hook and its declared HarnessHook, so every Claude flow it launches
-# runs that path, which the next version to hold it repoints.
+# its flow-hook. Memory holds the HarnessHook policy; the next version
+# to hold the executable link repoints it.
 #
 # Being the version at main, it declares the user's Flow CLI configuration,
 # ~/.config/nexus/flow-nexus.datom, `{ main }` (vision:nexus-v1):
@@ -38,20 +37,6 @@
       maximum = "3G";
       swapMaximum = "0";
     };
-    messageNexus = null;
-    # Every launch opens its pane in Herdr's default session, where the
-    # flows run (Flow 0.54.3's Configure.Nexus names it).
-    herdrSession = "default";
-    # Every family it is configured with, in meta-signal-flow 78's shape.
-    configurationDirectory = ./flow-nexus-config;
-    # The handover warning: each model warned at 15 percent before its
-    # threshold, every 10 minutes, to write its handover and refresh.
-    trailingConfigurationFiles = [
-      "harness-flags.datom"
-      "investigation.datom"
-      "default-minutes.datom"
-      "handover-policies.datom"
-    ];
   };
 
   home.packages = [ config.criomosHome.flow0550.clients ];
