@@ -20,6 +20,8 @@ description: Current Nexus account
 ---
 one body
 MODULE
+  printf '%s\n' 'span body' > "$valid/vision/nexus/0-1.md"
+  printf '%s\n' 'all body' > "$valid/vision/nexus/all.md"
   printf '%s\n' 'question body' > "$valid/inquiry/question/12.md"
   printf '%s\n' 'procedure body' > "$valid/role/book-reader-procedure.md"
 
@@ -28,7 +30,9 @@ MODULE
 inquiry:question:12 revision-one inquiry/question/12.md
 role:book-reader-procedure revision-one role/book-reader-procedure.md
 vision:nexus:0 revision-one vision/nexus/0.md
+vision:nexus:0-1 revision-one vision/nexus/0-1.md
 vision:nexus:1 revision-one vision/nexus/1.md
+vision:nexus:all revision-one vision/nexus/all.md
 EXPECTED
   diff -u "$TMPDIR/expected-modules" "$TMPDIR/out/modules"
   grep -F 'description: First Nexus account' "$TMPDIR/out/.claude/skills/vision:nexus:0/SKILL.md"
@@ -63,10 +67,35 @@ EXPECTED
   printf '%s\n' bad > "$leading_zero/vision/nexus/01.md"
   expect_failure leading-zero "$leading_zero" 'invalid version:'
 
-  span="$TMPDIR/span"
-  mkdir -p "$span/vision/nexus"
-  printf '%s\n' held > "$span/vision/nexus/0-1.md"
-  expect_failure span "$span" 'invalid version:'
+  span_equal="$TMPDIR/span-equal"
+  mkdir -p "$span_equal/vision/nexus"
+  printf '%s\n' bad > "$span_equal/vision/nexus/1-1.md"
+  expect_failure span-equal "$span_equal" 'invalid version:'
+
+  span_reversed="$TMPDIR/span-reversed"
+  mkdir -p "$span_reversed/vision/nexus"
+  printf '%s\n' bad > "$span_reversed/vision/nexus/2-1.md"
+  expect_failure span-reversed "$span_reversed" 'invalid version:'
+
+  span_leading_zero="$TMPDIR/span-leading-zero"
+  mkdir -p "$span_leading_zero/vision/nexus"
+  printf '%s\n' bad > "$span_leading_zero/vision/nexus/01-2.md"
+  expect_failure span-leading-zero "$span_leading_zero" 'invalid version:'
+
+  span_three_parts="$TMPDIR/span-three-parts"
+  mkdir -p "$span_three_parts/vision/nexus"
+  printf '%s\n' bad > "$span_three_parts/vision/nexus/0-1-2.md"
+  expect_failure span-three-parts "$span_three_parts" 'invalid version:'
+
+  span_nonnumeric="$TMPDIR/span-nonnumeric"
+  mkdir -p "$span_nonnumeric/vision/nexus"
+  printf '%s\n' bad > "$span_nonnumeric/vision/nexus/a-b.md"
+  expect_failure span-nonnumeric "$span_nonnumeric" 'invalid version:'
+
+  all_capitalised="$TMPDIR/all-capitalised"
+  mkdir -p "$all_capitalised/vision/nexus"
+  printf '%s\n' bad > "$all_capitalised/vision/nexus/All.md"
+  expect_failure all-capitalised "$all_capitalised" 'invalid version:'
 
   nested="$TMPDIR/nested"
   mkdir -p "$nested/vision/nexus/deeper"

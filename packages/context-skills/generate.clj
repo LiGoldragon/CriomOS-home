@@ -86,6 +86,17 @@
        :source (str "role/" file-name)
        :revision revision})))
 
+(defn valid-version?
+  "A version is a plain integer, a span `<first>-<last>` with first < last, or `all`."
+  [version]
+  (let [integer #"(?:0|[1-9][0-9]*)"]
+    (or (boolean (re-matches integer version))
+        (= version "all")
+        (when-let [[_ first-version last-version] (re-matches #"([^-]+)-([^-]+)" version)]
+          (and (re-matches integer first-version)
+               (re-matches integer last-version)
+               (< (bigint first-version) (bigint last-version)))))))
+
 (defn singleton-modules [kind topic-dir revision]
   (let [topic (.getName topic-dir)]
     (when-not (and (.isDirectory topic-dir) (not (symbolic-link? topic-dir)))
@@ -98,7 +109,7 @@
         (when-not (and (.isFile file) (not (symbolic-link? file)) (str/ends-with? file-name ".md"))
           (fail "not a module source: " file))
         (let [version (str/replace file-name #"\.md$" "")]
-          (when-not (re-matches #"(?:0|[1-9][0-9]*)" version) (fail "invalid version: " file))
+          (when-not (valid-version? version) (fail "invalid version: " file))
           {:name (str kind ":" topic ":" version)
            :body (slurp file)
            :source (str kind "/" topic "/" file-name)
