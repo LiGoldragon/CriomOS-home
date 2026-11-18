@@ -62,12 +62,18 @@ pkgs.runCommand "desktop-app-support-contract"
       pkgs.dpkg
       pkgs.gnutar
       pkgs.gnugrep
+      pkgs.nodejs
       pkgs.python3
       pkgs.xdg-utils
     ];
   }
   ''
     set -eu
+
+    # stdenv runs with pipefail, so a pipeline that ends in diff's expected
+    # exit 1 would stop this script without a word. Every stop names its line
+    # and command.
+    trap 'echo "desktop-app-support: stopped at line $LINENO: $BASH_COMMAND" >&2' ERR
 
     # Claude Desktop keeps its vendor application archive except for the one
     # keep-awake call: Chromium before 157.0.8092 turns it into a Wayland idle
@@ -91,20 +97,37 @@ pkgs.runCommand "desktop-app-support-contract"
     test "$(grep -rIo 'powerSaveBlocker\.start("prevent-app-suspension")' "$claude_pristine/app" | wc -l)" = 1
     # The fixup phase rewrites the unpacked ELF files, so only the archive's
     # other files are compared.
-    if diff -rq "$claude_pristine/app" "$claude_packaged" | grep -v '^Files '; then
+    # diff exits 1 when the trees differ, which is expected, and 2 on trouble.
+    claude_diff="$TMPDIR/claude-diff"
+    diff_status=0
+    diff -rq "$claude_pristine/app" "$claude_packaged" > "$claude_diff" || diff_status=$?
+    if [ "$diff_status" -gt 1 ]; then
+      echo "diff of the Claude archives failed with status $diff_status" >&2
+      exit 1
+    fi
+    if grep -v '^Files ' "$claude_diff"; then
       echo 'packaged Claude Desktop adds or drops files against the vendor archive' >&2
       exit 1
     fi
     : > "$TMPDIR/claude-differing"
-    diff -rq "$claude_pristine/app" "$claude_packaged" \
-      | sed -n 's/^Files \(.*\) and .* differ$/\1/p' \
-      | while read -r vendor_file; do
-          if ! head -c 4 "$vendor_file" | grep -q ELF; then
-            echo "$vendor_file" >> "$TMPDIR/claude-differing"
-          fi
-        done
-    test "$(wc -l < "$TMPDIR/claude-differing")" = 1
-    grep -E '/\.vite/build/index\.chunk-[A-Za-z0-9_-]+\.js$' "$TMPDIR/claude-differing"
+    sed -n 's/^Files \(.*\) and .* differ$/\1/p' "$claude_diff" > "$TMPDIR/claude-differing-all"
+    while read -r vendor_file; do
+      if ! head -c 4 "$vendor_file" | grep -q ELF; then
+        echo "$vendor_file" >> "$TMPDIR/claude-differing"
+      fi
+    done < "$TMPDIR/claude-differing-all"
+    if [ "$(wc -l < "$TMPDIR/claude-differing")" != 1 ]; then
+      echo 'packaged Claude Desktop differs from the vendor archive in other than one non-ELF file:' >&2
+      cat "$TMPDIR/claude-differing" >&2
+      exit 1
+    fi
+    node ${./claude-desktop-asar-contract.cjs} \
+      ${claudeDesktopPackage}/lib/claude-desktop/resources/app.asar
+    if ! grep -qE '/\.vite/build/index\.chunk-[A-Za-z0-9_-]+\.js$' "$TMPDIR/claude-differing"; then
+      echo 'the one differing Claude file is not the index.chunk-*.js file:' >&2
+      cat "$TMPDIR/claude-differing" >&2
+      exit 1
+    fi
 
     # This archive is fetched independently from the ChatGPT derivation. The
     # bundled Desktop Core remains byte-identical vendor product. The ASAR
