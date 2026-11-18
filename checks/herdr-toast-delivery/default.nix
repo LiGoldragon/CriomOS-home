@@ -35,6 +35,7 @@ let
       ../../modules/home/profiles/min/codex-next.nix
       ../../modules/home/profiles/min/default.nix
       {
+        disabledModules = [ "programs/noctalia" ];
         home = {
           username = "herdr-toast-check";
           homeDirectory = "/home/herdr-toast-check";

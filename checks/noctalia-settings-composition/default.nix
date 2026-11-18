@@ -15,6 +15,7 @@ let
       inputs.noctalia.homeModules.default
       ../../modules/home/profiles/min/sfwbar.nix
       {
+        disabledModules = [ "programs/noctalia" ];
         home = {
           username = "noctalia-check";
           homeDirectory = "/home/noctalia-check";
