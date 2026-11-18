@@ -56,7 +56,9 @@ assert !(builtins.pathExists chatgptRetiredPatcher);
 pkgs.runCommand "desktop-app-support-contract"
   {
     nativeBuildInputs = [
+      pkgs.asar
       pkgs.coreutils
+      pkgs.diffutils
       pkgs.dpkg
       pkgs.gnutar
       pkgs.gnugrep
@@ -67,17 +69,42 @@ pkgs.runCommand "desktop-app-support-contract"
   ''
     set -eu
 
-    # Claude Desktop retains its vendor application archive.  CriomOS wraps
-    # the executable for its libraries and Wayland flags but does not select
-    # or inject a desktop-local Claude Code binary.
+    # Claude Desktop keeps its vendor application archive except for the one
+    # keep-awake call: Chromium before 157.0.8092 turns it into a Wayland idle
+    # inhibitor that cancels the idle lock. The packaged archive differs from
+    # the vendor archive in that call alone, and calls powerSaveBlocker.start
+    # nowhere.
     claude_pristine="$TMPDIR/claude-pristine"
+    claude_packaged="$TMPDIR/claude-packaged"
     mkdir -p "$claude_pristine"
     dpkg-deb --fsys-tarfile ${claudePristineArchive} \
-      | tar --extract --to-stdout ./usr/lib/claude-desktop/resources/app.asar \
-      > "$claude_pristine/app.asar"
-    cmp \
-      "$claude_pristine/app.asar" \
-      ${claudeDesktopPackage}/lib/claude-desktop/resources/app.asar
+      | tar --extract --directory "$claude_pristine" \
+        --wildcards './usr/lib/claude-desktop/resources/app.asar*'
+    claude_resources="$claude_pristine/usr/lib/claude-desktop/resources"
+    ${pkgs.asar}/bin/asar extract "$claude_resources/app.asar" "$claude_pristine/app"
+    ${pkgs.asar}/bin/asar extract \
+      ${claudeDesktopPackage}/lib/claude-desktop/resources/app.asar "$claude_packaged"
+    if grep -rIE 'powerSaveBlocker\.start' "$claude_packaged"; then
+      echo 'packaged Claude Desktop still calls powerSaveBlocker.start' >&2
+      exit 1
+    fi
+    test "$(grep -rIo 'powerSaveBlocker\.start("prevent-app-suspension")' "$claude_pristine/app" | wc -l)" = 1
+    # The fixup phase rewrites the unpacked ELF files, so only the archive's
+    # other files are compared.
+    if diff -rq "$claude_pristine/app" "$claude_packaged" | grep -v '^Files '; then
+      echo 'packaged Claude Desktop adds or drops files against the vendor archive' >&2
+      exit 1
+    fi
+    : > "$TMPDIR/claude-differing"
+    diff -rq "$claude_pristine/app" "$claude_packaged" \
+      | sed -n 's/^Files \(.*\) and .* differ$/\1/p' \
+      | while read -r vendor_file; do
+          if ! head -c 4 "$vendor_file" | grep -q ELF; then
+            echo "$vendor_file" >> "$TMPDIR/claude-differing"
+          fi
+        done
+    test "$(wc -l < "$TMPDIR/claude-differing")" = 1
+    grep -E '/\.vite/build/index\.chunk-[A-Za-z0-9_-]+\.js$' "$TMPDIR/claude-differing"
 
     # This archive is fetched independently from the ChatGPT derivation. The
     # bundled Desktop Core remains byte-identical vendor product. The ASAR

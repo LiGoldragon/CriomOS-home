@@ -7,6 +7,8 @@ let
   inherit (pkgs)
     lib
     fetchurl
+    asar
+    nodejs
     makeWrapper
     stdenvNoCC
     bintools
@@ -103,6 +105,8 @@ stdenvNoCC.mkDerivation {
   };
   nativeBuildInputs = [
     formatelf
+    asar
+    nodejs
     copyDesktopItems
     makeWrapper
     patchelf
@@ -164,6 +168,28 @@ stdenvNoCC.mkDerivation {
     cp -a usr/lib/claude-desktop $out/lib/claude-desktop
     cp -a usr/share/icons $out/share/icons
     cp -a usr/share/doc $out/share/doc
+
+    # Chromium before 157.0.8092 turns the keep-awake blocker into a Wayland
+    # idle inhibitor, which cancels the compositor's idle lock. Remove that
+    # one call, repack with the archive's own unpacked set, and fail the build
+    # if any powerSaveBlocker.start call remains in the repacked archive.
+    app_asar="$out/lib/claude-desktop/resources/app.asar"
+    unpacked_app="$out/lib/claude-desktop/resources/app.asar.unpacked"
+    extracted_app="$TMPDIR/claude-desktop-app"
+    rechecked_app="$TMPDIR/claude-desktop-app-rechecked"
+    unpack_pattern="$(${nodejs}/bin/node ${./asar-unpack-pattern.mjs} "$app_asar")"
+    ${asar}/bin/asar extract "$app_asar" "$extracted_app"
+    ${nodejs}/bin/node ${./remove-keep-awake.mjs} "$extracted_app"
+    rm "$app_asar"
+    rm -rf "$unpacked_app"
+    ${asar}/bin/asar pack "$extracted_app" "$app_asar" --unpack "$unpack_pattern"
+    ${asar}/bin/asar extract "$app_asar" "$rechecked_app"
+    if grep -rIE --include='*.js' --include='*.mjs' --include='*.cjs' \
+      'powerSaveBlocker\.start' "$rechecked_app"; then
+      echo 'claude-desktop: the repacked app still calls powerSaveBlocker.start' >&2
+      exit 1
+    fi
+    ${nodejs}/bin/node ${../../gates/desktop-app-support/claude-desktop-asar-contract.cjs} "$app_asar"
 
     # This is the sole launcher wrapper. It points directly at the unpacked
     # executable and therefore cannot retain an upstream store prefix.
