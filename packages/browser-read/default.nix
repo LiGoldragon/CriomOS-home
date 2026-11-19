@@ -1,4 +1,4 @@
-{ pkgs, inputs, playwrightChrome, registryRelativePath ? "browser-read/registry.datom", ... }:
+{ pkgs, inputs, playwrightChrome ? pkgs.callPackage ../playwright-cli { }, registryRelativePath ? "browser-read/registry.datom", ... }:
 let
   system = pkgs.stdenv.hostPlatform.system;
   base = inputs.flow-0550.inputs.base;

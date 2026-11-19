@@ -49,6 +49,9 @@ elif command == "run-code":
     if "module.exports.closeOwnedPage" in arguments[3]:
         print(json.dumps({"result": json.dumps({"closed": True})}))
     elif mode == "run-timeout":
+        if "FIXTURE_EVENT_FIFO" in os.environ:
+            with open(os.environ["FIXTURE_EVENT_FIFO"], "w") as event:
+                event.write("running\n")
         signal.pause()
     elif mode == "bad-outcome":
         print(json.dumps({"result": json.dumps({"phase": "Read", "values": [{"name": "other", "value": "NEVER-FINAL"}]})}))

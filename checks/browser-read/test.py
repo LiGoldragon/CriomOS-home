@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import signal
 import sys
 import tempfile
 from unittest.mock import patch
@@ -94,6 +95,29 @@ with tempfile.TemporaryDirectory(prefix="browser-read-tests-") as temporary:
     invoke()
     recorded = trace.read_text()
     assert 'changed.invalid' in recorded and 'h2' in recorded and 'fixture.invalid' not in recorded
+
+    # Cancellation is triggered by a fixture event, not a timed polling loop.
+    fifo = root/'event'
+    os.mkfifo(fifo)
+    cancellation_task = {'url':'https://fixture.invalid/','fields':[{'name':'title','locator':'h1'}],
+                         'limits':{'navigation_ms':100,'action_ms':100,'command_ms':5000,'cleanup_ms':100,'output_bytes':65536}}
+    child = subprocess.Popen([sys.executable,helper,wrapper], stdin=subprocess.PIPE,
+                             stdout=subprocess.PIPE,stderr=subprocess.PIPE,
+                             env=dict(environment,FIXTURE_MODE='run-timeout',FIXTURE_EVENT_FIFO=str(fifo)),text=True)
+    child.stdin.write(json.dumps(cancellation_task))
+    child.stdin.close()
+    with fifo.open() as event:
+        assert event.readline() == 'running\n'
+    child.send_signal(signal.SIGTERM)
+    child.wait(timeout=10)
+    cancelled = child.stdout.read()
+    assert json.loads(cancelled) == {'phase':'Refused','refusal':'TabCleanup'}, cancelled
+    assert not child.stderr.read()
+    assert secret not in cancelled
+    for entry in map(json.loads,trace.read_text().splitlines()):
+        if 'root' in entry:
+            assert not Path(entry['root']).exists()
+    groups += 1
 
     # Failures after temporary allocation are inside the protected lifetime.
     spec = importlib.util.spec_from_file_location('session', helper)
