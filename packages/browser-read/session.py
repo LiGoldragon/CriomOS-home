@@ -44,8 +44,9 @@ class Session:
         self.deadline = time.monotonic() + task["limits"]["command_ms"] / 1000
 
     def on_signal(self, number, frame):
+        first = not self.interrupted
         self.interrupted = True
-        if not self.cleaning:
+        if first and not self.cleaning:
             raise Interrupted()
 
     def adopt(self):
@@ -256,7 +257,12 @@ class Session:
 def main():
     try:
         task = json.load(sys.stdin)
-        address = urllib.parse.urlsplit(task["url"])
+        try:
+            address = urllib.parse.urlsplit(task["url"])
+            address.port  # Validate the parser's optional numeric port position.
+        except ValueError:
+            print(json.dumps(refused("InvalidRegistry")))
+            return
         if address.scheme not in ("http", "https") or not address.hostname or address.username is not None or address.password is not None or any(c.isspace() or ord(c) < 32 or c == "\\" for c in task["url"]):
             outcome = refused("InvalidRegistry")
         else:

@@ -112,7 +112,7 @@ rec {
           }
           {
             name = "protos";
-            packageId = "git+https://github.com/LiGoldragon/protos?rev=c93b598025984f8a73e70aa18b8e8a6fdfdfdfd8#0.33.0";
+            packageId = "protos";
           }
           {
             name = "serde";
@@ -145,7 +145,7 @@ rec {
           }
           {
             name = "protos";
-            packageId = "git+https://github.com/LiGoldragon/protos?rev=c93b598#0.33.0";
+            packageId = "protos";
           }
         ];
         features = {
@@ -180,34 +180,6 @@ rec {
           }
         ];
 
-      };
-      "git+https://github.com/LiGoldragon/protos?rev=c93b598#0.33.0" = rec {
-        crateName = "protos";
-        version = "0.33.0";
-        edition = "2024";
-        workspace_member = null;
-        src = pkgs.fetchgit {
-          url = "https://github.com/LiGoldragon/protos";
-          rev = "c93b598025984f8a73e70aa18b8e8a6fdfdfdfd8";
-          sha256 = "00rwpzkxqmwhmxr2dkv9ay9wfvjxbprvvv23lfxmqamm2264r2gb";
-        };
-        features = {
-          "rkyv" = [ "dep:rkyv" ];
-        };
-      };
-      "git+https://github.com/LiGoldragon/protos?rev=c93b598025984f8a73e70aa18b8e8a6fdfdfdfd8#0.33.0" = rec {
-        crateName = "protos";
-        version = "0.33.0";
-        edition = "2024";
-        workspace_member = null;
-        src = pkgs.fetchgit {
-          url = "https://github.com/LiGoldragon/protos";
-          rev = "c93b598025984f8a73e70aa18b8e8a6fdfdfdfd8";
-          sha256 = "00rwpzkxqmwhmxr2dkv9ay9wfvjxbprvvv23lfxmqamm2264r2gb";
-        };
-        features = {
-          "rkyv" = [ "dep:rkyv" ];
-        };
       };
       "itoa" = rec {
         crateName = "itoa";
@@ -260,6 +232,20 @@ rec {
           "default" = [ "proc-macro" ];
         };
         resolvedDefaultFeatures = [ "default" "proc-macro" ];
+      };
+      "protos" = rec {
+        crateName = "protos";
+        version = "0.33.0";
+        edition = "2024";
+        workspace_member = null;
+        src = pkgs.fetchgit {
+          url = "https://github.com/LiGoldragon/protos";
+          rev = "c93b598025984f8a73e70aa18b8e8a6fdfdfdfd8";
+          sha256 = "00rwpzkxqmwhmxr2dkv9ay9wfvjxbprvvv23lfxmqamm2264r2gb";
+        };
+        features = {
+          "rkyv" = [ "dep:rkyv" ];
+        };
       };
       "quote" = rec {
         crateName = "quote";
