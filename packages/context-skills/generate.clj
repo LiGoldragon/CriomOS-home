@@ -98,7 +98,7 @@
         (when-not (and (.isFile file) (not (symbolic-link? file)) (str/ends-with? file-name ".md"))
           (fail "not a module source: " file))
         (let [version (str/replace file-name #"\.md$" "")]
-          (when-not (re-matches #"(?:0|[1-9][0-9]*)" version) (fail "invalid version: " file))
+          (when-not (re-matches #"(?:0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*))?|all" version) (fail "invalid version: " file))
           {:name (str kind ":" topic ":" version)
            :body (slurp file)
            :source (str kind "/" topic "/" file-name)
