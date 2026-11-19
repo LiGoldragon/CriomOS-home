@@ -89,7 +89,7 @@ class OwnedScopeTests(unittest.TestCase):
         self.root = Path(self.temporary.name)
         for name, body in (("runner", MANAGER), ("control", CONTROL), ("cli", CLI)):
             path = self.root / name
-            path.write_text(body)
+            path.write_text(body.replace("#!/usr/bin/env python3", "#!" + sys.executable))
             path.chmod(0o700)
         self.unrelated = subprocess.Popen([sys.executable, "-c", "import signal; signal.pause()"],
             stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -166,7 +166,7 @@ class OwnedScopeTests(unittest.TestCase):
         self.assertFalse((self.root/'pids').exists())
 
     def test_manager_failure_before_scope_starts_no_command(self):
-        (self.root/'runner').write_text('#!/usr/bin/env python3\nraise SystemExit(1)\n')
+        (self.root/'runner').write_text('#!' + sys.executable + '\nraise SystemExit(1)\n')
         request = {'readCode':'code','limits':{'navigation_ms':1,'action_ms':1,
             'command_ms':500,'cleanup_ms':1000,'output_bytes':2048}}
         result = session.supervise('unused',str(self.root/'runner'),'unused',request)
@@ -175,7 +175,7 @@ class OwnedScopeTests(unittest.TestCase):
         self.assertFalse((self.root/'pids').exists())
 
     def test_manager_timeout_before_scope_grant_starts_no_command(self):
-        (self.root/'runner').write_text('#!/usr/bin/env python3\nimport signal; signal.pause()\n')
+        (self.root/'runner').write_text('#!' + sys.executable + '\nimport signal; signal.pause()\n')
         request = {'readCode':'code','limits':{'navigation_ms':1,'action_ms':1,
             'command_ms':100,'cleanup_ms':1000,'output_bytes':2048}}
         result = session.supervise('unused',str(self.root/'runner'),'unused',request)
