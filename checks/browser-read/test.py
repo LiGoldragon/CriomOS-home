@@ -6,7 +6,7 @@ import subprocess
 import sys
 import tempfile
 
-reader = sys.argv[1]
+reader, generated_test = sys.argv[1:]
 secret = 'synthetic-token-never-output'
 registry = 'Registry.{ { 100 100 500 100 65536 } [ { fixture https://fixture.invalid/ [ { title h1 } ] } ] }'
 groups = 0
@@ -21,6 +21,7 @@ with tempfile.TemporaryDirectory(prefix='browser-read-tests-') as temporary:
 
     def invoke(request='Read.{ fixture [ title ] }',mode='success',expected=None,arguments=None):
         global groups
+        before = trace.read_text() if trace.exists() else ''
         result = subprocess.run([reader,*(arguments if arguments is not None else [request])],
                                 env=dict(environment,FIXTURE_MODE=mode),capture_output=True,text=True,timeout=10)
         assert secret not in result.stdout+result.stderr
@@ -29,6 +30,8 @@ with tempfile.TemporaryDirectory(prefix='browser-read-tests-') as temporary:
         if expected is not None:
             assert result.stdout.strip() == expected,(mode,result.stdout,expected)
             assert result.returncode == 1
+            if any(expected.startswith('Refused.'+phase) for phase in ('InvalidRequest','MissingRegistry','UnreadableRegistry','InvalidRegistry','UnknownPage','UnknownFields')):
+                assert (trace.read_text() if trace.exists() else '') == before
         else:
             assert result.returncode == 0,(mode,result.stdout)
             assert result.stdout.startswith('Read.') and 'title' in result.stdout and 'one' in result.stdout
@@ -45,6 +48,9 @@ with tempfile.TemporaryDirectory(prefix='browser-read-tests-') as temporary:
     invoke('Read.{ fixture [ absent ] }',expected='Refused.UnknownFields.[ absent ]')
     filename.unlink()
     invoke(expected='Refused.MissingRegistry')
+    filename.mkdir()
+    invoke(expected='Refused.UnreadableRegistry')
+    filename.rmdir()
     filename.write_text('not a registry')
     invoke(expected='Refused.InvalidRegistry')
     for replacement in (registry.replace('100 100 500','0 100 500'),registry.replace('https://fixture.invalid/','javascript:alert(1)'),registry.replace('https://fixture.invalid/','https://user:password@fixture.invalid/'),registry.replace('{ title h1 }','{ title h1 } { title h2 }')):
@@ -67,4 +73,19 @@ with tempfile.TemporaryDirectory(prefix='browser-read-tests-') as temporary:
     assert 'changed.invalid' in code and 'h2' in code and 'fixture.invalid' not in code
     assert set(jobs[0]) == {'readCode','limits'}
     assert all(isinstance(value,int) and value>0 for value in jobs[0]['limits'].values())
+    executed = subprocess.run(['node',generated_test],input=json.dumps(jobs[0]),capture_output=True,text=True,timeout=10)
+    assert executed.returncode == 0, executed.stderr
+    observed = json.loads(executed.stdout)
+    assert observed['urls'] == ['https://changed.invalid/'] and observed['locators'] == ['h2']
+    assert observed['result']['values'] == [{'name':'title','value':'synthetic text'}]
+    groups += 1
+    trace.unlink()
+    hostile = 'h1"); globalThis.injected=true; //'
+    filename.write_text(registry.replace('h1','«'+hostile+'»'))
+    invoke()
+    job = json.loads(trace.read_text())
+    executed = subprocess.run(['node',generated_test],input=json.dumps(job),capture_output=True,text=True,timeout=10)
+    assert executed.returncode == 0, executed.stderr
+    assert json.loads(executed.stdout)['locators'] == [hostile]
+    groups += 1
 print(f'command/wire fixtures: {groups} groups passed')

@@ -23,6 +23,7 @@ elif mode == 'false-error':
 elif mode == 'identity-leak':
     print(json.dumps({'result':'{}','pid':123}))
 elif mode == 'native-error':
+    print('NEVER-FINAL synthetic-token-never-output',file=sys.stderr)
     print(json.dumps({'isError':True,'error':'NEVER-FINAL synthetic-token-never-output'}))
 elif mode == 'bad-json':
     print('NEVER-FINAL synthetic-token-never-output')

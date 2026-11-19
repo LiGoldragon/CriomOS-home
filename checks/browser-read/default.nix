@@ -16,6 +16,6 @@ pkgs.runCommand "browser-read-synthetic" {
   export HOME="$TMPDIR/home"
   mkdir -p "$HOME"
   node ${./page-test.cjs} ${../../packages/browser-read/frontend/src/read-page.cjs}
-  python3 ${./test.py} ${reader}/bin/browser-read
+  python3 ${./test.py} ${reader}/bin/browser-read ${./generated-code-test.cjs}
   touch "$out"
 ''
