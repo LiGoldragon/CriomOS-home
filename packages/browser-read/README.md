@@ -12,7 +12,7 @@ Registry.{ { 1000 1000 10000 2000 65536 }
                [ { title h1 } { remaining .remaining } ] } ] }
 ```
 
-The limits, in order, are navigation milliseconds, locator/action milliseconds, complete operational deadline milliseconds, each wrapper cleanup wait milliseconds, and maximum wrapper/output bytes. Page names, HTTP(S) URLs, fields, locators and limits are runtime data. Extraction is text from exactly one matching locator. The request contains configured names alone.
+The limits, in order, are navigation milliseconds, locator/action milliseconds, complete operational deadline milliseconds, each wrapper cleanup wait milliseconds, and maximum wrapper/output bytes. The navigation/action/Page-cleanup waits fit the driver’s signed-32-bit millisecond timer. Page names, HTTP(S) URLs, fields, locators and limits are runtime data. Extraction is text from exactly one matching locator. The request contains configured names alone.
 
 ## Wrapper boundary
 
@@ -24,7 +24,7 @@ The Rust frontend invokes `playwright-chrome read-session` once, with one JSON o
 
 The reader's fixed function is compiled from `frontend/src/read-page.cjs`; registry values enter it through JSON data. It opens its own Page, bounds navigation and locator operations, and closes then observes `isClosed` while connected. It returns a serialized `Read` or page-phase refusal. An unconfirmed Page cleanup stays a refusal.
 
-The wrapper owns token preflight, private configuration/session/output/temporary artifacts, attach/run-code/detach, and all processes/scopes it starts, on every path. Its terminal stdout is exactly `{"result":"serialized read return"}` on success, or `{"isError":true,"phase":"SessionAttach|SessionRun|SessionCleanup|ArtifactSetup|ArtifactCleanup|Interrupted"}` with one actual phase string. It completes owned process/artifact cleanup before replying. The reader waits for this terminal reply and neither receives a daemon handle nor terminates daemons or performs artifact cleanup. Native error and snapshot content stay inside the wrapper. A result with a nonzero exit is refused; a recognized typed failure is accepted regardless of exit status.
+The wrapper owns token preflight, private configuration/session/output/temporary artifacts, attach/run-code/detach, and all processes/scopes it starts, on every path. Its terminal stdout is exactly `{"result":"serialized read return"}` on success, or `{"isError":true,"phase":"SessionAttach|SessionRun|SessionCleanup|ArtifactSetup|ArtifactCleanup|Interrupted"}` with one actual phase string. It completes owned process/artifact cleanup before replying. The reader waits for this terminal reply and neither receives a daemon handle nor terminates daemons or performs artifact cleanup. Native error and snapshot content stay inside the wrapper. Values with a nonzero exit are refused; a recognized typed failure, including a Page-phase failure returned in result, is accepted regardless of exit status.
 
 The extraction return is `{"phase":"Read","values":[{"name":"configured field","value":"text"}]}` or `{"phase":"Refused","refusal":"TabOpen|Navigation|TabCleanup"}` (one actual phase), or `{"phase":"Refused","refusal":{"Fields":["configured field"]}}`. The reader validates exact result shapes, field membership/order/count, and absence of partial values.
 

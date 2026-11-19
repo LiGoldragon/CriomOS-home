@@ -53,13 +53,13 @@ with tempfile.TemporaryDirectory(prefix='browser-read-tests-') as temporary:
     filename.rmdir()
     filename.write_text('not a registry')
     invoke(expected='Refused.InvalidRegistry')
-    for replacement in (registry.replace('100 100 500','0 100 500'),registry.replace('https://fixture.invalid/','javascript:alert(1)'),registry.replace('https://fixture.invalid/','https://user:password@fixture.invalid/'),registry.replace('{ title h1 }','{ title h1 } { title h2 }')):
+    for replacement in (registry.replace('100 100 500','0 100 500'),registry.replace('100 100 500','9223372036854775807 100 500'),registry.replace('https://fixture.invalid/','javascript:alert(1)'),registry.replace('https://fixture.invalid/','https://user:password@fixture.invalid/'),registry.replace('{ title h1 }','{ title h1 } { title h2 }')):
         filename.write_text(replacement)
         invoke(expected='Refused.InvalidRegistry')
     filename.write_text(registry)
     for phase in ('SessionAttach','SessionRun','SessionCleanup','ArtifactSetup','ArtifactCleanup','Interrupted'):
         invoke(mode=phase,expected='Refused.'+phase)
-    for mode,refusal in (('fields','Fields.[ title ]'),('tab-cleanup','TabCleanup'),('navigation','Navigation'),('tab-open','TabOpen')):
+    for mode,refusal in (('fields','Fields.[ title ]'),('failed-fields','Fields.[ title ]'),('tab-cleanup','TabCleanup'),('navigation','Navigation'),('tab-open','TabOpen')):
         invoke(mode=mode,expected='Refused.'+refusal)
     for mode in ('unknown-phase','false-error','identity-leak','native-error','bad-json','unknown-fields','duplicate-fields','empty-fields','bad-outcome','extra-value','partial-value','wrong-count','failed-success'):
         invoke(mode=mode,expected='Refused.BrowserOutcome')

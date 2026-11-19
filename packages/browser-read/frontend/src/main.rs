@@ -109,7 +109,7 @@ struct WrapperRequest<'a> {
 #[derive(Deserialize)]
 #[serde(untagged, deny_unknown_fields)]
 enum WrapperReply {
-    Read {
+    Returned {
         result: String,
     },
     Refused {
@@ -171,6 +171,9 @@ impl RegistrySelection for Registry {
         ]
         .iter()
         .any(|n| *n <= 0)
+            // Playwright's driver wait reaches Node's signed-32-bit timer.
+            || [limits.navigation_ms.0, limits.action_ms.0, limits.cleanup_ms.0]
+                .iter().any(|value| i32::try_from(*value).is_err())
             || limits
                 .command_ms
                 .0
@@ -268,14 +271,14 @@ impl WrapperReading for Wrapper {
                     };
                 }
                 WrapperReply::Refused { .. } => return Err(()),
-                WrapperReply::Read { result } if reply.status.success() => {
+                WrapperReply::Returned { result } => {
                     serde_json::from_str(&result).map_err(|_| ())?
                 }
-                _ => return Err(()),
             };
             match observed {
                 Observation::Read { values } => {
-                    if values.len() != task.fields.len()
+                    if !reply.status.success()
+                        || values.len() != task.fields.len()
                         || values
                             .iter()
                             .zip(&task.fields)

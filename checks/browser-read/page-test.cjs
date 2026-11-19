@@ -14,8 +14,8 @@ async function scenario(mode, fields = [{name:'title', locator:'h1'}]) {
     setDefaultTimeout: ms => calls.push(['timeout',ms]),
     goto: async (url, options) => { calls.push(['goto',url,options]); if (mode === 'navigation') throw Error('PRIVATE PAGE DUMP'); },
     locator: locator => ({
-      count: async () => mode === 'count-hang' ? new Promise(()=>{}) : mode === 'multiple' ? 2 : mode === 'absent' ? 0 : 1,
-      innerText: async options => { calls.push(['text',locator,options]); if (mode === 'locator') throw Error('PRIVATE PAGE DUMP'); return locator === 'h1' ? 'one » two \\ three\nline' : 'secondary'; }
+      count: async () => locator === '.missing' ? 0 : mode === 'count-hang' ? new Promise(()=>{}) : mode === 'multiple' ? 2 : mode === 'absent' ? 0 : 1,
+      innerText: async options => { calls.push(['text',locator,options]); if (mode === 'locator') throw Error('PRIVATE PAGE DUMP'); if (mode === 'empty') return ''; return locator === 'h1' ? 'one » two \\ three\nline' : 'secondary'; }
     }),
     close: async options => { calls.push(['close',options]); if (mode === 'close') throw Error('PRIVATE PAGE DUMP'); if (mode === 'close-hang') return new Promise(()=>{}); closed = true; },
     isClosed: () => { calls.push(['isClosed']); return mode === 'unconfirmed' ? false : closed; }
@@ -37,6 +37,8 @@ async function scenario(mode, fields = [{name:'title', locator:'h1'}]) {
   assert.deepEqual((await scenario('success', [{name:'second',locator:'.second'},{name:'title',locator:'h1'}])).result.values.map(v=>v.name), ['second','title']);
   for (const mode of ['multiple','absent','locator','count-hang']) assert.deepEqual((await scenario(mode)).result,{phase:'Refused',refusal:{Fields:['title']}});
   assert.deepEqual((await scenario('navigation')).result,{phase:'Refused',refusal:'Navigation'});
+  assert.deepEqual((await scenario('success', [{name:'title',locator:'h1'},{name:'missing',locator:'.missing'}])).result,{phase:'Refused',refusal:{Fields:['missing']}});
+  assert.deepEqual((await scenario('empty')).result,{phase:'Read',values:[{name:'title',value:''}]});
   for (const mode of ['close','unconfirmed','disconnected','open','close-hang','open-hang']) assert.deepEqual((await scenario(mode)).result,{phase:'Refused',refusal:'TabCleanup'});
-  console.log('page fixtures: 13 groups passed');
+  console.log('page fixtures: 15 groups passed');
 })().catch(error => {console.error(error); process.exitCode=1;});

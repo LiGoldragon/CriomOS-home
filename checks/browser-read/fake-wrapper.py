@@ -28,7 +28,7 @@ elif mode == 'native-error':
 elif mode == 'bad-json':
     print('NEVER-FINAL synthetic-token-never-output')
 else:
-    if mode == 'fields':
+    if mode in ('fields','failed-fields'):
         observation = {'phase':'Refused','refusal':{'Fields':['title']}}
     elif mode == 'unknown-fields':
         observation = {'phase':'Refused','refusal':{'Fields':['absent']}}
@@ -53,5 +53,5 @@ else:
     else:
         observation = {'phase':'Read','values':[{'name':'title','value':'one » two \\ three\nline'}]}
     print(json.dumps({'result':json.dumps(observation)}))
-    if mode == 'failed-success':
+    if mode in ('failed-success','failed-fields'):
         raise SystemExit(1)
