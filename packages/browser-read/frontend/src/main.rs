@@ -259,8 +259,9 @@ impl WrapperReading for Wrapper {
                     phase,
                 } => {
                     return match phase {
+                        // A missing fixed-function return gives no Page-close receipt.
+                        Refusal::SessionRun => Ok(Output::Refused(Refusal::TabCleanup)),
                         Refusal::SessionAttach
-                        | Refusal::SessionRun
                         | Refusal::SessionCleanup
                         | Refusal::ArtifactSetup
                         | Refusal::ArtifactCleanup
