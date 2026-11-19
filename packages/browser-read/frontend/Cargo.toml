@@ -5,7 +5,8 @@ edition = "2024"
 publish = false
 
 [dependencies]
-datom-codec = { git = "https://github.com/LiGoldragon/datom-codec", rev = "09a0526949b043f921b6d3ce115b7f455291f2e2" }
-protos = { git = "https://github.com/LiGoldragon/protos", rev = "c93b598" }
+datom-codec = { git = "https://github.com/LiGoldragon/datom-codec", rev = "09a0526949b043f921b6d3ce115b7f455291f2e2", features = ["rkyv"] }
+protos = { git = "https://github.com/LiGoldragon/protos", rev = "c93b598", features = ["rkyv"] }
 serde = { version = "=1.0.229", features = ["derive"] }
 serde_json = "=1.0.154"
+http = "=1.5.0"

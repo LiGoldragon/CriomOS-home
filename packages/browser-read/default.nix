@@ -4,14 +4,8 @@ let
   base = inputs.flow-0550.inputs.base;
   workspace = base.lib.workspace.${system} { cargoNix = ./frontend/Cargo.nix; };
   runtime = workspace.binaries "browser-read" [ ];
-  scripts = pkgs.runCommand "browser-read-session" { } ''
-    mkdir -p "$out"
-    cp ${./session.py} "$out/session.py"
-    cp ${./read-page.cjs} "$out/read-page.cjs"
-  '';
   command = pkgs.writeShellScriptBin "browser-read" ''
     exec ${runtime}/bin/browser-read \
-      ${pkgs.python3}/bin/python3 ${scripts}/session.py \
       ${playwrightChrome}/bin/playwright-chrome \
       "''${XDG_CONFIG_HOME:-$HOME/.config}/${registryRelativePath}" "$@"
   '';

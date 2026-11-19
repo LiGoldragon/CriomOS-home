@@ -1,6 +1,6 @@
 'use strict';
 const assert = require('node:assert/strict');
-const {readPage, closeOwnedPage} = require(process.argv[2]);
+const {readPage} = require(process.argv[2]);
 
 async function scenario(mode, fields = [{name:'title', locator:'h1'}]) {
   const calls = [];
@@ -33,8 +33,5 @@ async function scenario(mode, fields = [{name:'title', locator:'h1'}]) {
   for (const mode of ['multiple','absent','locator']) assert.deepEqual((await scenario(mode)).result,{phase:'Refused',refusal:{Fields:['title']}});
   assert.deepEqual((await scenario('navigation')).result,{phase:'Refused',refusal:'Navigation'});
   for (const mode of ['close','unconfirmed','disconnected','open']) assert.deepEqual((await scenario(mode)).result,{phase:'Refused',refusal:'TabCleanup'});
-  const owned = await scenario('success');
-  assert.deepEqual(await closeOwnedPage(owned.page, owned.task),{closed:true});
-  assert.deepEqual(await closeOwnedPage(owned.page, {...owned.task,marker:'someone-else'}),{closed:false});
-  console.log('page fixtures: 12 groups passed');
+  console.log('page fixtures: 10 groups passed');
 })().catch(error => {console.error(error); process.exitCode=1;});

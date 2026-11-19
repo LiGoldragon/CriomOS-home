@@ -100,6 +100,24 @@ enum Observation {
     Read { values: Vec<FieldValue> },
     Refused { refusal: Refusal },
 }
+#[derive(Serialize)]
+struct WrapperRequest<'a> {
+    #[serde(rename = "readCode")]
+    read_code: String,
+    limits: &'a Limits,
+}
+#[derive(Deserialize)]
+#[serde(untagged, deny_unknown_fields)]
+enum WrapperReply {
+    Read {
+        result: String,
+    },
+    Refused {
+        #[serde(rename = "isError")]
+        is_error: bool,
+        phase: Refusal,
+    },
+}
 
 // Contracts precede their implementations: typed text, registry selection, and
 // the sole existing-wrapper transport are distinct roles.
@@ -114,8 +132,6 @@ trait WrapperReading {
     fn read(&self, task: &ReadTask) -> Output;
 }
 struct Wrapper {
-    interpreter: String,
-    helper: String,
     executable: String,
 }
 struct Invocation {
@@ -166,6 +182,15 @@ impl RegistrySelection for Registry {
         let mut names = HashSet::new();
         for page in &self.pages {
             let mut fields = HashSet::new();
+            let address: http::Uri = page.url.0.parse().map_err(|_| Refusal::InvalidRegistry)?;
+            if !matches!(address.scheme_str(), Some("http" | "https"))
+                || address
+                    .authority()
+                    .is_none_or(|a| a.host().is_empty() || a.as_str().contains('@'))
+                || page.url.0.contains('\\')
+            {
+                return Err(Refusal::InvalidRegistry);
+            }
             if page.name.0.is_empty()
                 || !names.insert(&page.name)
                 || page.fields.iter().any(|f| {
@@ -203,21 +228,51 @@ impl RegistrySelection for Registry {
 impl WrapperReading for Wrapper {
     fn read(&self, task: &ReadTask) -> Output {
         let attempt = || -> Result<Output, ()> {
-            let mut child = Command::new(&self.interpreter)
-                .args([&self.helper, &self.executable])
+            let data = serde_json::to_string(task).map_err(|_| ())?;
+            let code = format!(
+                "async page => {{ const module = {{exports:{{}}}}; {}; return await module.exports.readPage(page,{}); }}",
+                include_str!("read-page.cjs"),
+                data
+            );
+            let request = WrapperRequest {
+                read_code: code,
+                limits: &task.limits,
+            };
+            let serialized = serde_json::to_vec(&request).map_err(|_| ())?;
+            // One call and one terminal reply. The reviewed wrapper alone owns
+            // timeouts, process lifetimes, private artifacts and cleanup.
+            let mut child = Command::new(&self.executable)
+                .arg("read-session")
                 .stdin(Stdio::piped())
                 .stdout(Stdio::piped())
                 .stderr(Stdio::null())
                 .spawn()
                 .map_err(|_| ())?;
-            let serialized = serde_json::to_vec(task).map_err(|_| ())?;
             let written = child.stdin.take().ok_or(())?.write_all(&serialized);
-            let result = child.wait_with_output().map_err(|_| ())?;
+            let reply = child.wait_with_output().map_err(|_| ())?;
             written.map_err(|_| ())?;
-            if !result.status.success() {
-                return Err(());
-            }
-            let observed: Observation = serde_json::from_slice(&result.stdout).map_err(|_| ())?;
+            let wrapper: WrapperReply = serde_json::from_slice(&reply.stdout).map_err(|_| ())?;
+            let observed: Observation = match wrapper {
+                WrapperReply::Refused {
+                    is_error: true,
+                    phase,
+                } => {
+                    return match phase {
+                        Refusal::SessionAttach
+                        | Refusal::SessionRun
+                        | Refusal::SessionCleanup
+                        | Refusal::ArtifactSetup
+                        | Refusal::ArtifactCleanup
+                        | Refusal::Interrupted => Ok(Output::Refused(phase)),
+                        _ => Err(()),
+                    };
+                }
+                WrapperReply::Refused { .. } => return Err(()),
+                WrapperReply::Read { result } if reply.status.success() => {
+                    serde_json::from_str(&result).map_err(|_| ())?
+                }
+                _ => return Err(()),
+            };
             match observed {
                 Observation::Read { values } => {
                     if values.len() != task.fields.len()
@@ -240,17 +295,10 @@ impl WrapperReading for Wrapper {
                     {
                         Err(())
                     }
-                    Refusal::SessionAttach
-                    | Refusal::TabOpen
+                    Refusal::TabOpen
                     | Refusal::Navigation
                     | Refusal::Fields(_)
-                    | Refusal::TabCleanup
-                    | Refusal::SessionRun
-                    | Refusal::SessionCleanup
-                    | Refusal::ArtifactSetup
-                    | Refusal::ArtifactCleanup
-                    | Refusal::InvalidRegistry
-                    | Refusal::Interrupted => Ok(Output::Refused(refusal)),
+                    | Refusal::TabCleanup => Ok(Output::Refused(refusal)),
                     _ => Err(()),
                 },
             }
@@ -261,8 +309,7 @@ impl WrapperReading for Wrapper {
 impl Invocable for Invocation {
     fn run(&self) -> Output {
         let run = || -> Result<Output, Refusal> {
-            let [interpreter, helper, executable, registry, request] = self.arguments.as_slice()
-            else {
+            let [executable, registry, request] = self.arguments.as_slice() else {
                 return Err(Refusal::InvalidRequest);
             };
             let Input::Read(request) =
@@ -285,8 +332,6 @@ impl Invocable for Invocation {
                 Configuration::read_text(&text).map_err(|_| Refusal::InvalidRegistry)?;
             let task = configuration.select(&request)?;
             Ok(Wrapper {
-                interpreter: interpreter.clone(),
-                helper: helper.clone(),
                 executable: executable.clone(),
             }
             .read(&task))

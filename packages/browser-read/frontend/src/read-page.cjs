@@ -5,7 +5,7 @@ async function readPage(page, task) {
   const context = page.context();
   let tab;
   let creating = false;
-  let timedOut = false;
+  let unconfirmedCreation = false;
   let output;
   const bounded = (promise, milliseconds) => new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error('Timeout')), milliseconds);
@@ -16,11 +16,10 @@ async function readPage(page, task) {
     creating = true;
     const creation = context.newPage().then(created => {
       tab = created;
-      context.__browserReadOwnedPage = { marker: task.marker, tab };
       return tab;
     });
     try { await bounded(creation, task.limits.action_ms); }
-    catch { timedOut = true; throw new Error('TabOpen'); }
+    catch { unconfirmedCreation = true; throw new Error('TabOpen'); }
     creating = false;
     tab.setDefaultTimeout(task.limits.action_ms);
     try {
@@ -48,25 +47,10 @@ async function readPage(page, task) {
         closed = tab.isClosed() === true && connected();
       } catch { closed = false; }
     }
-    // A timed-out newPage may still produce a tab: it is never a confirmed read.
-    if (!closed || timedOut) output = { phase: 'Refused', refusal: 'TabCleanup' };
+    // An unconfirmed newPage may still produce a tab: it is never a confirmed read.
+    if (!closed || unconfirmedCreation) output = { phase: 'Refused', refusal: 'TabCleanup' };
   }
   return output;
 }
 
-async function closeOwnedPage(page, task) {
-  const context = page.context();
-  const owned = context.__browserReadOwnedPage;
-  if (!owned || owned.marker !== task.marker) return { closed: false };
-  let timer;
-  try {
-    await Promise.race([
-      owned.tab.close({ runBeforeUnload: false }),
-      new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('Timeout')), task.limits.cleanup_ms); })
-    ]);
-    return { closed: owned.tab.isClosed() === true && context.browser()?.isConnected() === true };
-  } catch { return { closed: false }; }
-  finally { clearTimeout(timer); }
-}
-
-module.exports = { readPage, closeOwnedPage };
+module.exports = { readPage };
