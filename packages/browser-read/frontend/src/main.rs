@@ -1,0 +1,149 @@
+use datom_codec::{Actualizing, Budget, Composing, Datomizable, Path, Potential};
+use protos::{Protosizable, ReaderBudget, Textualizable};
+use serde::{Deserialize, Serialize};
+use std::{collections::HashSet, fs, io::Write, process::{Command, Stdio}};
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Composing, Datomizable, Serialize, Deserialize)]
+struct PageName(String);
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Composing, Datomizable, Serialize, Deserialize)]
+struct FieldName(String);
+#[derive(Composing, Datomizable)]
+struct ReadRequest { page: PageName, fields: Vec<FieldName> }
+#[derive(Composing, Datomizable)]
+enum Input { Read(ReadRequest) }
+#[derive(Clone, Composing, Datomizable, Serialize)]
+struct Limits {
+    navigation_ms: i64,
+    action_ms: i64,
+    command_ms: i64,
+    cleanup_ms: i64,
+    output_bytes: i64,
+}
+#[derive(Clone, Composing, Datomizable, Serialize)]
+struct Field { name: FieldName, locator: String }
+#[derive(Composing, Datomizable)]
+struct Page { name: PageName, url: String, fields: Vec<Field> }
+#[derive(Composing, Datomizable)]
+struct Registry { limits: Limits, pages: Vec<Page> }
+#[derive(Composing, Datomizable)]
+enum Configuration { Registry(Registry) }
+#[derive(Serialize)]
+struct ReadTask { url: String, fields: Vec<Field>, limits: Limits }
+#[derive(Composing, Datomizable, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct FieldValue { name: FieldName, value: String }
+#[derive(Composing, Datomizable, Deserialize)]
+enum Refusal {
+    InvalidRequest, MissingRegistry, UnreadableRegistry, InvalidRegistry,
+    UnknownPage(PageName), UnknownFields(Vec<FieldName>),
+    SessionAttach, TabOpen, Navigation, Fields(Vec<FieldName>), TabCleanup,
+    SessionRun, SessionCleanup, ArtifactSetup, ArtifactCleanup, BrowserOutcome, Interrupted, Busy,
+}
+#[derive(Composing, Datomizable)]
+enum Output { Read(Vec<FieldValue>), Refused(Refusal) }
+#[derive(Deserialize)]
+#[serde(tag = "phase", deny_unknown_fields)]
+enum Observation { Read { values: Vec<FieldValue> }, Refused { refusal: Refusal } }
+
+// Contracts precede their implementations: typed text, registry selection, and
+// the sole existing-wrapper transport are distinct roles.
+trait DatomText: Sized + datom_codec::Composing + Datomizable {
+    fn read_text(text: &str) -> Result<Self, ()>;
+    fn write_text(&self) -> String;
+}
+trait RegistrySelection { fn select(&self, request: &ReadRequest) -> Result<ReadTask, Refusal>; }
+trait WrapperReading { fn read(&self, task: &ReadTask) -> Output; }
+struct Wrapper { interpreter: String, helper: String, executable: String }
+struct Invocation { arguments: Vec<String> }
+trait Invocable { fn run(&self) -> Output; }
+
+impl<T: datom_codec::Composing + Datomizable> DatomText for T {
+    fn read_text(text: &str) -> Result<Self, ()> {
+        // The input itself bounds the parser's work, rather than a policy limit
+        // hidden in code. Both grammars have fixed shallow structural depth.
+        let nodes = i64::try_from(text.len()).map_err(|_| ())?.saturating_add(1);
+        let mut budget = Budget {
+            remaining: nodes,
+            reader: ReaderBudget::try_from(usize::try_from(nodes).map_err(|_| ())?).map_err(|_| ())?,
+            depth: 0,
+            maximum_depth: nodes,
+        };
+        Potential::from(text).actualize(&mut budget).map_err(|_| ())
+    }
+    fn write_text(&self) -> String { self.datomize(Path::new()).protosize().textualize() }
+}
+impl RegistrySelection for Registry {
+    fn select(&self, request: &ReadRequest) -> Result<ReadTask, Refusal> {
+        let limits = &self.limits;
+        if [limits.navigation_ms, limits.action_ms, limits.command_ms, limits.cleanup_ms, limits.output_bytes]
+            .iter().any(|n| *n <= 0)
+            || limits.command_ms.checked_add(limits.cleanup_ms).is_none()
+        { return Err(Refusal::InvalidRegistry); }
+        let mut names = HashSet::new();
+        for page in &self.pages {
+            let mut fields = HashSet::new();
+            if page.name.0.is_empty() || !names.insert(&page.name)
+                || page.fields.iter().any(|f| f.name.0.is_empty() || f.locator.is_empty() || !fields.insert(&f.name))
+            { return Err(Refusal::InvalidRegistry); }
+        }
+        let page = self.pages.iter().find(|p| p.name == request.page)
+            .ok_or_else(|| Refusal::UnknownPage(request.page.clone()))?;
+        let missing: Vec<_> = request.fields.iter().filter(|name| !page.fields.iter().any(|f| &f.name == *name)).cloned().collect();
+        if !missing.is_empty() { return Err(Refusal::UnknownFields(missing)); }
+        Ok(ReadTask {
+            url: page.url.clone(), limits: limits.clone(),
+            fields: request.fields.iter().filter_map(|name| page.fields.iter().find(|f| &f.name == name).cloned()).collect(),
+        })
+    }
+}
+impl WrapperReading for Wrapper {
+    fn read(&self, task: &ReadTask) -> Output {
+        let attempt = || -> Result<Output, ()> {
+            let mut child = Command::new(&self.interpreter).args([&self.helper, &self.executable])
+                .stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::null()).spawn().map_err(|_| ())?;
+            let serialized = serde_json::to_vec(task).map_err(|_| ())?;
+            let written = child.stdin.take().ok_or(())?.write_all(&serialized);
+            let result = child.wait_with_output().map_err(|_| ())?;
+            written.map_err(|_| ())?;
+            if !result.status.success() { return Err(()); }
+            let observed: Observation = serde_json::from_slice(&result.stdout).map_err(|_| ())?;
+            match observed {
+                Observation::Read { values } => {
+                    if values.len() != task.fields.len() || values.iter().zip(&task.fields).any(|(v, f)| v.name != f.name) { return Err(()); }
+                    Ok(Output::Read(values))
+                }
+                Observation::Refused { refusal } => match refusal {
+                    Refusal::Fields(ref fields) if fields.is_empty()
+                        || fields.iter().collect::<HashSet<_>>().len() != fields.len()
+                        || fields.iter().any(|name| !task.fields.iter().any(|f| &f.name == name)) => Err(()),
+                    Refusal::SessionAttach | Refusal::TabOpen | Refusal::Navigation | Refusal::Fields(_)
+                    | Refusal::TabCleanup | Refusal::SessionRun | Refusal::SessionCleanup
+                    | Refusal::ArtifactSetup | Refusal::ArtifactCleanup | Refusal::InvalidRegistry | Refusal::Interrupted | Refusal::Busy => Ok(Output::Refused(refusal)),
+                    _ => Err(()),
+                },
+            }
+        };
+        attempt().unwrap_or(Output::Refused(Refusal::BrowserOutcome))
+    }
+}
+impl Invocable for Invocation {
+    fn run(&self) -> Output {
+        let run = || -> Result<Output, Refusal> {
+            let [interpreter, helper, executable, registry, request] = self.arguments.as_slice() else { return Err(Refusal::InvalidRequest); };
+            let Input::Read(request) = Input::read_text(request).map_err(|_| Refusal::InvalidRequest)?;
+            if request.page.0.is_empty() || request.fields.is_empty()
+                || request.fields.iter().any(|f| f.0.is_empty())
+                || request.fields.iter().collect::<HashSet<_>>().len() != request.fields.len() { return Err(Refusal::InvalidRequest); }
+            let text = fs::read_to_string(registry).map_err(|e| if e.kind() == std::io::ErrorKind::NotFound { Refusal::MissingRegistry } else { Refusal::UnreadableRegistry })?;
+            let Configuration::Registry(configuration) = Configuration::read_text(&text).map_err(|_| Refusal::InvalidRegistry)?;
+            let task = configuration.select(&request)?;
+            Ok(Wrapper { interpreter: interpreter.clone(), helper: helper.clone(), executable: executable.clone() }.read(&task))
+        };
+        run().unwrap_or_else(Output::Refused)
+    }
+}
+fn main() {
+    let output = Invocation { arguments: std::env::args().skip(1).collect() }.run();
+    println!("{}", output.write_text());
+    if matches!(output, Output::Refused(_)) { std::process::exit(1); }
+}
