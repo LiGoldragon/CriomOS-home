@@ -185,7 +185,7 @@ class Session:
                 except Exception:
                     pass
                 outcome = refused("TabCleanup")
-            if self.started:
+            if self.started and self.pidfds:
                 try:
                     self.invoke(["detach"], limit)
                 except Exception:

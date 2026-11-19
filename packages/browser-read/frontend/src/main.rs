@@ -37,7 +37,7 @@ enum Refusal {
     InvalidRequest, MissingRegistry, UnreadableRegistry, InvalidRegistry,
     UnknownPage(PageName), UnknownFields(Vec<FieldName>),
     SessionAttach, TabOpen, Navigation, Fields(Vec<FieldName>), TabCleanup,
-    SessionRun, SessionCleanup, ArtifactSetup, ArtifactCleanup, BrowserOutcome, Interrupted, Busy,
+    SessionRun, SessionCleanup, ArtifactSetup, ArtifactCleanup, BrowserOutcome, Interrupted,
 }
 #[derive(Composing, Datomizable)]
 enum Output { Read(Vec<FieldValue>), Refused(Refusal) }
@@ -118,7 +118,7 @@ impl WrapperReading for Wrapper {
                         || fields.iter().any(|name| !task.fields.iter().any(|f| &f.name == name)) => Err(()),
                     Refusal::SessionAttach | Refusal::TabOpen | Refusal::Navigation | Refusal::Fields(_)
                     | Refusal::TabCleanup | Refusal::SessionRun | Refusal::SessionCleanup
-                    | Refusal::ArtifactSetup | Refusal::ArtifactCleanup | Refusal::InvalidRegistry | Refusal::Interrupted | Refusal::Busy => Ok(Output::Refused(refusal)),
+                    | Refusal::ArtifactSetup | Refusal::ArtifactCleanup | Refusal::InvalidRegistry | Refusal::Interrupted => Ok(Output::Refused(refusal)),
                     _ => Err(()),
                 },
             }
