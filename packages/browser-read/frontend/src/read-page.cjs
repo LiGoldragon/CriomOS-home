@@ -7,10 +7,12 @@ async function readPage(page, task) {
   let creating = false;
   let unconfirmedCreation = false;
   let output;
-  const bounded = (promise, milliseconds) => new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error('Timeout')), milliseconds);
-    Promise.resolve(promise).then(value => { clearTimeout(timer); resolve(value); }, error => { clearTimeout(timer); reject(error); });
-  });
+  // Upstream run-code's VM exposes Page and standard JS, not Node timers.
+  // Page.waitForTimeout is a read-only driver wait and supplies the deadline.
+  const bounded = (promise, milliseconds) => Promise.race([
+    promise,
+    page.waitForTimeout(milliseconds).then(() => { throw new Error('Timeout'); })
+  ]);
   const connected = () => context.browser()?.isConnected() === true;
   try {
     creating = true;
