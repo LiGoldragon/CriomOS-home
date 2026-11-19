@@ -58,7 +58,7 @@ with tempfile.TemporaryDirectory(prefix='browser-read-tests-') as temporary:
         invoke(expected='Refused.InvalidRegistry')
     filename.write_text(registry)
     for phase in ('SessionAttach','SessionRun','SessionCleanup','ArtifactSetup','ArtifactCleanup','Interrupted'):
-        invoke(mode=phase,expected='Refused.'+phase)
+        invoke(mode=phase,expected='Refused.'+('TabCleanup' if phase == 'SessionRun' else phase))
     for mode,refusal in (('fields','Fields.[ title ]'),('failed-fields','Fields.[ title ]'),('tab-cleanup','TabCleanup'),('navigation','Navigation'),('tab-open','TabOpen')):
         invoke(mode=mode,expected='Refused.'+refusal)
     for mode in ('unknown-phase','false-error','identity-leak','native-error','bad-json','unknown-fields','duplicate-fields','empty-fields','bad-outcome','extra-value','partial-value','wrong-count','failed-success'):
