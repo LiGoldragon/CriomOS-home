@@ -39,7 +39,7 @@ with tempfile.TemporaryDirectory(prefix='browser-read-tests-') as temporary:
         return result.stdout
 
     first = invoke()
-    assert '\\»' in first and '\\\\' in first and '\nline' in first
+    assert first == r'Read.[ { title «one \» two \ three' + '\nline» } ]\n', repr(first)
     for request in ('Read.{ fixture [] }','Read.{ fixture [ title title ] }','Read.{ fixture [ title ]','Read.{ fixture [ title ] } trailing','Read.{ fixture [ «» ] }'):
         invoke(request,expected='Refused.InvalidRequest')
     invoke(arguments=[],expected='Refused.InvalidRequest')
