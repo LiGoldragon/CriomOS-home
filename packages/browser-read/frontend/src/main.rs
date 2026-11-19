@@ -208,23 +208,21 @@ impl RegistrySelection for Registry {
             .iter()
             .find(|p| p.name == request.page)
             .ok_or_else(|| Refusal::UnknownPage(request.page.clone()))?;
-        let missing: Vec<_> = request
-            .fields
-            .iter()
-            .filter(|name| !page.fields.iter().any(|f| &f.name == *name))
-            .cloned()
-            .collect();
+        let mut missing = Vec::new();
+        let mut fields = Vec::new();
+        for name in &request.fields {
+            match page.fields.iter().find(|field| &field.name == name) {
+                Some(field) => fields.push(field.clone()),
+                None => missing.push(name.clone()),
+            }
+        }
         if !missing.is_empty() {
             return Err(Refusal::UnknownFields(missing));
         }
         Ok(ReadTask {
             url: page.url.clone(),
             limits: limits.clone(),
-            fields: request
-                .fields
-                .iter()
-                .filter_map(|name| page.fields.iter().find(|f| &f.name == name).cloned())
-                .collect(),
+            fields,
         })
     }
 }
