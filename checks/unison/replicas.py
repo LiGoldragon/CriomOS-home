@@ -62,11 +62,12 @@ with tempfile.TemporaryDirectory() as temporary:
     for argument in ["-F", "none", "-oBatchMode=yes", "-oIdentityAgent=SSH_AUTH_SOCK", "-oIdentityFile=none", "-oUserKnownHostsFile=none", "-oGlobalKnownHostsFile=/etc/ssh/ssh_known_hosts", "-oStrictHostKeyChecking=yes", "-oPreferredAuthentications=publickey"]:
         assert argument in arguments, arguments
     # -G resolves options without authenticating or opening a connection.
-    options = arguments[:arguments.index("replica.cluster.example")]
+    server_program = next(line.removeprefix("servercmd = ") for line in profile.splitlines() if line.startswith("servercmd = "))
+    options = arguments[:arguments.index(server_program)]
     if "-l" in options:
         # Unison supplies the declared user explicitly; retain it for -G.
         assert options[options.index("-l") + 1] == "example"
-    effective = subprocess.run([sys.argv[3], "-G"] + options + ["replica.cluster.example"], env=environment, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30).stdout.decode()
+    effective = subprocess.run([sys.argv[3], "-G"] + options, env=environment, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30).stdout.decode()
     for setting in ["batchmode yes", "identityfile none", "userknownhostsfile none", "globalknownhostsfile /etc/ssh/ssh_known_hosts", "stricthostkeychecking true", "preferredauthentications publickey"]:
         assert setting in effective, (setting, effective)
     print("closed SSH: exact Unison argument delivery and non-network OpenSSH effective configuration passed")

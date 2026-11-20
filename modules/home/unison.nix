@@ -32,7 +32,7 @@ let
           "times = false"
           "sshcmd = ${cfg.sshPackage}/bin/ssh"
           "sshargs = ${
-            lib.escapeShellArgs [
+            lib.concatStringsSep " " [
               "-F"
               "none"
               "-oBatchMode=yes"
@@ -69,9 +69,9 @@ in
       description = "Declared Unison executable on the replica.";
     };
     knownHostsFile = lib.mkOption {
-      type = lib.types.str;
+      type = lib.types.strMatching "[^[:space:]]+";
       default = "/etc/ssh/ssh_known_hosts";
-      description = "Cluster host keys declared by CriomOS, used exclusively by this service.";
+      description = "Cluster host keys declared by CriomOS, used exclusively; its path must be one Unison sshargs token.";
     };
     ignored = lib.mkOption {
       type = lib.types.listOf lib.types.str;
