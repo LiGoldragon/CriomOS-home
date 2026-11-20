@@ -1,7 +1,7 @@
 { pkgs, inputs, ... }:
 let
   mk =
-    node: synchronizations:
+    node: synchronizations: homeDirectory:
     (inputs.home-manager.lib.homeManagerConfiguration {
       inherit pkgs;
       extraSpecialArgs = {
@@ -18,7 +18,7 @@ let
         ../../modules/home/unison.nix
         {
           home.username = "example";
-          home.homeDirectory = "/home/example";
+          home.homeDirectory = homeDirectory;
           home.stateVersion = "26.05";
         }
       ];
@@ -28,9 +28,15 @@ let
     replica = "replica";
     tree = "code";
   };
-  master = mk "master" [ synchronization ];
-  replica = mk "replica" [ synchronization ];
-  other = mk "other" [ synchronization ];
+  master = mk "master" [ synchronization ] "/home/example";
+  replica = mk "replica" [ synchronization ] "/home/example";
+  other = mk "other" [ synchronization ] "/home/example";
+  invalidHomes = map (path: mk "master" [ synchronization ] path) [
+    "/home/example "
+    "/home/example\t"
+    "/home/ex\rample"
+    "/home/ex\nample"
+  ];
   service = builtins.head (builtins.attrValues master.systemd.user.services);
   command = builtins.head service.Service.ExecStart;
   profileName = builtins.unsafeDiscardStringContext (
@@ -42,6 +48,12 @@ assert builtins.length (builtins.attrNames master.systemd.user.services) == 1;
 assert replica.systemd.user.services == { };
 assert other.systemd.user.services == { };
 assert builtins.elem master.criomos.unison.package replica.home.packages;
+assert builtins.all (
+  configuration:
+  builtins.any (
+    check: !check.assertion && pkgs.lib.hasPrefix "Unison cannot represent home path" check.message
+  ) configuration.assertions
+) invalidHomes;
 assert service.Service.Restart == "on-failure";
 assert builtins.elem (toString profile) service.Unit.X-Restart-Triggers;
 assert service.Unit.StartLimitBurst == 3;
