@@ -49,10 +49,7 @@ assert replica.systemd.user.services == { };
 assert other.systemd.user.services == { };
 assert builtins.elem master.criomos.unison.package replica.home.packages;
 assert builtins.all (
-  configuration:
-  builtins.any (
-    check: !check.assertion && pkgs.lib.hasPrefix "Unison cannot represent home path" check.message
-  ) configuration.assertions
+  configuration: !(builtins.tryEval configuration.home.homeDirectory).success
 ) invalidHomes;
 assert service.Service.Restart == "on-failure";
 assert builtins.elem (toString profile) service.Unit.X-Restart-Triggers;
