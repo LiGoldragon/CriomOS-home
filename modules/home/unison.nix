@@ -78,6 +78,7 @@ in
       default = [
         "target"
         "result"
+        "result-*"
         ".direnv"
       ];
       description = "Basenames excluded from synchronization.";

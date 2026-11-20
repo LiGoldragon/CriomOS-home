@@ -16,7 +16,7 @@ with tempfile.TemporaryDirectory() as temporary:
     (master / "target" / "build").write_text("local build only\n")
     (master / "link").symlink_to("file")
     command = [sys.argv[1], str(master), str(replica), "-batch", "-prefer", str(master), "-times=false"]
-    for ignored in ["target", "result", ".direnv"]:
+    for ignored in ["target", "result", "result-*", ".direnv"]:
         command += ["-ignore", "Name " + ignored]
     def synchronize():
         result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=30)
@@ -36,6 +36,67 @@ with tempfile.TemporaryDirectory() as temporary:
     synchronize()
     assert (replica / "file").read_text() == "master conflict winner\n"
     print("real Unison: bidirectional changes, master conflict preference, VCS, ignored builds, symlinks passed")
+
+# Run the deployed profile with local roots, preserving its watch and ignore
+# settings. Kernel filesystem events drive the fixture; deadlines only fail it.
+import ctypes
+import os
+import select
+import time
+with tempfile.TemporaryDirectory() as temporary:
+    root = pathlib.Path(temporary)
+    master, replica = root / "master", root / "replica"
+    master.mkdir()
+    replica.mkdir()
+    (master / "result").symlink_to("/nix/store/fixture-default")
+    (master / "result-bin").symlink_to("/nix/store/fixture-bin")
+    (master / "result-dev").symlink_to("/nix/store/fixture-dev")
+    (master / "resultnotes").write_text("ordinary content stays\n")
+    profile = pathlib.Path(sys.argv[2]).read_text()
+    profile = profile.replace("root = /home/example/code", "root = " + str(master))
+    profile = profile.replace("root = ssh://example@replica.cluster.example//home/example/code", "root = " + str(replica))
+    profile = profile.replace("prefer = /home/example/code", "prefer = " + str(master))
+    profiles = pathlib.Path(os.environ["HOME"]) / ".unison"
+    profiles.mkdir(exist_ok=True)
+    (profiles / "watch-fixture.prf").write_text(profile)
+    libc = ctypes.CDLL(None, use_errno=True)
+    descriptor = libc.inotify_init1(os.O_CLOEXEC | os.O_NONBLOCK)
+    assert descriptor >= 0
+    for directory in [master, replica]:
+        assert libc.inotify_add_watch(descriptor, os.fsencode(directory), 0x00000FFF) >= 0
+    def await_contents(path, contents):
+        deadline = time.monotonic() + 30
+        while True:
+            if path.is_file() and path.read_text() == contents:
+                return
+            remaining = deadline - time.monotonic()
+            assert remaining > 0, ("watch propagation deadline", str(path))
+            assert select.select([descriptor], [], [], remaining)[0], ("no filesystem event", str(path))
+            os.read(descriptor, 65536)
+    with (root / "watch.log").open("wb") as log:
+        process = subprocess.Popen([sys.argv[1], "watch-fixture"], stdout=log, stderr=subprocess.STDOUT)
+        try:
+            await_contents(replica / "resultnotes", "ordinary content stays\n")
+            (master / "from-master").write_text("watch master update\n")
+            await_contents(replica / "from-master", "watch master update\n")
+            (replica / "from-replica").write_text("watch replica update\n")
+            await_contents(master / "from-replica", "watch replica update\n")
+            for name in ["result", "result-bin", "result-dev"]:
+                assert not (replica / name).is_symlink(), name
+            assert process.poll() is None
+            print("profile watch: event-driven bidirectional updates, result/output links excluded, resultnotes retained")
+        except BaseException:
+            log.flush()
+            print((root / "watch.log").read_text(errors="replace"))
+            raise
+        finally:
+            process.terminate()
+            try:
+                process.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait(timeout=10)
+            os.close(descriptor)
 
 # Exercise Unison's own sshargs parsing, using a fixture program that cannot
 # open a network connection. No production daemon or user directory is used.
