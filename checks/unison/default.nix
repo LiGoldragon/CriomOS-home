@@ -19,7 +19,7 @@ let
   other = mk "other" [ synchronization ];
   service = builtins.head (builtins.attrValues master.systemd.user.services);
   command = builtins.head service.Service.ExecStart;
-  profileName = builtins.elemAt (pkgs.lib.splitString " " command) 1;
+  profileName = builtins.unsafeDiscardStringContext (builtins.elemAt (pkgs.lib.splitString " " command) 1);
   profile = master.home.file.".unison/${profileName}.prf".source;
 in
 assert builtins.length (builtins.attrNames master.systemd.user.services) == 1;
