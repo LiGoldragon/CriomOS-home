@@ -41,8 +41,7 @@ in
     systemd.user.services.battery-warning = {
       Unit = {
         Description = "UPower battery warning lifecycle";
-        After = [ "graphical-session.target" "mako.service" ];
-        Wants = [ "mako.service" ];
+        After = [ "graphical-session.target" ];
         PartOf = [ "graphical-session.target" ];
       };
       Service = {
