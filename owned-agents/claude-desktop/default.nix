@@ -1,6 +1,7 @@
 {
   pkgs,
   commandLineArgs ? "",
+  claudeCodePackage ? pkgs.callPackage ../claude-code { },
 }:
 
 let
@@ -168,6 +169,7 @@ stdenvNoCC.mkDerivation {
     # This is the sole launcher wrapper. It points directly at the unpacked
     # executable and therefore cannot retain an upstream store prefix.
     makeWrapper "$out/lib/claude-desktop/claude-desktop" "$out/bin/claude-desktop" \
+      --set CLAUDE_CODE_LOCAL_BINARY "${claudeCodePackage}/bin/claude" \
       --prefix LD_LIBRARY_PATH : "$out/lib/claude-desktop" \
       --suffix PATH : "${lib.makeBinPath [ xdg-utils ]}" \
       --prefix XDG_DATA_DIRS : "$XDG_ICON_DIRS:$GSETTINGS_SCHEMAS_PATH" \

@@ -13,5 +13,7 @@
   chatgptPackage = pkgs.callPackage ../owned-agents/chatgpt {
     commandLineArgs = chatgptCommandLineArgs;
   };
-  claudeDesktopPackage = pkgs.callPackage ../owned-agents/claude-desktop { };
+  claudeDesktopPackage = pkgs.callPackage ../owned-agents/claude-desktop {
+    inherit claudeCodePackage;
+  };
 }
