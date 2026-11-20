@@ -35,7 +35,7 @@ let
     passthru.flowClient = writeShellApplication {
       name = "codex-plain-flow-client";
       text = ''
-        : "''${CODEX_HOME:?Set CODEX_HOME to this endpoint's private home}"
+        : "''${CODEX_HOME:?Set CODEX_HOME to the private endpoint home}"
         export CODEX_HOME
         exec ${package}/bin/codex "$@"
       '';
