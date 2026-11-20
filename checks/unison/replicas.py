@@ -36,3 +36,37 @@ with tempfile.TemporaryDirectory() as temporary:
     synchronize()
     assert (replica / "file").read_text() == "master conflict winner\n"
     print("real Unison: bidirectional changes, master conflict preference, VCS, ignored builds, symlinks passed")
+
+# Exercise Unison's own sshargs parsing, using a fixture program that cannot
+# open a network connection. No production daemon or user directory is used.
+import json
+import os
+with tempfile.TemporaryDirectory() as temporary:
+    root = pathlib.Path(temporary)
+    agent = root / "agent.sock"
+    captured = root / "arguments.json"
+    fake = root / "ssh"
+    fake.write_text("#!" + sys.executable + "\nimport json,os,pathlib,sys\npathlib.Path(os.environ['UNISON_FIXTURE_ARGUMENTS']).write_text(json.dumps(sys.argv[1:]))\nsys.exit(1)\n")
+    fake.chmod(0o700)
+    profiles = pathlib.Path(os.environ["HOME"]) / ".unison"
+    profiles.mkdir(exist_ok=True)
+    profile = pathlib.Path(sys.argv[2]).read_text()
+    profile = profile.replace("sshcmd = " + sys.argv[3], "sshcmd = " + str(fake))
+    profile = profile.replace("/home/example/code", str(root / "tree"))
+    (root / "tree").mkdir()
+    (profiles / "closed-ssh.prf").write_text(profile)
+    environment = dict(os.environ, SSH_AUTH_SOCK=str(agent), UNISON_FIXTURE_ARGUMENTS=str(captured))
+    failed = subprocess.run([sys.argv[1], "closed-ssh"], env=environment, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=30)
+    assert failed.returncode != 0
+    arguments = json.loads(captured.read_text())
+    for argument in ["-F", "none", "-oBatchMode=yes", "-oIdentityAgent=SSH_AUTH_SOCK", "-oIdentityFile=none", "-oUserKnownHostsFile=none", "-oGlobalKnownHostsFile=/etc/ssh/ssh_known_hosts", "-oStrictHostKeyChecking=yes", "-oPreferredAuthentications=publickey"]:
+        assert argument in arguments, arguments
+    # -G resolves options without authenticating or opening a connection.
+    options = arguments[:arguments.index("replica.cluster.example")]
+    if "-l" in options:
+        # Unison supplies the declared user explicitly; retain it for -G.
+        assert options[options.index("-l") + 1] == "example"
+    effective = subprocess.run([sys.argv[3], "-G"] + options + ["replica.cluster.example"], env=environment, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30).stdout.decode()
+    for setting in ["batchmode yes", "identityfile none", "userknownhostsfile none", "globalknownhostsfile /etc/ssh/ssh_known_hosts", "stricthostkeychecking true", "preferredauthentications publickey"]:
+        assert setting in effective, (setting, effective)
+    print("closed SSH: exact Unison argument delivery and non-network OpenSSH effective configuration passed")

@@ -31,7 +31,19 @@ let
           "prefer = ${localRoot}"
           "times = false"
           "sshcmd = ${cfg.sshPackage}/bin/ssh"
-          "sshargs = -oBatchMode=yes"
+          "sshargs = ${
+            lib.escapeShellArgs [
+              "-F"
+              "none"
+              "-oBatchMode=yes"
+              "-oIdentityAgent=SSH_AUTH_SOCK"
+              "-oIdentityFile=none"
+              "-oUserKnownHostsFile=none"
+              "-oGlobalKnownHostsFile=${cfg.knownHostsFile}"
+              "-oStrictHostKeyChecking=yes"
+              "-oPreferredAuthentications=publickey"
+            ]
+          }"
           "servercmd = ${cfg.remoteProgram}"
         ]
         ++ map (name: "ignore = Name ${name}") cfg.ignored
@@ -55,6 +67,11 @@ in
       type = lib.types.str;
       default = "${config.home.profileDirectory}/bin/unison";
       description = "Declared Unison executable on the replica.";
+    };
+    knownHostsFile = lib.mkOption {
+      type = lib.types.str;
+      default = "/etc/ssh/ssh_known_hosts";
+      description = "Cluster host keys declared by CriomOS, used exclusively by this service.";
     };
     ignored = lib.mkOption {
       type = lib.types.listOf lib.types.str;

@@ -71,12 +71,14 @@ pkgs.runCommand "unison-user-module-contract"
     grep -Fx 'batch = true' ${profile}
     grep -Fx 'prefer = /home/example/code' ${profile}
     grep -Fx 'times = false' ${profile}
-    grep -Fx 'sshargs = -oBatchMode=yes' ${profile}
+    grep -F -- '-oBatchMode=yes' ${profile}
+    grep -F -- '-oIdentityAgent=SSH_AUTH_SOCK' ${profile}
+    grep -F -- '-oStrictHostKeyChecking=yes' ${profile}
     grep -Fx 'ignore = Name target' ${profile}
     grep -Fx 'ignore = Name result' ${profile}
     grep -Fx 'ignore = Name .direnv' ${profile}
     export HOME="$TMPDIR/home"
     mkdir -p "$HOME"
-    python3 ${./replicas.py} ${master.criomos.unison.package}/bin/unison
+    python3 ${./replicas.py} ${master.criomos.unison.package}/bin/unison ${profile} ${master.criomos.unison.sshPackage}/bin/ssh
     touch "$out"
   ''
