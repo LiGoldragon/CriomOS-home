@@ -57,7 +57,7 @@ assert builtins.all (
 assert service.Service.Restart == "on-failure";
 assert builtins.elem (toString profile) service.Unit.X-Restart-Triggers;
 assert service.Unit.StartLimitBurst == 3;
-assert service.Unit.StartLimitIntervalSec == "5min";
+assert service.Unit.StartLimitIntervalSec == 300;
 assert builtins.elem "SSH_AUTH_SOCK=%t/gnupg/S.gpg-agent.ssh" service.Service.Environment;
 pkgs.runCommand "unison-user-module-contract"
   {

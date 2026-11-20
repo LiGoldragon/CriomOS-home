@@ -76,9 +76,9 @@ in
       description = "Maximum service starts within the start limit interval.";
     };
     startLimitInterval = lib.mkOption {
-      type = lib.types.str;
-      default = "5min";
-      description = "Service manager start limit interval.";
+      type = lib.types.ints.positive;
+      default = 300;
+      description = "Positive service manager start limit interval in seconds.";
     };
     restartDelay = lib.mkOption {
       type = lib.types.str;
