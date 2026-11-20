@@ -37,6 +37,7 @@
     ./desktop-database.nix
     ./base.nix
     ./profiles/min
+    ./profiles/min/codex-plain.nix
     ./profiles/min/codex-next.nix
     ./profiles/min/codex-next-candidate.nix
     ./profiles/min/codex-remote-control.nix
