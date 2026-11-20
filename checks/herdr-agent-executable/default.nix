@@ -20,11 +20,13 @@ let
         ../../modules/home/profiles/min/codex-remote-control.nix
         ../../modules/home/profiles/min/codex-next.nix
         ../../modules/home/profiles/min/codex-next-candidate.nix
+        ../../modules/home/profiles/min/codex-plain.nix
         ../../modules/home/profiles/min/herdr.nix
         {
           home.username = user.name;
           home.homeDirectory = "/home/li";
           home.stateVersion = "26.05";
+          criomosHome.codexPlain.enable = true;
         }
       ];
     }).config;
@@ -40,12 +42,15 @@ let
   nextRaw = configuration.criomosHome.codexNextCandidate.package;
   nextClient = configuration.criomosHome.codexNextCandidate.clientPackage;
   nextRemoteClient = configuration.criomosHome.codexNextCandidate.remoteClientPackage;
+  plainClient = configuration.criomosHome.codexPlain.clientPackage;
   configToml = builtins.readFile configuration.xdg.configFile."herdr/config.toml".source;
 in
 assert
   builtins.match ".*codex_executables.*codex-stable-flow-client.*codex-next-flow-client.*" configToml
   != null;
 assert expectedRetainedStablePackage.version == "0.163.0";
+assert lib.hasInfix "\"${plainClient}/bin/codex-plain-flow-client\"" configToml;
+assert builtins.elem plainClient configuration.home.packages;
 assert expectedPathPackage.version == "0.169.0";
 assert pathPackage == expectedPathPackage;
 assert pathPackage != expectedRetainedStablePackage;

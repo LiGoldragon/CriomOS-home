@@ -8,6 +8,7 @@ let
       ../../modules/home/profiles/min/codex-plain.nix
       ({ lib, ... }: {
         options.home.homeDirectory = lib.mkOption { type = lib.types.str; default = "/home/fixture"; };
+        options.home.packages = lib.mkOption { type = lib.types.listOf lib.types.package; default = []; };
         options.systemd.user.services = lib.mkOption { type = lib.types.attrs; default = {}; };
         config.criomosHome.codexPlain.enable = enabled;
       })
@@ -19,6 +20,8 @@ let
   unit = enabled.systemd.user.services.${cfg.unit};
 in
 assert disabled.systemd.user.services == {};
+assert disabled.home.packages == [];
+assert enabled.home.packages == [ cfg.clientPackage ];
 assert !cfg.autoStart;
 assert cfg.authSource == null;
 assert unit.Install.WantedBy == [];

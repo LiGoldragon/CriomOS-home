@@ -25,6 +25,7 @@ in {
     unit = lib.mkOption { type = lib.types.str; readOnly = true; default = unit; };
   };
   config = lib.mkIf cfg.enable {
+    home.packages = [ cfg.clientPackage ];
     systemd.user.services.${unit} = {
       Unit.Description = "Plain stable Codex app-server ${hash}";
       Unit."X-SwitchMethod" = "keep-old";
