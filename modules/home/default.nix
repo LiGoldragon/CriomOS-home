@@ -99,6 +99,7 @@
     # (bar widgets, idle timer, lock timeout). Without it the user
     # gets noctalia's upstream defaults.
     ./profiles/min/sfwbar.nix
+    ./profiles/min/battery-warning.nix
     ./profiles/min/active-network.nix
     ./profiles/min/bitwarden.nix
     ./profiles/med
