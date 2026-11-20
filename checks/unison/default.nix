@@ -43,6 +43,7 @@ assert replica.systemd.user.services == { };
 assert other.systemd.user.services == { };
 assert builtins.elem master.criomos.unison.package replica.home.packages;
 assert service.Service.Restart == "on-failure";
+assert builtins.elem (toString profile) service.Unit.X-Restart-Triggers;
 assert service.Unit.StartLimitBurst == 3;
 assert service.Unit.StartLimitIntervalSec == "5min";
 assert builtins.elem "SSH_AUTH_SOCK=%t/gnupg/S.gpg-agent.ssh" service.Service.Environment;

@@ -99,6 +99,7 @@ in
         lib.nameValuePair (serviceName s) {
           Unit = {
             Description = "Unison ${s.tree} to ${s.replica}";
+            X-Restart-Triggers = [ "${profile s}" ];
             StartLimitBurst = cfg.startLimitBurst;
             StartLimitIntervalSec = cfg.startLimitInterval;
           };
