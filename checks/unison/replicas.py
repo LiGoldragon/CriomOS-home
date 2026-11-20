@@ -19,7 +19,10 @@ with tempfile.TemporaryDirectory() as temporary:
     for ignored in ["target", "result", ".direnv"]:
         command += ["-ignore", "Name " + ignored]
     def synchronize():
-        subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=30)
+        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=30)
+        if result.returncode:
+            print(result.stdout.decode(errors="replace"))
+            result.check_returncode()
     synchronize()
     assert (replica / "file").read_text() == "initial master\n"
     assert (replica / ".git" / "fixture").is_file()
