@@ -107,6 +107,8 @@ stdenvNoCC.mkDerivation {
     copyDesktopItems
     makeWrapper
     patchelf
+    pkgs.asar
+    pkgs.nodejs
   ];
   buildInputs = [
     adwaita-icon-theme
@@ -166,10 +168,22 @@ stdenvNoCC.mkDerivation {
     cp -a usr/share/icons $out/share/icons
     cp -a usr/share/doc $out/share/doc
 
+    asar extract "$out/lib/claude-desktop/resources/app.asar" "$TMPDIR/desktop-app"
+    node - "$TMPDIR/desktop-app/.vite/build/index.chunk-DOKiptke.js" "${claudeCodePackage}/bin/claude" <<'NODE'
+    const fs = require("node:fs");
+    const file = process.argv[2];
+    const binary = process.argv[3];
+    const source = fs.readFileSync(file, "utf8");
+    const anchor = "this.localBinaryInitPromise=null";
+    if (source.split(anchor).length !== 2) throw new Error("Claude manager initialization anchor changed");
+    const call = "this.localBinaryInitPromise=this.initLocalBinary(" + JSON.stringify(binary) + ")";
+    fs.writeFileSync(file, source.replace(anchor, call));
+    NODE
+    asar pack "$TMPDIR/desktop-app" "$out/lib/claude-desktop/resources/app.asar"
+
     # This is the sole launcher wrapper. It points directly at the unpacked
     # executable and therefore cannot retain an upstream store prefix.
     makeWrapper "$out/lib/claude-desktop/claude-desktop" "$out/bin/claude-desktop" \
-      --set CLAUDE_CODE_LOCAL_BINARY "${claudeCodePackage}/bin/claude" \
       --prefix LD_LIBRARY_PATH : "$out/lib/claude-desktop" \
       --suffix PATH : "${lib.makeBinPath [ xdg-utils ]}" \
       --prefix XDG_DATA_DIRS : "$XDG_ICON_DIRS:$GSETTINGS_SCHEMAS_PATH" \

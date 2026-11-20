@@ -29,6 +29,12 @@ pkgs.runCommand "claude-desktop-launcher-linkage"
       const fs = require("node:fs");
       const path = require("node:path");
       const app = process.argv[1];
+      const binary = process.argv[2];
+      const manager = fs.readFileSync(path.join(app, ".vite/build/index.chunk-DOKiptke.js"), "utf8");
+      const call = "this.localBinaryInitPromise=this.initLocalBinary(" + JSON.stringify(binary) + ")";
+      if (manager.split(call).length !== 2) throw new Error("production manager does not initialize exactly once with declared Claude Code");
+      if (manager.includes("this.localBinaryInitPromise=null")) throw new Error("inactive manager initializer remains");
+      if (!manager.includes("this.localBinaryInitPromise&&await this.localBinaryInitPromise,this.localBinaryPath")) throw new Error("manager does not await local initialization before selecting binary");
       const packagePath = path.join(app, "package.json");
       const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
       packageJson.main = "criomos-launcher-linkage.cjs";
@@ -43,7 +49,7 @@ pkgs.runCommand "claude-desktop-launcher-linkage"
           if (process.resourcesPath !== expectedResources) throw new Error("launcher used " + process.resourcesPath + ", expected " + expectedResources);
           if (process.execPath !== expectedExecutable) throw new Error("launcher used " + process.execPath + ", expected " + expectedExecutable);
           const expectedClaude = process.env.CRIOMOS_EXPECTED_CLAUDE;
-          if (process.env.CLAUDE_CODE_LOCAL_BINARY !== expectedClaude) throw new Error("launcher must select the plain declared Claude Code binary");
+          if (process.env.CLAUDE_CODE_LOCAL_BINARY !== undefined) throw new Error("obsolete launcher variable remains");
           if (!expectedClaude.startsWith("/nix/store/") || !fs.existsSync(expectedClaude)) throw new Error("declared Claude Code is absent");
           const cli = require("node:child_process").spawnSync(expectedClaude, ["--version"], {encoding: "utf8"});
           if (cli.status !== 0) throw new Error("declared Claude Code does not execute");
@@ -56,7 +62,7 @@ pkgs.runCommand "claude-desktop-launcher-linkage"
           process.exit(1);
         });
       `);
-    ' "$test_app"
+    ' "$test_app" "${ownedAgentPackages.claudeCodePackage}/bin/claude"
     ${pkgs.asar}/bin/asar pack \
       "$test_app" \
       "$test_desktop/lib/claude-desktop/resources/app.asar"
@@ -96,7 +102,6 @@ pkgs.runCommand "claude-desktop-launcher-linkage"
       XDG_CONFIG_HOME="$runtime_root/config" \
       XDG_DATA_HOME="$runtime_root/data" \
       XDG_CACHE_HOME="$runtime_root/cache" \
-      CLAUDE_CODE_LOCAL_BINARY=/unusable-inherited-override \
       CRIOMOS_EXPECTED_CLAUDE="${ownedAgentPackages.claudeCodePackage}/bin/claude" \
       CRIOMOS_EXPECTED_RESOURCES="$test_desktop/lib/claude-desktop/resources" \
       CRIOMOS_EXPECTED_EXECUTABLE="$test_desktop/lib/claude-desktop/claude-desktop" \
