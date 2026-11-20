@@ -35,13 +35,18 @@ pkgs.runCommand "claude-desktop-launcher-linkage"
       fs.writeFileSync(packagePath, JSON.stringify(packageJson));
       fs.writeFileSync(path.join(app, "criomos-launcher-linkage.cjs"), `
         const electron = require("electron");
+        const fs = require("node:fs");
         const expectedResources = process.env.CRIOMOS_EXPECTED_RESOURCES;
         const expectedExecutable = process.env.CRIOMOS_EXPECTED_EXECUTABLE;
         if (!expectedResources || !expectedExecutable) throw new Error("launcher linkage expectations are absent");
         electron.app.whenReady().then(() => {
           if (process.resourcesPath !== expectedResources) throw new Error("launcher used " + process.resourcesPath + ", expected " + expectedResources);
           if (process.execPath !== expectedExecutable) throw new Error("launcher used " + process.execPath + ", expected " + expectedExecutable);
-          if (process.env.CLAUDE_CODE_LOCAL_BINARY !== undefined) throw new Error("launcher unexpectedly sets a mutable CLI override");
+          const expectedClaude = process.env.CRIOMOS_EXPECTED_CLAUDE;
+          if (process.env.CLAUDE_CODE_LOCAL_BINARY !== expectedClaude) throw new Error("launcher must select the plain declared Claude Code binary");
+          if (!expectedClaude.startsWith("/nix/store/") || !fs.existsSync(expectedClaude)) throw new Error("declared Claude Code is absent");
+          const cli = require("node:child_process").spawnSync(expectedClaude, ["--version"], {encoding: "utf8"});
+          if (cli.status !== 0) throw new Error("declared Claude Code does not execute");
           console.log("claude-desktop-launcher-linkage: passed");
           electron.app.quit();
           process.exit(0);
@@ -91,6 +96,8 @@ pkgs.runCommand "claude-desktop-launcher-linkage"
       XDG_CONFIG_HOME="$runtime_root/config" \
       XDG_DATA_HOME="$runtime_root/data" \
       XDG_CACHE_HOME="$runtime_root/cache" \
+      CLAUDE_CODE_LOCAL_BINARY=/unusable-inherited-override \
+      CRIOMOS_EXPECTED_CLAUDE="${ownedAgentPackages.claudeCodePackage}/bin/claude" \
       CRIOMOS_EXPECTED_RESOURCES="$test_desktop/lib/claude-desktop/resources" \
       CRIOMOS_EXPECTED_EXECUTABLE="$test_desktop/lib/claude-desktop/claude-desktop" \
       "$test_desktop/bin/claude-desktop" \
@@ -100,5 +107,9 @@ pkgs.runCommand "claude-desktop-launcher-linkage"
     wait "$launcher_pgid"
     launcher_pgid=""
 
+    # This synthetic startup proves launcher linkage and local CLI execution,
+    # not a signed-in vendor session. Its isolated home must have no downloaded CLI.
+    test ! -e "$runtime_root/home/.local/share/claude"
+    test ! -e "$runtime_root/config/Claude/claude-code"
     touch "$out"
   ''
