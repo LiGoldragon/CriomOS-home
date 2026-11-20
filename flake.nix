@@ -473,6 +473,8 @@
             codex = ownedAgentPackages.codexPackage;
             codex-next = ownedPkgs.callPackage ./owned-agents/codex-next { };
             claude-code = ownedAgentPackages.claudeCodePackage;
+            codex-plain = pkgs.callPackage ./owned-agents/codex-plain {};
+            codex-plain-flow-client = (pkgs.callPackage ./owned-agents/codex-plain {}).flowClient;
           };
         in
         basePackages
@@ -621,6 +623,7 @@
           };
           codex-remote = checkPkgs.callPackage ./gates/codex-remote { };
           codex-artifact-gateway = checkPkgs.callPackage ./checks/codex-artifact-gateway { };
+          codex-plain = checkPkgs.callPackage ./checks/codex-plain {};
           codex-artifact-gateway-module = checkPkgs.callPackage ./checks/codex-artifact-gateway-module {
             inherit inputs;
           };
