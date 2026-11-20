@@ -29,7 +29,7 @@ assert service.Service.Restart == "on-failure";
 assert service.Unit.StartLimitBurst == 3;
 assert service.Unit.StartLimitIntervalSec == "5min";
 assert builtins.elem "SSH_AUTH_SOCK=%t/gnupg/S.gpg-agent.ssh" service.Service.Environment;
-pkgs.runCommand "unison-user-module-contract" { } ''
+pkgs.runCommand "unison-user-module-contract" { nativeBuildInputs = [ pkgs.python3 master.criomos.unison.package ]; } ''
   set -eu
   grep -Fx 'root = /home/example/code' ${profile}
   grep -Fx 'root = ssh://example@replica.cluster.example//home/example/code' ${profile}
@@ -41,5 +41,8 @@ pkgs.runCommand "unison-user-module-contract" { } ''
   grep -Fx 'ignore = Name target' ${profile}
   grep -Fx 'ignore = Name result' ${profile}
   grep -Fx 'ignore = Name .direnv' ${profile}
+  export HOME="$TMPDIR/home"
+  mkdir -p "$HOME"
+  python3 ${./replicas.py} ${master.criomos.unison.package}/bin/unison
   touch "$out"
 ''
