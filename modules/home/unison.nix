@@ -87,6 +87,17 @@ in
     };
   };
   config = lib.mkIf participates {
+    assertions = [
+      {
+        assertion =
+          builtins.match "[^\n\r]*" config.home.homeDirectory != null
+          && !(lib.hasPrefix " " config.home.homeDirectory)
+          && !(lib.hasPrefix "\t" config.home.homeDirectory)
+          && !(lib.hasSuffix " " config.home.homeDirectory)
+          && !(lib.hasSuffix "\t" config.home.homeDirectory);
+        message = "Unison cannot represent home path ${builtins.toJSON config.home.homeDirectory} in its profile";
+      }
+    ];
     home.packages = [ cfg.package ];
     home.file = builtins.listToAttrs (
       map (
