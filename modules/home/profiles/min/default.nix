@@ -433,7 +433,7 @@ in
   config = mkIf (sizeAtLeast "Min") {
     criomosHome.codexPlain = {
       enable = lib.mkDefault true;
-      autoStart = lib.mkDefault true;
+      autoStart = lib.mkDefault false;
     };
 
     fonts.fontconfig = {
