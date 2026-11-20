@@ -63,7 +63,7 @@ with tempfile.TemporaryDirectory() as temporary:
     descriptor = libc.inotify_init1(os.O_CLOEXEC | os.O_NONBLOCK)
     assert descriptor >= 0
     for directory in [master, replica]:
-        assert libc.inotify_add_watch(descriptor, os.fsencode(directory), 0x00000FFF) >= 0
+        assert libc.inotify_add_watch(descriptor, os.fsencode(directory), 0x00000388) >= 0
     def await_contents(path, contents):
         deadline = time.monotonic() + 30
         while True:
