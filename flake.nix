@@ -473,8 +473,8 @@
             codex = ownedAgentPackages.codexPackage;
             codex-next = ownedPkgs.callPackage ./owned-agents/codex-next { };
             claude-code = ownedAgentPackages.claudeCodePackage;
-            codex-plain = pkgs.callPackage ./owned-agents/codex-plain {};
-            codex-plain-flow-client = (pkgs.callPackage ./owned-agents/codex-plain {}).flowClient;
+            codex-plain = ownedPkgs.callPackage ./owned-agents/codex-plain {};
+            codex-plain-flow-client = (ownedPkgs.callPackage ./owned-agents/codex-plain {}).flowClient;
           };
         in
         basePackages
