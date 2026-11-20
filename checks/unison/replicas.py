@@ -15,7 +15,7 @@ with tempfile.TemporaryDirectory() as temporary:
     (master / "target").mkdir()
     (master / "target" / "build").write_text("local build only\n")
     (master / "link").symlink_to("file")
-    command = [sys.argv[1], str(master), str(replica), "-batch", "-prefer", str(master), "-times", "false"]
+    command = [sys.argv[1], str(master), str(replica), "-batch", "-prefer", str(master), "-times=false"]
     for ignored in ["target", "result", ".direnv"]:
         command += ["-ignore", "Name " + ignored]
     def synchronize():

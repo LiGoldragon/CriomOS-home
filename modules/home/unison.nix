@@ -36,6 +36,7 @@ in {
   };
   config = lib.mkIf participates {
     home.packages = [ cfg.package ];
+    home.file = builtins.listToAttrs (map (s: lib.nameValuePair ".unison/${serviceName s}.prf" { source = profile s; }) localSynchronizations);
     systemd.user.services = builtins.listToAttrs (map (s: lib.nameValuePair (serviceName s) {
       Unit = {
         Description = "Unison ${s.tree} to ${s.replica}";
@@ -43,7 +44,7 @@ in {
         StartLimitIntervalSec = cfg.startLimitInterval;
       };
       Service = {
-        ExecStart = "${cfg.package}/bin/unison ${profile s}";
+        ExecStart = "${cfg.package}/bin/unison ${serviceName s}";
         Environment = [ "SSH_AUTH_SOCK=${cfg.identityAgent}" ];
         Restart = "on-failure";
         RestartSec = cfg.restartDelay;
