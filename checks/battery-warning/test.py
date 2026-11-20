@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import sys
+import tempfile
 import unittest
 from unittest import mock
 
@@ -93,9 +94,19 @@ class PowerDevice(ServiceInterface):
 
 class BatteryWarningTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
-        self.daemon = await asyncio.create_subprocess_exec('dbus-daemon','--session','--nofork','--print-address=1',
-            stdout=asyncio.subprocess.PIPE,stderr=asyncio.subprocess.DEVNULL)
+        self.temporary = tempfile.TemporaryDirectory()
+        configuration = Path(self.temporary.name) / 'bus.conf'
+        configuration.write_text('<busconfig><type>session</type><listen>unix:tmpdir=' +
+            self.temporary.name + '</listen><auth>EXTERNAL</auth><policy context="default">' +
+            '<allow user="*"/><allow own="*"/><allow send_destination="*"/>' +
+            '<allow receive_sender="*"/></policy></busconfig>')
+        self.daemon = await asyncio.create_subprocess_exec('dbus-daemon','--config-file='+str(configuration),
+            '--nofork','--print-address=1',stdout=asyncio.subprocess.PIPE,stderr=asyncio.subprocess.PIPE)
         address = (await self.daemon.stdout.readline()).decode().strip()
+        if not address:
+            _, diagnostic = await self.daemon.communicate()
+            self.temporary.cleanup()
+            raise RuntimeError('private fixture bus failed: ' + diagnostic.decode())
         self.environment = mock.patch.dict(os.environ,{'DBUS_SESSION_BUS_ADDRESS':address,'DBUS_SYSTEM_BUS_ADDRESS':address})
         self.environment.start()
         self.bus = await MessageBus(bus_address=address).connect()
@@ -118,6 +129,7 @@ class BatteryWarningTests(unittest.IsolatedAsyncioTestCase):
         self.daemon.terminate()
         await self.daemon.wait()
         self.environment.stop()
+        self.temporary.cleanup()
 
     async def update(self, value):
         return await self.controller.update(warning.PowerSnapshot.decode(value))
