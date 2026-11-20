@@ -66,6 +66,13 @@ pkgs.runCommand "claude-desktop-launcher-linkage"
     ${pkgs.asar}/bin/asar pack \
       "$test_app" \
       "$test_desktop/lib/claude-desktop/resources/app.asar"
+    ${pkgs.nodejs}/bin/node - "${pkgs.asar}/lib/node_modules/@electron/asar" "${claudeDesktopPackage}/lib/claude-desktop/resources/app.asar" <<'NODE'
+    const asar = require(process.argv[2]);
+    const archive = process.argv[3];
+    const actual = asar.listPackage(archive).filter(name => asar.statFile(archive, name.slice(1), false).unpacked).sort();
+    const expected = ["/node_modules/@ant/claude-native/claude-native-binding.node", "/node_modules/node-pty/prebuilds/linux-x64/pty.node", "/resources/github-mcp/github-mcp-server"].sort();
+    if (JSON.stringify(actual) !== JSON.stringify(expected)) throw new Error("vendor native/helper unpacked entries changed");
+    NODE
     launcher="$test_desktop/bin/claude-desktop"
     sed -i "s|${claudeDesktopPackage}|$test_desktop|g" "$launcher"
     ! grep -F '/nix/store/' "$launcher" | grep -F '/bin/claude-desktop' | grep -v "$test_desktop" 
