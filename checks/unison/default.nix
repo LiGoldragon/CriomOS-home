@@ -76,6 +76,7 @@ pkgs.runCommand "unison-user-module-contract"
     grep -F -- '-oStrictHostKeyChecking=yes' ${profile}
     grep -Fx 'ignore = Name target' ${profile}
     grep -Fx 'ignore = Name result' ${profile}
+    grep -Fx 'ignore = Name result-*' ${profile}
     grep -Fx 'ignore = Name .direnv' ${profile}
     export HOME="$TMPDIR/home"
     mkdir -p "$HOME"
