@@ -169,8 +169,13 @@ stdenvNoCC.mkDerivation {
     cp -a usr/share/doc $out/share/doc
 
     asar extract "$out/lib/claude-desktop/resources/app.asar" "$TMPDIR/desktop-app"
-    node - "$TMPDIR/desktop-app/.vite/build/index.chunk-DOKiptke.js" "${claudeCodePackage}/bin/claude" <<'NODE'
+    node - "$TMPDIR/desktop-app/.vite/build/index.chunk-DOKiptke.js" "${claudeCodePackage}/bin/claude" "$out/lib/claude-desktop/resources/app.asar" "${pkgs.asar}/lib/node_modules/@electron/asar" <<'NODE'
     const fs = require("node:fs");
+    const path = require("node:path");
+    const asar = require(process.argv[5]);
+    const archive = process.argv[4];
+    const unpacked = () => asar.listPackage(archive).filter(name => asar.statFile(archive, name.slice(1), false).unpacked).sort();
+    const originalUnpacked = unpacked();
     const file = process.argv[2];
     const binary = process.argv[3];
     const source = fs.readFileSync(file, "utf8");
@@ -178,8 +183,14 @@ stdenvNoCC.mkDerivation {
     if (source.split(anchor).length !== 2) throw new Error("Claude manager initialization anchor changed");
     const call = "this.localBinaryInitPromise=this.initLocalBinary(" + JSON.stringify(binary) + ")";
     fs.writeFileSync(file, source.replace(anchor, call));
+    const root = path.resolve(path.dirname(file), "../..");
+    const paths = originalUnpacked.map(name => path.join(root, name.slice(1)));
+    const unpack = paths.length === 1 ? paths[0] : "{" + paths.join(",") + "}";
+    asar.createPackageWithOptions(root, archive, {unpack}).then(() => {
+      asar.uncache(archive);
+      if (JSON.stringify(unpacked()) !== JSON.stringify(originalUnpacked)) throw new Error("vendor unpacked layout changed");
+    }).catch(error => { console.error(error); process.exit(1); });
     NODE
-    asar pack "$TMPDIR/desktop-app" "$out/lib/claude-desktop/resources/app.asar"
 
     # This is the sole launcher wrapper. It points directly at the unpacked
     # executable and therefore cannot retain an upstream store prefix.
