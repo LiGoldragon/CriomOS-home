@@ -609,6 +609,7 @@
           plannotator = checkPkgs.callPackage ./checks/plannotator { };
           spirit-deployment = checkPkgs.callPackage ./checks/spirit-deployment { inherit inputs; };
           flow-id = checkPkgs.callPackage ./checks/flow-id { inherit inputs; };
+          unison = checkPkgs.callPackage ./checks/unison { inherit inputs; };
           aggregator-deployment = checkPkgs.callPackage ./checks/aggregator-deployment { inherit inputs; };
           owned-agent-updater = checkPkgs.callPackage ./checks/owned-agent-updater { inherit inputs; };
           context-skills-singleton-layout =

@@ -31,6 +31,7 @@
   # CriomOS-home's own flake inputs (the wrapper overrides
   # _module.args.inputs).
   imports = [
+    ./unison.nix
     ./core-packages.nix
     ./text-scale.nix
     ./visual-theme.nix
