@@ -778,7 +778,7 @@
     "ethos-zero": {
       "inputs": {
         "base": [
-          "flow-0550",
+          "flow-0604",
           "translator",
           "base"
         ],
@@ -824,7 +824,7 @@
     "fenix_10": {
       "inputs": {
         "nixpkgs": [
-          "flow-0550",
+          "flow-0604",
           "migration-predecessor",
           "unconfigured-flow",
           "nixpkgs"
@@ -1141,7 +1141,7 @@
     "fenix_8": {
       "inputs": {
         "nixpkgs": [
-          "flow-0550",
+          "flow-0604",
           "base",
           "nixpkgs"
         ],
@@ -1164,7 +1164,7 @@
     "fenix_9": {
       "inputs": {
         "nixpkgs": [
-          "flow-0550",
+          "flow-0604",
           "migration-predecessor",
           "nixpkgs"
         ],
@@ -1596,7 +1596,7 @@
         "type": "github"
       }
     },
-    "flow-0550": {
+    "flow-0604": {
       "inputs": {
         "base": "base_3",
         "curriculum": "curriculum",
@@ -1604,11 +1604,11 @@
         "translator": "translator"
       },
       "locked": {
-        "lastModified": 1795234168,
-        "narHash": "sha256-YOgP1glMqwdTFBI2y8BPXloi9eelkFXQbQEmuERF8gs=",
+        "lastModified": 1795270011,
+        "narHash": "sha256-KLrq0WD84UmdjQoLxo9LiNdRRvqNtRX9FfM9sHPpPzM=",
         "owner": "LiGoldragon",
         "repo": "flow",
-        "rev": "1e9d9e59abb735e795db816b0140c71ee8e4f73d",
+        "rev": "fad498e52b0eb5f6d9ab7a5afea2bbfbdac279d3",
         "type": "github"
       },
       "original": {
@@ -2790,7 +2790,7 @@
         "dotos-text-query": "dotos-text-query",
         "field-belief": "field-belief",
         "flow": [
-          "flow-0550"
+          "flow-0604"
         ],
         "mind-belief": "mind-belief",
         "nixpkgs": [
@@ -2926,7 +2926,7 @@
         "field-clj": "field-clj",
         "field-luna-research-source": "field-luna-research-source",
         "field-monitoring-source": "field-monitoring-source",
-        "flow-0550": "flow-0550",
+        "flow-0604": "flow-0604",
         "google-workspace-cli": "google-workspace-cli",
         "harness": "harness",
         "herdr": "herdr",
@@ -4322,7 +4322,7 @@
     "translator": {
       "inputs": {
         "base": [
-          "flow-0550",
+          "flow-0604",
           "base"
         ],
         "ethos-zero": "ethos-zero"
