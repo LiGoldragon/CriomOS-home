@@ -61,10 +61,10 @@ assert command != null;
 pkgs.runCommand "builder-cargo-check" { } ''
   grep -F "/home/example/Code" ${command}/bin/builder-cargo
   grep -F "builder.example.criome" ${command}/bin/builder-cargo
-  cd /
+  cd "$TMPDIR"
   status=0
-  ${command}/bin/builder-cargo build 2>reply || status=$?
+  ${command}/bin/builder-cargo build 2>"$TMPDIR/reply" || status=$?
   test "$status" -eq 2
-  grep -F "outside the synchronized tree" reply
+  grep -F "outside the synchronized tree" "$TMPDIR/reply"
   touch "$out"
 ''
