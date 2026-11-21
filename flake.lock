@@ -194,11 +194,11 @@
         "nixpkgs": "nixpkgs_4"
       },
       "locked": {
-        "lastModified": 1795232760,
-        "narHash": "sha256-Md4IXPqKu9UB1MojkguWeAK8oJPC6RfTCW27Vjbg8QI=",
+        "lastModified": 1795279492,
+        "narHash": "sha256-EvQqywp/PG5jkm5HRu9dw4iLNKN03GOGgiCN1Vq+1FY=",
         "owner": "LiGoldragon",
         "repo": "build-base",
-        "rev": "5c77a13bd94886c2aba7d5c351d0208575dc73ee",
+        "rev": "e46932b476a810859ad39b63daadae2ef676c08d",
         "type": "github"
       },
       "original": {
@@ -778,7 +778,7 @@
     "ethos-zero": {
       "inputs": {
         "base": [
-          "flow-0604",
+          "flow-0606",
           "translator",
           "base"
         ],
@@ -824,7 +824,7 @@
     "fenix_10": {
       "inputs": {
         "nixpkgs": [
-          "flow-0604",
+          "flow-0606",
           "migration-predecessor",
           "unconfigured-flow",
           "nixpkgs"
@@ -1141,7 +1141,7 @@
     "fenix_8": {
       "inputs": {
         "nixpkgs": [
-          "flow-0604",
+          "flow-0606",
           "base",
           "nixpkgs"
         ],
@@ -1164,7 +1164,7 @@
     "fenix_9": {
       "inputs": {
         "nixpkgs": [
-          "flow-0604",
+          "flow-0606",
           "migration-predecessor",
           "nixpkgs"
         ],
@@ -1596,7 +1596,7 @@
         "type": "github"
       }
     },
-    "flow-0604": {
+    "flow-0606": {
       "inputs": {
         "base": "base_3",
         "curriculum": "curriculum",
@@ -1604,11 +1604,11 @@
         "translator": "translator"
       },
       "locked": {
-        "lastModified": 1795270011,
-        "narHash": "sha256-KLrq0WD84UmdjQoLxo9LiNdRRvqNtRX9FfM9sHPpPzM=",
+        "lastModified": 1795279815,
+        "narHash": "sha256-Csdfdj7Y8hkA3yXYm4DI1kAGAgd9wLdb7p29FfkSRAQ=",
         "owner": "LiGoldragon",
         "repo": "flow",
-        "rev": "fad498e52b0eb5f6d9ab7a5afea2bbfbdac279d3",
+        "rev": "19b5fda23dfc55854d2192580fd70a4ad2a3d986",
         "type": "github"
       },
       "original": {
@@ -2790,7 +2790,7 @@
         "dotos-text-query": "dotos-text-query",
         "field-belief": "field-belief",
         "flow": [
-          "flow-0604"
+          "flow-0606"
         ],
         "mind-belief": "mind-belief",
         "nixpkgs": [
@@ -2926,7 +2926,7 @@
         "field-clj": "field-clj",
         "field-luna-research-source": "field-luna-research-source",
         "field-monitoring-source": "field-monitoring-source",
-        "flow-0604": "flow-0604",
+        "flow-0606": "flow-0606",
         "google-workspace-cli": "google-workspace-cli",
         "harness": "harness",
         "herdr": "herdr",
@@ -4322,7 +4322,7 @@
     "translator": {
       "inputs": {
         "base": [
-          "flow-0604",
+          "flow-0606",
           "base"
         ],
         "ethos-zero": "ethos-zero"
