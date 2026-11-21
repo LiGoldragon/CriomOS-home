@@ -87,8 +87,6 @@
     ./profiles/min/flow.nix
     # Flow 0.55.0, the version at main.
     ./profiles/min/flow-0550.nix
-    # Cargo for iteration on the host CriomOS names; the wrapper elsewhere.
-    ./profiles/min/rust-iteration.nix
     # Next Flow and next Message beside the stable pair, on their own
     # sockets and stores (the stable/next pattern, lib/stable-next-service.nix).
     ./profiles/min/flow-message-next.nix

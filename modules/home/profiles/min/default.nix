@@ -424,9 +424,11 @@ let
 in
 {
   imports = [
+    ./codex-plain.nix
     ./default-opener.nix
     ./herdr.nix
     ./pi-models.nix
+    ./rust-iteration.nix
   ];
 
   config = mkIf (sizeAtLeast "Min") {
