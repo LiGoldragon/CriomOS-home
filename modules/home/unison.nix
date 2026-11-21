@@ -83,8 +83,8 @@ in
     };
     ignoredPaths = lib.mkOption {
       type = lib.types.listOf lib.types.str;
-      default = [ "staging" ];
-      description = "Paths under the tree's root excluded from synchronization; staging holds worktrees that link back into this node's /git.";
+      default = [ ];
+      description = "Paths under the tree's root excluded from synchronization.";
     };
     identityAgent = lib.mkOption {
       type = lib.types.str;
