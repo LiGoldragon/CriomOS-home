@@ -81,6 +81,10 @@ pkgs.runCommand "unison-user-module-contract"
     grep -Fx 'ignore = Name result' ${profile}
     grep -Fx 'ignore = Name result-*' ${profile}
     grep -Fx 'ignore = Name .direnv' ${profile}
+    if grep -Fx 'ignore = Path staging' ${profile}; then
+      echo 'a root-level staging directory must sync by default' >&2
+      exit 1
+    fi
     export HOME="$TMPDIR/home"
     mkdir -p "$HOME"
     python3 ${./replicas.py} ${master.criomos.unison.package}/bin/unison ${profile} ${master.criomos.unison.sshPackage}/bin/ssh
