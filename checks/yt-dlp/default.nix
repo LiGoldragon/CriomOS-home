@@ -44,7 +44,7 @@ let
     };
     # The real projection, not a hand-written shape. See fixtures/horizon.nix.
     horizon = import ../../fixtures/horizon.nix;
-    config = { };
+    config.criomosHome.rustIteration.toolchain = null;
     inputs = { };
     hexis = null;
     rustToolchain = null;
