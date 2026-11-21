@@ -1,12 +1,12 @@
-# Flow Nexus 0.60.4, built per crate on the build base: its package and its
-# clients under their versioned names (flow-0.60.4, flow-meta-0.60.4). It
+# Flow Nexus 0.60.5, built per crate on the build base: its package and its
+# clients under their versioned names (flow-0.60.5, flow-meta-0.60.5). It
 # starts in its place (flow-nexus-place.nix): main, the place every flow
 # reports to, whose sockets are $XDG_RUNTIME_DIR/nexus/main/ and whose memory
 # is ~/.local/state/nexus/main/flow.sema, which it opens and upgrades in
 # place. It is the version at main, enabled for a user with AgentStack as
 # every version is. The bare flow and flow-meta are its own CLIs.
 #
-# Every version is its own unit, named for it (flow-nexus-0604). A new
+# Every version is its own unit, named for it (flow-nexus-0605). A new
 # version at main is a new input, a new module and a new unit, and the Home
 # activation stops the previous version's unit and starts this one: nothing is
 # stopped by hand before a switch, so the user manager's re-execution during
@@ -28,12 +28,12 @@
 {
   imports = [
     (import ./flow-nexus-place.nix {
-      version = "0.60.4";
-      slug = "0604";
+      version = "0.60.5";
+      slug = "0605";
     })
   ];
 
-  criomosHome.flow0604 = {
+  criomosHome.flow0605 = {
     place = "main";
     stableHook = true;
     glibcAllocator = {
@@ -49,14 +49,14 @@
     };
   };
 
-  systemd.user.services.${config.criomosHome.flow0604.unit}.Unit.X-SwitchMethod = "keep-old";
+  systemd.user.services.${config.criomosHome.flow0605.unit}.Unit.X-SwitchMethod = "keep-old";
 
-  home.packages = [ config.criomosHome.flow0604.clients ];
+  home.packages = [ config.criomosHome.flow0605.clients ];
 
-  home.file.".local/bin/flow".source = "${config.criomosHome.flow0604.package}/bin/flow";
-  home.file.".local/bin/flow-meta".source = "${config.criomosHome.flow0604.package}/bin/flow-meta";
+  home.file.".local/bin/flow".source = "${config.criomosHome.flow0605.package}/bin/flow";
+  home.file.".local/bin/flow-meta".source = "${config.criomosHome.flow0605.package}/bin/flow-meta";
 
-  xdg.configFile."nexus/flow-nexus.datom" = lib.mkIf (config.criomosHome.flow0604.place == "main") {
-    source = "${config.criomosHome.flow0604.placeConfiguration}/nexus/flow-nexus.datom";
+  xdg.configFile."nexus/flow-nexus.datom" = lib.mkIf (config.criomosHome.flow0605.place == "main") {
+    source = "${config.criomosHome.flow0605.placeConfiguration}/nexus/flow-nexus.datom";
   };
 }
