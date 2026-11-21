@@ -63,6 +63,17 @@ lib.mkIf behavesAs.edge {
       widget.listener-level.type = "criomos/listener-level:level";
       widget.tray.drawer = true;
       widget.battery.display_mode = "graphic";
+      battery = { warning_threshold = 0; device = { }; };
+      notification = {
+        enable_daemon = false;
+        filter.mako-only = {
+          enabled = true;
+          match_content = ".*";
+          show_toast = false;
+          save_history = false;
+          play_sound = false;
+        };
+      };
       bar.main = {
         margin_ends = 0;
         start = [
@@ -95,6 +106,8 @@ lib.mkIf behavesAs.edge {
     file = "$HOME/.local/state/noctalia/settings.toml";
     declared = {
       theme.mode = "external";
+      notification = config.programs.noctalia.settings.notification;
+      battery = config.programs.noctalia.settings.battery;
       plugins.enabled = [
         "criomos/wispr-status"
         "criomos/listener-level"
@@ -104,6 +117,10 @@ lib.mkIf behavesAs.edge {
     };
     modes = {
       "/theme/mode" = "always";
+      "/notification/enable_daemon" = "always";
+      "/notification/filter" = "always";
+      "/battery/warning_threshold" = "always";
+      "/battery/device" = "always";
       "/plugins/enabled" = "always";
     };
   };
@@ -181,7 +198,7 @@ lib.mkIf behavesAs.edge {
       margin = "8";
       width = 380;
       height = 120;
-      default-timeout = 5000;
+      default-timeout = 3000;
       layer = "overlay";
       anchor = "top-right";
       icons = true;
@@ -200,7 +217,7 @@ lib.mkIf behavesAs.edge {
       # eventually so the user doesn't accumulate a click-away queue.
       "urgency=critical" = {
         border-color = lib.mkForce "${colors.base08}cc";
-        default-timeout = 30000;
+        default-timeout = 10000;
       };
 
     };

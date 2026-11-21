@@ -35,6 +35,7 @@ let
     codex_executables = [
       "${stableCodexClientPackage}/bin/codex-stable-flow-client",
       "${nextCodexClientPackage}/bin/codex-next-flow-client",
+      ${lib.optionalString (config.criomosHome.codexPlain.enable or false) ''"${config.criomosHome.codexPlain.clientPackage}/bin/codex-plain-flow-client",''}
     ]
 
     [theme]

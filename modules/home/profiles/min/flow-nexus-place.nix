@@ -7,7 +7,8 @@
 # every activation, with translator's nexus-configure, for it holds the user's
 # runtime directory, /run/user/<uid>/nexus/<place>, which no declaration holds;
 # a Nexus with no place file refuses to start, naming it, so Home always
-# writes it. Nothing else reaches the unit: no environment, no other argument.
+# writes it. The unit selects the Place and may supply configured allocator
+# settings; policy remains in the Nexus Memory.
 #
 # Two places are two names: the stable version runs at `main`, a candidate
 # at `next` with its own memory. A version becomes main by being started at
@@ -134,6 +135,28 @@ in
       default = null;
       description = "The memory the Nexus unit is held to; null holds it to none. It is part of the unit, so it exists only where the unit does.";
     };
+    glibcAllocator = lib.mkOption {
+      type = lib.types.nullOr (
+        lib.types.submodule {
+          options = {
+            arenaMaximum = lib.mkOption {
+              type = lib.types.ints.positive;
+              description = "Maximum number of glibc allocation arenas.";
+            };
+            mmapThreshold = lib.mkOption {
+              type = lib.types.ints.unsigned;
+              description = "Fixed glibc mmap allocation threshold in bytes.";
+            };
+            trimThreshold = lib.mkOption {
+              type = lib.types.ints.unsigned;
+              description = "Fixed glibc heap trimming threshold in bytes.";
+            };
+          };
+        }
+      );
+      default = null;
+      description = "Explicit glibc allocation settings for the Nexus and its children; null preserves glibc defaults.";
+    };
     package = lib.mkOption {
       type = lib.types.package;
       readOnly = true;
@@ -192,6 +215,13 @@ in
         ExecStart = "${runtime}/bin/flow-nexus-daemon ${cfg.place}";
         Restart = "on-failure";
         RestartSec = "100ms";
+      }
+      // lib.optionalAttrs (cfg.glibcAllocator != null) {
+        Environment = [
+          "MALLOC_ARENA_MAX=${toString cfg.glibcAllocator.arenaMaximum}"
+          "MALLOC_MMAP_THRESHOLD_=${toString cfg.glibcAllocator.mmapThreshold}"
+          "MALLOC_TRIM_THRESHOLD_=${toString cfg.glibcAllocator.trimThreshold}"
+        ];
       }
       // lib.optionalAttrs (cfg.memoryLimit != null) {
         MemoryMax = cfg.memoryLimit.maximum;

@@ -13,6 +13,9 @@ let
       inputs.stylix.homeModules.stylix
       inputs.niri-flake.homeModules.config
       inputs.noctalia.homeModules.default
+      # As in homeModules.default: noctalia's module declares programs.noctalia,
+      # and a Home Manager that declares it too has its own left out.
+      { disabledModules = [ "programs/noctalia" ]; }
       ../../modules/home/profiles/min/sfwbar.nix
       {
         home = {

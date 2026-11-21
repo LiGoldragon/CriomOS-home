@@ -31,12 +31,16 @@
   # CriomOS-home's own flake inputs (the wrapper overrides
   # _module.args.inputs).
   imports = [
+    ./unison.nix
+    # Cargo on the builder, run from here in the synchronized tree.
+    ./builder-cargo.nix
     ./core-packages.nix
     ./text-scale.nix
     ./visual-theme.nix
     ./desktop-database.nix
     ./base.nix
     ./profiles/min
+    ./profiles/min/codex-plain.nix
     ./profiles/min/codex-next.nix
     ./profiles/min/codex-next-candidate.nix
     ./profiles/min/codex-remote-control.nix
@@ -99,6 +103,7 @@
     # (bar widgets, idle timer, lock timeout). Without it the user
     # gets noctalia's upstream defaults.
     ./profiles/min/sfwbar.nix
+    ./profiles/min/battery-warning.nix
     ./profiles/min/active-network.nix
     ./profiles/min/bitwarden.nix
     ./profiles/med

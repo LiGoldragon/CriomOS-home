@@ -28,6 +28,9 @@ let
       inputs.stylix.homeModules.stylix
       inputs.niri-flake.homeModules.config
       inputs.noctalia.homeModules.default
+      # As in homeModules.default: noctalia's module declares programs.noctalia,
+      # and a Home Manager that declares it too has its own left out.
+      { disabledModules = [ "programs/noctalia" ]; }
       # The Home deployment supplies criomos.corePackages and the Codex-next
       # client; this standalone fixture imports the same modules so herdr.nix
       # can resolve both Codex executables.

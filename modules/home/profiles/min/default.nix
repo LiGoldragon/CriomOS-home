@@ -7,7 +7,6 @@
   config,
   inputs,
   hexis,
-  rustToolchain,
   # Todo(data)
   ...
 }:
@@ -243,8 +242,8 @@ let
   programmingTools = with pkgs; [
     # C
     stdenv.cc
-    # Rust
-    rustToolchain
+    # Rust: the wrapper, or build-base's Cargo where iteration is enabled
+    config.criomosHome.rustIteration.toolchain
     # Agent language intelligence
     leta
     typescript-language-server
@@ -425,12 +424,19 @@ let
 in
 {
   imports = [
+    ./codex-plain.nix
     ./default-opener.nix
     ./herdr.nix
     ./pi-models.nix
+    ./rust-iteration.nix
   ];
 
   config = mkIf (sizeAtLeast "Min") {
+    criomosHome.codexPlain = {
+      enable = lib.mkDefault true;
+      autoStart = lib.mkDefault true;
+    };
+
     fonts.fontconfig = {
       enable = true;
       # TODO

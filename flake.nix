@@ -133,6 +133,11 @@
     # every repository on the base shares.
     flow-0550.url = "github:LiGoldragon/flow";
 
+    # The build base: its Rust toolchain is the real Cargo a host carries for
+    # iteration (modules/home/profiles/min/rust-iteration.nix), the one the
+    # Nix builds compile with. Home overrides none of its inputs.
+    base.url = "github:LiGoldragon/build-base";
+
     # The Energy Nexus at its place (modules/home/profiles/min/energy-nexus.nix).
     # It builds with its own pins: Home overrides none of its inputs.
     energy-nexus.url = "github:LiGoldragon/energy-nexus";
@@ -473,6 +478,8 @@
             codex = ownedAgentPackages.codexPackage;
             codex-next = ownedPkgs.callPackage ./owned-agents/codex-next { };
             claude-code = ownedAgentPackages.claudeCodePackage;
+            codex-plain = ownedPkgs.callPackage ./owned-agents/codex-plain {};
+            codex-plain-flow-client = (ownedPkgs.callPackage ./owned-agents/codex-plain {}).flowClient;
           };
         in
         basePackages
@@ -607,6 +614,7 @@
           plannotator = checkPkgs.callPackage ./checks/plannotator { };
           spirit-deployment = checkPkgs.callPackage ./checks/spirit-deployment { inherit inputs; };
           flow-id = checkPkgs.callPackage ./checks/flow-id { inherit inputs; };
+          unison = checkPkgs.callPackage ./checks/unison { inherit inputs; };
           aggregator-deployment = checkPkgs.callPackage ./checks/aggregator-deployment { inherit inputs; };
           owned-agent-updater = checkPkgs.callPackage ./checks/owned-agent-updater { inherit inputs; };
           context-skills-singleton-layout =
@@ -621,6 +629,7 @@
           };
           codex-remote = checkPkgs.callPackage ./gates/codex-remote { };
           codex-artifact-gateway = checkPkgs.callPackage ./checks/codex-artifact-gateway { };
+          codex-plain = checkPkgs.callPackage ./checks/codex-plain {};
           codex-artifact-gateway-module = checkPkgs.callPackage ./checks/codex-artifact-gateway-module {
             inherit inputs;
           };
