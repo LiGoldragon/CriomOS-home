@@ -44,6 +44,7 @@ let
           "servercmd = ${cfg.remoteProgram}"
         ]
         ++ map (name: "ignore = Name ${name}") cfg.ignored
+        ++ map (path: "ignore = Path ${path}") cfg.ignoredPaths
       )
       + "\n"
     );
@@ -79,6 +80,11 @@ in
         ".direnv"
       ];
       description = "Basenames excluded from synchronization.";
+    };
+    ignoredPaths = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ "staging" ];
+      description = "Paths under the tree's root excluded from synchronization; staging holds worktrees that link back into this node's /git.";
     };
     identityAgent = lib.mkOption {
       type = lib.types.str;
