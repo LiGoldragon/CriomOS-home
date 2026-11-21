@@ -7,7 +7,7 @@ pkgs.runCommand "context-skills-singleton-layout" {
   generator=${../../packages/context-skills/generate.clj}
 
   valid="$TMPDIR/valid"
-  mkdir -p "$valid/vision/nexus" "$valid/inquiry/question" "$valid/role"
+  mkdir -p "$valid/vision/nexus" "$valid/inquiry/question" "$valid/role" "$valid/state/hosts"
   cat > "$valid/vision/nexus/0.md" <<'MODULE'
 ---
 description: First Nexus account
@@ -24,11 +24,18 @@ MODULE
   printf '%s\n' 'all body' > "$valid/vision/nexus/all.md"
   printf '%s\n' 'question body' > "$valid/inquiry/question/12.md"
   printf '%s\n' 'procedure body' > "$valid/role/book-reader-procedure.md"
+  cat > "$valid/state/hosts/0.md" <<'MODULE'
+---
+description: Which of his hosts are away, since when and until when.
+---
+Synthetic State body for the shared menu.
+MODULE
 
   bb "$generator" "$TMPDIR/out" "$valid=revision-one"
   cat > "$TMPDIR/expected-modules" <<'EXPECTED'
 inquiry:question:12 revision-one inquiry/question/12.md
 role:book-reader-procedure revision-one role/book-reader-procedure.md
+state:hosts:0 revision-one state/hosts/0.md
 vision:nexus:0 revision-one vision/nexus/0.md
 vision:nexus:0-1 revision-one vision/nexus/0-1.md
 vision:nexus:1 revision-one vision/nexus/1.md
@@ -40,6 +47,12 @@ EXPECTED
   grep -F 'one body' "$TMPDIR/out/.agents/skills/vision:nexus:1/SKILL.md"
   grep -F 'question body' "$TMPDIR/out/.opencode/skills/inquiry:question:12/SKILL.md"
   grep -F 'procedure body' "$TMPDIR/out/.pi/skills/role:book-reader-procedure/SKILL.md"
+  for surface in .claude .agents .codex .pi .opencode; do
+    skill="$TMPDIR/out/$surface/skills/state:hosts:0/SKILL.md"
+    grep -Fx 'description: Which of his hosts are away, since when and until when.' "$skill"
+    grep -Fx 'Synthetic State body for the shared menu.' "$skill"
+  done
+  grep -Fx 'name: state:hosts:0' "$TMPDIR/out/.opencode/skills/state:hosts:0/SKILL.md"
 
   expect_failure() {
     name="$1"

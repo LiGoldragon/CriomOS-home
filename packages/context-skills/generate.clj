@@ -6,7 +6,7 @@
 (import '[java.nio.file Files])
 
 (def module-types
-  ["vision" "intent" "spirit" "knowledge" "compensation" "role" "raw" "inquiry"])
+  ["vision" "intent" "spirit" "knowledge" "compensation" "role" "raw" "inquiry" "state"])
 
 ;; Every surface a harness reads, the harness its text is rendered for,
 ;; and whether it carries Codex's invocation policy file.
