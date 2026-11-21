@@ -49,7 +49,7 @@ assert replica.systemd.user.services == { };
 assert other.systemd.user.services == { };
 assert builtins.elem master.criomos.unison.package master.home.packages;
 assert !(builtins.elem master.criomos.unison.package replica.home.packages);
-assert replica.home.file == { };
+assert !(builtins.any (name: pkgs.lib.hasInfix "/.unison/" name || pkgs.lib.hasPrefix ".unison/" name) (builtins.attrNames replica.home.file));
 assert builtins.all (
   configuration: !(builtins.tryEval configuration.home.homeDirectory).success
 ) invalidHomes;
