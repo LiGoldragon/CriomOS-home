@@ -56,10 +56,12 @@ assert !(builtins.pathExists chatgptRetiredPatcher);
 pkgs.runCommand "desktop-app-support-contract"
   {
     nativeBuildInputs = [
+      pkgs.asar
       pkgs.coreutils
       pkgs.dpkg
       pkgs.gnutar
       pkgs.gnugrep
+      pkgs.nodejs
       pkgs.python3
       pkgs.xdg-utils
     ];
@@ -67,17 +69,18 @@ pkgs.runCommand "desktop-app-support-contract"
   ''
     set -eu
 
-    # Claude Desktop retains its vendor application archive.  CriomOS wraps
-    # the executable for its libraries and Wayland flags but does not select
-    # or inject a desktop-local Claude Code binary.
+    # The packaged Claude Desktop changes only its local Code manager
+    # initializer and retains the vendor archive contents and unpacked layout.
     claude_pristine="$TMPDIR/claude-pristine"
     mkdir -p "$claude_pristine"
     dpkg-deb --fsys-tarfile ${claudePristineArchive} \
       | tar --extract --to-stdout ./usr/lib/claude-desktop/resources/app.asar \
       > "$claude_pristine/app.asar"
-    cmp \
+    node ${./claude-desktop-asar-contract.cjs} \
+      "${pkgs.asar}/lib/node_modules/@electron/asar" \
       "$claude_pristine/app.asar" \
-      ${claudeDesktopPackage}/lib/claude-desktop/resources/app.asar
+      "${claudeDesktopPackage}/lib/claude-desktop/resources/app.asar" \
+      "${ownedAgentPackages.claudeCodePackage}/bin/claude"
 
     # This archive is fetched independently from the ChatGPT derivation. The
     # bundled Desktop Core remains byte-identical vendor product. The ASAR
