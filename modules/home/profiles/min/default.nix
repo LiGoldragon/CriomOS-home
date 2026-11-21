@@ -242,8 +242,6 @@ let
   programmingTools = with pkgs; [
     # C
     stdenv.cc
-    # Rust: the wrapper, or build-base's Cargo where iteration is enabled
-    config.criomosHome.rustIteration.toolchain
     # Agent language intelligence
     leta
     typescript-language-server
@@ -280,7 +278,9 @@ let
     difftastic
     tokei # Lines of code
     scc # Structured code counts
-  ];
+  ] ++ lib.optional
+    (config.criomosHome.rustIteration.toolchain != null)
+    config.criomosHome.rustIteration.toolchain;
 
   unixDeveloperPackages = unixUtilities ++ programmingTools;
 
