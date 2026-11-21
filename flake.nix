@@ -133,6 +133,11 @@
     # every repository on the base shares.
     flow-0550.url = "github:LiGoldragon/flow";
 
+    # The build base: its Rust toolchain is the real Cargo a host carries for
+    # iteration (modules/home/profiles/min/rust-iteration.nix), the one the
+    # Nix builds compile with. Home overrides none of its inputs.
+    base.url = "github:LiGoldragon/build-base";
+
     # The Energy Nexus at its place (modules/home/profiles/min/energy-nexus.nix).
     # It builds with its own pins: Home overrides none of its inputs.
     energy-nexus.url = "github:LiGoldragon/energy-nexus";
