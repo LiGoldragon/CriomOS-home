@@ -1,4 +1,4 @@
-{ pkgs }:
+{ pkgs, ... }:
 let
   inherit (pkgs) lib;
   package = pkgs.callPackage ../../owned-agents/codex-plain {};
