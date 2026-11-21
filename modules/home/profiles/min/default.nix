@@ -425,6 +425,7 @@ let
 in
 {
   imports = [
+    ./codex-plain.nix
     ./default-opener.nix
     ./herdr.nix
     ./pi-models.nix
