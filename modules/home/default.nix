@@ -32,6 +32,8 @@
   # _module.args.inputs).
   imports = [
     ./unison.nix
+    # Cargo on the builder, run from here in the synchronized tree.
+    ./builder-cargo.nix
     ./core-packages.nix
     ./text-scale.nix
     ./visual-theme.nix
