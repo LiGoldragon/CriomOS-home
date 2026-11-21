@@ -87,8 +87,8 @@
     ./profiles/min/energy-nexus.nix
     # What every Flow Nexus version shares; each version is its own unit.
     ./profiles/min/flow.nix
-    # Flow 0.55.0, the version at main.
-    ./profiles/min/flow-0550.nix
+    # Flow 0.60.3, the version at main.
+    ./profiles/min/flow-0603.nix
     # Next Flow and next Message beside the stable pair, on their own
     # sockets and stores (the stable/next pattern, lib/stable-next-service.nix).
     ./profiles/min/flow-message-next.nix

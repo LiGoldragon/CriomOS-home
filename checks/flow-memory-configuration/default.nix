@@ -17,14 +17,14 @@ SCRIPT
     touch "$out/bin/flow-hook" "$out/bin/flow-nexus-daemon"
   '';
   fixtureInputs = inputs // {
-    flow-0550.packages.${system} = { default = runtime; nexus-configure = runtime; };
+    flow-0603.packages.${system} = { default = runtime; nexus-configure = runtime; };
   };
   mkConfiguration = extraModules: (inputs.home-manager.lib.homeManagerConfiguration {
     inherit pkgs;
     extraSpecialArgs = { inputs = fixtureInputs; inherit user; };
     modules = [
       ../../modules/home/profiles/min/nexus-places.nix
-      ../../modules/home/profiles/min/flow-0550.nix
+      ../../modules/home/profiles/min/flow-0603.nix
       {
         home.username = user.name;
         home.homeDirectory = "/home/${user.name}";
@@ -33,20 +33,20 @@ SCRIPT
     ] ++ extraModules;
   }).config;
   configuration = mkConfiguration [];
-  defaults = mkConfiguration [ { criomosHome.flow0550.glibcAllocator = lib.mkForce null; } ];
+  defaults = mkConfiguration [ { criomosHome.flow0603.glibcAllocator = lib.mkForce null; } ];
   custom = mkConfiguration [ {
-    criomosHome.flow0550.glibcAllocator = lib.mkForce {
+    criomosHome.flow0603.glibcAllocator = lib.mkForce {
       arenaMaximum = 4; mmapThreshold = 2097152; trimThreshold = 65536;
     };
-    systemd.user.services.flow-nexus-0550.Service.Environment = [ "EXISTING_FIXTURE=preserved" ];
+    systemd.user.services.flow-nexus-0603.Service.Environment = [ "EXISTING_FIXTURE=preserved" ];
   } ];
-  deployment = configuration.criomosHome.flow0550;
+  deployment = configuration.criomosHome.flow0603;
   authored = (import ../../modules/home/profiles/min/flow-nexus-place.nix {
-    version = "0.55.0"; slug = "0550";
+    version = "0.60.3"; slug = "0603";
   }) { config = configuration; inputs = fixtureInputs; inherit lib pkgs user; };
   expectedUnit = {
     Unit = {
-      Description = "Flow Nexus 0.55.0 at main";
+      Description = "Flow Nexus 0.60.3 at main";
       Wants = [ "curriculum-nexus.service" ];
       After = [ "curriculum-nexus.service" "systemd-tmpfiles-setup.service" ];
     };
@@ -72,39 +72,39 @@ SCRIPT
     "presentationPrompt" "herdrSession" "replayPackage"
   ];
   moduleSource = builtins.readFile ../../modules/home/profiles/min/flow-nexus-place.nix;
-  profileSource = builtins.readFile ../../modules/home/profiles/min/flow-0550.nix;
+  profileSource = builtins.readFile ../../modules/home/profiles/min/flow-0603.nix;
 in
-assert authored.config.content.systemd.user.services == { flow-nexus-0550 = expectedUnit; };
+assert authored.config.content.systemd.user.services == { flow-nexus-0603 = expectedUnit; };
 assert authored.config.content.home.packages == [ deployment.clients ];
 assert builtins.attrNames authored.config.content.home.file.content == [ ".local/bin/flow-hook" ];
 assert configuration.home.file.".local/bin/flow-hook".source == "${runtime}/bin/flow-hook";
 assert deployment.package == runtime;
-assert configuration.systemd.user.services.flow-nexus-0550.Unit.X-SwitchMethod == "keep-old";
-assert (defaults.systemd.user.services.flow-nexus-0550.Service.Environment or []) == [];
-assert lib.sort builtins.lessThan custom.systemd.user.services.flow-nexus-0550.Service.Environment == lib.sort builtins.lessThan [
+assert configuration.systemd.user.services.flow-nexus-0603.Unit.X-SwitchMethod == "keep-old";
+assert (defaults.systemd.user.services.flow-nexus-0603.Service.Environment or []) == [];
+assert lib.sort builtins.lessThan custom.systemd.user.services.flow-nexus-0603.Service.Environment == lib.sort builtins.lessThan [
   "EXISTING_FIXTURE=preserved"
   "MALLOC_ARENA_MAX=4"
   "MALLOC_MMAP_THRESHOLD_=2097152"
   "MALLOC_TRIM_THRESHOLD_=65536"
 ];
-assert custom.systemd.user.services.flow-nexus-0550.Service.MemoryMax == "3G";
-assert custom.systemd.user.services.flow-nexus-0550.Service.Type == "notify";
-assert custom.systemd.user.services.flow-nexus-0550.Service.ExecStart == [ expectedUnit.Service.ExecStart ];
-assert lib.all (name: !(builtins.hasAttr name authored.options.criomosHome.flow0550)) policyOptions;
+assert custom.systemd.user.services.flow-nexus-0603.Service.MemoryMax == "3G";
+assert custom.systemd.user.services.flow-nexus-0603.Service.Type == "notify";
+assert custom.systemd.user.services.flow-nexus-0603.Service.ExecStart == [ expectedUnit.Service.ExecStart ];
+assert lib.all (name: !(builtins.hasAttr name authored.options.criomosHome.flow0603)) policyOptions;
 assert !(builtins.pathExists ../../modules/home/profiles/min/flow-nexus-config);
 assert !(lib.hasInfix "Configure." moduleSource);
 assert !(lib.hasInfix "flow-replay-" moduleSource);
 assert !(lib.hasInfix "flow-nexus-config" profileSource);
-assert !(configuration.systemd.user.services ? flow-configure-0550);
+assert !(configuration.systemd.user.services ? flow-configure-0603);
 pkgs.runCommand "flow-memory-configuration-contract" { nativeBuildInputs = [ pkgs.coreutils ]; } ''
   set -eu
   test "$(cat ${deployment.placeConfiguration}/nexus/flow-nexus.datom)" = '{ main }'
   test "$(readlink ${deployment.placeConfiguration}/nexus/main/flow-nexus.signal)" = '/home/memory-test/.config/nexus/main/flow-nexus.signal'
   for client in flow flow-meta; do
-    ${deployment.clients}/bin/"$client-0.55.0" Fixture > "$TMPDIR/$client"
+    ${deployment.clients}/bin/"$client-0.60.3" Fixture > "$TMPDIR/$client"
     printf '%s\n' '${deployment.placeConfiguration}' Fixture > "$TMPDIR/expected"
     diff -u "$TMPDIR/expected" "$TMPDIR/$client"
   done
-  test ! -e ${deployment.clients}/bin/flow-replay-0.55.0
+  test ! -e ${deployment.clients}/bin/flow-replay-0.60.3
   touch "$out"
 ''

@@ -778,7 +778,7 @@
     "ethos-zero": {
       "inputs": {
         "base": [
-          "flow-0550",
+          "flow-0603",
           "translator",
           "base"
         ],
@@ -824,7 +824,7 @@
     "fenix_10": {
       "inputs": {
         "nixpkgs": [
-          "flow-0550",
+          "flow-0603",
           "migration-predecessor",
           "unconfigured-flow",
           "nixpkgs"
@@ -1141,7 +1141,7 @@
     "fenix_8": {
       "inputs": {
         "nixpkgs": [
-          "flow-0550",
+          "flow-0603",
           "base",
           "nixpkgs"
         ],
@@ -1164,7 +1164,7 @@
     "fenix_9": {
       "inputs": {
         "nixpkgs": [
-          "flow-0550",
+          "flow-0603",
           "migration-predecessor",
           "nixpkgs"
         ],
@@ -1596,7 +1596,7 @@
         "type": "github"
       }
     },
-    "flow-0550": {
+    "flow-0603": {
       "inputs": {
         "base": "base_3",
         "curriculum": "curriculum",
@@ -2790,7 +2790,7 @@
         "dotos-text-query": "dotos-text-query",
         "field-belief": "field-belief",
         "flow": [
-          "flow-0550"
+          "flow-0603"
         ],
         "mind-belief": "mind-belief",
         "nixpkgs": [
@@ -2926,7 +2926,7 @@
         "field-clj": "field-clj",
         "field-luna-research-source": "field-luna-research-source",
         "field-monitoring-source": "field-monitoring-source",
-        "flow-0550": "flow-0550",
+        "flow-0603": "flow-0603",
         "google-workspace-cli": "google-workspace-cli",
         "harness": "harness",
         "herdr": "herdr",
@@ -4322,7 +4322,7 @@
     "translator": {
       "inputs": {
         "base": [
-          "flow-0550",
+          "flow-0603",
           "base"
         ],
         "ethos-zero": "ethos-zero"

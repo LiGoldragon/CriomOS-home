@@ -33,7 +33,7 @@
     primary = {
       url = "github:LiGoldragon/primary";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flow.follows = "flow-0550";
+      inputs.flow.follows = "flow-0603";
       inputs.curriculum = {
         url = "github:LiGoldragon/Curriculum";
         flake = false;
@@ -128,10 +128,10 @@
     harness.url = "github:LiGoldragon/harness";
     harness.inputs.nixpkgs.follows = "nixpkgs";
 
-    # Flow 0.55.0, built per crate on the build base. It follows no Home
+    # Flow 0.60.3, built per crate on the build base. It follows no Home
     # input: its nixpkgs is the base's, which gives its crates the store paths
     # every repository on the base shares.
-    flow-0550.url = "github:LiGoldragon/flow";
+    flow-0603.url = "github:LiGoldragon/flow";
 
     # The build base: its Rust toolchain is the real Cargo a host carries for
     # iteration (modules/home/profiles/min/rust-iteration.nix), the one the
