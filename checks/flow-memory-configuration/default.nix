@@ -19,7 +19,7 @@ SCRIPT
   fixtureInputs = inputs // {
     flow-0550.packages.${system} = { default = runtime; nexus-configure = runtime; };
   };
-  configuration = (inputs.home-manager.lib.homeManagerConfiguration {
+  mkConfiguration = extraModules: (inputs.home-manager.lib.homeManagerConfiguration {
     inherit pkgs;
     extraSpecialArgs = { inputs = fixtureInputs; inherit user; };
     modules = [
@@ -30,8 +30,16 @@ SCRIPT
         home.homeDirectory = "/home/${user.name}";
         home.stateVersion = "26.05";
       }
-    ];
+    ] ++ extraModules;
   }).config;
+  configuration = mkConfiguration [];
+  defaults = mkConfiguration [ { criomosHome.flow0550.glibcAllocator = lib.mkForce null; } ];
+  custom = mkConfiguration [ {
+    criomosHome.flow0550.glibcAllocator = lib.mkForce {
+      arenaMaximum = 4; mmapThreshold = 2097152; trimThreshold = 65536;
+    };
+    systemd.user.services.flow-nexus-0550.Service.Environment = [ "EXISTING_FIXTURE=preserved" ];
+  } ];
   deployment = configuration.criomosHome.flow0550;
   authored = (import ../../modules/home/profiles/min/flow-nexus-place.nix {
     version = "0.55.0"; slug = "0550";
@@ -48,6 +56,11 @@ SCRIPT
       ExecStart = "${runtime}/bin/flow-nexus-daemon main";
       Restart = "on-failure";
       RestartSec = "100ms";
+      Environment = [
+        "MALLOC_ARENA_MAX=2"
+        "MALLOC_MMAP_THRESHOLD_=1048576"
+        "MALLOC_TRIM_THRESHOLD_=131072"
+      ];
       MemoryMax = "3G";
       MemorySwapMax = "0";
     };
@@ -66,6 +79,17 @@ assert authored.config.content.home.packages == [ deployment.clients ];
 assert builtins.attrNames authored.config.content.home.file.content == [ ".local/bin/flow-hook" ];
 assert configuration.home.file.".local/bin/flow-hook".source == "${runtime}/bin/flow-hook";
 assert deployment.package == runtime;
+assert configuration.systemd.user.services.flow-nexus-0550.Unit.X-SwitchMethod == "keep-old";
+assert (defaults.systemd.user.services.flow-nexus-0550.Service.Environment or []) == [];
+assert lib.sort builtins.lessThan custom.systemd.user.services.flow-nexus-0550.Service.Environment == lib.sort builtins.lessThan [
+  "EXISTING_FIXTURE=preserved"
+  "MALLOC_ARENA_MAX=4"
+  "MALLOC_MMAP_THRESHOLD_=2097152"
+  "MALLOC_TRIM_THRESHOLD_=65536"
+];
+assert custom.systemd.user.services.flow-nexus-0550.Service.MemoryMax == "3G";
+assert custom.systemd.user.services.flow-nexus-0550.Service.Type == "notify";
+assert custom.systemd.user.services.flow-nexus-0550.Service.ExecStart == [ expectedUnit.Service.ExecStart ];
 assert lib.all (name: !(builtins.hasAttr name authored.options.criomosHome.flow0550)) policyOptions;
 assert !(builtins.pathExists ../../modules/home/profiles/min/flow-nexus-config);
 assert !(lib.hasInfix "Configure." moduleSource);
