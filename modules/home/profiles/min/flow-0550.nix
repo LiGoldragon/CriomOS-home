@@ -31,6 +31,7 @@
   criomosHome.flow0550 = {
     place = "main";
     stableHook = true;
+    heapProfile = { };
     # The Nexus at main is held to 3G of memory and no swap, so the kernel
     # stops a runaway Nexus at that size.
     memoryLimit = {
@@ -38,6 +39,8 @@
       swapMaximum = "0";
     };
   };
+
+  systemd.user.services.${config.criomosHome.flow0550.unit}.Unit.X-SwitchMethod = "keep-old";
 
   home.packages = [ config.criomosHome.flow0550.clients ];
 

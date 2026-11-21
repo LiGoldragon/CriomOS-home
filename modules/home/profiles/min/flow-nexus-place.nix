@@ -91,6 +91,24 @@ let
   # other Nexus at the same place and declared by nexus-places.nix, so the unit
   # names no RuntimeDirectory or StateDirectory that a stop would remove.
   placeText = "{ ${text cfg.place} ${text "\${runtimeRoot}/nexus/${cfg.place}"} ${text "${config.xdg.stateHome}/nexus/${cfg.place}"} }";
+  profiledLauncher = pkgs.writeShellApplication {
+    name = "flow-${slug}-heaptrack";
+    runtimeInputs = [ pkgs.coreutils pkgs.gnused pkgs.gzip pkgs.zstd pkgs.inetutils ];
+    text = ''
+      umask 077
+      directory=${lib.escapeShellArg cfg.heapProfile.directory}
+      test ! -L "$directory"
+      if test -e "$directory"; then
+        test -d "$directory"
+        test "$(stat -c %u -- "$directory")" = "$(id -u)"
+      fi
+      install -d -m700 -- "$directory"
+      test "$(stat -c %a -- "$directory")" = 700
+      exec ${cfg.heapProfile.package}/bin/heaptrack --record-only \
+        --output "$directory"/${lib.escapeShellArg cfg.heapProfile.outputName} \
+        ${runtime}/bin/flow-nexus-daemon ${lib.escapeShellArg cfg.place}
+    '';
+  };
 in
 {
   options.criomosHome.${optionName} = {
@@ -133,6 +151,29 @@ in
       );
       default = null;
       description = "The memory the Nexus unit is held to; null holds it to none. It is part of the unit, so it exists only where the unit does.";
+    };
+    heapProfile = lib.mkOption {
+      type = lib.types.nullOr (lib.types.submodule {
+        options = {
+          package = lib.mkOption {
+            type = lib.types.package;
+            default = pkgs.heaptrack;
+            description = "Heaptrack used at the next daemon incarnation.";
+          };
+          directory = lib.mkOption {
+            type = lib.types.str;
+            default = "/var/tmp/flow-nexus-${slug}-heaptrack-${config.home.username}";
+            description = "User-owned private directory for heap profiles.";
+          };
+          outputName = lib.mkOption {
+            type = lib.types.strMatching "[^/\n\r]+";
+            default = "heaptrack.%p";
+            description = "Heaptrack output basename; its %p expands in heaptrack, outside systemd specifier handling.";
+          };
+        };
+      });
+      default = null;
+      description = "Optional startup heap profiling; the profiler and its children share the unit memory limit.";
     };
     package = lib.mkOption {
       type = lib.types.package;
@@ -189,9 +230,15 @@ in
         # Started once both its sockets listen: READY=1.
         Type = "notify";
         WorkingDirectory = "%h";
-        ExecStart = "${runtime}/bin/flow-nexus-daemon ${cfg.place}";
+        ExecStart = if cfg.heapProfile == null then
+          "${runtime}/bin/flow-nexus-daemon ${cfg.place}"
+        else lib.getExe profiledLauncher;
         Restart = "on-failure";
         RestartSec = "100ms";
+      }
+      // lib.optionalAttrs (cfg.heapProfile != null) {
+        NotifyAccess = "all";
+        UMask = "0077";
       }
       // lib.optionalAttrs (cfg.memoryLimit != null) {
         MemoryMax = cfg.memoryLimit.maximum;

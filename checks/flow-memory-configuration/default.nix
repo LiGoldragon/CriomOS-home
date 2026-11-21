@@ -29,6 +29,7 @@ SCRIPT
         home.username = user.name;
         home.homeDirectory = "/home/${user.name}";
         home.stateVersion = "26.05";
+        criomosHome.flow0550.heapProfile = null;
       }
     ];
   }).config;
@@ -62,6 +63,7 @@ SCRIPT
   profileSource = builtins.readFile ../../modules/home/profiles/min/flow-0550.nix;
 in
 assert authored.config.content.systemd.user.services == { flow-nexus-0550 = expectedUnit; };
+assert configuration.systemd.user.services.flow-nexus-0550.Unit.X-SwitchMethod == "keep-old";
 assert authored.config.content.home.packages == [ deployment.clients ];
 assert builtins.attrNames authored.config.content.home.file.content == [ ".local/bin/flow-hook" ];
 assert configuration.home.file.".local/bin/flow-hook".source == "${runtime}/bin/flow-hook";
