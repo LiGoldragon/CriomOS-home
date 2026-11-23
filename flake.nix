@@ -613,6 +613,7 @@
           };
           codex-remote = checkPkgs.callPackage ./gates/codex-remote { };
           codex-native-thread = checkPkgs.callPackage ./gates/codex-native-thread { inherit inputs; };
+          claude-native-session = checkPkgs.callPackage ./gates/claude-native-session { inherit inputs; };
           codex-artifact-gateway = checkPkgs.callPackage ./checks/codex-artifact-gateway { };
           codex-plain = checkPkgs.callPackage ./checks/codex-plain {};
           codex-harness-nexus = checkPkgs.callPackage ./checks/codex-harness-nexus { inherit inputs; };

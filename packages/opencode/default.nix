@@ -28,6 +28,9 @@ stdenvNoCC.mkDerivation (final: {
   '';
   doInstallCheck = true;
   installCheckPhase = ''
+    export HOME="$TMPDIR/home"
+    mkdir -p "$HOME"
+    cd "$HOME"
     "$out/bin/opencode" --version | grep -F "opencode v${final.version}"
   '';
   meta = {
