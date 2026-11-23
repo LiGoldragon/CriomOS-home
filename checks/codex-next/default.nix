@@ -45,7 +45,7 @@ DECLARED
 )"
   ${pkgs.jq}/bin/jq -e '.approval_policy == "never" and .sandbox_mode == "danger-full-access"' "$declared"
   ${package}/bin/codex --version > "$out"
-  test "$(cat "$out")" = "codex-cli 0.158.0-alpha.9"
+  test "$(cat "$out")" = "codex-cli ${package.version}"
   test -n "${configuration.criomosHome.codexNextCandidate.hash}"
   test -x ${configuration.criomosHome.codexNextCandidate.remoteClientPackage}/bin/codex-next
   test -x ${package}/bin/codex-code-mode-host

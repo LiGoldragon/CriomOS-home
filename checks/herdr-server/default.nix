@@ -70,9 +70,9 @@ let
     }
     {
       ok =
-        on.criomosHome.herdr.versionPin == "0.8.2"
+        on.criomosHome.herdr.versionPin == "0.9.5"
         && herdrPackage.version == on.criomosHome.herdr.versionPin;
-      msg = "the Herdr package does not match the 0.8.2 version pin";
+      msg = "the Herdr package does not match the 0.9.5 version pin";
     }
     {
       ok =
@@ -109,6 +109,6 @@ else
   pkgs.runCommand "herdr-server" { } ''
     set -eu
     test -x ${herdrPackage}/bin/herdr
-    ${herdrPackage}/bin/herdr --version | grep -qx 'herdr 0.8.2'
+    ${herdrPackage}/bin/herdr --version | grep -qx 'herdr 0.9.5'
     touch $out
   ''

@@ -31,9 +31,6 @@ let
       ];
     }).config;
   herdrPackage = configuration.criomosHome.herdr.package;
-  expectedRetainedStablePackage = pkgs.callPackage "${inputs.deployed-codex-source}/owned-agents/codex" {
-    manifestFile = "${inputs.deployed-codex-source}/owned-agents/codex/stable-hashes.json";
-  };
   expectedPathPackage = pkgs.callPackage ../../owned-agents/codex { inherit inputs; };
   pathPackage = builtins.head (
     builtins.filter (package: lib.getName package == "codex") configuration.home.packages
@@ -48,12 +45,10 @@ in
 assert
   builtins.match ".*codex_executables.*codex-stable-flow-client.*codex-next-flow-client.*" configToml
   != null;
-assert expectedRetainedStablePackage.version == "0.163.0";
 assert lib.hasInfix (builtins.unsafeDiscardStringContext "\"${plainClient}/bin/codex-plain-flow-client\"") configToml;
 assert builtins.elem plainClient configuration.home.packages;
-assert expectedPathPackage.version == "0.169.0";
 assert pathPackage == expectedPathPackage;
-assert pathPackage != expectedRetainedStablePackage;
+assert nextRaw == expectedPathPackage;
 pkgs.runCommand "herdr-agent-executable-contract" { } ''
   set -eu
   stable=${stableClient}/bin/codex-stable-flow-client
@@ -61,8 +56,7 @@ pkgs.runCommand "herdr-agent-executable-contract" { } ''
   remote=${nextRemoteClient}/bin/codex-next
 
   grep -F 'export CODEX_HOME=' "$stable"
-  grep -F 'exec ${expectedRetainedStablePackage}/bin/codex "$@"' "$stable"
-  ! grep -F 'exec ${expectedPathPackage}/bin/codex "$@"' "$stable"
+  grep -F 'exec ${expectedPathPackage}/bin/codex "$@"' "$stable"
   ! grep -F -- '--remote' "$stable"
   grep -F 'export CODEX_HOME=' "$next"
   grep -F 'exec ${nextRaw}/bin/codex "$@"' "$next"

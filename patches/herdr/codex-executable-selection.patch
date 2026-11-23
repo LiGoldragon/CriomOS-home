@@ -1,6 +1,8 @@
+diff --git a/src/api/schema/agents.rs b/src/api/schema/agents.rs
+index 48450c3..233d8b9 100644
 --- a/src/api/schema/agents.rs
 +++ b/src/api/schema/agents.rs
-@@ -165,6 +165,10 @@
+@@ -168,6 +168,10 @@ pub struct AgentStartParams {
      pub name: String,
      pub kind: String,
      pub pane_id: String,
@@ -11,7 +13,7 @@
      #[serde(default, skip_serializing_if = "Vec::is_empty")]
      pub args: Vec<String>,
      /// Startup timeout in milliseconds. Values must be greater than 3000 and at most 300000.
-@@ -187,6 +191,9 @@
+@@ -190,6 +194,9 @@ pub struct AgentInfo {
      pub name: Option<String>,
      #[serde(default, skip_serializing_if = "Option::is_none")]
      pub agent: Option<String>,
@@ -21,9 +23,11 @@
      #[serde(default, skip_serializing_if = "Option::is_none")]
      pub title: Option<String>,
      #[serde(default, skip_serializing_if = "Option::is_none")]
+diff --git a/src/api/schema/response.rs b/src/api/schema/response.rs
+index e92e495..ddb814c 100644
 --- a/src/api/schema/response.rs
 +++ b/src/api/schema/response.rs
-@@ -99,6 +99,7 @@
+@@ -99,6 +99,7 @@ pub enum ResponseResult {
      },
      AgentStarted {
          agent: AgentInfo,
@@ -31,9 +35,11 @@
          argv: Vec<String>,
      },
      AgentPrompted {
+diff --git a/src/api/schema/tests.rs b/src/api/schema/tests.rs
+index 3b43133..6f2b97c 100644
 --- a/src/api/schema/tests.rs
 +++ b/src/api/schema/tests.rs
-@@ -69,6 +69,7 @@
+@@ -98,6 +98,7 @@ fn agent_start_and_prompt_requests_round_trip() {
              name: "reviewer".into(),
              kind: "pi".into(),
              pane_id: "w1:p2".into(),
@@ -41,6 +47,8 @@
              args: vec!["--no-session".into()],
              timeout_ms: Some(30_000),
          }),
+diff --git a/src/app/agents.rs b/src/app/agents.rs
+index 89625f0..7c2a52b 100644
 --- a/src/app/agents.rs
 +++ b/src/app/agents.rs
 @@ -1,3 +1,4 @@
@@ -48,7 +56,7 @@
  use std::time::{Duration, Instant};
  
  use bytes::Bytes;
-@@ -145,7 +146,7 @@
+@@ -145,7 +146,7 @@ impl App {
      pub(super) fn start_agent(
          &mut self,
          params: AgentStartParams,
@@ -57,7 +65,7 @@
          let name = params.name;
          if !valid_agent_name(&name) {
              return Err(AgentStartError::InvalidName);
-@@ -192,7 +193,9 @@
+@@ -194,7 +195,9 @@ impl App {
          let shell_name = available_shell_name(runtime)
              .ok_or_else(|| AgentStartError::TargetBusy(params.pane_id.clone()))?;
  
@@ -68,7 +76,7 @@
          argv.extend(params.args);
          let command = crate::platform::interactive_shell_command(&argv, &shell_name)
              .ok_or(AgentStartError::InvalidArgument)?;
-@@ -212,7 +215,14 @@
+@@ -218,7 +221,14 @@ impl App {
              .terminals
              .get_mut(&terminal_id)
              .ok_or_else(|| AgentStartError::TargetUnavailable(params.pane_id.clone()))?;
@@ -84,7 +92,7 @@
          if let Err(err) = runtime.try_send_bytes(Bytes::from(bytes)) {
              terminal.clear_agent_name();
              return Err(AgentStartError::InputFailed(err.to_string()));
-@@ -223,7 +233,7 @@
+@@ -232,7 +242,7 @@ impl App {
          let agent = self
              .agent_info(ws_idx, pane_id)
              .ok_or(AgentStartError::TargetUnavailable(params.pane_id))?;
@@ -93,7 +101,7 @@
      }
  
      pub(super) fn agent_start_error_body(
-@@ -243,6 +253,22 @@
+@@ -252,6 +262,22 @@ impl App {
                  code: "invalid_agent_argument".into(),
                  message: "agent arguments cannot be encoded safely for the target shell".into(),
              },
@@ -116,7 +124,7 @@
              AgentStartError::InvalidTimeout => crate::api::schema::ErrorBody {
                  code: "invalid_agent_timeout".into(),
                  message: INVALID_AGENT_TIMEOUT_MESSAGE.into(),
-@@ -374,6 +400,7 @@
+@@ -383,6 +409,7 @@ impl App {
              terminal_id: pane.terminal_id,
              name: terminal.agent_name.clone(),
              agent: pane.agent,
@@ -124,7 +132,7 @@
              title: pane.title,
              terminal_title: pane.terminal_title,
              terminal_title_stripped: pane.terminal_title_stripped,
-@@ -440,10 +467,59 @@
+@@ -450,10 +477,59 @@ fn live_runtime_agent(runtime: &crate::terminal::TerminalRuntime) -> Option<crat
          })
  }
  
@@ -184,7 +192,7 @@
      InvalidTimeout,
      TargetNotFound(String),
      TargetBusy(String),
-@@ -468,7 +544,9 @@
+@@ -478,7 +554,9 @@ pub(super) enum AgentRenameError {
  
  #[cfg(test)]
  mod tests {
@@ -195,7 +203,7 @@
  
      #[test]
      fn agent_names_use_a_small_cli_safe_grammar() {
-@@ -488,4 +566,61 @@
+@@ -498,4 +576,61 @@ mod tests {
              assert!(!valid_agent_name(name), "expected {name:?} to be invalid");
          }
      }
@@ -257,9 +265,11 @@
 +        fs::remove_dir(&directory).unwrap();
 +    }
  }
+diff --git a/src/app/api/agents.rs b/src/app/api/agents.rs
+index 690e53c..983adb8 100644
 --- a/src/app/api/agents.rs
 +++ b/src/app/api/agents.rs
-@@ -51,12 +51,19 @@
+@@ -71,12 +71,15 @@ impl App {
      }
  
      pub(super) fn handle_agent_start(&mut self, id: String, params: AgentStartParams) -> String {
@@ -272,34 +282,32 @@
 -        encode_success(id, ResponseResult::AgentStarted { agent, argv })
 +        encode_success(
 +            id,
-+            ResponseResult::AgentStarted {
-+                agent,
-+                executable,
-+                argv,
-+            },
++            ResponseResult::AgentStarted { agent, executable, argv },
 +        )
      }
  
-     pub(super) fn handle_agent_prompt(&mut self, id: String, params: AgentPromptParams) -> String {
+     pub(crate) fn handle_deferred_agent_api_request(
+diff --git a/src/app/mod.rs b/src/app/mod.rs
+index 6effa3a..8babaa2 100644
 --- a/src/app/mod.rs
 +++ b/src/app/mod.rs
-@@ -98,6 +98,7 @@
+@@ -103,6 +103,7 @@ impl AppPolicy {
  }
  
  pub struct App {
 +    pub(crate) codex_executable_allowlist: Vec<std::path::PathBuf>,
      pub state: AppState,
-     pub(crate) pane_graphics: pane_graphics::Runtime,
-     pub(crate) pane_graphics_files: Arc<crate::pane_graphics_files::FileStore>,
-@@ -755,6 +756,7 @@
-         });
+     pub(crate) pixel_mouse_available: bool,
+     pub(crate) terminal_runtimes: crate::terminal::TerminalRuntimeRegistry,
+@@ -616,6 +617,7 @@ impl App {
+             custom_commands::EndpointCommandRegistry::new(&state.keybinds.custom_commands);
  
          let mut app = Self {
 +            codex_executable_allowlist: config.agents.codex_executables.clone(),
+             plugin_installation_leases,
+             plugin_installation_cleanup_allowed,
              config_diagnostic_deadline: None,
-             toast_deadline: None,
-             copy_feedback_deadline: None,
-@@ -1445,6 +1447,10 @@
+@@ -859,6 +861,10 @@ impl App {
          let invalid_section =
              |section: &str| invalid_sections.iter().any(|invalid| invalid == section);
  
@@ -310,7 +318,7 @@
          if !invalid_section("keys") {
              match config.live_keybinds_with_diagnostics() {
                  Ok((live, keybind_diagnostics)) => {
-@@ -4805,6 +4811,7 @@
+@@ -2969,6 +2975,7 @@ mod tests {
                  name: "worker".into(),
                  kind: "pi".into(),
                  pane_id,
@@ -318,17 +326,19 @@
                  args: Vec::new(),
                  timeout_ms: Some(1_000),
              }),
-@@ -4847,6 +4854,7 @@
+@@ -3011,6 +3018,7 @@ mod tests {
                  name: "worker".into(),
-                 kind: "pi".into(),
+                 kind: "codex".into(),
                  pane_id: pane_id.clone(),
 +                executable: None,
-                 args: Vec::new(),
+                 args: vec!["resume".into(), "codex-session".into()],
                  timeout_ms: Some(4_000),
              }),
+diff --git a/src/cli/agent.rs b/src/cli/agent.rs
+index 0904346..1cf4d48 100644
 --- a/src/cli/agent.rs
 +++ b/src/cli/agent.rs
-@@ -274,7 +274,7 @@
+@@ -288,7 +288,7 @@ fn matched_rule_region_preview<'a>(
  
  fn agent_start(args: &[String]) -> std::io::Result<i32> {
      let Some(name) = args.first() else {
@@ -337,7 +347,7 @@
          return Ok(2);
      };
      let separator = args
-@@ -284,6 +284,7 @@
+@@ -298,6 +298,7 @@ fn agent_start(args: &[String]) -> std::io::Result<i32> {
      let mut kind = None;
      let mut pane_id = None;
      let mut timeout_ms = None;
@@ -345,7 +355,7 @@
      let mut index = 1;
      while index < separator {
          match args[index].as_str() {
-@@ -314,6 +315,14 @@
+@@ -328,6 +329,14 @@ fn agent_start(args: &[String]) -> std::io::Result<i32> {
                  };
                  index += 2;
              }
@@ -360,7 +370,7 @@
              other => {
                  eprintln!("unknown option: {other}");
                  return Ok(2);
-@@ -361,6 +370,7 @@
+@@ -375,6 +384,7 @@ fn agent_start(args: &[String]) -> std::io::Result<i32> {
                  name: name.clone(),
                  kind: kind.clone(),
                  pane_id: pane_id.clone(),
@@ -368,7 +378,7 @@
                  args: agent_args.clone(),
                  timeout_ms,
              }),
-@@ -917,7 +927,7 @@
+@@ -941,7 +951,7 @@ fn print_agent_help() {
      eprintln!("  herdr agent wait <target> [--until STATUS]... [--timeout MS]");
      eprintln!("  herdr agent attach <target> [--takeover]");
      eprintln!(
@@ -377,22 +387,26 @@
      );
      eprintln!("  herdr agent explain <target> [--json|--format text|json] [--verbose]");
      eprintln!(
+diff --git a/src/cli/spec.rs b/src/cli/spec.rs
+index 9a503a1..32b4b99 100644
 --- a/src/cli/spec.rs
 +++ b/src/cli/spec.rs
-@@ -423,6 +423,10 @@
+@@ -423,6 +423,10 @@ fn agent_command() -> Command {
+                         .required(true)
                          .help("Existing pane at an interactive shell prompt"),
                  )
-                 .arg(
++                .arg(
 +                    option("executable", "ABSOLUTE_PATH")
 +                        .help("Exact configured executable for this launch"),
 +                )
-+                .arg(
+                 .arg(
                      option("timeout", "MS")
                          .help("Wait for interactive readiness (default: 30000; max: 300000)"),
-                 )
+diff --git a/src/config/io.rs b/src/config/io.rs
+index 110d431..f8b3d0b 100644
 --- a/src/config/io.rs
 +++ b/src/config/io.rs
-@@ -6,6 +6,7 @@
+@@ -6,6 +6,7 @@ use super::{model::LoadedConfig, Config, CONFIG_PATH_ENV_VAR};
  
  const KNOWN_TOP_LEVEL_CONFIG_KEYS: &[&str] = &[
      "advanced",
@@ -400,21 +414,23 @@
      "experimental",
      "keys",
      "onboarding",
-@@ -263,6 +264,14 @@
+@@ -287,6 +288,14 @@ fn load_live_config_from_str(content: &str) -> Result<LoadedConfig, Vec<String>>
+         }
+     }
  
-     load_live_section(
-         table,
++    load_live_section(
++        table,
 +        "agents",
 +        "agent config",
 +        &mut diagnostics,
 +        &mut invalid_sections,
 +        |section| config.agents = section,
 +    );
-+    load_live_section(
-+        table,
+     load_live_section(
+         table,
          "theme",
-         "theme config",
-         &mut diagnostics,
+diff --git a/src/config/model.rs b/src/config/model.rs
+index 29802fd..a6b5fc7 100644
 --- a/src/config/model.rs
 +++ b/src/config/model.rs
 @@ -1,4 +1,4 @@
@@ -423,7 +439,7 @@
  
  use crossterm::event::KeyModifiers;
  use serde::{de, Deserialize, Deserializer, Serialize};
-@@ -315,6 +315,7 @@
+@@ -311,6 +311,7 @@ pub fn validated_sidebar_bounds(min: u16, max: u16) -> Option<(u16, u16)> {
  #[derive(Debug, Default, Deserialize)]
  #[serde(default)]
  pub struct Config {
@@ -431,7 +447,7 @@
      pub onboarding: Option<bool>,
      pub theme: ThemeConfig,
      pub terminal: TerminalConfig,
-@@ -329,6 +330,13 @@
+@@ -325,6 +326,13 @@ pub struct Config {
      pub remote: RemoteConfig,
  }
  
@@ -445,42 +461,58 @@
  #[derive(Debug)]
  pub struct LoadedConfig {
      pub config: Config,
+diff --git a/src/main.rs b/src/main.rs
+index f97e7e2..449cebe 100644
 --- a/src/main.rs
 +++ b/src/main.rs
-@@ -160,6 +160,11 @@
- # "current" for Herdr's process directory, or a fixed path such as "~/Projects".
- # new_cwd = "follow"
+@@ -120,6 +120,10 @@ const DEFAULT_CONFIG: &str = r##"# herdr configuration
+ # Render pane images in Kitty graphics-compatible outer terminals.
+ # kitty_graphics = true
  
 +[agents]
-+# Exact absolute Codex executable paths accepted by `herdr agent start --executable`.
-+# The canonical `codex` executable remains the default when this option is omitted.
-+# codex_executables = ["/nix/store/.../bin/codex-next"]
++# Exact absolute Codex executables permitted by herdr agent start --executable.
++# codex_executables = []
 +
  [update]
  # Update channel used by background version checks and `herdr update`.
  # Stable builds default to "stable". Windows preview builds default to "preview"
+diff --git a/src/platform/macos/input_tests.rs b/src/platform/macos/input_tests.rs
+index 5d73c24..64f0114 100644
+--- a/src/platform/macos/input_tests.rs
++++ b/src/platform/macos/input_tests.rs
+@@ -91,6 +91,7 @@ fn start_request(pane_id: &str, argument: &str) -> Request {
+             name: "worker".into(),
+             kind: "codex".into(),
+             pane_id: pane_id.into(),
++            executable: None,
+             args: vec!["resume".into(), argument.into()],
+             timeout_ms: Some(10_000),
+         }),
+diff --git a/src/terminal/state.rs b/src/terminal/state.rs
+index 11d540b..b2c0f19 100644
 --- a/src/terminal/state.rs
 +++ b/src/terminal/state.rs
-@@ -133,6 +133,7 @@
+@@ -144,6 +144,7 @@ pub struct TerminalState {
      pub agent_name: Option<String>,
      agent_name_owner: Option<AgentNameOwner>,
      managed_agent: Option<ManagedAgent>,
 +    managed_agent_executable: Option<String>,
+     codex_prompt_ready: bool,
+     managed_agent_launch_session: Option<crate::agent_resume::PersistedAgentSession>,
      hook_report_sequences: HashMap<String, u64>,
-     suppressed_full_lifecycle_hook_reports: HashMap<String, SuppressedFullLifecycleHookReport>,
-     stale_full_lifecycle_hook_sessions: HashMap<String, Vec<StaleFullLifecycleHookSession>>,
-@@ -167,6 +168,7 @@
+@@ -184,6 +185,7 @@ impl TerminalState {
              agent_name: None,
              agent_name_owner: None,
              managed_agent: None,
 +            managed_agent_executable: None,
+             codex_prompt_ready: false,
+             managed_agent_launch_session: None,
              hook_report_sequences: HashMap::new(),
-             suppressed_full_lifecycle_hook_reports: HashMap::new(),
-             stale_full_lifecycle_hook_sessions: HashMap::new(),
-@@ -1901,6 +1903,25 @@
+@@ -2141,6 +2143,25 @@ impl TerminalState {
+         now: Instant,
          settle_delay: Duration,
          timeout: Duration,
-     ) {
++    ) {
 +        self.begin_managed_agent_with_executable(
 +            name,
 +            kind,
@@ -499,11 +531,10 @@
 +        now: Instant,
 +        settle_delay: Duration,
 +        timeout: Duration,
-+    ) {
+     ) {
+         self.codex_prompt_ready = false;
          self.set_agent_name(name);
-         self.agent_name_owner = Some(AgentNameOwner {
-             agent_label: crate::detect::agent_label(kind).to_string(),
-@@ -1914,6 +1935,7 @@
+@@ -2157,6 +2178,7 @@ impl TerminalState {
                  observed_expected: false,
              },
          });
@@ -511,7 +542,7 @@
      }
  
      pub fn managed_agent_launch_pending(&self) -> bool {
-@@ -1934,6 +1956,10 @@
+@@ -2191,6 +2213,10 @@ impl TerminalState {
          self.managed_agent.map(|managed| managed.kind)
      }
  
@@ -522,15 +553,15 @@
      pub fn next_managed_agent_deadline(&self) -> Option<Instant> {
          let ManagedAgentPhase::Pending {
              ready_after,
-@@ -2038,12 +2064,15 @@
-             kind,
-             phase: ManagedAgentPhase::Active,
-         });
-+        self.managed_agent_executable =
-+            Some(crate::detect::interactive_agent_executable(kind).to_string());
+@@ -2298,6 +2324,7 @@ impl TerminalState {
      }
  
-     pub fn clear_agent_name(&mut self) {
+     pub fn restore_managed_agent(&mut self, name: String, kind: Agent) {
++        self.managed_agent_executable = None;
+         self.set_agent_name(name);
+         self.agent_name_owner = Some(AgentNameOwner {
+             agent_label: crate::detect::agent_label(kind).to_string(),
+@@ -2322,6 +2349,7 @@ impl TerminalState {
          self.agent_name = None;
          self.agent_name_owner = None;
          self.managed_agent = None;

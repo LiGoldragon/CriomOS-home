@@ -10,11 +10,8 @@ let
   buildGuard = config.criomosHome.remoteBuildCommandGuard;
   inheritedServicePath = "%h/.local/bin:/run/wrappers/bin:/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin:/etc/profiles/per-user/%u/bin:%h/.nix-profile/bin";
   herdrPackage = pkgs.callPackage ../../../../packages/herdr { inherit inputs; };
-  # Matches the flake input `herdr.url = "github:herdrdev/herdr/v0.8.2"`.
-  herdrVersionPin = "0.8.2";
-  stableCodexPackage = pkgs.callPackage "${inputs.deployed-codex-source}/owned-agents/codex" {
-    manifestFile = "${inputs.deployed-codex-source}/owned-agents/codex/stable-hashes.json";
-  };
+  herdrVersionPin = inputs.herdr.packages.${pkgs.stdenv.hostPlatform.system}.default.version;
+  stableCodexPackage = config.criomos.corePackages.codex;
   stableCodexClientPackage = pkgs.writeShellApplication {
     name = "codex-stable-flow-client";
     text = ''

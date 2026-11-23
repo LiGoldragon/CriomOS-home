@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   pkgs,
   inputs ? null,
@@ -15,8 +16,8 @@
 
     codexNextServer = lib.mkOption {
       type = lib.types.package;
-      default = pkgs.callPackage "${inputs.deployed-codex-source}/owned-agents/codex-next" { };
-      defaultText = lib.literalExpression ''pkgs.callPackage "${inputs.deployed-codex-source}/owned-agents/codex-next" { }'';
+      default = config.criomos.corePackages.codex;
+      defaultText = lib.literalExpression ''config.criomos.corePackages.codex'';
       description = "The deployed next Codex server derivation selected for every user.";
     };
 

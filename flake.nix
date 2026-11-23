@@ -22,12 +22,6 @@
       flake = false;
     };
 
-    # Source of the Codex derivations occupied by the running servers and Flow.
-    # The lock pins the deployed Home revision; PATH clients advance independently.
-    deployed-codex-source = {
-      url = "github:LiGoldragon/CriomOS-home";
-      flake = false;
-    };
 
     # Primary's immutable Curriculum package provides the user CLI and Nexus.
     primary = {
