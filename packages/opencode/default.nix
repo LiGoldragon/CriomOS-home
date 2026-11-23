@@ -2,11 +2,11 @@
 let inherit (pkgs) lib stdenvNoCC fetchurl; in
 stdenvNoCC.mkDerivation (final: {
   pname = "opencode";
-  version = "1.19.6";
+  version = "2.4.1";
   src = fetchurl (let
     sources = {
-      x86_64-linux = { name = "opencode-linux-x64-baseline-musl.tar.gz"; hash = "sha256-vGsNcCFj2FkWHujkPqPxbRvUOzBax84XdC6wG6ckifM="; };
-      aarch64-linux = { name = "opencode-linux-arm64-musl.tar.gz"; hash = "sha256-RUBziHd9/BiUWRyXJ8Fp8gKtksdXVwOJUGMKD7sSypc="; };
+      x86_64-linux = { name = "opencode-linux-x64-baseline-musl.tar.gz"; hash = "sha256-PY0Lpm0z4WMevmG1U5zS75cack/2jrKGVUCTv1W6XJ8="; };
+      aarch64-linux = { name = "opencode-linux-arm64-musl.tar.gz"; hash = "sha256-gU2S3GzhcqOCCQeX33Byt/4PKEDyRAg4IoGWeJwONS8="; };
     };
     source = sources.${stdenvNoCC.hostPlatform.system};
   in {
