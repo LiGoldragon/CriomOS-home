@@ -128,6 +128,8 @@
     harness.url = "github:LiGoldragon/harness";
     harness.inputs.nixpkgs.follows = "nixpkgs";
 
+    codex-harness-nexus.url = "github:LiGoldragon/codex-harness-nexus";
+
     # Flow 0.60.6, built per crate on the build base. It follows no Home
     # input: its nixpkgs is the base's, which gives its crates the store paths
     # every repository on the base shares.
@@ -630,6 +632,7 @@
           codex-remote = checkPkgs.callPackage ./gates/codex-remote { };
           codex-artifact-gateway = checkPkgs.callPackage ./checks/codex-artifact-gateway { };
           codex-plain = checkPkgs.callPackage ./checks/codex-plain {};
+          codex-harness-nexus = checkPkgs.callPackage ./checks/codex-harness-nexus { inherit inputs; };
           codex-artifact-gateway-module = checkPkgs.callPackage ./checks/codex-artifact-gateway-module {
             inherit inputs;
           };

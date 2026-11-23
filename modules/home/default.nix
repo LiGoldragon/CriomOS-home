@@ -85,6 +85,7 @@
     # The Nexus places, $XDG_RUNTIME_DIR/nexus/<place>/ and
     # ~/.local/state/nexus/<place>/: declared once, owned by no Nexus.
     ./profiles/min/nexus-places.nix
+    ./profiles/min/codex-harness-nexus.nix
     # The Energy Nexus at its place.
     ./profiles/min/energy-nexus.nix
     # What every Flow Nexus version shares; each version is its own unit.
