@@ -25,7 +25,7 @@ pkgs.buildNpmPackage (finalAttrs: {
     runHook preInstall
 
     mkdir -p $out/lib/pi-monorepo
-    cp -r packages node_modules package.json $out/lib/pi-monorepo/
+    cp -r apps packages node_modules package.json $out/lib/pi-monorepo/
 
     mkdir -p $out/bin
     makeWrapper "${pkgs.lib.getExe pkgs.nodejs_24}" "$out/bin/pi" \
