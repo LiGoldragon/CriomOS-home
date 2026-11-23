@@ -32,7 +32,7 @@ pkgs.buildNpmPackage (finalAttrs: {
       --add-flags "$out/lib/pi-monorepo/packages/coding-agent/dist/bundle/cli.js" \
       --suffix PATH : "${pkgs.lib.makeBinPath [ pkgs.nodejs_24 ]}" \
       --prefix PATH : "${pkgs.lib.makeBinPath (with pkgs; [ fd ripgrep wl-clipboard xclip ])}" \
-      --run 'if [ -z "''${PI_PACKAGE_DIR:-}" ]; then export PI_PACKAGE_DIR="$HOME/.local/share/criomos/pi/package"; fi' \
+      --set-default PI_PACKAGE_DIR "$out/lib/pi-monorepo/packages/coding-agent" \
       --run 'export LINKUP_API_KEY="''${LINKUP_API_KEY:-$(${pkgs.gopass}/bin/gopass show -o linkup.so/api-key 2>/dev/null || true)}"'
 
     runHook postInstall
