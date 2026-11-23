@@ -1,20 +1,20 @@
 diff --git a/packages/coding-agent/src/core/skills.ts b/packages/coding-agent/src/core/skills.ts
-index 2d95ce1..c7f3c6a 100644
+index 48df453..cbe348f 100644
 --- a/packages/coding-agent/src/core/skills.ts
 +++ b/packages/coding-agent/src/core/skills.ts
-@@ -330,6 +330,6 @@ export function formatSkillsForPrompt(skills: Skill[]): string {
- 	const lines = [
- 		"\n\nThe following skills provide specialized instructions for specific tasks.",
--		"Use the read tool to load a skill's file when the task matches its description.",
-+		"Use the read tool to load a skill's file when the task matches its description. A complete pasted `<skill name=... location=...> ... </skill>` block with the full body is already loaded; read the file for incomplete blocks, missing name/location/body, or explicit freshness/source checks.",
- 		"When a skill file references a relative path, resolve it against the skill directory (parent of SKILL.md / dirname of the path) and use that absolute path in tool commands.",
+@@ -369,6 +369,7 @@ export function formatSkillsForPrompt(skills: Skill[], fileReadTool: "read" | "b
+ 			: fileReadTool === "bash"
+ 				? "Use bash to load a skill's file when the task matches its description."
+ 				: "Load a skill's file when the task matches its description.",
++		"A complete pasted `<skill name=... location=...> ... </skill>` block with the full body is already loaded; read the file for incomplete blocks, missing name/location/body, or explicit freshness/source checks.",
+ 		"Resolve relative paths against the skill's directory (parent of SKILL.md). Use absolute paths in tool calls.",
  		"",
  		"<available_skills>",
 diff --git a/packages/coding-agent/test/skills.test.ts b/packages/coding-agent/test/skills.test.ts
-index 3af9e35..b622760 100644
+index 0398019..a8a0593 100644
 --- a/packages/coding-agent/test/skills.test.ts
 +++ b/packages/coding-agent/test/skills.test.ts
-@@ -264,6 +264,7 @@ describe("skills", () => {
+@@ -263,6 +263,7 @@ describe("skills", () => {
  
  			expect(introText).toContain("The following skills provide specialized instructions");
  			expect(introText).toContain("Use the read tool to load a skill's file");

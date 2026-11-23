@@ -171,11 +171,8 @@
     # AI coding agents are owned by the local package constructors under
     # `packages/{codex,claude-code,chatgpt,claude-desktop}`. Keep independent
     # VSIX inputs versioned separately from those package derivations.
-    # Agent harness managers.  Herdr supplies its official tagged flake;
-    # Orca remains packaged in its dedicated repository and Home consumes
-    # only that pinned package output.
+    # Herdr supplies its official tagged flake; Orca uses official Linux artifacts.
     herdr.url = "github:herdrdev/herdr";
-    orca-ide.url = "github:Samuka007/nix-orca";
 
     # Google Workspace CLI for no-MCP assistant access to Gmail, Drive,
     # Calendar, Docs, Sheets, Slides, Tasks, and People/Contacts.
@@ -220,16 +217,6 @@
     # Message — its message-mcp-send is the send server each Flow Nexus
     # version is configured with (flow-nexus-place.nix).
     message.url = "github:LiGoldragon/message";
-
-    # `pi` (earendil-works/pi coding-agent CLI) — TypeScript npm
-    # monorepo with no upstream flake. Consumed as a non-flake source
-    # input and built locally via `packages/pi/default.nix`
-    # (buildNpmPackage over the `packages/coding-agent` workspace).
-    # Replaces the previous pi-mentci wrapper flake (dropped 2026-04-25).
-    pi-src = {
-      url = "github:earendil-works/pi";
-      flake = false;
-    };
 
     # Pi extension packages. Kept as flake inputs so source revisions and
     # content hashes live in flake.lock, not in package Nix code.
@@ -619,6 +606,7 @@
           codex-release-manifest = checkPkgs.callPackage ./checks/codex-release-manifest { };
           bird-codex-selection = checkPkgs.callPackage ./checks/bird-codex-selection { inherit inputs; };
           opencode-harness = checkPkgs.callPackage ./checks/opencode-harness { inherit inputs; };
+          harness-client-startup = checkPkgs.callPackage ./gates/harness-client-startup { inherit inputs; };
           system-projection-boundary = checkPkgs.callPackage ./checks/system-projection-boundary { };
           main-contract-pins = checkPkgs.callPackage ./checks/main-contract-pins {
             inherit inputs;

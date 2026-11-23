@@ -38,7 +38,7 @@ stdenvNoCC.mkDerivation {
     test -x "$out/bin/codex-code-mode-host"
   '';
   meta = {
-    description = "Locally promoted, reproducibly pinned Codex CLI";
+    description = "Reproducibly pinned upstream stable Codex CLI";
     homepage = "https://github.com/openai/codex";
     changelog = "https://github.com/openai/codex/releases/tag/rust-v${version}";
     license = lib.licenses.asl20;

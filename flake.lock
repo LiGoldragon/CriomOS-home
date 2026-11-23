@@ -2162,32 +2162,16 @@
     },
     "nixpkgs_10": {
       "locked": {
-        "lastModified": 1786599213,
-        "narHash": "sha256-yNJd40f11EzXBjSByCB7IPpeFFAdeoSKKM67dGkfFoU=",
+        "lastModified": 1794042290,
+        "narHash": "sha256-ziZn2PvCJE5JEEpqTdxXwJpPB+L3YqoCpTAMCzyaP3U=",
         "owner": "LiGoldragon",
         "repo": "nixpkgs",
-        "rev": "0e251e24a4f24e036a084b6b4b2d2491af4167f4",
+        "rev": "f4a03c008967841f2a0b3cb7c436fc6fc31671f6",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "ref": "main",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs_11": {
-      "locked": {
-        "lastModified": 1783776592,
-        "narHash": "sha256-UgCQzxeWI75XM8G+hPrPh+MKzEPjG3SpAj7dtqSbksA=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "e7a3ca8092b61ff85b6a45bf863ea2b2d6a661b3",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "nixos-unstable",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -2393,24 +2377,6 @@
         "type": "github"
       }
     },
-    "orca-ide": {
-      "inputs": {
-        "nixpkgs": "nixpkgs_11"
-      },
-      "locked": {
-        "lastModified": 1787381882,
-        "narHash": "sha256-UIEsDym/+wiukBh4YBvCPrOIjFeJRTjY3U+DhZdfCsc=",
-        "owner": "Samuka007",
-        "repo": "nix-orca",
-        "rev": "249a8d3c1bb2842ddec882ef2c1afd28c426b19e",
-        "type": "github"
-      },
-      "original": {
-        "owner": "Samuka007",
-        "repo": "nix-orca",
-        "type": "github"
-      }
-    },
     "orchestrate": {
       "inputs": {
         "flake-utils": "flake-utils_10",
@@ -2474,22 +2440,6 @@
       "original": {
         "owner": "LiGoldragon",
         "repo": "pi-session-namer",
-        "type": "github"
-      }
-    },
-    "pi-src": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1786081693,
-        "narHash": "sha256-lg+I4S/aAjazjhGZU567ow+rksoNiqOqjHl//TjAMes=",
-        "owner": "earendil-works",
-        "repo": "pi",
-        "rev": "53fa77ccd8a279eb87e92294ef3687b03ff80112",
-        "type": "github"
-      },
-      "original": {
-        "owner": "earendil-works",
-        "repo": "pi",
         "type": "github"
       }
     },
@@ -2998,12 +2948,10 @@
         "niri-flake": "niri-flake",
         "nixpkgs": "nixpkgs_10",
         "noctalia": "noctalia",
-        "orca-ide": "orca-ide",
         "orchestrate": "orchestrate",
         "pi-continue-src": "pi-continue-src",
         "pi-linkup-src": "pi-linkup-src",
         "pi-session-namer": "pi-session-namer",
-        "pi-src": "pi-src",
         "pi-subagents-src": "pi-subagents-src",
         "pi-ultra-subagents-src": "pi-ultra-subagents-src",
         "pi-ultra-subagents-typebox-src": "pi-ultra-subagents-typebox-src",

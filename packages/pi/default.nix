@@ -1,9 +1,13 @@
-{ pkgs, inputs, ... }:
+{ pkgs, ... }:
 pkgs.buildNpmPackage (finalAttrs: {
   pname = "pi";
-  version = "0.84.1";
+  version = "1.6.0";
 
-  src = inputs.pi-src;
+  # The official release asset contains the model catalog used by this build.
+  src = pkgs.fetchurl {
+    url = "https://github.com/earendil-works/pi/releases/download/v${finalAttrs.version}/pi-${finalAttrs.version}-source.tar.gz";
+    hash = "sha256-FFGeKI6E5xNimyILtq3mgY4y1P8j8gX9gKfMSd7cQT4=";
+  };
 
   patches = [
     ./patches/complete-pasted-skill-blocks-are-loaded.patch
@@ -11,77 +15,10 @@ pkgs.buildNpmPackage (finalAttrs: {
     ./patches/extension-context-theme-persistence.patch
   ];
 
-  # No `npmWorkspace` — pi is `@earendil-works/pi-coding-agent` in the
-  # monorepo and its dist resolves sibling workspaces via symlinks
-  # under `node_modules/@earendil-works/pi-{ai,agent-core,tui,...}`. If
-  # we point npmWorkspace at coding-agent only, the install hook
-  # copies just that workspace, leaving every sibling-symlink dangling
-  # at runtime. Install the whole monorepo and stitch in the `pi`
-  # binary ourselves in postInstall.
-
-  npmDepsHash = "sha256-tufyZQRPAUeDtiq0UQodbKA/Y9xUAvNT8K+NWFjkeME=";
-
-  makeCacheWritable = true;
-
-  # `packages/ai`'s model refresh steps hit OpenRouter / ai-gateway.vercel /
-  # models.dev to refresh catalogues that are also committed in the source.
-  # Network is forbidden in the build sandbox, so the committed catalogues are
-  # the source of truth at the pinned tag.
-  postPatch = ''
-    substituteInPlace packages/ai/package.json \
-      --replace-fail '"generate-models": "node scripts/generate-models.ts --strict"' \
-                     '"generate-models": "true"' \
-      --replace-fail '"generate-image-models": "node scripts/generate-image-models.ts --strict"' \
-                     '"generate-image-models": "true"' \
-      --replace-fail '"check:model-data": "node scripts/check-model-data.ts"' \
-                     '"check:model-data": "true"'
-
-    # pi v0.84.1 does not commit the generated provider JSON catalogs to source
-    # (they live in packages/ai/src/providers/data/*.json and are produced by
-    # generate-models at dev-time). The TypeScript build imports them directly,
-    # so they must exist before `tsgo` runs. Provide empty-object stubs — each
-    # provider catalog is typed as Record<string,Record<string,object>>, so {}
-    # is a valid (zero-model) value.
-    mkdir -p packages/ai/src/providers/data
-    for f in amazon-bedrock anthropic ant-ling azure-openai-responses \
-              baseten cerebras cloudflare-ai-gateway cloudflare-workers-ai \
-              deepseek fireworks github-copilot google google-vertex groq \
-              huggingface kimi-coding minimax-cn minimax mistral \
-              moonshotai-cn moonshotai nvidia openai-codex openai \
-              opencode-go opencode openrouter qwen-token-plan-cn \
-              qwen-token-plan-individual qwen-token-plan together \
-              vercel-ai-gateway xai xiaomi xiaomi-token-plan-ams \
-              xiaomi-token-plan-cn xiaomi-token-plan-sgp zai-coding-cn zai; do
-      echo '{}' > packages/ai/src/providers/data/$f.json
-    done
-    # .manifest.json is imported by all.ts for its generatedAt timestamp
-    echo '{"generatedAt":"1970-01-01T00:00:00Z"}' > packages/ai/src/providers/data/.manifest.json
-
-    # With empty {} provider stubs, GITHUB_COPILOT_MODELS resolves to an empty
-    # record type and Object.values() returns unknown[] under strict mode, causing
-    # a type error on model.id. Suppress it with @ts-ignore.
-    sed -i '349s/^/\/\/ @ts-ignore — model catalog is an empty stub in offline build\n/' \
-      packages/ai/src/auth/oauth/github-copilot.ts
-  '';
-
-  # pi's root `build` script sequences workspaces in dependency
-  # order (tui → ai → agent → coding-agent → mom → web-ui → pods).
-  # Building only the coding-agent workspace fails because the sibling
-  # workspaces it imports from (`@mariozechner/pi-ai`, etc.) haven't
-  # produced their dist/ yet. Run the root script instead of relying on
-  # buildNpmPackage's default per-workspace build.
-  buildPhase = ''
-    runHook preBuild
-    npm run build
-    runHook postBuild
-  '';
-
-  # buildNpmPackage's default `npmInstallHook` is built around a
-  # single-package shape (`npm pack` + extract); applied to the
-  # monorepo root it drops the workspace dist/ artifacts. Skip it and
-  # copy the entire build tree verbatim — we need the workspaces dir
-  # plus node_modules so the symlinks inside `node_modules/@mariozechner/*`
-  # resolve to real files at runtime.
+  npmDepsHash = "sha256-V7fRy44X50tqfFewWQ/k5UjvUt+AoMOZkTw/v0bib6o=";
+  nodejs = pkgs.nodejs_24;
+  npmRebuildFlags = [ "--ignore-scripts" ];
+  npmBuildScript = "build:offline";
   dontNpmInstall = true;
 
   installPhase = ''
@@ -91,30 +28,26 @@ pkgs.buildNpmPackage (finalAttrs: {
     cp -r packages node_modules package.json $out/lib/pi-monorepo/
 
     mkdir -p $out/bin
-    chmod +x $out/lib/pi-monorepo/packages/coding-agent/dist/cli.js
-    makeWrapper "$out/lib/pi-monorepo/packages/coding-agent/dist/cli.js" "$out/bin/pi" \
+    makeWrapper "${pkgs.lib.getExe pkgs.nodejs_24}" "$out/bin/pi" \
+      --add-flags "$out/lib/pi-monorepo/packages/coding-agent/dist/bundle/cli.js" \
+      --suffix PATH : "${pkgs.lib.makeBinPath [ pkgs.nodejs_24 ]}" \
+      --prefix PATH : "${pkgs.lib.makeBinPath (with pkgs; [ fd ripgrep wl-clipboard xclip ])}" \
       --run 'if [ -z "''${PI_PACKAGE_DIR:-}" ]; then export PI_PACKAGE_DIR="$HOME/.local/share/criomos/pi/package"; fi' \
       --run 'export LINKUP_API_KEY="''${LINKUP_API_KEY:-$(${pkgs.gopass}/bin/gopass show -o linkup.so/api-key 2>/dev/null || true)}"'
 
     runHook postInstall
   '';
 
-  # `canvas` (transitive native node addon, comes via the workspace
-  # tree even though pi-coding-agent itself doesn't use it directly)
-  # builds with node-gyp against pkg-config-discovered system libs.
-  nativeBuildInputs = with pkgs; [
-    makeWrapper
-    pkg-config
-    python3
-  ];
-  buildInputs = with pkgs; [
-    cairo
-    pango
-    libpng
-    libjpeg
-    librsvg
-    pixman
-  ];
+  nativeBuildInputs = [ pkgs.makeWrapper pkgs.autoPatchelfHook ];
+  buildInputs = [ pkgs.stdenv.cc.cc.lib pkgs.libxcb ];
+
+  doCheck = true;
+  checkPhase = ''
+    runHook preCheck
+    npm exec --workspace=@earendil-works/pi-coding-agent -- vitest run \
+      test/skills.test.ts test/system-prompt.test.ts test/extensions-runner.test.ts
+    runHook postCheck
+  '';
 
   meta = {
     description = "pi — coding agent CLI from earendil-works/pi";

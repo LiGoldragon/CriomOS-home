@@ -19,7 +19,7 @@ let
     toString
     ;
   inventory = fromJSON (readFile (inputs.criomos-lib + "/data/largeAI/llm.json"));
-  pi = pkgs.callPackage ../../../../packages/pi { inherit inputs; };
+  pi = pkgs.callPackage ../../../../packages/pi { };
   pi-criomos = pkgs.callPackage ../../../../packages/pi-criomos { };
   pi-linkup = pkgs.callPackage ../../../../packages/pi-linkup { inherit inputs; };
   pi-subagents = pkgs.callPackage ../../../../packages/pi-subagents {
