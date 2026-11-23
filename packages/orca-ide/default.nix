@@ -26,6 +26,10 @@ pkgs.stdenvNoCC.mkDerivation (final: {
     pango stdenv.cc.cc.lib systemdLibs
   ];
   runtimeDependencies = with pkgs; [ gtk3 libsecret ];
+  # The remote deployment template is a byte payload for machines that may
+  # use a different libc or architecture. Fix up the local desktop and CLI
+  # only; put back the unmodified payload after the local fixup.
+  dontAutoPatchelf = true;
   sourceRoot = ".";
   unpackPhase = "dpkg-deb -x $src .";
   installPhase = ''
@@ -46,7 +50,21 @@ pkgs.stdenvNoCC.mkDerivation (final: {
       --run 'export ORCA_NODE_OPTIONS="''${NODE_OPTIONS-}" ORCA_NODE_REPL_EXTERNAL_MODULE="''${NODE_REPL_EXTERNAL_MODULE-}"' \
       --unset NODE_OPTIONS --unset NODE_REPL_EXTERNAL_MODULE \
       --set ELECTRON_RUN_AS_NODE 1 --add-flags "$cli"
+    vendorResources="$out/lib/orca/resources"
+    mv "$vendorResources/orcad-template" "$TMPDIR/orca-remote-template"
+    find "$vendorResources/node_modules/@koromix" -type d -name 'musl_*' -print > "$TMPDIR/orca-musl-paths"
+    mkdir "$TMPDIR/orca-musl"
+    while IFS= read -r module; do
+      mv "$module" "$TMPDIR/orca-musl/''${module##*/}"
+    done < "$TMPDIR/orca-musl-paths"
     runHook postInstall
+  '';
+  postFixup = ''
+    autoPatchelf "$out"
+    mv "$TMPDIR/orca-remote-template" "$out/lib/orca/resources/orcad-template"
+    while IFS= read -r module; do
+      mv "$TMPDIR/orca-musl/''${module##*/}" "$module"
+    done < "$TMPDIR/orca-musl-paths"
   '';
   meta = {
     description = "Orca multi-agent development environment";

@@ -5,21 +5,21 @@ stdenvNoCC.mkDerivation (final: {
   version = "2.4.1";
   src = fetchurl (let
     sources = {
-      x86_64-linux = { name = "opencode-linux-x64-baseline.tar.gz"; hash = "sha256-nd0Y4/r2Tq7M9qD8vJalx6FFIK5f1bYeW+UdiU9Hi0c="; };
-      aarch64-linux = { name = "opencode-linux-arm64.tar.gz"; hash = "sha256-yyjPlFQa62KksupZl6mbXda65ZWncvNvvieSmfIDKk8="; };
+      x86_64-linux = { name = "cli-linux-x64-baseline"; hash = "sha512-hYF+w2CQU/Jx4Px2VNxHrfUybR6xze1FeOCmPXXsPWXWkk0BILJkxI0fQVA1FzlGPy6avHWJzzJ1fCf9wwkupw=="; };
+      aarch64-linux = { name = "cli-linux-arm64"; hash = "sha512-olNKfoAuHaDtHrWrlqxh2RPSonSfAZPGJlru7tMNeNTlHyLSrTbDe/+HJ6vdYRp7g4yKLSQ8SG264U/IC7Pgtw=="; };
     };
     source = sources.${stdenvNoCC.hostPlatform.system};
   in {
     inherit (source) hash;
-    url = "https://github.com/anomalyco/opencode/releases/download/v${final.version}/${source.name}";
+    url = "https://registry.npmjs.org/@opencode/${source.name}/-/${source.name}-${final.version}.tgz";
   });
-  sourceRoot = ".";
+  sourceRoot = "package";
   nativeBuildInputs = [ pkgs.autoPatchelfHook pkgs.makeWrapper ];
   buildInputs = [ pkgs.stdenv.cc.cc.lib pkgs.zlib ];
 
   installPhase = ''
     runHook preInstall
-    install -Dm755 opencode "$out/bin/opencode"
+    install -Dm755 bin/opencode "$out/bin/opencode"
     wrapProgram "$out/bin/opencode" --prefix PATH : "${lib.makeBinPath [ pkgs.ripgrep ]}"
     runHook postInstall
   '';

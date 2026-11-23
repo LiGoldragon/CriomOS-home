@@ -1,5 +1,5 @@
 diff --git a/packages/coding-agent/src/core/system-prompt.ts b/packages/coding-agent/src/core/system-prompt.ts
-index e51e14f..f4c21fe 100644
+index e51e14f..4e94c0f 100644
 --- a/packages/coding-agent/src/core/system-prompt.ts
 +++ b/packages/coding-agent/src/core/system-prompt.ts
 @@ -159,13 +159,15 @@ export function buildSystemPromptSections(input: BuildSystemPromptOptions): Syst
@@ -23,10 +23,10 @@ index e51e14f..f4c21fe 100644
  
  	if (appendSystemPrompt) promptSections.addendum = appendSystemPrompt;
 diff --git a/packages/coding-agent/test/system-prompt.test.ts b/packages/coding-agent/test/system-prompt.test.ts
-index 86d2c69..a820375 100644
+index 86d2c69..300e3ec 100644
 --- a/packages/coding-agent/test/system-prompt.test.ts
 +++ b/packages/coding-agent/test/system-prompt.test.ts
-@@ -110,15 +110,18 @@ describe("buildSystemPrompt", () => {
+@@ -110,19 +110,22 @@ describe("buildSystemPrompt", () => {
  			expect(prompt).toContain(expected);
  		});
  
@@ -47,3 +47,8 @@ index 86d2c69..a820375 100644
  			);
  			expect(prompt).toContain("environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md)");
  			expect(prompt).toContain(
+-				"Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.",
++				"Before implementing harness changes in a role that permits direct access, read the relevant docs and examples and follow related cross-references.",
+ 			);
+ 		});
+ 	});
