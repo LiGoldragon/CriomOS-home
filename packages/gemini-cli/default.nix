@@ -1,4 +1,5 @@
-{ lib, stdenvNoCC, fetchurl, nodejs_24, ripgrep, unzip, makeWrapper, writeText }:
+{ pkgs, ... }:
+let inherit (pkgs) lib stdenvNoCC fetchurl nodejs_24 ripgrep unzip makeWrapper writeText; in
 stdenvNoCC.mkDerivation (final: {
   pname = "gemini-cli";
   version = "0.70.0";

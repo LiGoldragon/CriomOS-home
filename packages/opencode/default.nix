@@ -1,4 +1,5 @@
-{ lib, stdenvNoCC, fetchurl }:
+{ pkgs, ... }:
+let inherit (pkgs) lib stdenvNoCC fetchurl; in
 stdenvNoCC.mkDerivation (final: {
   pname = "opencode";
   version = "1.19.6";

@@ -1,5 +1,6 @@
-{ lib, appimageTools, fetchurl, python3, stdenv }:
+{ pkgs, ... }:
 let
+  inherit (pkgs) lib appimageTools fetchurl python3 stdenv;
   pname = "orca-ide";
   version = "1.4.272";
   sources = {

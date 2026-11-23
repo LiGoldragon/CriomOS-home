@@ -1,5 +1,5 @@
 final: _: {
-  gemini-cli = final.callPackage ../packages/gemini-cli { };
-  opencode = final.callPackage ../packages/opencode { };
-  orca-ide = final.callPackage ../packages/orca-ide { };
+  gemini-cli = import ../packages/gemini-cli { pkgs = final; };
+  opencode = import ../packages/opencode { pkgs = final; };
+  orca-ide = import ../packages/orca-ide { pkgs = final; };
 }
