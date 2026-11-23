@@ -5,8 +5,8 @@ stdenvNoCC.mkDerivation (final: {
   version = "2.4.1";
   src = fetchurl (let
     sources = {
-      x86_64-linux = { name = "opencode-linux-x64-baseline-musl.tar.gz"; hash = "sha256-PY0Lpm0z4WMevmG1U5zS75cack/2jrKGVUCTv1W6XJ8="; };
-      aarch64-linux = { name = "opencode-linux-arm64-musl.tar.gz"; hash = "sha256-gU2S3GzhcqOCCQeX33Byt/4PKEDyRAg4IoGWeJwONS8="; };
+      x86_64-linux = { name = "opencode-linux-x64-baseline.tar.gz"; hash = "sha256-nd0Y4/r2Tq7M9qD8vJalx6FFIK5f1bYeW+UdiU9Hi0c="; };
+      aarch64-linux = { name = "opencode-linux-arm64.tar.gz"; hash = "sha256-yyjPlFQa62KksupZl6mbXda65ZWncvNvvieSmfIDKk8="; };
     };
     source = sources.${stdenvNoCC.hostPlatform.system};
   in {
@@ -14,9 +14,13 @@ stdenvNoCC.mkDerivation (final: {
     url = "https://github.com/anomalyco/opencode/releases/download/v${final.version}/${source.name}";
   });
   sourceRoot = ".";
+  nativeBuildInputs = [ pkgs.autoPatchelfHook pkgs.makeWrapper ];
+  buildInputs = [ pkgs.stdenv.cc.cc.lib pkgs.zlib ];
+
   installPhase = ''
     runHook preInstall
     install -Dm755 opencode "$out/bin/opencode"
+    wrapProgram "$out/bin/opencode" --prefix PATH : "${lib.makeBinPath [ pkgs.ripgrep ]}"
     runHook postInstall
   '';
   meta = {
