@@ -25,10 +25,12 @@ os.environ.update(XDG_RUNTIME_DIR=str(runtime), XDG_STATE_HOME=str(state), XDG_C
 def words(command):
     return [arg.replace("%t", str(runtime)).replace("%S", str(state)) for arg in shlex.split(command)]
 
+def commands(service, name):
+    value = plan[service][name]
+    return [value] if isinstance(value, str) else value
 
 def phase(service, name):
-    commands = plan[service][name]
-    for command in [commands] if isinstance(commands, str) else commands:
+    for command in commands(service, name):
         subprocess.run(words(command), check=True, timeout=15)
 
 
@@ -36,7 +38,8 @@ children = []
 try:
     for service in ["nexus", "translator"]:
         phase(service, "ExecStartPre")
-        children.append((service, subprocess.Popen(words(plan[service]["ExecStart"]))))
+        [start] = commands(service, "ExecStart")
+        children.append((service, subprocess.Popen(words(start))))
         phase(service, "ExecStartPost")
     for suffix in ["", "-meta", "-translator", "-meta-translator", "-hook", "-emission"]:
         mode = (place / f"codex-harness{suffix}.sock").stat().st_mode
@@ -47,7 +50,7 @@ try:
 
     # A second writer at main must be refused without removing its socket.
     pre = subprocess.run(
-        words(plan["nexus"]["ExecStartPre"]), capture_output=True, text=True, timeout=5
+        words(commands("nexus", "ExecStartPre")[0]), capture_output=True, text=True, timeout=5
     )
     assert pre.returncode and "already owns" in pre.stderr
     assert (place / "codex-harness.sock").is_socket()
