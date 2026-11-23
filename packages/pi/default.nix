@@ -39,7 +39,7 @@ pkgs.buildNpmPackage (finalAttrs: {
   '';
 
   nativeBuildInputs = [ pkgs.makeWrapper pkgs.autoPatchelfHook ];
-  buildInputs = [ pkgs.stdenv.cc.cc.lib pkgs.libxcb ];
+  buildInputs = [ pkgs.stdenv.cc.cc.lib pkgs.libxcb pkgs.libcap_ng ];
 
   doCheck = true;
   checkPhase = ''

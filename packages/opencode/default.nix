@@ -14,14 +14,21 @@ stdenvNoCC.mkDerivation (final: {
     url = "https://registry.npmjs.org/@opencode/${source.name}/-/${source.name}-${final.version}.tgz";
   });
   sourceRoot = "package";
-  nativeBuildInputs = [ pkgs.autoPatchelfHook pkgs.makeWrapper ];
-  buildInputs = [ pkgs.stdenv.cc.cc.lib pkgs.zlib ];
-
+  nativeBuildInputs = [ pkgs.makeWrapper ];
+  # Bun's single-file release includes a payload at the end of the executable.
+  # Preserve the published bytes and select the host's ELF loader in the wrapper.
+  dontFixup = true;
   installPhase = ''
     runHook preInstall
-    install -Dm755 bin/opencode "$out/bin/opencode"
-    wrapProgram "$out/bin/opencode" --prefix PATH : "${lib.makeBinPath [ pkgs.ripgrep ]}"
+    install -Dm755 bin/opencode "$out/libexec/opencode"
+    makeWrapper "${pkgs.stdenv.cc.bintools.dynamicLinker}" "$out/bin/opencode" \
+      --add-flags "$out/libexec/opencode" \
+      --prefix PATH : "${lib.makeBinPath [ pkgs.ripgrep ]}"
     runHook postInstall
+  '';
+  doInstallCheck = true;
+  installCheckPhase = ''
+    "$out/bin/opencode" --version | grep -F "opencode v${final.version}"
   '';
   meta = {
     description = "OpenCode terminal coding agent";
