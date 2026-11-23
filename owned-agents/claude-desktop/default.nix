@@ -169,21 +169,26 @@ stdenvNoCC.mkDerivation {
     cp -a usr/share/doc $out/share/doc
 
     asar extract "$out/lib/claude-desktop/resources/app.asar" "$TMPDIR/desktop-app"
-    node - "$TMPDIR/desktop-app/.vite/build/index.chunk-DOKiptke.js" "${claudeCodePackage}/bin/claude" "$out/lib/claude-desktop/resources/app.asar" "${pkgs.asar}/lib/node_modules/@electron/asar" <<'NODE'
+    node - "$TMPDIR/desktop-app" "${claudeCodePackage}/bin/claude" "$out/lib/claude-desktop/resources/app.asar" "${pkgs.asar}/lib/node_modules/@electron/asar" <<'NODE'
     const fs = require("node:fs");
     const path = require("node:path");
     const asar = require(process.argv[5]);
     const archive = process.argv[4];
     const unpacked = () => asar.listPackage(archive).filter(name => asar.statFile(archive, name.slice(1), false).unpacked).sort();
     const originalUnpacked = unpacked();
-    const file = process.argv[2];
+    const root = process.argv[2];
     const binary = process.argv[3];
-    const source = fs.readFileSync(file, "utf8");
     const anchor = "this.localBinaryInitPromise=null";
+    const build = path.join(root, ".vite", "build");
+    const managers = fs.readdirSync(build).filter(name => name.endsWith(".js")).map(name => {
+      const file = path.join(build, name);
+      return {file, source: fs.readFileSync(file, "utf8")};
+    }).filter(({source}) => source.includes(anchor));
+    if (managers.length !== 1) throw new Error("Expected one Claude local binary manager");
+    const [{file, source}] = managers;
     if (source.split(anchor).length !== 2) throw new Error("Claude manager initialization anchor changed");
     const call = "this.localBinaryInitPromise=this.initLocalBinary(" + JSON.stringify(binary) + ")";
     fs.writeFileSync(file, source.replace(anchor, call));
-    const root = path.resolve(path.dirname(file), "../..");
     const paths = originalUnpacked.map(name => path.join(root, name.slice(1)));
     const unpack = paths.length === 1 ? paths[0] : "{" + paths.join(",") + "}";
     asar.createPackageWithOptions(root, archive, {unpack}).then(() => {

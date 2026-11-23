@@ -30,8 +30,13 @@ pkgs.runCommand "claude-desktop-launcher-linkage"
       const path = require("node:path");
       const app = process.argv[1];
       const binary = process.argv[2];
-      const manager = fs.readFileSync(path.join(app, ".vite/build/index.chunk-DOKiptke.js"), "utf8");
       const call = "this.localBinaryInitPromise=this.initLocalBinary(" + JSON.stringify(binary) + ")";
+      const build = path.join(app, ".vite", "build");
+      const matches = fs.readdirSync(build).filter(name => name.endsWith(".js"))
+        .map(name => fs.readFileSync(path.join(build, name), "utf8"))
+        .filter(source => source.includes(call));
+      if (matches.length !== 1) throw new Error("Expected one production manager");
+      const [manager] = matches;
       if (manager.split(call).length !== 2) throw new Error("production manager does not initialize exactly once with declared Claude Code");
       if (manager.includes("this.localBinaryInitPromise=null")) throw new Error("inactive manager initializer remains");
       if (!manager.includes("this.localBinaryInitPromise&&await this.localBinaryInitPromise,this.localBinaryPath")) throw new Error("manager does not await local initialization before selecting binary");
