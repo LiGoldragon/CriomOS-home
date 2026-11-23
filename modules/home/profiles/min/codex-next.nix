@@ -7,7 +7,7 @@
 }:
 let
   enabled = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size "Min";
-  package = if stableCodex then config.criomos.corePackages.codex else pkgs.callPackage ../../../../owned-agents/codex-next { };
+  package = config.criomos.corePackages.codex;
   # The user's key here carrying StableCodex keeps the stable core Codex and its own account data.
   stableCodex = builtins.elem "StableCodex" user.capabilities;
   nextHome = "${config.home.homeDirectory}/.codex-next";

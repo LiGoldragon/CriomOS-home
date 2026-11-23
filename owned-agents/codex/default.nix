@@ -1,48 +1,52 @@
-{
-  lib,
-  stdenvNoCC,
-  fetchurl,
-  manifestFile ? ./hashes.json,
-  ...
-}:
+{ lib, stdenvNoCC, fetchurl, jq, writeShellApplication, ... }:
 let
-  manifest = builtins.fromJSON (builtins.readFile manifestFile);
-  version = manifest.version;
-  targets = manifest.targets;
-  artifact = targets.${stdenvNoCC.hostPlatform.system};
-in
-assert manifest.strategy == "prebuilt";
-stdenvNoCC.mkDerivation {
-  pname = "codex";
-  inherit version;
-  src = fetchurl {
-    inherit (artifact.cli) url hash;
+  manifest = builtins.fromJSON (builtins.readFile ./hashes.json);
+  artifact = manifest.targets.${stdenvNoCC.hostPlatform.system};
+  package = stdenvNoCC.mkDerivation {
+    pname = "codex-plain";
+    inherit (manifest) version;
+    src = fetchurl {
+      url = "https://github.com/openai/codex/releases/download/rust-v${manifest.version}/codex-package-${artifact.target}.tar.gz";
+      inherit (artifact) hash;
+    };
+    sourceRoot = ".";
+    nativeBuildInputs = [ jq ];
+    dontConfigure = true;
+    dontBuild = true;
+    dontFixup = true;
+    installPhase = ''
+      runHook preInstall
+      mkdir -p "$out"
+      cp -a bin codex-package.json codex-path codex-resources "$out/"
+      runHook postInstall
+    '';
+    doInstallCheck = true;
+    installCheckPhase = ''
+      test "$("$out/bin/codex" --version)" = "codex-cli ${manifest.version}"
+      jq -e '.layoutVersion == 1 and .version == "${manifest.version}" and .target == "${artifact.target}" and .entrypoint == "bin/codex" and .resourcesDir == "codex-resources" and .pathDir == "codex-path"' "$out/codex-package.json"
+      test -x "$out/bin/codex-code-mode-host"
+      test -x "$out/bin/codex-exec-server"
+      test -x "$out/codex-path/rg"
+      test -x "$out/codex-resources/bwrap"
+      "$out/bin/codex" app-server --help > "$TMPDIR/app-server-help"
+      "$out/bin/codex" app-server generate-json-schema --out "$TMPDIR/schema"
+      test -n "$(find "$TMPDIR/schema" -name '*.json' -print -quit)"
+    '';
+    passthru.releaseManifest = manifest;
+    passthru.flowClient = writeShellApplication {
+      name = "codex-plain-flow-client";
+      text = ''
+        : "''${CODEX_HOME:?Set CODEX_HOME to the private endpoint home}"
+        export CODEX_HOME
+        exec ${package}/bin/codex "$@"
+      '';
+    };
+    meta = {
+      description = "Complete unpatched upstream stable Codex for a separate app-server endpoint";
+      homepage = "https://github.com/openai/codex";
+      license = lib.licenses.asl20;
+      platforms = builtins.attrNames manifest.targets;
+      mainProgram = "codex";
+    };
   };
-  codeModeHost = fetchurl {
-    inherit (artifact.codeModeHost) url hash;
-  };
-  passthru.releaseManifest = manifest;
-  sourceRoot = ".";
-  dontConfigure = true;
-  dontBuild = true;
-  installPhase = ''
-    runHook preInstall
-    install -Dm755 codex-${artifact.target} "$out/bin/codex"
-    tar -xOzf "$codeModeHost" codex-code-mode-host-${artifact.target} > codex-code-mode-host
-    install -Dm755 codex-code-mode-host "$out/bin/codex-code-mode-host"
-    runHook postInstall
-  '';
-  doInstallCheck = true;
-  installCheckPhase = ''
-    test "$("$out/bin/codex" --version)" = "codex-cli ${version}"
-    test -x "$out/bin/codex-code-mode-host"
-  '';
-  meta = {
-    description = "Reproducibly pinned upstream stable Codex CLI";
-    homepage = "https://github.com/openai/codex";
-    changelog = "https://github.com/openai/codex/releases/tag/rust-v${version}";
-    license = lib.licenses.asl20;
-    platforms = builtins.attrNames targets;
-    mainProgram = "codex";
-  };
-}
+in package

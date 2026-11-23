@@ -587,6 +587,7 @@
           flow-message-next = checkPkgs.callPackage ./checks/flow-message-next { inherit inputs; };
           herdr-toast-delivery = checkPkgs.callPackage ./checks/herdr-toast-delivery { inherit inputs; };
           herdr-agent-executable = checkPkgs.callPackage ./checks/herdr-agent-executable { inherit inputs; };
+          herdr-codex-tui = checkPkgs.callPackage ./gates/herdr-codex-tui { inherit inputs; };
           herdr-codex-integration = checkPkgs.callPackage ./checks/herdr-codex-integration {
             inherit inputs;
           };

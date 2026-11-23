@@ -1,28 +1,13 @@
 {
-  "strategy": "prebuilt",
+  "version": "0.171.0",
   "targets": {
-    "aarch64-linux": {
-      "cli": {
-        "hash": "sha256-vPULg2OF5RvSl2qyu+krGwihy+N3EuuNvjeKp40khxw=",
-        "url": "https://github.com/openai/codex/releases/download/rust-v0.171.0/codex-aarch64-unknown-linux-musl.tar.gz"
-      },
-      "codeModeHost": {
-        "hash": "sha256-dmnIgbeGabXxPduZmWtc7z+xDatbafQ74x0Z6C6c1is=",
-        "url": "https://github.com/openai/codex/releases/download/rust-v0.171.0/codex-code-mode-host-aarch64-unknown-linux-musl.tar.gz"
-      },
-      "target": "aarch64-unknown-linux-musl"
-    },
     "x86_64-linux": {
-      "cli": {
-        "hash": "sha256-Abqi5HgJ+Fl75bL4q9Tk3+P7W8tuUEwvuqrZcFbBXo0=",
-        "url": "https://github.com/openai/codex/releases/download/rust-v0.171.0/codex-x86_64-unknown-linux-musl.tar.gz"
-      },
-      "codeModeHost": {
-        "hash": "sha256-14YZAwwbjQpNnJxnZnwb+iOtnZ7cY9h//qqGeW89how=",
-        "url": "https://github.com/openai/codex/releases/download/rust-v0.171.0/codex-code-mode-host-x86_64-unknown-linux-musl.tar.gz"
-      },
-      "target": "x86_64-unknown-linux-musl"
+      "target": "x86_64-unknown-linux-musl",
+      "hash": "sha256-g5HWd1dJa/0UiT7KbL8MlplL8mJ1Zv8fAY9wYAye9rM="
+    },
+    "aarch64-linux": {
+      "target": "aarch64-unknown-linux-musl",
+      "hash": "sha256-2MQ77mzxGwHrGLlfTXlhCSvEAigYCAiFnnDau3eEwck="
     }
-  },
-  "version": "0.171.0"
+  }
 }

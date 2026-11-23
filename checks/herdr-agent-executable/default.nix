@@ -33,7 +33,7 @@ let
   herdrPackage = configuration.criomosHome.herdr.package;
   expectedPathPackage = pkgs.callPackage ../../owned-agents/codex { inherit inputs; };
   pathPackage = builtins.head (
-    builtins.filter (package: lib.getName package == "codex") configuration.home.packages
+    builtins.filter (package: lib.getName package == lib.getName expectedPathPackage) configuration.home.packages
   );
   stableClient = configuration.criomosHome.herdr.stableCodexClientPackage;
   nextRaw = configuration.criomosHome.codexNextCandidate.package;

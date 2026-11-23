@@ -21,7 +21,7 @@ spec.loader.exec_module(updater)
 def fixture(version='1.2.3'):
     assets, contents = [], {}
     for target in updater.TARGETS.values():
-        for prefix in ('codex', 'codex-code-mode-host'):
+        for prefix in ('codex-package',):
             name = f'{prefix}-{target}.tar.gz'
             url = f'https://github.com/openai/codex/releases/download/rust-v{version}/{name}'
             content = f'{version}/{name}'.encode()
@@ -38,17 +38,17 @@ def manifest(version='1.2.3'):
 
 
 class ReleaseTests(unittest.TestCase):
-    def test_all_cli_and_companion_bytes_match_published_digests(self):
+    def test_complete_packages_match_published_digests(self):
         release, contents = fixture()
         with patch.object(updater, 'fetch_bytes', side_effect=contents.__getitem__) as fetch:
             result = updater.release_manifest(release)
-        self.assertEqual(fetch.call_count, 4)
+        self.assertEqual(fetch.call_count, 2)
         self.assertEqual(result['version'], '1.2.3')
         for row in result['targets'].values():
-            for key in ('cli', 'codeModeHost'):
-                self.assertEqual(row[key]['hash'], 'sha256-' + base64.b64encode(hashlib.sha256(contents[row[key]['url']]).digest()).decode())
+            url = updater.artifact_url(result['version'], row['target'])
+            self.assertEqual(row['hash'], 'sha256-' + base64.b64encode(hashlib.sha256(contents[url]).digest()).decode())
 
-    def test_missing_companion_refuses_before_any_download(self):
+    def test_missing_platform_refuses_before_any_download(self):
         release, _ = fixture()
         release['assets'].pop()
         with patch.object(updater, 'fetch_bytes') as fetch:
@@ -75,8 +75,16 @@ class ReleaseTests(unittest.TestCase):
             data = copy.deepcopy(original)
             if change == 'strategy': data['strategy'] = 'source'
             if change == 'target': data['targets']['new-system'] = {}
-            if change == 'url': data['targets']['x86_64-linux']['cli']['url'] = 'https://example.invalid/tool'
+            if change == 'url': data['targets']['x86_64-linux']['url'] = 'https://example.invalid/tool'
             with self.assertRaises(ValueError): updater.validate_manifest(data)
+
+    def test_noncanonical_download_url_refuses_before_fetch(self):
+        release, _ = fixture()
+        release["assets"][0]["browser_download_url"] = "https://example.invalid/tool"
+        with patch.object(updater, 'fetch_bytes') as fetch:
+            with self.assertRaisesRegex(ValueError, 'does not match'):
+                updater.release_manifest(release)
+            fetch.assert_not_called()
 
     def invoke(self, current, args, release=None, contents=None):
         root = Path(self.directory.name)
@@ -107,7 +115,7 @@ class ReleaseTests(unittest.TestCase):
 
     def test_same_version_changed_identity_preserves_original_file(self):
         current = manifest()
-        current['targets']['x86_64-linux']['cli']['hash'] = 'sha256-' + base64.b64encode(b'x' * 32).decode()
+        current['targets']['x86_64-linux']['hash'] = 'sha256-' + base64.b64encode(b'x' * 32).decode()
         release, contents = fixture()
         with self.assertRaisesRegex(ValueError, 'Immutable release'):
             self.invoke(current, [], release, contents)
