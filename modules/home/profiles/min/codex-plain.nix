@@ -18,6 +18,21 @@ in {
     enable = lib.mkEnableOption "the separate plain stable Codex endpoint after isolated acceptance";
     autoStart = lib.mkOption { type = lib.types.bool; default = false; description = "Start only this new endpoint on user login after explicit adoption."; };
     authSource = lib.mkOption { type = lib.types.nullOr lib.types.str; default = null; description = "Authorized private runtime auth.json source for one-time import; no secret is held by Nix."; };
+    restartDelay = lib.mkOption {
+      type = lib.types.str;
+      default = "2s";
+      description = "Systemd delay before restarting the Codex app-server after a failure.";
+    };
+    memoryHigh = lib.mkOption {
+      type = lib.types.str;
+      default = "8G";
+      description = "Systemd memory threshold at which the Codex app-server and its subprocesses are throttled.";
+    };
+    memoryMax = lib.mkOption {
+      type = lib.types.str;
+      default = "12G";
+      description = "Systemd hard memory limit for the Codex app-server and its subprocesses.";
+    };
     package = lib.mkOption { type = lib.types.package; readOnly = true; default = package; };
     clientPackage = lib.mkOption { type = lib.types.package; readOnly = true; default = client; };
     homeDirectory = lib.mkOption { type = lib.types.str; readOnly = true; default = home; };
@@ -43,7 +58,10 @@ in {
         ExecStart = "${package}/bin/codex app-server --remote-control --listen unix://${socket}";
         UMask = "0077";
         KillMode = "process";
-        Restart = "no";
+        Restart = "on-failure";
+        RestartSec = cfg.restartDelay;
+        MemoryHigh = cfg.memoryHigh;
+        MemoryMax = cfg.memoryMax;
         LimitNOFILE = 524288;
       };
       Install.WantedBy = lib.optional cfg.autoStart "default.target";
