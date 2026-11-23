@@ -72,7 +72,7 @@ pkgs.runCommand "codex-harness-deployment-contract" {
     jq -e --arg marker '/.local/bin/codex-harness-report' \
       --arg command '/home/fixture/.local/bin/codex-harness-report' --argjson timeout 5 \
       --argjson events '["SessionStart","PostToolUse"]' \
-      -f ${../../packages/codex-harness-deployment/merge-hooks.jq}
+      -f ${../../lib/codex-harness-deployment/merge-hooks.jq}
   }
   merge > hooks.json <<'FIXTURE'
   {

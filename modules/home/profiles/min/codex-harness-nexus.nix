@@ -19,7 +19,7 @@ let
   runtime = "%t/nexus/${cfg.place}";
   state = "%S/nexus/${cfg.place}";
   place = lib.escapeShellArg "{ «${cfg.place}» «${runtime}» «${state}» }";
-  deployment = ../../../../packages/codex-harness-deployment;
+  deployment = ../../../../lib/codex-harness-deployment;
   readiness = "${pkgs.python3}/bin/python3 ${deployment}/socket-readiness.py";
   marker = ".local/bin/codex-harness-report";
   markerPath = "${config.home.homeDirectory}/${marker}";
