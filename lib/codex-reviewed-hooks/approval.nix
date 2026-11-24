@@ -2,7 +2,7 @@
   home = "/home/li/.codex-plain-i6q2ban20b4h";
   hostPublicKey = "/etc/ssh/ssh_host_ed25519_key.pub";
   hostPublicKeyDigest = "0a835951731daad8c3c627ad3fd83af5b55835d67252617240ba151095a17b22";
-  target = "immutable";
+  target = "legacy";
   handlers = {
     SessionStart = {
       event = "session_start";
