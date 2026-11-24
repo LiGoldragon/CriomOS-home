@@ -89,7 +89,12 @@ assert lib.sort builtins.lessThan custom.systemd.user.services.flow-nexus-0606.S
 ];
 assert custom.systemd.user.services.flow-nexus-0606.Service.MemoryMax == "3G";
 assert custom.systemd.user.services.flow-nexus-0606.Service.Type == "notify";
-assert custom.systemd.user.services.flow-nexus-0606.Service.ExecStart == [ expectedUnit.Service.ExecStart ];
+assert lib.hasInfix "flow-writer.lock" (lib.head custom.systemd.user.services.flow-nexus-0606.Service.ExecStart);
+assert lib.hasInfix "bin/flow-nexus-daemon" (lib.head custom.systemd.user.services.flow-nexus-0606.Service.ExecStart);
+assert configuration.systemd.user.services.flow-nexus-0606.Unit.Conflicts == [ "flow-nexus-0607.service" ];
+assert configuration.systemd.user.services.flow-nexus-0606.Unit.Requires == [ "flow-handoff-0606-0607-restore.service" ];
+assert configuration.systemd.user.services.flow-nexus-0607.Unit.RefuseManualStart;
+assert configuration.systemd.user.services.flow-handoff-0606-0607-restore.Service.Type == "oneshot";
 assert lib.all (name: !(builtins.hasAttr name authored.options.criomosHome.flow0606)) policyOptions;
 assert !(builtins.pathExists ../../modules/home/profiles/min/flow-nexus-config);
 assert !(lib.hasInfix "Configure." moduleSource);
