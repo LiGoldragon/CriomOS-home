@@ -1,5 +1,6 @@
-"""Reconcile reviewed hooks through the owning plain Codex app-server."""
+"""Shared scope and read-only evidence for the reviewed plain Codex transition."""
 
+from contextlib import contextmanager
 import copy
 import hashlib
 import json
@@ -8,8 +9,6 @@ from pathlib import Path
 import socket
 import stat
 import struct
-import sys
-import tempfile
 import time
 import tomllib
 
@@ -36,7 +35,9 @@ def exact_path(path, kind, owner, forbidden_permissions):
     )
 
 
-class Codex:
+class ReadOnlyCodex:
+    methods = frozenset({"initialize", "config/read", "hooks/list"})
+
     def __init__(self, connection, timeout, home):
         self.connection = connection
         self.timeout = timeout
@@ -45,14 +46,12 @@ class Codex:
             "clientInfo": {"name": "criomos-reviewed-hooks", "version": "1"},
         })
         require(result.get("codexHome") == str(home), "The peer reports another Codex home.")
-        self.send({"method": "initialized"})
-
-    def send(self, message):
-        self.connection.send(json.dumps(message))
+        self.connection.send(json.dumps({"method": "initialized"}))
 
     def request(self, method, params):
+        require(method in self.methods, "The RPC is outside the declared capability.")
         self.number += 1
-        self.send({"id": self.number, "method": method, "params": params})
+        self.connection.send(json.dumps({"id": self.number, "method": method, "params": params}))
         deadline = time.monotonic() + self.timeout
         while True:
             reply = json.loads(self.connection.recv(timeout=max(0, deadline - time.monotonic())))
@@ -121,48 +120,57 @@ def verify_user_layer(codex, config_path, disk_state):
         "The Codex user-layer hook state differs from its file.",
     )
     require(layer["config"].get("features", {}).get("hooks") is True, "The user layer does not enable hooks.")
+    require(isinstance(layer["version"], str) and layer["version"], "Codex did not report a user-layer version.")
     return layer["version"]
 
 
-def replace_hooks(path, previous, document):
-    with tempfile.NamedTemporaryFile(dir=path.parent, delete=False) as temporary:
-        pending = Path(temporary.name)
-        try:
-            temporary.write((json.dumps(document, ensure_ascii=False, indent=2) + "\n").encode())
-            temporary.flush()
-            os.fsync(temporary.fileno())
-            exact_path(path, stat.S_ISREG, os.getuid(), 0o077)
-            require(path.read_bytes() == previous, "The hook declarations changed during activation.")
-            os.replace(pending, path)
-        finally:
-            pending.unlink(missing_ok=True)
+def digest(content):
+    return hashlib.sha256(content).hexdigest()
 
 
-def reconcile(plan):
+def peer_identity(stream, expected_executable):
+    pid, uid, _ = struct.unpack("3i", stream.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, 12))
+    require(pid > 0 and uid == os.getuid(), "The peer is not in the owning user identity.")
+    process = Path("/proc") / str(pid)
+    executable = os.readlink(process / "exe")
+    require(executable == expected_executable, "The socket does not belong to the pinned plain Codex binary.")
+    start_time = (process / "stat").read_text().rsplit(")", 1)[1].split()[19]
+    return {
+        "pid": pid,
+        "uid": uid,
+        "startTime": start_time,
+        "executable": executable,
+        "bootId": Path("/proc/sys/kernel/random/boot_id").read_text().strip(),
+    }
+
+
+def read_owned_file(path):
+    exact_path(path, stat.S_ISREG, os.getuid(), 0o077)
+    return path.read_bytes()
+
+
+@contextmanager
+def observe(plan_path, codex_type=ReadOnlyCodex):
+    plan_bytes = plan_path.read_bytes()
+    plan = json.loads(plan_bytes)
     uid = os.getuid()
     home = Path(plan["home"])
     public_key = Path(plan["hostPublicKey"])
     exact_path(public_key, stat.S_ISREG, 0, 0o022)
-    require(
-        hashlib.sha256(public_key.read_bytes()).hexdigest() == plan["hostPublicKeyDigest"],
-        "The approval belongs to a different host.",
-    )
+    require(digest(public_key.read_bytes()) == plan["hostPublicKeyDigest"], "The approval belongs to a different host.")
     exact_path(home, stat.S_ISDIR, uid, 0o077)
-    marker = Path(plan["marker"])
     require(
-        str(marker.resolve(strict=True)) == plan["hookTarget"],
+        str(Path(plan["marker"]).resolve(strict=True)) == plan["hookTarget"],
         "Home did not install the reviewed immutable hook target.",
     )
     config_path, hooks_path = home / "config.toml", home / "hooks.json"
     control = Path(plan["socket"])
-    exact_path(config_path, stat.S_ISREG, uid, 0o077)
-    exact_path(hooks_path, stat.S_ISREG, uid, 0o077)
     exact_path(control.parent, stat.S_ISDIR, uid, 0o077)
     require(control.lstat().st_uid == uid, "The rendezvous is owned by a different user.")
     protected_socket = control.resolve(strict=True)
     exact_path(protected_socket.parent, stat.S_ISDIR, uid, 0o077)
-    exact_path(protected_socket, stat.S_ISSOCK, uid, 0)
-    config_bytes, hooks_bytes = config_path.read_bytes(), hooks_path.read_bytes()
+    exact_path(protected_socket, stat.S_ISSOCK, uid, 0o077)
+    config_bytes, hooks_bytes = read_owned_file(config_path), read_owned_file(hooks_path)
     config = tomllib.loads(config_bytes.decode())
     state = config.get("hooks", {}).get("state", {})
     require(
@@ -182,51 +190,29 @@ def reconcile(plan):
     with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as stream:
         stream.settimeout(timeout)
         stream.connect(str(protected_socket))
-        peer, peer_uid, _ = struct.unpack("3i", stream.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, 12))
-        require(
-            peer_uid == uid and os.readlink(f"/proc/{peer}/exe") == plan["codex"],
-            "The socket does not belong to the pinned plain Codex binary.",
-        )
+        peer = peer_identity(stream, plan["codex"])
         with unix_connect(sock=stream, proxy=None, open_timeout=timeout, close_timeout=timeout) as connection:
-            codex = Codex(connection, timeout, home)
+            codex = codex_type(connection, timeout, home)
             version = verify_user_layer(codex, config_path, state)
             verify_inventory(codex, home, hooks_path, before)
-            exact_path(config_path, stat.S_ISREG, uid, 0o077)
-            require(config_path.read_bytes() == config_bytes, "The user config changed during activation.")
-            if candidate != current:
-                replace_hooks(hooks_path, hooks_bytes, candidate)
-            verify_inventory(codex, home, hooks_path, after)
-            exact_path(config_path, stat.S_ISREG, uid, 0o077)
-            require(config_path.read_bytes() == config_bytes, "The user config changed during approval.")
-            edits = [
-                {"keyPath": f"hooks.state.{json.dumps(key, ensure_ascii=False)}.trusted_hash",
-                 "value": digest, "mergeStrategy": "upsert"}
-                for key, digest in after.items()
-                if state.get(key, {}).get("trusted_hash") != digest
-            ]
-            if edits:
-                receipt = codex.request("config/batchWrite", {
-                    "filePath": str(config_path),
-                    "expectedVersion": version,
-                    "reloadUserConfig": False,
-                    "edits": edits,
-                })
+            evidence = {
+                "planDigest": digest(plan_bytes),
+                "peer": peer,
+                "userLayer": {"file": str(config_path), "profile": None, "version": version},
+                "configDigest": digest(config_bytes),
+                "hooksDigest": digest(hooks_bytes),
+            }
+
+            def revalidate():
                 require(
-                    receipt.get("status") == "ok" and receipt.get("filePath") == str(config_path),
-                    "Codex did not confirm the exact user-config write.",
+                    control.resolve(strict=True) == protected_socket
+                    and peer_identity(connection.socket, plan["codex"]) == peer,
+                    "The owning app-server identity changed during approval.",
                 )
-            approved_state = config.setdefault("hooks", {}).setdefault("state", {})
-            for key, digest in after.items():
-                approved_state.setdefault(key, {})["trusted_hash"] = digest
-            exact_path(config_path, stat.S_ISREG, uid, 0o077)
-            require(tomllib.loads(config_path.read_text()) == config, "The user config differs outside the reviewed changes.")
-            verify_inventory(codex, home, hooks_path, after, target_status=True)
+                require(
+                    read_owned_file(config_path) == config_bytes and read_owned_file(hooks_path) == hooks_bytes,
+                    "The predecessor hook files changed during approval.",
+                )
 
-
-if __name__ == "__main__":
-    try:
-        reconcile(json.loads(Path(sys.argv[1]).read_text()))
-    except Refusal as error:
-        sys.exit(f"Codex hook approval: {error}")
-    except Exception as error:
-        sys.exit(f"Codex hook approval could not verify its inputs or reply ({type(error).__name__}).")
+            revalidate()
+            yield codex, evidence, revalidate, (config_path, hooks_path, config, hooks_bytes, state, current, candidate, after)

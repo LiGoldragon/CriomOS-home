@@ -77,7 +77,8 @@ let
       mv -T -- "$temporary" "$destination"
     '';
   };
-  approval = import (deployment + "/plain-hook-approval.nix");
+  review = ../../../../lib/codex-reviewed-hooks;
+  approval = import (review + "/approval.nix");
   reviewedHome = cfg.hookHome == approval.home
     && config.criomosHome.codexPlain.enable
     && config.criomosHome.codexPlain.homeDirectory == approval.home;
@@ -94,6 +95,12 @@ let
     };
   }));
   reviewPython = pkgs.python3.withPackages (packages: [ packages.websockets ]);
+  reviewedUnit = "codex-reviewed-hook-approval";
+  reviewedCommand = pkgs.writeShellScript "codex-reviewed-hook-approval" ''
+    set -euo pipefail
+    ${reviewPython}/bin/python3 -EsB ${review}/preflight.py ${reviewedPlan} |
+      ${reviewPython}/bin/python3 -EsB ${review}/writer.py ${reviewedPlan}
+  '';
   serviceDefaults = {
     Type = "exec";
     UMask = "0077";
@@ -204,6 +211,18 @@ in
           ExecStopPost = [ removeReady "${readiness} clear ${translatorSockets}" ];
         };
       };
+    } // lib.optionalAttrs reviewedHome {
+      ${reviewedUnit} = {
+        Unit.Description = "Apply the four reviewed plain Codex hook approvals";
+        Service = {
+          Type = "oneshot";
+          ExecStart = toString reviewedCommand;
+          PrivateTmp = false;
+          UMask = "0077";
+          NoNewPrivileges = true;
+          RestrictAddressFamilies = [ "AF_UNIX" ];
+        };
+      };
     };
     home.file = lib.mkIf (cfg.hookHome != null) {
       ${marker}.source = hook;
@@ -222,8 +241,12 @@ in
         '';
       })
       (lib.mkIf reviewedHome {
-        codexHarnessReviewedHooks = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
-          run ${reviewPython}/bin/python3 ${deployment}/reconcile-reviewed-hooks.py ${reviewedPlan}
+        codexHarnessReviewedHooks = lib.hm.dag.entryAfter [ "linkGeneration" "reloadSystemd" ] ''
+          (
+            unset DBUS_SESSION_BUS_ADDRESS
+            export XDG_RUNTIME_DIR="/run/user/$(${pkgs.coreutils}/bin/id -u)"
+            run ${pkgs.systemd}/bin/systemctl --user start ${reviewedUnit}.service
+          )
         '';
       })
     ];
