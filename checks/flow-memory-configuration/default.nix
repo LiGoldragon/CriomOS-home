@@ -101,8 +101,9 @@ assert !(lib.hasInfix "Configure." moduleSource);
 assert !(lib.hasInfix "flow-replay-" moduleSource);
 assert !(lib.hasInfix "flow-nexus-config" profileSource);
 assert !(configuration.systemd.user.services ? flow-configure-0607);
-pkgs.runCommand "flow-memory-configuration-contract" { nativeBuildInputs = [ pkgs.coreutils ]; } ''
+pkgs.runCommand "flow-memory-configuration-contract" { nativeBuildInputs = [ pkgs.coreutils pkgs.python3 ]; } ''
   set -eu
+  python3 ${./handoff.py} ${../../lib/flow-handoff.py}
   test "$(cat ${deployment.placeConfiguration}/nexus/flow-nexus.datom)" = '{ main }'
   test "$(readlink ${deployment.placeConfiguration}/nexus/main/flow-nexus.signal)" = '/home/memory-test/.config/nexus/main/flow-nexus.signal'
   for client in flow flow-meta; do

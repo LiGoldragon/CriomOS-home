@@ -1,5 +1,6 @@
 """Seal or restore a stopped Flow store inside an exclusive writer fence."""
 
+from contextlib import contextmanager
 import fcntl
 import hashlib
 import json
@@ -19,7 +20,10 @@ def require(condition, message):
 
 
 def record_of(systemctl, unit):
-    fields = ["ActiveState", "MainPID", "Result", "ExecMainCode", "ExecMainStatus", "InvocationID"]
+    fields = [
+        "LoadState", "ActiveState", "MainPID", "ControlPID", "Result",
+        "ExecMainCode", "ExecMainStatus", "InvocationID",
+    ]
     words = subprocess.check_output(
         [systemctl, "--user", "show", *[f"--property={name}" for name in fields], unit],
         text=True,
@@ -31,8 +35,13 @@ def stopped(systemctl, units, runtime):
     owner = {}
     for unit in units:
         record = record_of(systemctl, unit)
-        require(record.get("ActiveState") == "inactive" and record.get("MainPID") == "0",
-                f"Writer {unit} has not stopped.")
+        require(
+            record.get("LoadState") == "loaded"
+            and record.get("ActiveState") in {"inactive", "failed"}
+            and record.get("MainPID") == "0"
+            and record.get("ControlPID") == "0",
+            f"Writer {unit} is not verifiably stopped.",
+        )
         owner[unit] = record
     names = ("flow.sock", "flow-meta.sock")
     for name in names:
@@ -65,9 +74,10 @@ def stopped(systemctl, units, runtime):
 
 
 def clean_exit(record):
-    return (record.get("Result"), record.get("ExecMainCode"), record.get("ExecMainStatus")) == (
-        "success", "1", "0",
-    )
+    return (
+        record.get("ActiveState"), record.get("Result"),
+        record.get("ExecMainCode"), record.get("ExecMainStatus"),
+    ) == ("inactive", "success", "1", "0")
 
 
 def opened(path):
@@ -123,7 +133,6 @@ def seal(state, runtime, path, directory, coordinates, exits, systemctl):
         require(not (directory / "restored.json").exists(), "This crossing was already reversed.")
         return
     old = exits[coordinates["oldUnit"]]
-    require(clean_exit(old), "The predecessor did not report a clean graceful exit.")
     scratch = Path(tempfile.mkdtemp(prefix=".flow-seal-", dir=state))
     try:
         snapshot = scratch / "flow.sema"
@@ -166,6 +175,20 @@ def restore(state, runtime, path, directory, coordinates, exits, systemctl):
     scratch.rmdir()
 
 
+@contextmanager
+def writer_fence(path):
+    descriptor = os.open(path, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW | os.O_NONBLOCK, 0o600)
+    try:
+        require(stat.S_ISREG(os.fstat(descriptor).st_mode), "Expected a regular Flow writer lock.")
+        try:
+            fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise SystemExit("The exclusive Flow writer fence is held.") from None
+        yield
+    finally:
+        os.close(descriptor)
+
+
 def main():
     mode, systemctl, state_path, runtime_path, old_unit, new_unit, old_revision, new_revision = sys.argv[1:]
     state, runtime = Path(state_path), Path(runtime_path)
@@ -174,8 +197,7 @@ def main():
                        newRevision=new_revision, runtime=str(runtime), state=str(state))
     path = state / "flow.sema"
     directory = state / f"flow-handoff-{old_unit.removesuffix('.service')}-{new_unit.removesuffix('.service')}"
-    with os.fdopen(os.open(state / "flow-writer.lock", os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600), "r+b") as lock:
-        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    with writer_fence(state / "flow-writer.lock"):
         exits = stopped(systemctl, (old_unit, new_unit), runtime)
         action = {"seal": seal, "restore": restore}[mode]
         action(state, runtime, path, directory, coordinates, exits, systemctl)
