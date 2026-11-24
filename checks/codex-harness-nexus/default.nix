@@ -7,29 +7,32 @@ let
   };
   fixtureHome = "/home/${fixtureUser.name}";
   codexHome = "${fixtureHome}/codex";
-  configuration = user: extra: (inputs.home-manager.lib.homeManagerConfiguration {
+  configuration = user: plainModule: extra: (inputs.home-manager.lib.homeManagerConfiguration {
     inherit pkgs;
     extraSpecialArgs = { inherit user inputs; };
     modules = [
       ../../modules/home/profiles/min/nexus-places.nix
       ../../modules/home/profiles/min/codex-harness-nexus.nix
-      ({ lib, ... }: {
-        options.criomosHome.codexPlain = {
-          enable = lib.mkOption { type = lib.types.bool; default = true; };
-          homeDirectory = lib.mkOption { type = lib.types.str; default = codexHome; };
-        };
-        config.home = {
+      plainModule
+      {
+        home = {
           username = user.name;
-          homeDirectory = fixtureHome;
+          homeDirectory = "/home/${user.name}";
           stateVersion = "26.05";
         };
-      })
+      }
       extra
     ];
   }).config;
-  enabled = configuration fixtureUser {};
-  disabled = configuration (fixtureUser // { capabilities = []; }) {};
-  custom = configuration fixtureUser {
+  fixturePlainModule = { lib, ... }: {
+    options.criomosHome.codexPlain = {
+      enable = lib.mkOption { type = lib.types.bool; default = true; };
+      homeDirectory = lib.mkOption { type = lib.types.str; default = codexHome; };
+    };
+  };
+  enabled = configuration fixtureUser fixturePlainModule {};
+  disabled = configuration (fixtureUser // { capabilities = []; }) fixturePlainModule {};
+  custom = configuration fixtureUser fixturePlainModule {
     criomosHome.nexusPlaces.places = [ "trial" ];
     criomosHome.codexHarness = {
       place = "trial";
@@ -39,6 +42,16 @@ let
       hookHome = null;
     };
   };
+  approval = import ../../lib/codex-harness-deployment/plain-hook-approval.nix;
+  reviewed = configuration
+    (fixtureUser // { name = baseNameOf (dirOf approval.home); })
+    ../../modules/home/profiles/min/codex-plain.nix
+    { criomosHome.codexPlain.enable = true; };
+  inReviewScope = reviewed.criomosHome.codexPlain.homeDirectory == approval.home;
+  reviewedActivation = pkgs.writeShellScript "codex-reviewed-hook-activation" ''
+    run() { "$@"; }
+    ${reviewed.home.activation.codexHarnessReviewedHooks.data}
+  '';
   nexus = enabled.systemd.user.services.codex-harness-nexus-040;
   translator = enabled.systemd.user.services.codex-harness-translator-040;
   configured = custom.systemd.user.services.codex-harness-translator-040;
@@ -52,6 +65,10 @@ let
   });
 in
 assert !(disabled.systemd.user.services ? codex-harness-nexus-040);
+assert !(enabled.home.activation ? codexHarnessReviewedHooks);
+assert (reviewed.home.activation ? codexHarnessReviewedHooks) == inReviewScope;
+assert (reviewed.home.activation ? codexHarnessHooks) != inReviewScope;
+assert (reviewed.home.activation ? codexHarnessHookFeature) != inReviewScope;
 assert !(disabled.systemd.user.services ? codex-harness-translator-040);
 assert nexus.Unit.Wants == [ "codex-harness-translator-040.service" ];
 assert nexus.Unit.After == [ "systemd-tmpfiles-setup.service" ];
@@ -97,5 +114,8 @@ pkgs.runCommand "codex-harness-deployment-contract" {
     .hooks.Stop == [{hooks: [{type: "command", command: "foreign"}]}] and
     .hooks.PostToolUse[0].hooks[0].timeout == 5
   ' hooks.json
-  touch "$out"
+  mkdir "$out"
+  ${pkgs.lib.optionalString inReviewScope ''
+    ln -s ${reviewedActivation} "$out/reviewed-activation"
+  ''}
 ''

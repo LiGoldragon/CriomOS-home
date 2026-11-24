@@ -77,6 +77,23 @@ let
       mv -T -- "$temporary" "$destination"
     '';
   };
+  approval = import (deployment + "/plain-hook-approval.nix");
+  reviewedHome = cfg.hookHome == approval.home
+    && config.criomosHome.codexPlain.enable
+    && config.criomosHome.codexPlain.homeDirectory == approval.home;
+  reviewedPlan = pkgs.writeText "codex-reviewed-hook-plan.json" (builtins.toJSON (approval // {
+    requestTimeout = cfg.hookApprovalRequestTimeoutSeconds;
+    hookTimeout = cfg.hookTimeoutSeconds;
+    hookTarget = toString hook;
+    marker = markerPath;
+    socket = config.criomosHome.codexPlain.socket;
+    codex = "${config.criomosHome.codexPlain.package}/bin/codex";
+    commands = {
+      legacy = hookCommand;
+      immutable = "if [ -x ${lib.escapeShellArg markerPath} ]; then exec ${lib.escapeShellArg (toString hook)} ${lib.escapeShellArg cfg.hookHome}; fi";
+    };
+  }));
+  reviewPython = pkgs.python3.withPackages (packages: [ packages.websockets ]);
   serviceDefaults = {
     Type = "exec";
     UMask = "0077";
@@ -133,6 +150,11 @@ in
       default = [ "SessionStart" "PermissionRequest" "PostToolUse" "PostCompact" ];
       description = "Codex events sent to the Harness Nexus hook.";
     };
+    hookApprovalRequestTimeoutSeconds = lib.mkOption {
+      type = lib.types.ints.positive;
+      default = 5;
+      description = "Deadline in seconds for each request to the plain Codex hook approval endpoint.";
+    };
     hookTimeoutSeconds = lib.mkOption {
       type = lib.types.ints.positive;
       default = 5;
@@ -186,17 +208,24 @@ in
     home.file = lib.mkIf (cfg.hookHome != null) {
       ${marker}.source = hook;
     };
-    home.activation = lib.mkIf (cfg.hookHome != null) {
-      codexHarnessHookFeature = inputs.hexis.lib.mkManagedConfig {
-        inherit lib pkgs;
-        hexis = inputs.hexis.packages.${system}.default;
-        file = "${cfg.hookHome}/config.toml";
-        declared.features.hooks = true;
-        modes."/features/hooks" = "always";
-      };
-      codexHarnessHooks = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        run ${hookMerge}/bin/merge-codex-harness-hooks ${lib.escapeShellArg cfg.hookHome}
-      '';
-    };
+    home.activation = lib.mkMerge [
+      (lib.mkIf (cfg.hookHome != null && !reviewedHome) {
+        codexHarnessHookFeature = inputs.hexis.lib.mkManagedConfig {
+          inherit lib pkgs;
+          hexis = inputs.hexis.packages.${system}.default;
+          file = "${cfg.hookHome}/config.toml";
+          declared.features.hooks = true;
+          modes."/features/hooks" = "always";
+        };
+        codexHarnessHooks = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+          run ${hookMerge}/bin/merge-codex-harness-hooks ${lib.escapeShellArg cfg.hookHome}
+        '';
+      })
+      (lib.mkIf reviewedHome {
+        codexHarnessReviewedHooks = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+          run ${reviewPython}/bin/python3 ${deployment}/reconcile-reviewed-hooks.py ${reviewedPlan}
+        '';
+      })
+    ];
   };
 }
