@@ -66,14 +66,11 @@ assert !(enabled.home.activation ? codexHarnessReviewedHooks);
 assert (reviewed.home.activation ? codexHarnessReviewedHooks) == inReviewScope;
 assert !(enabled.systemd.user.services ? codex-reviewed-hook-approval);
 assert (reviewed.systemd.user.services ? codex-reviewed-hook-approval) == inReviewScope;
-assert !inReviewScope || (
-  (reviewedUnit.Install or {}) == {}
-  && reviewedUnit.Unit == { Description = "Apply the four reviewed plain Codex hook approvals"; }
-  && reviewedUnit.Service.Type == "oneshot"
-  && !reviewedUnit.Service.PrivateTmp
-  && reviewedUnit.Service.RestrictAddressFamilies == [ "AF_UNIX" ]
-  && reviewed.home.activation.codexHarnessReviewedHooks.after == [ "linkGeneration" "reloadSystemd" ]
-);
+assert !inReviewScope || pkgs.lib.all (
+  stage: pkgs.lib.elem stage reviewed.home.activation.codexHarnessReviewedHooks.after
+) [ "linkGeneration" "reloadSystemd" ];
+assert !inReviewScope || (reviewedUnit.Install.WantedBy or []) == [];
+assert !inReviewScope || (reviewedUnit.Install.RequiredBy or []) == [];
 assert (reviewed.home.activation ? codexHarnessHooks) != inReviewScope;
 assert (reviewed.home.activation ? codexHarnessHookFeature) != inReviewScope;
 assert !(disabled.systemd.user.services ? codex-harness-translator-040);
@@ -123,6 +120,14 @@ pkgs.runCommand "codex-harness-deployment-contract" {
   ' hooks.json
   mkdir "$out"
   ${pkgs.lib.optionalString inReviewScope ''
-    ln -s ${reviewedUnit.Service.ExecStart} "$out/reviewed-owner-helper"
+    unit=${reviewed.xdg.configFile."systemd/user/codex-reviewed-hook-approval.service".source}
+    grep -qx 'Type=oneshot' "$unit"
+    grep -qx 'PrivateTmp=false' "$unit"
+    grep -qx 'RestrictAddressFamilies=AF_UNIX' "$unit"
+    if grep -Eq '^\[Install\]$|^(Wants|Requires|Sockets|BindsTo|PartOf|After|Before)=' "$unit"; then
+      echo "The reviewed hook unit must start only on explicit request and must not activate another unit." >&2
+      exit 1
+    fi
+    ln -s "$unit" "$out/reviewed-user-unit"
   ''}
 ''
