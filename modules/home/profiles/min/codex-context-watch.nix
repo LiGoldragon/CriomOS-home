@@ -3,38 +3,50 @@ let
   cfg = config.criomosHome.codexContextWatch;
   home = config.home.homeDirectory;
   source = pkgs.fetchurl {
-    url = "https://raw.githubusercontent.com/LiGoldragon/makeshift-tools/9952ef331e9288e47dbaabfdab5e7e10eb093b7e/codex-context-watch.clj";
-    hash = "sha256-burxSEn8AYerq6ky+FHTnDI5yBjudn9+x71VJQrhu2M=";
+    url = "https://raw.githubusercontent.com/LiGoldragon/makeshift-tools/e8ac421702714aacb62599f7f90707641eee1016/codex-context-watch.clj";
+    hash = "sha256-E/COdOocAQUswPnRqyZTtvsW/z5TyS3wz6DT8hdrv94=";
   };
+  modelNames = [ "Astra" "Luna" "Sol" "Terra" ];
+  addressPattern = "[{] (Psyche|Mind|Field) [[:alnum:]]+ (Astra|Luna|Sol|Terra) [}]";
+  addressModel = address: builtins.elemAt (builtins.match addressPattern address) 1;
+  codexHome = config.criomosHome.codexPlain.homeDirectory;
+  migrationHomes = lib.unique (builtins.filter (path: path != codexHome) cfg.additionalHomes);
   unitName = address: "codex-refresh-watch-" + builtins.replaceStrings [ "{ " " }" " " ] [ "" "" "-" ] address;
   start = pkgs.writeShellApplication {
     name = "codex-context-watch";
     runtimeInputs = [ pkgs.babashka pkgs.inotify-tools config.criomosHome.herdr.package ];
     text = ''
       export PATH=${lib.escapeShellArg "${home}/.local/bin"}:"$PATH"
-      homes=(--home ${lib.escapeShellArg config.criomosHome.codexPlain.homeDirectory})
-      for directory in ${lib.escapeShellArgs cfg.additionalHomes}; do
+      homes=(--home ${lib.escapeShellArg codexHome})
+      for directory in ${lib.escapeShellArgs migrationHomes}; do
         if [[ -d "$directory/sessions" ]]; then homes+=(--home "$directory"); fi
       done
-      exec bb ${source} "$1" ${toString cfg.inputTokenThreshold} \
-        --margin ${toString cfg.escalationMargin} --receipt-file "$STATE_DIRECTORY/receipts.edn" "''${homes[@]}"
+      exec bb ${source} "$1" "$2" \
+        --margin "$3" --model-window "$4" --receipt-file "$STATE_DIRECTORY/receipts.edn" "''${homes[@]}"
     '';
   };
 in
 {
   options.criomosHome.codexContextWatch = {
     addresses = lib.mkOption {
-      type = lib.types.listOf (lib.types.strMatching "[{] (Psyche|Mind|Field) [[:alnum:]]+ Sol [}]");
+      type = lib.types.listOf (lib.types.strMatching addressPattern);
       default = [ ];
-      description = "Sol addresses covered by the Codex rollout watcher.";
+      description = "Addresses covered by the Codex rollout watcher.";
     };
-    inputTokenThreshold = lib.mkOption {
-      type = lib.types.ints.positive;
-      description = "Input tokens at which the watcher asks for a handover and refresh.";
-    };
-    escalationMargin = lib.mkOption {
-      type = lib.types.ints.positive;
-      description = "Additional input tokens at which the watcher sends the urgent reminder.";
+    modelPolicies = lib.mkOption {
+      type = lib.types.submodule {
+        options = lib.genAttrs modelNames (model: lib.mkOption {
+          description = "Effective Codex window and reminder thresholds for ${model}.";
+          type = lib.types.submodule {
+            options = {
+              effectiveContextWindow = lib.mkOption { type = lib.types.ints.positive; };
+              refreshInputTokens = lib.mkOption { type = lib.types.ints.positive; };
+              escalationInputTokens = lib.mkOption { type = lib.types.ints.positive; };
+            };
+          };
+        });
+      };
+      description = "Refresh and escalation limits for the four OpenAI models.";
     };
     additionalHomes = lib.mkOption {
       type = lib.types.listOf lib.types.str;
@@ -44,7 +56,11 @@ in
   };
 
   config = lib.mkIf (config.criomosHome.flow.enable && config.criomosHome.codexPlain.enable) {
-    systemd.user.services = builtins.listToAttrs (map (address: rec {
+    systemd.user.services = builtins.listToAttrs (map (address:
+      let policy = cfg.modelPolicies.${addressModel address};
+      in assert policy.refreshInputTokens < policy.escalationInputTokens;
+         assert policy.escalationInputTokens < policy.effectiveContextWindow;
+      rec {
       name = unitName address;
       value = {
         Unit = {
@@ -53,7 +69,7 @@ in
           StartLimitIntervalSec = 0;
         };
         Service = {
-          ExecStart = ''${start}/bin/codex-context-watch "${address}"'';
+          ExecStart = ''${start}/bin/codex-context-watch "${address}" ${toString policy.refreshInputTokens} ${toString (policy.escalationInputTokens - policy.refreshInputTokens)} ${toString policy.effectiveContextWindow}'';
           Restart = "on-failure";
           RestartSec = "5s";
           StateDirectory = name;

@@ -439,19 +439,26 @@ in
     };
 
     criomosHome.codexContextWatch = {
-      inputTokenThreshold = 300000;
-      escalationMargin = 50000;
+      modelPolicies = {
+        Astra = { effectiveContextWindow = 258400; refreshInputTokens = 163200; escalationInputTokens = 190400; };
+        Luna = { effectiveContextWindow = 258400; refreshInputTokens = 163200; escalationInputTokens = 190400; };
+        Sol = { effectiveContextWindow = 475000; refreshInputTokens = 300000; escalationInputTokens = 350000; };
+        Terra = { effectiveContextWindow = 475000; refreshInputTokens = 300000; escalationInputTokens = 350000; };
+      };
       additionalHomes = [
         "${homeDir}/.codex-next"
+        "${homeDir}/.codex-next-5ck97j38j3sb"
         "${homeDir}/.codex-plain-i6q2ban20b4h"
       ];
       addresses = [
         "{ Field core Sol }"
+        "{ Field heartbeat Luna }"
         "{ Mind core Sol }"
         "{ Mind curriculum Sol }"
         "{ Mind dictateAndroid Sol }"
         "{ Mind flowNexus Sol }"
         "{ Mind harnessNexus Sol }"
+        "{ Mind listener Astra }"
         "{ Mind listener Sol }"
         "{ Mind lojix Sol }"
         "{ Mind makeshiftTools Sol }"
@@ -460,6 +467,7 @@ in
         "{ Mind research Sol }"
         "{ Mind subscription Sol }"
         "{ Mind versionZero Sol }"
+        "{ Psyche core Astra }"
         "{ Psyche core Sol }"
         "{ Psyche research Sol }"
       ];
