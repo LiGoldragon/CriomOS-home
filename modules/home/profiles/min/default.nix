@@ -452,7 +452,6 @@ in
       ];
       addresses = [
         "{ Field core Sol }"
-        "{ Field heartbeat Luna }"
         "{ Mind core Sol }"
         "{ Mind curriculum Sol }"
         "{ Mind dictateAndroid Sol }"
@@ -469,6 +468,7 @@ in
         "{ Psyche core Astra }"
         "{ Psyche core Sol }"
         "{ Psyche research Sol }"
+        "{ Psyche visualizer Sol }"
       ];
     };
 
