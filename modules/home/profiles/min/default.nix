@@ -425,6 +425,7 @@ in
 {
   imports = [
     ./codex-plain.nix
+    ./codex-context-watch.nix
     ./default-opener.nix
     ./herdr.nix
     ./pi-models.nix
@@ -435,6 +436,33 @@ in
     criomosHome.codexPlain = {
       enable = lib.mkDefault true;
       autoStart = lib.mkDefault true;
+    };
+
+    criomosHome.codexContextWatch = {
+      inputTokenThreshold = 300000;
+      escalationMargin = 50000;
+      additionalHomes = [
+        "${homeDir}/.codex-next"
+        "${homeDir}/.codex-plain-i6q2ban20b4h"
+      ];
+      addresses = [
+        "{ Field core Sol }"
+        "{ Mind core Sol }"
+        "{ Mind curriculum Sol }"
+        "{ Mind dictateAndroid Sol }"
+        "{ Mind flowNexus Sol }"
+        "{ Mind harnessNexus Sol }"
+        "{ Mind listener Sol }"
+        "{ Mind lojix Sol }"
+        "{ Mind makeshiftTools Sol }"
+        "{ Mind messengerNexus Sol }"
+        "{ Mind nixCriomos Sol }"
+        "{ Mind research Sol }"
+        "{ Mind subscription Sol }"
+        "{ Mind versionZero Sol }"
+        "{ Psyche core Sol }"
+        "{ Psyche research Sol }"
+      ];
     };
 
     fonts.fontconfig = {
