@@ -458,7 +458,6 @@ in
         "{ Mind dictateAndroid Sol }"
         "{ Mind flowNexus Sol }"
         "{ Mind harnessNexus Sol }"
-        "{ Mind listener Astra }"
         "{ Mind listener Sol }"
         "{ Mind lojix Sol }"
         "{ Mind makeshiftTools Sol }"
