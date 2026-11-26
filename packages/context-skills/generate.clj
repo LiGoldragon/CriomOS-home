@@ -141,7 +141,7 @@
       (fail "unsupported NUL in skill source"))
     (let [input (apply str (map #(str (:body %) separator) modules))
           result @(process/process [classifier] {:in input :out :string :err :string})
-          classifications (str/split-lines (:out result))]
+          classifications (if (empty? (:out result)) [] (str/split-lines (:out result)))]
       (when (or (not (zero? (:exit result)))
                 (not= (count classifications) (count modules))
                 (not-every? #{"Public" "Specialist"} classifications))

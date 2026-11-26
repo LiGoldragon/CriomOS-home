@@ -61,6 +61,11 @@ EXPECTED
   done
   ! grep -RF 'private marker for the fixture' "$TMPDIR/out"
 
+  mkdir "$TMPDIR/empty-repository"
+  bb "$generator" "$TMPDIR/empty-output" "$TMPDIR/empty-repository=revision-empty"
+  test ! -s "$TMPDIR/empty-output/modules"
+  for surface in $surfaces; do test -d "$TMPDIR/empty-output/$surface"; done
+
   # Actual regeneration removes preexisting leaked copies in a private
   # workspace, even if the entire replacement inventory is specialist-only.
   export PRIMARY="$TMPDIR/primary"
