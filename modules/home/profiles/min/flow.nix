@@ -10,6 +10,11 @@ let
   cfg = config.criomosHome.flow;
   system = pkgs.stdenv.hostPlatform.system;
   sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
+  flowThreadsPython = pkgs.python3.withPackages (packages: [ packages.websockets ]);
+  flowThreads = pkgs.writeShellScriptBin "flow-threads" ''
+    unset PYTHONPATH
+    exec ${flowThreadsPython}/bin/python3 -s ${../../../../lib/flow-threads.py} "$@"
+  '';
   claudeAgentDescription = ../../../../lib/claude-flow-agent-description;
   installClaudeAgentDescription = pkgs.writeShellApplication {
     name = "install-claude-flow-agent-description";
@@ -90,6 +95,8 @@ in
     default = builtins.elem "AgentStack" user.capabilities;
   };
   config = lib.mkIf (sizeAtLeast "Min" && cfg.enable) {
+    home.file.".local/bin/flow-threads".source = "${flowThreads}/bin/flow-threads";
+
     # The editable passage is seeded once; later activations verify the mod
     # code without overwriting the passage or restarting a Claude session.
     home.activation.claudeFlowAgentDescription = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
