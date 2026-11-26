@@ -22,9 +22,11 @@ for directory in [place, state / "nexus/main", config / "nexus"]:
 os.environ.update(XDG_RUNTIME_DIR=str(runtime), XDG_STATE_HOME=str(state), XDG_CONFIG_HOME=str(config))
 
 hint = (
-    "Use sub-agents freely. Run commands, builds, tests, searches and the reading "
-    "of logs and long files in a sub-agent, and keep your own context for "
-    "judgment and the work only you hold."
+    "Maximize sub-agents. Run commands, builds, tests, searches and the reading of "
+    "logs and long files in a sub-agent, and give it every bounded part of your "
+    "work; keep your own context for judgment and the work only you hold. Reuse a "
+    "sub-agent that already holds the context before you start a new one. When a "
+    "kind of work returns, give it a role file."
 )
 
 def managed_config(entry):

@@ -10,7 +10,7 @@ let
   cfg = config.criomosHome.codexHarness;
   plain = config.criomosHome.codexPlain;
   sharedPlain = plain.enable && cfg.hookHome == plain.homeDirectory;
-  multiAgentModeHint = "Use sub-agents freely. Run commands, builds, tests, searches and the reading of logs and long files in a sub-agent, and keep your own context for judgment and the work only you hold.";
+  multiAgentModeHint = "Maximize sub-agents. Run commands, builds, tests, searches and the reading of logs and long files in a sub-agent, and give it every bounded part of your work; keep your own context for judgment and the work only you hold. Reuse a sub-agent that already holds the context before you start a new one. When a kind of work returns, give it a role file.";
   places = config.criomosHome.nexusPlaces;
   sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
   system = pkgs.stdenv.hostPlatform.system;
