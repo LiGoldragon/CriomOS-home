@@ -29,6 +29,9 @@ let
   }).config;
   enabled = configuration fixtureUser {};
   disabled = configuration (fixtureUser // { capabilities = []; }) {};
+  foreignHooks = configuration fixtureUser {
+    criomosHome.codexHarness.hookHome = "${fixtureHome}/other-codex";
+  };
   custom = configuration fixtureUser {
     criomosHome.nexusPlaces.places = [ "trial" ];
     criomosHome.codexHarness = {
@@ -48,6 +51,8 @@ let
     translator = translator.Service;
     config = enabled.xdg.configFile."nexus/codex-harness-nexus.datom".text;
     hook = enabled.home.file.".local/bin/codex-harness-report".source;
+    sharedHookConfig = enabled.home.activation.codexHarnessHookFeature.data;
+    foreignHookConfig = foreignHooks.home.activation.codexHarnessHookFeature.data;
     inherit codexHome;
   });
 in

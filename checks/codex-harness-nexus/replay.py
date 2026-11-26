@@ -21,6 +21,31 @@ for directory in [place, state / "nexus/main", config / "nexus"]:
 (config / "nexus/codex-harness-nexus.datom").write_text(plan["config"])
 os.environ.update(XDG_RUNTIME_DIR=str(runtime), XDG_STATE_HOME=str(state), XDG_CONFIG_HOME=str(config))
 
+hint = (
+    "Use sub-agents freely. Run commands, builds, tests, searches and the reading "
+    "of logs and long files in a sub-agent, and keep your own context for "
+    "judgment and the work only you hold."
+)
+
+def managed_config(entry):
+    args = shlex.split(plan[entry])
+    declared = Path(args[args.index("--declared") + 1])
+    return args[args.index("--file") + 1], json.loads(declared.read_text())
+
+shared_file, shared = managed_config("sharedHookConfig")
+other_file, other = managed_config("foreignHookConfig")
+assert shared_file == f"{plan['codexHome']}/config.toml"
+assert other_file == f"{Path(plan['codexHome']).parent}/other-codex/config.toml"
+assert shared["features"] == {
+    "hooks": True, "multi_agent_v2": {"multi_agent_mode_hint_text": hint},
+}
+assert shared["$hexis"]["modes"] == {
+    "/features/hooks": "always",
+    "/features/multi_agent_v2/multi_agent_mode_hint_text": "always",
+}
+assert other["features"] == {"hooks": True}
+assert other["$hexis"]["modes"] == {"/features/hooks": "always"}
+
 
 def words(command):
     return [arg.replace("%t", str(runtime)).replace("%S", str(state)) for arg in shlex.split(command)]

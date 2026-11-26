@@ -8,6 +8,9 @@
 }:
 let
   cfg = config.criomosHome.codexHarness;
+  plain = config.criomosHome.codexPlain;
+  sharedPlain = plain.enable && cfg.hookHome == plain.homeDirectory;
+  multiAgentModeHint = "Use sub-agents freely. Run commands, builds, tests, searches and the reading of logs and long files in a sub-agent, and keep your own context for judgment and the work only you hold.";
   places = config.criomosHome.nexusPlaces;
   sizeAtLeast = (import ../../../../lib/horizon-user.nix { inherit lib; }).sizeAtLeast user.size;
   system = pkgs.stdenv.hostPlatform.system;
@@ -191,8 +194,16 @@ in
         inherit lib pkgs;
         hexis = inputs.hexis.packages.${system}.default;
         file = "${cfg.hookHome}/config.toml";
-        declared.features.hooks = true;
-        modes."/features/hooks" = "always";
+        declared.features = {
+          hooks = true;
+        } // lib.optionalAttrs sharedPlain {
+          multi_agent_v2.multi_agent_mode_hint_text = multiAgentModeHint;
+        };
+        modes = {
+          "/features/hooks" = "always";
+        } // lib.optionalAttrs sharedPlain {
+          "/features/multi_agent_v2/multi_agent_mode_hint_text" = "always";
+        };
       };
       codexHarnessHooks = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         run ${hookMerge}/bin/merge-codex-harness-hooks ${lib.escapeShellArg cfg.hookHome}
