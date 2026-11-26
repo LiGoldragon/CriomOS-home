@@ -1,10 +1,10 @@
-{ pkgs, ... }:
+{ pkgs, inputs, ... }:
 
 let
   inherit (pkgs) lib;
   homeDirectory = "/build/context-skills-home";
   moduleResult = import ../../modules/home/profiles/min/context-skills.nix {
-    inherit lib pkgs;
+    inherit lib pkgs inputs;
     config = {
       home.homeDirectory = homeDirectory;
       criomosHome.contextSkills.enable = true;
@@ -19,7 +19,7 @@ let
       moduleResult;
   service = moduleConfiguration.systemd.user.services.context-skills;
   path = moduleConfiguration.systemd.user.paths.context-skills;
-  regenerate = pkgs.callPackage ../../packages/context-skills { };
+  regenerate = pkgs.callPackage ../../packages/context-skills { inherit inputs; };
   refs = map (name: "${homeDirectory}/primary/repos/${name}/.git/refs") [
     "psyche-belief"
     "mind-belief"

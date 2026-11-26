@@ -1,7 +1,8 @@
 ;; Projects every belief module of the pinned cohort into the skill
 ;; directory each harness reads: <out>/<surface>/skills/<module>/SKILL.md.
 ;; Arguments: out, then one "<root>=<revision>" per context repository.
-(require '[clojure.java.io :as io]
+(require '[babashka.process :as process]
+         '[clojure.java.io :as io]
          '[clojure.string :as str])
 (import '[java.nio.file Files])
 
@@ -132,20 +133,41 @@
               (sort-by #(.getName %) (.listFiles kind-dir)))))))
     module-types))
 
+(defn exportable-modules [modules]
+  (let [classifier (System/getenv "CURRICULUM_SKILL_INVENTORY")
+        separator (str (char 0))]
+    (when (str/blank? classifier) (fail "missing Curriculum skill inventory program"))
+    (when (some #(str/includes? (:body %) separator) modules)
+      (fail "unsupported NUL in skill source"))
+    (let [input (apply str (map #(str (:body %) separator) modules))
+          result @(process/process [classifier] {:in input :out :string :err :string})
+          classifications (str/split-lines (:out result))]
+      (when (or (not (zero? (:exit result)))
+                (not= (count classifications) (count modules))
+                (not-every? #{"Public" "Specialist"} classifications))
+        (fail "Curriculum skill inventory refused: " (:err result)))
+      (keep (fn [[classification module]] (when (= "Public" classification) module))
+            (map vector classifications modules)))))
+
 (let [[out & sources] *command-line-args*
       all (mapcat #(apply modules (str/split % #"=" 2)) sources)
       duplicates (->> all (map :name) frequencies (filter #(> (val %) 1)) keys)]
   (when (empty? sources) (fail "no context repository given"))
   (when (seq duplicates) (fail "duplicate module ids: " (str/join " " duplicates)))
-  (doseq [surface surfaces
-          module all
-          :let [dir (io/file out (:directory surface) (:name module))]]
-    (.mkdirs dir)
-    (spit (io/file dir "SKILL.md") (render surface module))
-    (when (and (:codex-policy surface) (user-only? (:body module)))
-      (.mkdirs (io/file dir "agents"))
-      (spit (io/file dir "agents" "openai.yaml") "policy:\n  allow_implicit_invocation: false\n")))
-  ;; One line per module: id, repository revision, source path.
-  (spit (io/file out "modules")
-        (str/join (for [{:keys [name revision source]} (sort-by :name all)]
-                    (str name " " revision " " source "\n")))))
+  (let [modules (exportable-modules all)]
+    ;; Even an empty public inventory is a complete projection: regeneration
+    ;; must be able to remove earlier copies from every target.
+    (doseq [surface surfaces]
+      (.mkdirs (io/file out (:directory surface))))
+    (doseq [surface surfaces
+            module modules
+            :let [dir (io/file out (:directory surface) (:name module))]]
+      (.mkdirs dir)
+      (spit (io/file dir "SKILL.md") (render surface module))
+      (when (and (:codex-policy surface) (user-only? (:body module)))
+        (.mkdirs (io/file dir "agents"))
+        (spit (io/file dir "agents" "openai.yaml") "policy:\n  allow_implicit_invocation: false\n")))
+    ;; One line per published module: id, repository revision, source path.
+    (spit (io/file out "modules")
+          (str/join (for [{:keys [name revision source]} (sort-by :name modules)]
+                      (str name " " revision " " source "\n"))))))

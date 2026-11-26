@@ -646,11 +646,11 @@
         "base": "base_3"
       },
       "locked": {
-        "lastModified": 1795196454,
-        "narHash": "sha256-bqprU0yE/h0aQlaaiRzhI4dxwfYbvzDqyAnE+mwyEdk=",
+        "lastModified": 1795718602,
+        "narHash": "sha256-b+D08RJy2LMpgsajl6bYhNUPoONsATzyC0nl2vRFl7o=",
         "owner": "LiGoldragon",
         "repo": "Curriculum",
-        "rev": "59eaaacbb08d68977acb3b470e52dd5089af6f05",
+        "rev": "dd527403a65c5f92d8dedf660257f6ae7060511d",
         "type": "github"
       },
       "original": {

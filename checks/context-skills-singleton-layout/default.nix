@@ -1,10 +1,15 @@
-{ pkgs, ... }:
+{ pkgs, inputs, ... }:
 
+let
+  regenerate = pkgs.callPackage ../../packages/context-skills { inherit inputs; };
+  curriculum = pkgs.callPackage ../../packages/curriculum-resolver-deployment { inherit inputs; };
+in
 pkgs.runCommand "context-skills-singleton-layout" {
-  nativeBuildInputs = [ pkgs.babashka pkgs.coreutils pkgs.diffutils pkgs.gnugrep ];
+  nativeBuildInputs = [ pkgs.babashka pkgs.coreutils pkgs.diffutils pkgs.gnugrep pkgs.git ];
 } ''
   set -eu
   generator=${../../packages/context-skills/generate.clj}
+  export CURRICULUM_SKILL_INVENTORY=${curriculum.runtime}/bin/curriculum-skill-inventory
 
   valid="$TMPDIR/valid"
   mkdir -p "$valid/vision/nexus" "$valid/inquiry/question" "$valid/role"
@@ -25,6 +30,14 @@ MODULE
   printf '%s\n' 'question body' > "$valid/inquiry/question/12.md"
   printf '%s\n' 'procedure body' > "$valid/role/book-reader-procedure.md"
 
+  mkdir -p "$valid/knowledge/private"
+  cat > "$valid/knowledge/private/0.md" <<'MODULE'
+---
+description: private marker for the fixture
+placement: Specialist.[ FlowDriver ]
+---
+private marker for the fixture
+MODULE
   bb "$generator" "$TMPDIR/out" "$valid=revision-one"
   cat > "$TMPDIR/expected-modules" <<'EXPECTED'
 inquiry:question:12 revision-one inquiry/question/12.md
@@ -41,6 +54,39 @@ EXPECTED
   grep -F 'question body' "$TMPDIR/out/.opencode/skills/inquiry:question:12/SKILL.md"
   grep -F 'procedure body' "$TMPDIR/out/.pi/skills/role:book-reader-procedure/SKILL.md"
 
+  surfaces=".claude/skills .agents/skills .codex/skills .pi/skills .opencode/skills"
+  for surface in $surfaces; do
+    test ! -e "$TMPDIR/out/$surface/knowledge:private:0"
+    test -f "$TMPDIR/out/$surface/vision:nexus:0/SKILL.md"
+  done
+  ! grep -RF 'private marker for the fixture' "$TMPDIR/out"
+
+  # Actual regeneration removes preexisting leaked copies in a private
+  # workspace, even if the entire replacement inventory is specialist-only.
+  export PRIMARY="$TMPDIR/primary"
+  export XDG_RUNTIME_DIR="$TMPDIR/runtime"
+  mkdir -p "$XDG_RUNTIME_DIR"
+  for root in psyche-belief mind-belief field-belief; do
+    repository="$PRIMARY/repos/$root"
+    mkdir -p "$repository"
+    git -C "$repository" init -q -b main
+    git -C "$repository" -c user.name=Fixture -c user.email=fixture@example.invalid commit -q --allow-empty -m fixture
+  done
+  repository="$PRIMARY/repos/mind-belief"
+  mkdir -p "$repository/knowledge/private"
+  cp "$valid/knowledge/private/0.md" "$repository/knowledge/private/0.md"
+  git -C "$repository" add knowledge/private/0.md
+  git -C "$repository" -c user.name=Fixture -c user.email=fixture@example.invalid commit -q -m specialist
+  for surface in $surfaces; do
+    mkdir -p "$PRIMARY/$surface/knowledge:private:0"
+    cp "$valid/knowledge/private/0.md" "$PRIMARY/$surface/knowledge:private:0/SKILL.md"
+  done
+  ${regenerate}/bin/context-skills-regenerate
+  for surface in $surfaces; do
+    test -d "$PRIMARY/$surface"
+    test ! -e "$PRIMARY/$surface/knowledge:private:0"
+  done
+
   expect_failure() {
     name="$1"
     root="$2"
@@ -51,6 +97,12 @@ EXPECTED
     fi
     grep -F "$expected" "$TMPDIR/$name.err"
   }
+
+  malformed_placement="$TMPDIR/malformed-placement"
+  mkdir -p "$malformed_placement/knowledge/topic"
+  printf '%s\n' '---' 'placement: Specialist.[ ]' '---' Body >"$malformed_placement/knowledge/topic/0.md"
+  expect_failure malformed-placement "$malformed_placement" 'Curriculum skill inventory refused:'
+  test ! -e "$TMPDIR/out-malformed-placement"
 
   wrong_kind_flat="$TMPDIR/wrong-kind-flat"
   mkdir -p "$wrong_kind_flat/vision"

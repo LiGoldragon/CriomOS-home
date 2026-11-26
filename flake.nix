@@ -602,8 +602,8 @@
           aggregator-deployment = checkPkgs.callPackage ./checks/aggregator-deployment { inherit inputs; };
           owned-agent-updater = checkPkgs.callPackage ./checks/owned-agent-updater { inherit inputs; };
           context-skills-singleton-layout =
-            checkPkgs.callPackage ./checks/context-skills-singleton-layout { };
-          context-skills-activation = checkPkgs.callPackage ./checks/context-skills-activation { };
+            checkPkgs.callPackage ./checks/context-skills-singleton-layout { inherit inputs; };
+          context-skills-activation = checkPkgs.callPackage ./checks/context-skills-activation { inherit inputs; };
           codex-release-manifest = checkPkgs.callPackage ./checks/codex-release-manifest { };
           bird-codex-selection = checkPkgs.callPackage ./checks/bird-codex-selection { inherit inputs; };
           opencode-harness = checkPkgs.callPackage ./checks/opencode-harness { inherit inputs; };

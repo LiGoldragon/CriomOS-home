@@ -1,12 +1,13 @@
 {
   config,
+  inputs,
   lib,
   pkgs,
   ...
 }:
 let
   cfg = config.criomosHome.contextSkills;
-  regenerate = pkgs.callPackage ../../../../packages/context-skills { };
+  regenerate = pkgs.callPackage ../../../../packages/context-skills { inherit inputs; };
   mains = map (name: "${config.home.homeDirectory}/primary/repos/${name}/.git/refs") [
     "psyche-belief"
     "mind-belief"
@@ -17,7 +18,7 @@ in
   options.criomosHome.contextSkills.enable = lib.mkOption {
     type = lib.types.bool;
     default = config.criomosHome.curriculum.enable;
-    description = "Keep every belief module installed as a skill in the Primary workspace's harness skill directories, regenerated from main on every change to main.";
+    description = "Keep every globally available belief module installed as a skill in the Primary workspace's harness skill directories, regenerated from main on every change to main.";
   };
 
   config = lib.mkIf cfg.enable {
