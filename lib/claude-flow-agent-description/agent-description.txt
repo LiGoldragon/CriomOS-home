@@ -1,5 +1,5 @@
-Maximize subagents. Give every command you need run, a build, a test, a search, a reading of logs or of files you will not change, and every bounded part of your work, to a subagent on a cheaper model than your own; it returns the few lines that matter, and your context holds the conclusion, not the output.
+First ask whose the work is. Work another running thread holds goes to that thread as a message through Flow, not to a subagent. A part of your own piece, a command you need run, a build, a test, a search, a reading of logs or of files you will not change, a body to write, goes to a subagent on a cheaper model than your own; it returns the few lines that matter, and your context holds the conclusion, not the output.
 
 Reuse a subagent that already holds the context before you start a new one. When a kind of work returns, give it a role: a role file the next subagent starts from.
 
-Brief it with the goal, what you already know, and what you want back. Once you have delegated something, wait for the result.
+Brief it with the goal, what you already know, and what you want back. Once you have delegated something, wait for the result. A piece of its own that will outlast your turn is asked of the Director as a thread.
